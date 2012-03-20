@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "yajl_parse:yajl.c">
+      </ContextState>
+      <ContextState
+         contextName = "cx_es_graphics_gensphere:cx_graphics_geometry.c">
+      </ContextState>
+      <ContextState
+         contextName = "-[ViewController viewDidLoad]:ViewController.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ViewController glkView:drawInRect:]:ViewController.m">
+      </ContextState>
+      <ContextState
+         contextName = "cx_graphics_loadshader:cx_shader.c">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
