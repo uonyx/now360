@@ -41,6 +41,10 @@ cx_texture_node *cx_texture_db_get (cx_texture *texture);
 #if CX_TEXTURE_DEBUG
 cx_texture *cx_texture_db_exists (const char *filename);
 #endif
+
+void cx_texture_gpu_init (cx_texture *texture);
+void cx_texture_gpu_deinit (cx_texture *texture);
+
 static bool cx_texture_load_png (cx_texture *texture, const char *filename);
 extern bool cx_native_load_png (const char *filename, cx_texture *texture);
 
@@ -206,6 +210,7 @@ cx_texture *cx_texture_create (const char *filename)
     
     cx_texture_load_png (&textureNode->texture, filename);
     cx_texture_db_add (textureNode);
+    cx_texture_gpu_init (&textureNode->texture);
     
     texture = &textureNode->texture;
   }
@@ -221,8 +226,11 @@ void cx_texture_destroy (cx_texture *texture)
 {
   if (texture)
   {
+    cx_texture_gpu_deinit (texture);
     cx_texture_node *node = cx_texture_db_get (texture);
     CX_ASSERT (node);
+    
+    cx_texture_db_remove (node);
     
 #if CX_TEXTURE_DEBUG
     cx_free (texture->filename);
@@ -235,7 +243,7 @@ void cx_texture_destroy (cx_texture *texture)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_texture_clean_up (void)
+void cx_texture_db_clean_up (void)
 {
   cx_texture_node *node;
   cx_texture_node *nextNode;
@@ -280,8 +288,17 @@ void cx_texture_gpu_init (cx_texture *texture)
   }
   
   // set up mipmaps
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glGenerateMipmap (GL_TEXTURE_2D);
+  cx_graphics_assert_no_errors ();
+  
+  // set up filters
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  cx_graphics_assert_no_errors ();
+  
+  // set up coordinate wrapping
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   cx_graphics_assert_no_errors ();
 }
 
@@ -295,6 +312,35 @@ void cx_texture_gpu_deinit (cx_texture *texture)
   
   glDeleteTextures (1, &texture->id);
   cx_graphics_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_texture_set_wrap_mode (cx_texture *texture, cx_texture_wrap_mode mode)
+{
+  switch (mode) 
+  {
+    case CX_TEXTURE_WRAP_MODE_CLAMP:  
+    { 
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      break; 
+    }
+      
+    case CX_TEXTURE_WRAP_MODE_REPEAT: 
+    {
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      break; 
+    }
+      
+    default: 
+    { 
+      break; 
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

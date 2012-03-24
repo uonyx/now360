@@ -69,12 +69,11 @@ void app_initialise (int width, int height)
   CX_FATAL_ASSERT (s_shader != NULL);
   
   // mesh
-  s_mesh = cx_mesh_create_sphere (64, 1.5f);
+  s_mesh = cx_mesh_create_sphere (64, 1.0f);
   cx_mesh_gpu_init (s_mesh, s_shader);
   
   // texture  
   s_texture = cx_texture_create ("earthmap1k.png");
-  cx_texture_gpu_init (s_texture);
   
   // material
   s_material = cx_material_create ("material-1"); 
@@ -153,7 +152,7 @@ void app_view_update (float deltaTime)
   //s_rotAngle = cx_clamp(s_rotAngle, -90.0f, 90.0f);
   
 #if 1
-  cx_vec4_set (&s_camera.position, 0.0f, 0.0f, -7.0f, 1.0f);
+  cx_vec4_set (&s_camera.position, 0.0f, 0.0f, -4.0f, 1.0f);
   cx_vec4_set (&s_camera.target, 0.0f, 0.0f, 0.0f, 1.0f);
   
   // update view and projetion matrix
@@ -305,97 +304,6 @@ void app_render (void)
 
 void app_test_code (void)
 {
-#if CX_DEBUG
-  CX_OUTPUTLOG_CONSOLE (1, "app_initialise");
-  
-  cx_timer timer;
-  
-  cx_vec4 vec0, vec1, result;
-  
-  cx_vec4_zero (&vec0);
-  cx_vec4_set (&vec1, 1.0f, 2.0f, 3.0f, 0.0f);
-  cx_vec4_add (&result, &vec0, &vec1);
-  
-  cx_vec4 copy = result;
-  
-  cx_vec4 mult; float scalar = 1.5f;
-  cx_vec4_mul (&mult, scalar, &copy);
-  
-  cx_vec4_sub (&result, &vec0, &vec1);
-  
-  float dotp = cx_vec4_dot(&result, &copy);
-  CX_REFERENCE_UNUSED_VARIABLE (dotp);
-  CX_OUTPUTLOG_CONSOLE (1, "Dot product = %f", dotp);
-  
-  cx_mat4x4 mat0, mat1, mat2;
-  
-  const int bufSize = 128;
-  char logStr [bufSize];
-  
-  cx_mat4x4_zero(&mat0);
-  cx_mat4x4_string(logStr, bufSize, &mat0);
-  CX_OUTPUTLOG_CONSOLE(1, "zero matrix : %s", logStr);
-  
-  cx_mat4x4_identity(&mat0);
-  cx_mat4x4_string(logStr, bufSize, &mat0);
-  CX_OUTPUTLOG_CONSOLE(1, "identity matrix : %s", logStr);
-  
-  cxf32 farray1 [16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-  cx_mat4x4_set(&mat0, farray1);
-  cx_mat4x4_string(logStr, bufSize, &mat0);
-  CX_OUTPUTLOG_CONSOLE(1, "set matrix : %s", logStr);
-  
-  cx_mat4x4_transpose(&mat1, &mat0);
-  cx_mat4x4_string(logStr, bufSize, &mat1);
-  CX_OUTPUTLOG_CONSOLE(1, "transpose matrix : %s", logStr);
-  
-  cxf32 farray2 [16] = { 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2 };
-  cx_mat4x4_set (&mat0, farray2);
-  
-  cx_mat4x4_add(&mat0, &mat2, &mat1);
-  cx_mat4x4_string(logStr, bufSize, &mat2);
-  CX_OUTPUTLOG_CONSOLE(1, "add matrix : %s", logStr);
-  
-  cx_mat4x4_sub(&mat0, &mat2, &mat1);
-  cx_mat4x4_string(logStr, bufSize, &mat2);
-  CX_OUTPUTLOG_CONSOLE(1, "sub matrix : %s", logStr);
-  
-  cx_mat4x4_mul_scalar(&mat2, &mat0, 3.0f);
-  cx_mat4x4_string(logStr, bufSize, &mat2);
-  CX_OUTPUTLOG_CONSOLE(1, "mul scalar matrix : %s", logStr);
-  
-  cx_vec4_set (&vec0, 1.0f, 2.0f, 3.0f, 0.0f);
-  cx_mat4x4_identity(&mat0);
-  cx_mat4x4_mul_vec4(&vec1, &mat0, &vec0);
-  cx_vec4_string(logStr, bufSize, &vec1);
-  CX_OUTPUTLOG_CONSOLE(1, "mul vec vector: %s", logStr);
-  
-  cx_mat4x4_mul(&mat2, &mat0, &mat1);
-  cx_mat4x4_string(logStr, bufSize, &mat0);
-  CX_OUTPUTLOG_CONSOLE(1, "mul matrix : %s", logStr);
-  
-  
-  CX_OUTPUTLOG_CONSOLE(1, "matrix multiply test");
-  const int testCount = 0;// 8 * 1024 * 1024;
-  
-  cx_timer_start(&timer);
-  
-  for (int i = 0; i < testCount; ++i)
-  {
-    cx_mat4x4_set(&mat1, farray1);
-    cx_mat4x4_set (&mat2, farray2);
-    
-    cx_mat4x4_mul(&mat2, &mat0, &mat1);
-    cx_vec4_add (&result, &vec0, &vec1);
-  }
-  
-  cx_timer_stop (&timer);
-  
-  printf ("Elasped Time = %.3f ms\n", timer.elapsedTime);
-  //CX_OUTPUTLOG_CONSOLE(1, "Elasped Time = %.3f ms", timer.elapsedTime);
-  
-  CX_DEBUG_BREAK_ABLE
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

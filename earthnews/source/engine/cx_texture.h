@@ -26,6 +26,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+typedef enum cx_texture_filter
+{
+  CX_TEXTURE_FILTER_0,  // nearest
+  CX_TEXTURE_FILTER_1,  // linear
+  CX_TEXTURE_FILTER_2,  // bilinear
+  CX_TEXTURE_FILTER_3,  // trilinear - requires mipmaps
+} cx_texture_filter;
+
+typedef enum cx_texture_wrap_mode
+{
+  CX_TEXTURE_WRAP_MODE_CLAMP,
+  CX_TEXTURE_WRAP_MODE_REPEAT,
+} cx_texture_wrap_mode;
+
 typedef enum cx_texture_format
 {
   CX_TEXTURE_FORMAT_INVALID,
@@ -50,6 +64,8 @@ typedef struct cx_texture
   cxi32 bpp;
   cxi32 format;
   
+  bool iscompressed;
+  
 #if CX_TEXTURE_DEBUG
   char *filename;
 #endif
@@ -61,10 +77,9 @@ typedef struct cx_texture
 
 cx_texture *cx_texture_create (const char *filename);
 void cx_texture_destroy (cx_texture *texture);
-void cx_texture_clean_up (void);
 
-void cx_texture_gpu_init (cx_texture *texture);
-void cx_texture_gpu_deinit (cx_texture *texture);
+void cx_texture_set_wrap_mode (cx_texture *texture, cx_texture_wrap_mode mode);
+void cx_texture_db_clean_up (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

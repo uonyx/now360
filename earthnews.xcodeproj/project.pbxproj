@@ -41,6 +41,7 @@
 		3182B9A014B0B6680097A87E /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B99F14B0B6680097A87E /* CoreGraphics.framework */; };
 		3182B9B314B0B6C40097A87E /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B9B214B0B6C40097A87E /* OpenGLES.framework */; };
 		3182B9B514B0B6CC0097A87E /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B9B414B0B6CC0097A87E /* GLKit.framework */; };
+		31BCB81615195387001A01D5 /* cx_font.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCB81515195387001A01D5 /* cx_font.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -114,6 +115,8 @@
 		3182B99F14B0B6680097A87E /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		3182B9B214B0B6C40097A87E /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		3182B9B414B0B6CC0097A87E /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
+		31BCB81315195355001A01D5 /* cx_font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_font.h; sourceTree = "<group>"; };
+		31BCB81515195387001A01D5 /* cx_font.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_font.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +159,7 @@
 		316FA9F71517BB4D00CC39F2 /* engine */ = {
 			isa = PBXGroup;
 			children = (
+				316FAA161517BB4D00CC39F2 /* yajl */,
 				316FA9F81517BB4D00CC39F2 /* cx_colour.h */,
 				316FA9F91517BB4D00CC39F2 /* cx_debug.c */,
 				316FA9FA1517BB4D00CC39F2 /* cx_debug.h */,
@@ -173,7 +177,6 @@
 				316FAA061517BB4D00CC39F2 /* cx_memory.h */,
 				316FAA071517BB4D00CC39F2 /* cx_mesh.c */,
 				316FAA081517BB4D00CC39F2 /* cx_mesh.h */,
-				316FAA091517BB4D00CC39F2 /* cx_native_ios.m */,
 				316FAA0A1517BB4D00CC39F2 /* cx_shader.c */,
 				316FAA0B1517BB4D00CC39F2 /* cx_shader.h */,
 				316FAA0C1517BB4D00CC39F2 /* cx_string.h */,
@@ -186,7 +189,9 @@
 				316FAA131517BB4D00CC39F2 /* cx_utility.c */,
 				316FAA141517BB4D00CC39F2 /* cx_utility.h */,
 				316FAA151517BB4D00CC39F2 /* cx_vector4.h */,
-				316FAA161517BB4D00CC39F2 /* yajl */,
+				31BCB81315195355001A01D5 /* cx_font.h */,
+				31BCB81515195387001A01D5 /* cx_font.c */,
+				316FAA091517BB4D00CC39F2 /* cx_native_ios.m */,
 			);
 			path = engine;
 			sourceTree = "<group>";
@@ -370,6 +375,7 @@
 				316FAA711517C06400CC39F2 /* AppDelegate.m in Sources */,
 				316FAA721517C06400CC39F2 /* main.m in Sources */,
 				316FAA731517C06400CC39F2 /* ViewController.m in Sources */,
+				31BCB81615195387001A01D5 /* cx_font.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
