@@ -21,6 +21,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define CX_SHADER_VERTEX_SHADER_FILE_EXTENSION    "vsh"
+#define CX_SHADER_FRAGMENT_SHADER_FILE_EXTENSION  "fsh"
+#define CX_SHADER_CONFIGURATION_FILE_EXTENSION    "cfg"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const char *s_attribEnumStrings [CX_NUM_SHADER_ATTRIBUTES] =
 {
   "CX_SHADER_ATTRIBUTE_POSITION",
@@ -68,14 +76,13 @@ static int s_numShaders = 0;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static bool cx_shader_compile (GLuint *shader, GLenum type, const char *buffer, cxi32 bufferSize);
+static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmentShader);
+static bool cx_shader_configure (const char *buffer, cx_shader *shader);
+
 void cx_graphics_add_shader (cx_shader_node *shader);
 void cx_graphics_remove_shader (cx_shader_node *shader);
 
-BOOL cx_graphics_compile_shader (GLuint *shader, GLenum type, const char *buffer, cxi32 bufferSize);
-BOOL cx_graphics_link_program (GLuint *program, GLuint vertexShader, GLuint fragmentShader);
-BOOL cx_graphics_config_shader (const char *buffer, cx_shader *shader);
-
-BOOL cx_graphics_prelink_program (const char *buffer, GLuint shaderProgram, cxi32 *numAttributes);
 void cx_debug_print_gl_attribs_and_uniforms (GLuint shaderProgram);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +137,7 @@ void cx_graphics_remove_shader (cx_shader_node *shader)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BOOL cx_graphics_compile_shader (GLuint *shader, GLenum type, const char *buffer, cxi32 bufferSize)
+static bool cx_shader_compile (GLuint *shader, GLenum type, const char *buffer, cxi32 bufferSize)
 {
   GLuint outShader = 0;
   GLint compiled = 0;
@@ -162,7 +169,7 @@ BOOL cx_graphics_compile_shader (GLuint *shader, GLenum type, const char *buffer
     {
       char *log = (char *) cx_malloc (sizeof(char) * logLength);
       glGetShaderInfoLog (outShader, logLength, &logLength, log);
-      CX_OUTPUTLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Shader compile log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Shader compile log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -180,7 +187,7 @@ BOOL cx_graphics_compile_shader (GLuint *shader, GLenum type, const char *buffer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BOOL cx_graphics_link_program (GLuint *program, GLuint vertexShader, GLuint fragmentShader)
+static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmentShader)
 {
   CX_ASSERT (vertexShader != 0);
   CX_ASSERT (fragmentShader != 0);
@@ -219,7 +226,7 @@ BOOL cx_graphics_link_program (GLuint *program, GLuint vertexShader, GLuint frag
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_OUTPUTLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Program link log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Program link log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -243,7 +250,7 @@ BOOL cx_graphics_link_program (GLuint *program, GLuint vertexShader, GLuint frag
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_OUTPUTLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Program validate log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Program validate log:\n%s", log);
       cx_free (log);
     }
     
@@ -271,9 +278,13 @@ BOOL cx_graphics_link_program (GLuint *program, GLuint vertexShader, GLuint frag
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BOOL cx_graphics_config_shader (const char *buffer, cx_shader *shader)
+static bool cx_shader_configure (const char *buffer, cx_shader *shader)
 {
   char errorBuffer [512];
+  
+  yajl_gen g = yajl_gen_alloc (NULL);
+  yajl_handle h = yajl_alloc (NULL, NULL, g);
+  yajl_config (h, yajl_allow_trailing_garbage);
   yajl_val root = yajl_tree_parse (buffer, errorBuffer, 512);
   
   if (root == NULL)
@@ -283,7 +294,8 @@ BOOL cx_graphics_config_shader (const char *buffer, cx_shader *shader)
       cx_sprintf (errorBuffer, 512, "%s", "Unknown Error");
     }
     
-    CX_OUTPUTLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "JSON Parse Error: %s", errorBuffer);
+    CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, errorBuffer);
+    CX_FATAL_ERROR ("JSON Parse Error: %s");
     
     return FALSE;
   }
@@ -309,7 +321,7 @@ BOOL cx_graphics_config_shader (const char *buffer, cx_shader *shader)
       shader->attributes [i] = glGetAttribLocation (shader->program, attribName);
       
       CX_ASSERT (glGetError() == GL_NO_ERROR);
-      CX_OUTPUTLOG_CONSOLE (1, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
+      CX_DEBUGLOG_CONSOLE (1, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
       
       attribCount++;
     }
@@ -340,7 +352,7 @@ BOOL cx_graphics_config_shader (const char *buffer, cx_shader *shader)
       shader->uniforms [i] = glGetUniformLocation (shader->program, uniformName);
       
       CX_ASSERT (glGetError() == GL_NO_ERROR);
-      CX_OUTPUTLOG_CONSOLE (1, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
+      CX_DEBUGLOG_CONSOLE (1, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
       
       uniformCount++;
     }
@@ -352,86 +364,9 @@ BOOL cx_graphics_config_shader (const char *buffer, cx_shader *shader)
   CX_ASSERT (numUniforms <= uniformCount);
 #endif
   
-  return TRUE;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-BOOL cx_graphics_prelink_program (const char *buffer, GLuint shaderProgram, cxi32 *numAttributes)
-{
-  char errorBuffer [512];
-  yajl_val root = yajl_tree_parse (buffer, errorBuffer, 512);
-  
-  if (root == NULL)
-  {
-    if (strlen (errorBuffer) == 0)
-    {
-      cx_sprintf (errorBuffer, 512, "%s", "Unknown Error");
-    }
-    
-    CX_OUTPUTLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "JSON Parse Error: %s", errorBuffer);
-    
-    return FALSE;
-  }
-  
-  // attrib
-  // get object key 
-  // find enum from object key
-  // bind enum to value
-  
-  int attribCount = 0;
-  int i;
-  for (i = 0; i < CX_NUM_SHADER_ATTRIBUTES; ++i)
-  {
-    const char *attribStr = s_attribEnumStrings [i];
-    const char *attribPath [] = { "attributes", attribStr, NULL };
-    
-    yajl_val attribNode = yajl_tree_get (root, attribPath, yajl_t_any);
-    
-    if (attribNode)
-    {
-      CX_ASSERT (attribNode->type == yajl_t_string);
-      
-      const char *attribName = YAJL_GET_STRING (attribNode);
-      
-      glBindAttribLocation (shaderProgram, i, attribName);
-      
-      CX_ASSERT (glGetError() == GL_NO_ERROR);
-      
-      attribCount++;
-    }
-  }
-  
-  *numAttributes = attribCount;
-  
-  
-  /*
-   const char *attribPath [] = { "attributes", NULL };
-   yajl_val attribNode = yajl_tree_get (root, attribPath, yajl_t_any);
-   
-   CX_ASSERT (attribNode);
-   CX_ASSERT (attribNode->type == yajl_t_object);
-   
-   int i;
-   
-   for (i = 0; i < attribNode->u.object.len; ++i)
-   {
-   if (!strcmp ("position", attribNode->u.object.keys [i]))
-   {
-   const char *valStr = YAJL_GET_STRING (attribNode->u.object.values [i]);
-   CX_ASSERT (valStr != NULL);
-   CX_OUTPUTLOG_CONSOLE (1, "%s", valStr);
-   }
-   else if (!strcmp ("CX_ATTRIB_NORMAL", attribNode->u.object.keys [i]))
-   {
-   const char *valStr = YAJL_GET_STRING (attribNode->u.object.values [i]);
-   CX_ASSERT (valStr != NULL);
-   CX_OUTPUTLOG_CONSOLE (1, "%s", valStr);
-   }
-   }
-   */
+  yajl_tree_free (root);
+  yajl_free (h);
+  yajl_gen_free (g);
   
   return TRUE;
 }
@@ -440,25 +375,28 @@ BOOL cx_graphics_prelink_program (const char *buffer, GLuint shaderProgram, cxi3
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_shader *cx_shader_load (const char *name, const char *dir)
+cx_shader *cx_shader_create (const char *name, const char *dir)
 {
   CX_ASSERT (name != NULL);
   
   BOOL success = FALSE;
 
-  char vertexShaderFilename [256], fragmentShaderFilename [256], shaderConfigFilename [256];
+  char 
+    vertexShaderFilename [CX_FILENAME_MAX], 
+    fragmentShaderFilename [CX_FILENAME_MAX], 
+    shaderConfigFilename [CX_FILENAME_MAX];
   
   if (dir)
   {
-    cx_sprintf (vertexShaderFilename, 256, "%s/%s.vsh", dir, name);
-    cx_sprintf (fragmentShaderFilename, 256, "%s/%s.fsh", dir, name);
-    cx_sprintf (shaderConfigFilename, 256, "%s/%s.scf", dir, name);
+    cx_sprintf (vertexShaderFilename, CX_FILENAME_MAX, "%s/%s.%s", dir, name, CX_SHADER_VERTEX_SHADER_FILE_EXTENSION);
+    cx_sprintf (fragmentShaderFilename, CX_FILENAME_MAX, "%s/%s.%s", dir, name, CX_SHADER_FRAGMENT_SHADER_FILE_EXTENSION);
+    cx_sprintf (shaderConfigFilename, CX_FILENAME_MAX, "%s/%s.%s", dir, name, CX_SHADER_CONFIGURATION_FILE_EXTENSION);
   }
   else
   {
-    cx_sprintf (vertexShaderFilename, 256, "%s.vsh", name);
-    cx_sprintf (fragmentShaderFilename, 256, "%s.fsh", name);
-    cx_sprintf (shaderConfigFilename, 256, "%s.scf", name);
+    cx_sprintf (vertexShaderFilename, CX_FILENAME_MAX, "%s.%s", name, CX_SHADER_VERTEX_SHADER_FILE_EXTENSION);
+    cx_sprintf (fragmentShaderFilename, CX_FILENAME_MAX, "%s.%s", name, CX_SHADER_FRAGMENT_SHADER_FILE_EXTENSION);
+    cx_sprintf (shaderConfigFilename, CX_FILENAME_MAX, "%s.%s", name, CX_SHADER_CONFIGURATION_FILE_EXTENSION);
   }
   
   cx_file vsFile, fsFile, scFile;
@@ -473,13 +411,13 @@ cx_shader *cx_shader_load (const char *name, const char *dir)
   success = cx_file_load (&scFile, shaderConfigFilename);
   CX_FATAL_ASSERT (success);
   
-  success = cx_graphics_compile_shader (&vertexShader, GL_VERTEX_SHADER, vsFile.data, vsFile.size);
+  success = cx_shader_compile (&vertexShader, GL_VERTEX_SHADER, vsFile.data, vsFile.size);
   CX_FATAL_ASSERT (success);
   
-  success = cx_graphics_compile_shader (&fragmentShader, GL_FRAGMENT_SHADER, fsFile.data, fsFile.size);
+  success = cx_shader_compile (&fragmentShader, GL_FRAGMENT_SHADER, fsFile.data, fsFile.size);
   CX_FATAL_ASSERT (success);
   
-  success = cx_graphics_link_program (&shaderProgram, vertexShader, fragmentShader);
+  success = cx_shader_link (&shaderProgram, vertexShader, fragmentShader);
   CX_FATAL_ASSERT (success);
   
   cx_shader_node *shaderNode;
@@ -489,10 +427,10 @@ cx_shader *cx_shader_load (const char *name, const char *dir)
   shaderNode->shader.program  = shaderProgram;
   shaderNode->shader.name     = cx_strdup (name);
   
-  memset(shaderNode->shader.attributes, 0, sizeof (shaderNode->shader.attributes));
-  memset(shaderNode->shader.uniforms, 0, sizeof (shaderNode->shader.uniforms));
+  memset (shaderNode->shader.attributes, -1, sizeof (shaderNode->shader.attributes));
+  memset (shaderNode->shader.uniforms, -1, sizeof (shaderNode->shader.uniforms));
   
-  success = cx_graphics_config_shader (scFile.data, &shaderNode->shader);
+  success = cx_shader_configure (scFile.data, &shaderNode->shader);
   CX_FATAL_ASSERT (success);
   
   cx_graphics_add_shader (shaderNode);
@@ -614,7 +552,7 @@ void cx_debug_print_gl_attribs_and_uniforms (GLuint shaderProgram)
     
     location = glGetUniformLocation(shaderProgram, uniformName);
     
-    CX_OUTPUTLOG_CONSOLE (1, "Uniform name: %s, Uniform Location: %d", uniformName, location);
+    CX_DEBUGLOG_CONSOLE (1, "Uniform name: %s, Uniform Location: %d", uniformName, location);
   }
   
   free (uniformName);
@@ -638,7 +576,7 @@ void cx_debug_print_gl_attribs_and_uniforms (GLuint shaderProgram)
     
     location = glGetAttribLocation (shaderProgram, attribName);
     
-    CX_OUTPUTLOG_CONSOLE (1, "Attribute name: %s, Attribute Location: %d", attribName, location);
+    CX_DEBUGLOG_CONSOLE (1, "Attribute name: %s, Attribute Location: %d", attribName, location);
   }
   
   free (attribName);

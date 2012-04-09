@@ -839,6 +839,9 @@ static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cx
   cxf32 rsl = right - left;
   cxf32 tsb = top - bottom;
   cxf32 fsn = far - near;
+  cxf32 ral = right + left;
+  cxf32 tab = top + bottom;
+  cxf32 fan = far + near;
   
   m->f16 [0] = 2.0f / rsl;
   m->f16 [1] = 0.0f;
@@ -855,9 +858,9 @@ static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cx
   m->f16 [10] = -2.0f / fsn;
   m->f16 [11] = 0.0f;
   
-  m->f16 [12] = -(right + left) / rsl;
-  m->f16 [13] = -(top + bottom) / tsb;
-  m->f16 [14] = -(far + near) / fsn;
+  m->f16 [12] = -ral / rsl;
+  m->f16 [13] = -tab / tsb;
+  m->f16 [14] = -fan / fsn;
   m->f16 [15] = 1.0f;
 }
 

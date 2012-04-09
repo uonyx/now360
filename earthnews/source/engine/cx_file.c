@@ -26,44 +26,44 @@ extern void cx_native_get_filepath_from_resource (const char *filename, char *de
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BOOL cx_file_load (cx_file *file, const char *filename)
+bool cx_file_load (cx_file *file, const char *filename)
 {
-  BOOL success = FALSE;
+  bool success = false;
   
   char fullFilePath [512];
   cx_native_get_filepath_from_resource (filename, fullFilePath, 512);
   
   file->size = 0;
   file->data = NULL;
-  file->fileHandle = fopen (fullFilePath, "rb");
+  file->fp = fopen (fullFilePath, "rb");
   
-  if (file->fileHandle)
+  if (file->fp)
   {
     // get file size
-    fseek (file->fileHandle, 0L, SEEK_END);
+    fseek (file->fp, 0L, SEEK_END);
     
-    file->size = (cxu32) ftell (file->fileHandle);
+    file->size = (cxu32) ftell (file->fp);
     
-    fseek (file->fileHandle, 0L, SEEK_SET);
+    fseek (file->fp, 0L, SEEK_SET);
     
     // get data
-    file->data = (char *) cx_malloc (sizeof(char) * file->size);
+    file->data = (char *) cx_malloc (sizeof (char) * file->size);
   
     if (file->data)
     {
-      size_t bytesRead = fread (file->data, sizeof(char), file->size, file->fileHandle);
+      size_t bytesRead = fread (file->data, sizeof(char), file->size, file->fp);
       CX_ASSERT (bytesRead == file->size);
       CX_REFERENCE_UNUSED_VARIABLE (bytesRead);
-      success = TRUE;
+      success = true;
     }
     else
     {
-      CX_OUTPUTLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_load: failed to malloc %d bytes", (file->size * sizeof(char)));
+      CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_load: failed to malloc %d bytes", (file->size * sizeof(char)));
     }
   }
   else
   {
-    CX_OUTPUTLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_load: failed to open file [%s]", fullFilePath);
+    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_load: failed to open file [%s]", fullFilePath);
   }
   
   return success;
@@ -73,11 +73,11 @@ BOOL cx_file_load (cx_file *file, const char *filename)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BOOL cx_file_unload (cx_file *file)
+bool cx_file_unload (cx_file *file)
 {
-  BOOL success = FALSE;
+  bool success = false;
   
-  int err = fclose (file->fileHandle);
+  int err = fclose (file->fp);
   
   if (err == 0)
   {
@@ -85,13 +85,13 @@ BOOL cx_file_unload (cx_file *file)
     
     file->size = 0;
     file->data = NULL;
-    file->fileHandle = NULL;
+    file->fp = NULL;
     
-    success = TRUE;
+    success = true;
   }
   else
   {
-    CX_OUTPUTLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_unload: failed to close file");
+    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_unload: failed to close file");
   }
   
   return success;
@@ -123,7 +123,7 @@ cxu32 cx_file_getsize (const char *filename)
   }
   else
   {
-    CX_OUTPUTLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_getsize: failed to open file [%s]", fullFilePath);
+    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_getsize: failed to open file [%s]", fullFilePath);
   }
   
   return size;
@@ -133,18 +133,18 @@ cxu32 cx_file_getsize (const char *filename)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BOOL cx_file_getexists (const char *filename)
+bool cx_file_getexists (const char *filename)
 {
   FILE *fp = fopen (filename, "rb");
   
   if (fp)
   {
     fclose (fp);
-    return TRUE;
+    return true;
   }
   else
   {
-    return FALSE;
+    return false;
   }
 
   /*
@@ -165,3 +165,12 @@ BOOL cx_file_getexists (const char *filename)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_file_test (cx_file **file)
+{
+  (*file)->size = 0;
+  
+  cx_file *f = *file;
+  
+  f->size = 0;
+}

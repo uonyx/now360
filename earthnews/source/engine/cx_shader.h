@@ -87,7 +87,7 @@ cx_shader_datatype;
 typedef struct cx_shader
 {
   cxu32 program;
-  cxu32 attributes [CX_NUM_SHADER_ATTRIBUTES];
+  cxi32 attributes [CX_NUM_SHADER_ATTRIBUTES];
   cxi32 uniforms [CX_NUM_SHADER_UNIFORMS];
   
   char *name;
@@ -102,7 +102,7 @@ typedef struct cx_shader
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-cx_shader *cx_shader_load (const char *name, const char *dir);
+cx_shader *cx_shader_create (const char *name, const char *dir);
 cx_shader *cx_shader_get (const char *name);
 bool cx_shader_unload_all (void);
 void cx_shader_use (const cx_shader *shader);

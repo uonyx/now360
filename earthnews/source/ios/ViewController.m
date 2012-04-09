@@ -58,7 +58,7 @@
   
   if (!self.context)
   {
-    CX_OUTPUTLOG_CONSOLE (1, "Failed ot create ES context");
+    CX_DEBUGLOG_CONSOLE (1, "Failed ot create ES context");
   }
 
   GLKView *view = (GLKView *) self.view;
@@ -107,6 +107,7 @@
   [EAGLContext setCurrentContext:self.context];
   
   app_initialise ((int) view.bounds.size.width, (int) view.bounds.size.height);
+  app_update ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,12 +181,12 @@
 
 - (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_OUTPUTLOG_CONSOLE (1, "touchesBegan [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (1, "touchesBegan [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
   
-  CX_OUTPUTLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
 
   float screen_width = self.view.frame.size.width;
   float screen_height = self.view.frame.size.height;
@@ -202,12 +203,12 @@
 
 - (void) touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_OUTPUTLOG_CONSOLE (1, "touchesEnded [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (1, "touchesEnded [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
   
-  CX_OUTPUTLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.frame.size.width;
   float screen_height = self.view.frame.size.height;
@@ -224,14 +225,14 @@
 
 - (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_OUTPUTLOG_CONSOLE (1, "touchesMoved [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (1, "touchesMoved [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
   CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
   
-  CX_OUTPUTLOG_CONSOLE (DEBUG_LOG_TOUCHES, "prev: x = %.1f, y = %.1f", prevTouchPoint.x, prevTouchPoint.y);
-  CX_OUTPUTLOG_CONSOLE (DEBUG_LOG_TOUCHES, "curr: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "prev: x = %.1f, y = %.1f", prevTouchPoint.x, prevTouchPoint.y);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "curr: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.frame.size.width;
   float screen_height = self.view.frame.size.height;
@@ -250,12 +251,12 @@
 
 - (void) touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_OUTPUTLOG_CONSOLE (1, "touchesCancelled [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (1, "touchesCancelled [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
   
-  CX_OUTPUTLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.frame.size.width;
   float screen_height = self.view.frame.size.height;
@@ -274,7 +275,7 @@
 {
   CGFloat factor = [(UIPinchGestureRecognizer *)sender scale];
   
-  CX_OUTPUTLOG_CONSOLE (1, "Pinch Gesture: factor [%.2f]", factor);
+  CX_DEBUGLOG_CONSOLE (1, "Pinch Gesture: factor [%.2f]", factor);
   
   factor = cx_clamp (factor, 0.5f, 1.5f);
   //self.view.transform = CGAffineTransformMakeScale (factor, factor);

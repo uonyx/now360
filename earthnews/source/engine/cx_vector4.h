@@ -56,6 +56,7 @@ union cx_vec3
 */
 union cx_vec4
 {
+  struct { cxf32 r, g, b, a; };
   struct { cxf32 x, y, z, w; };
   cxf32 f4 [4];
   CX_SIMD_VEC4_DECL

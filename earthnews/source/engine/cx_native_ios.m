@@ -54,10 +54,12 @@ bool cx_native_load_png (const char *filename, cx_texture *texture)
   
   texture->width = CGImageGetWidth (image.CGImage);
   texture->height = CGImageGetHeight (image.CGImage);
-  texture->bpp = CGImageGetBitsPerPixel (image.CGImage);
-  texture->data = cx_malloc (texture->width * texture->height * 4);
+  texture->dataSize = texture->width * texture->height * 4 * sizeof (cxu8);
+  texture->data = cx_malloc (texture->dataSize);
   
-  if (texture->bpp == 24)
+  int bpp = CGImageGetBitsPerPixel (image.CGImage);
+  
+  if (bpp == 24)
   {
     texture->format = CX_TEXTURE_FORMAT_RGB;
   }
@@ -79,7 +81,9 @@ bool cx_native_load_png (const char *filename, cx_texture *texture)
 	
 	[image release];
   [pngData release];
+  
 #else
+  
   CGImageRef spriteImage;
 	CGContextRef spriteContext;
 	//GLubyte *spriteData;
@@ -93,11 +97,12 @@ bool cx_native_load_png (const char *filename, cx_texture *texture)
 
   texture->width = CGImageGetWidth(spriteImage);
   texture->height = CGImageGetHeight(spriteImage);
-  texture->bpp = CGImageGetBitsPerPixel(spriteImage);//
-  
+  texture->dataSize = texture->width * texture->height * 4 * sizeof (cxu8);
   texture->data = (cxu8 *)calloc(texture->width * texture->height * 4,sizeof(cxu8));
   
-  if (texture->bpp == 24)
+  int bpp = CGImageGetBitsPerPixel (spriteImage);
+  
+  if (bpp == 24)
   {
     texture->format = CX_TEXTURE_FORMAT_RGB;
     //NSLog(@"TEXTURE_GL_RGB, bpp=%d ",text->bpp);
@@ -110,10 +115,8 @@ bool cx_native_load_png (const char *filename, cx_texture *texture)
     spriteContext = CGBitmapContextCreate(texture->data, texture->width, texture->height, 8, texture->width * 4, CGImageGetColorSpace(spriteImage), kCGImageAlphaPremultipliedLast);
   }
   
-  
   CGContextDrawImage(spriteContext, CGRectMake(0.0, 0.0, (CGFloat)texture->width, (CGFloat)texture->height), spriteImage);
   CGContextRelease(spriteContext);
-  
 	
 	[name release];
 #endif
