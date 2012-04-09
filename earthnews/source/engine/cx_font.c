@@ -15,15 +15,17 @@
 #include <OpenGLES/ES2/glext.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
-
 #include "stb_truetype/stb_truetype.h"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_FONT_TEXTURE_WIDTH   512
-#define CX_FONT_TEXTURE_HEIGHT  512
+#define CX_FONT_TEXTURE_WIDTH       512
+#define CX_FONT_TEXTURE_HEIGHT      512
 
-#define CX_FONT_MAX_NUM_FONT_CHARS    96
-#define CX_FONT_FIRST_CHAR            32
+#define CX_FONT_MAX_NUM_FONT_CHARS  96
+#define CX_FONT_FIRST_CHAR          32
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +65,7 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize, cx_shader *shader
                                                  CX_TEXTURE_FORMAT_ALPHA);
   
   stbtt_BakeFontBitmap (file.data, 0, fontSize, fontImpl->texture->data, 
-                        CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 32, 96, fontImpl->ttfCharData);
+                        CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, CX_FONT_FIRST_CHAR, CX_FONT_MAX_NUM_FONT_CHARS, fontImpl->ttfCharData);
   
   cx_texture_gpu_init (fontImpl->texture);
   

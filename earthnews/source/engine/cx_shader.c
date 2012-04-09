@@ -57,81 +57,9 @@ static const char *s_uniformEnumStrings [CX_NUM_SHADER_UNIFORMS] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct cx_shader_node
-{
-  struct cx_shader_node *next;
-  struct cx_shader shader;
-};
-
-typedef struct cx_shader_node cx_shader_node;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static cx_shader_node *s_shaders = NULL;
-static int s_numShaders = 0;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static bool cx_shader_compile (GLuint *shader, GLenum type, const char *buffer, cxi32 bufferSize);
 static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmentShader);
 static bool cx_shader_configure (const char *buffer, cx_shader *shader);
-
-void cx_graphics_add_shader (cx_shader_node *shader);
-void cx_graphics_remove_shader (cx_shader_node *shader);
-
-void cx_debug_print_gl_attribs_and_uniforms (GLuint shaderProgram);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void cx_graphics_add_shader (cx_shader_node *shader)
-{
-  cx_shader_node *node = shader;
-  
-  node->next = s_shaders;
-  
-  s_shaders = node;
-  
-  ++s_numShaders;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void cx_graphics_remove_shader (cx_shader_node *shader)
-{
-  cx_shader_node *prev, *curr;
-  
-  prev = NULL;
-  curr = s_shaders;
-  
-  while (curr)
-  {
-    if (curr == shader)
-    {
-      if (curr == s_shaders)
-      {
-        s_shaders = curr->next;
-      }
-      else
-      {
-        prev->next = curr->next;
-      }
-      
-      --s_numShaders;
-      return;
-    }
-    
-    prev = curr;
-    curr = curr->next;
-  }
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,7 +97,7 @@ static bool cx_shader_compile (GLuint *shader, GLenum type, const char *buffer, 
     {
       char *log = (char *) cx_malloc (sizeof(char) * logLength);
       glGetShaderInfoLog (outShader, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Shader compile log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "Shader compile log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -226,7 +154,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Program link log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "Program link log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -250,7 +178,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "Program validate log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "Program validate log:\n%s", log);
       cx_free (log);
     }
     
@@ -294,7 +222,7 @@ static bool cx_shader_configure (const char *buffer, cx_shader *shader)
       cx_sprintf (errorBuffer, 512, "%s", "Unknown Error");
     }
     
-    CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, errorBuffer);
+    CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, errorBuffer);
     CX_FATAL_ERROR ("JSON Parse Error: %s");
     
     return FALSE;
@@ -420,73 +348,37 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
   success = cx_shader_link (&shaderProgram, vertexShader, fragmentShader);
   CX_FATAL_ASSERT (success);
   
-  cx_shader_node *shaderNode;
+  cx_shader *shader = (cx_shader *) cx_malloc (sizeof(cx_shader));
+  shader->program   = shaderProgram;
+  shader->name      = cx_strdup (name);
   
-  shaderNode                  = (cx_shader_node *) cx_malloc (sizeof (cx_shader_node));
-  shaderNode->next            = NULL;
-  shaderNode->shader.program  = shaderProgram;
-  shaderNode->shader.name     = cx_strdup (name);
+  memset (shader->attributes, -1, sizeof (shader->attributes));
+  memset (shader->uniforms, -1, sizeof (shader->uniforms));
   
-  memset (shaderNode->shader.attributes, -1, sizeof (shaderNode->shader.attributes));
-  memset (shaderNode->shader.uniforms, -1, sizeof (shaderNode->shader.uniforms));
-  
-  success = cx_shader_configure (scFile.data, &shaderNode->shader);
+  success = cx_shader_configure (scFile.data, shader);
   CX_FATAL_ASSERT (success);
-  
-  cx_graphics_add_shader (shaderNode);
   
   cx_file_unload (&vsFile);
   cx_file_unload (&fsFile);
   cx_file_unload (&scFile);
   
-  return &shaderNode->shader;
+  return shader;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool cx_shader_unload_all (void)
+void cx_shader_destroy (cx_shader *shader)
 {
-  struct cx_shader_node *node;
+  CX_ASSERT (shader);
   
-  node = s_shaders;
+  glDeleteProgram (shader->program);
   
-  while (node)
-  {
-    cx_shader_node *nextNode = node->next;
-    
-    glDeleteProgram (node->shader.program);
-    
-    cx_free (node->shader.name);
-    
-    cx_free (node);
-    
-    node = nextNode;
-  }
+  cx_free (shader->name);
   
-  return true;
+  cx_free (shader);
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-cx_shader *cx_shader_get (const char *name)
-{
-  cx_shader_node *node = s_shaders;
-  
-  while (node)
-  {
-    if (!strcmp (node->shader.name, name))
-    {
-      return &node->shader;
-    }
-  }
-  
-  return NULL;
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -495,11 +387,7 @@ cx_shader *cx_shader_get (const char *name)
 void cx_shader_use (const cx_shader *shader)
 {
   glUseProgram (shader->program);
-  
-#if CX_DEBUG
-  GLenum error = glGetError ();
-  CX_ASSERT (error == GL_NO_ERROR);
-#endif
+  cx_graphics_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -519,6 +407,8 @@ void cx_shader_write_to_uniform (const cx_shader *shader, enum cx_shader_uniform
     case CX_SHADER_DATATYPE_MATRIX4X4: { glUniformMatrix4fv (shader->uniforms[uniform], 1, GL_FALSE, (GLfloat *) data); break; }
     default: { break; }
   }
+  
+  cx_graphics_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -529,7 +419,9 @@ void cx_shader_write_to_uniform (const cx_shader *shader, enum cx_shader_uniform
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_debug_print_gl_attribs_and_uniforms (GLuint shaderProgram)
+#if 0
+
+static void cx_debug_print_gl_attribs_and_uniforms (GLuint shaderProgram)
 {
   // set uniforms
   
@@ -587,3 +479,71 @@ void cx_debug_print_gl_attribs_and_uniforms (GLuint shaderProgram)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct cx_shader_node
+{
+  struct cx_shader_node *next;
+  struct cx_shader shader;
+};
+
+typedef struct cx_shader_node cx_shader_node;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static cx_shader_node *s_shaders = NULL;
+static int s_numShaders = 0;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cx_graphics_add_shader (cx_shader_node *shader)
+{
+  cx_shader_node *node = shader;
+  
+  node->next = s_shaders;
+  
+  s_shaders = node;
+  
+  ++s_numShaders;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cx_graphics_remove_shader (cx_shader_node *shader)
+{
+  cx_shader_node *prev, *curr;
+  
+  prev = NULL;
+  curr = s_shaders;
+  
+  while (curr)
+  {
+    if (curr == shader)
+    {
+      if (curr == s_shaders)
+      {
+        s_shaders = curr->next;
+      }
+      else
+      {
+        prev->next = curr->next;
+      }
+      
+      --s_numShaders;
+      return;
+    }
+    
+    prev = curr;
+    curr = curr->next;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#endif

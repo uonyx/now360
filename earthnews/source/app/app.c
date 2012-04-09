@@ -8,11 +8,10 @@
 
 #include "app.h"
 #include "camera.h"
+#include "ui.h"
 
-#include "../engine/cx_vector4.h"
 #include "../engine/cx_matrix4x4.h"
 #include "../engine/cx_time.h"
-#include "../engine/cx_font.h"
 #include "../engine/cx_draw.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,17 +25,13 @@
 #define DEFAULT_ORTHOGRAPHIC_PROJECTION_FAR   (1.0f)
 
 static cx_shader *s_shader = NULL;
-static cx_shader *s_fontShader = NULL;
 static cx_mesh *s_mesh = NULL;
 static cx_texture *s_texture = NULL;
-static cx_texture *s_quadTexture = NULL;
 static cx_material *s_material = NULL;
 
 static camera_t s_camera;
 static cx_mat4x4 s_mvpMatrix;
 static cx_mat3x3 s_normalMatrix;
-
-static cx_font *s_font;
 
 static cx_vec2 s_rotaxis;
 static float s_rotAccel = 0.0f;
@@ -65,37 +60,27 @@ void app_render_3d (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 void app_initialise (int width, int height)
-{
-  (void)s_shader;
-  (void)s_mesh;
-  (void)s_texture;
-  (void)s_material;
-  
+{  
   cx_time_global_init ();
+  
   cx_graphics_initialise (width, height);
-  cx_graphics_set_viewport (width, height);
   
   cx_draw_initialise ();
   
-  cx_mat4x4_identity (&s_mvpMatrix);
-  cx_mat3x3_identity (&s_normalMatrix);
+  ui_initialise ();
   
-  cx_graphics_print_info ();
+  cx_mat3x3_identity (&s_normalMatrix);
   cx_mat4x4_identity (&s_mvpMatrix);
 
   // shader
   s_shader = cx_shader_create ("mesh", "data/shaders");
   CX_FATAL_ASSERT (s_shader);
 
-  s_fontShader = cx_shader_create ("font", "data/shaders");
-  CX_FATAL_ASSERT (s_fontShader);
-
   // texture  
   s_texture = cx_texture_create_from_file ("data/textures/earthmap1k.png");
-  s_quadTexture = cx_texture_create_from_file ("data/textures/avatar.png");
-
+  CX_FATAL_ASSERT (s_texture);
+  
   // material
   s_material = cx_material_create ("material-1"); 
   cx_material_attach_texture (s_material, s_texture, CX_MATERIAL_TEXTURE_AMBIENT);
@@ -106,12 +91,15 @@ void app_initialise (int width, int height)
   
   // camera 
   camera_init (&s_camera, 65.0f);
-  CX_REFERENCE_UNUSED_VARIABLE (s_camera);
-  
-  s_font = cx_font_create ("data/fonts/courier_new.ttf", 24.0f, s_fontShader);
   
   s_rotaxis.x = 1.0f;
   s_rotaxis.y = 0.0f;
+  
+  CX_REFERENCE_UNUSED_VARIABLE (s_camera);
+  CX_REFERENCE_UNUSED_VARIABLE (s_shader);
+  CX_REFERENCE_UNUSED_VARIABLE (s_mesh);
+  CX_REFERENCE_UNUSED_VARIABLE (s_texture);
+  CX_REFERENCE_UNUSED_VARIABLE (s_material);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,6 +108,7 @@ void app_initialise (int width, int height)
 
 void app_deinitialise (void)
 {
+  ui_deinitialise ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,6 +122,8 @@ void app_update (void)
   float deltaTime = (float) cx_time_global_delta_time ();
   
   app_view_update (deltaTime);
+  
+  ui_update ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,7 +166,7 @@ void app_view_update (float deltaTime)
   s_rotAngle += (s_rotSpeed * deltaTime);
   //s_rotAngle = cx_clamp(s_rotAngle, -90.0f, 90.0f);
   
-#if 0
+#if 1
   cx_vec4_set (&s_camera.position, 0.0f, 0.0f, -4.0f, 1.0f);
   cx_vec4_set (&s_camera.target, 0.0f, 0.0f, 0.0f, 1.0f);
   
@@ -187,7 +178,7 @@ void app_view_update (float deltaTime)
   cx_vec4 center = {{0.0f, 0.0f, 0.0f, 1.0f}};
   
   cx_vec4 axis_x = {{1.0f, 0.0f, 0.0f, 0.0f}};
-  cx_vec4 axis_y = {{0.0f, 1.0f, 0.0f, 0.0f}};
+  cx_vec4 axis_y = {{0.0f, -1.0f, 0.0f, 0.0f}};
   
   camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotationAngleX), &axis_x);
   camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotationAngleY), &axis_y);
@@ -342,7 +333,7 @@ void app_render_2d (void)
   cx_graphics_set_blend_mode (CX_GRAPHICS_BLEND_MODE_SRC_ALPHA, CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
   cx_graphics_enable_z_buffer (false);
   
-  // set 2d matrix
+  // set 2d mvp matrix
   float screenWidth = cx_graphics_get_screen_width ();
   float screenHeight = cx_graphics_get_screen_height ();
   cx_mat4x4 orthoProjMatrix;
@@ -354,24 +345,7 @@ void app_render_2d (void)
   // render
   //////////////
   
-  float x1 = 60.0f;
-  float y1 = 100.0f;
-  float x2 = x1 + 100.0f;
-  float y2 = y1 + 100.0f;
-  
-  cx_draw_quad_colour (x1, y1, x2, y2, cx_colour_blue ());
-  
-  x1 += 100.0f;
-  x2 += 100.0f;
-  
-  float u1 = 0.0f;
-  float v1 = 0.0f;
-  float u2 = 1.0f;
-  float v2 = 1.0f;
-  
-  cx_draw_quad_texture (x1, y1, x2, y2, u1, v1, u2, v2, cx_colour_white(), s_quadTexture);
-  
-  cx_font_render (s_font, "Jack and Jill went up the hill", 4.0f, 36.0f, cx_colour_green ());
+  ui_render ();
   
   //////////////
   // end

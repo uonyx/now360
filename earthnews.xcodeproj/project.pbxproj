@@ -42,6 +42,7 @@
 		3182B9B314B0B6C40097A87E /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B9B214B0B6C40097A87E /* OpenGLES.framework */; };
 		3182B9B514B0B6CC0097A87E /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B9B414B0B6CC0097A87E /* GLKit.framework */; };
 		318A37F31531D91300C006A8 /* cx_draw.c in Sources */ = {isa = PBXBuildFile; fileRef = 318A37F21531D91300C006A8 /* cx_draw.c */; };
+		31B1B2DB15326B69006896C3 /* ui.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B1B2DA15326B69006896C3 /* ui.c */; };
 		31BCB81615195387001A01D5 /* cx_font.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCB81515195387001A01D5 /* cx_font.c */; };
 		31BCBFA9151E8B9A001A01D5 /* basepic.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBE49151E8B9A001A01D5 /* basepic.c */; };
 		31BCBFAA151E8B9A001A01D5 /* ftadvanc.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBE4B151E8B9A001A01D5 /* ftadvanc.c */; };
@@ -187,6 +188,8 @@
 		3182B9B414B0B6CC0097A87E /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		318A37F01531D7CE00C006A8 /* cx_draw.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_draw.h; sourceTree = "<group>"; };
 		318A37F21531D91300C006A8 /* cx_draw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_draw.c; sourceTree = "<group>"; };
+		31B1B2D915326B5A006896C3 /* ui.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ui.h; sourceTree = "<group>"; };
+		31B1B2DA15326B69006896C3 /* ui.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui.c; sourceTree = "<group>"; };
 		31BCB81315195355001A01D5 /* cx_font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_font.h; sourceTree = "<group>"; };
 		31BCB81515195387001A01D5 /* cx_font.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_font.c; sourceTree = "<group>"; };
 		31BCBDD5151E8B9A001A01D5 /* ftconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftconfig.h; sourceTree = "<group>"; };
@@ -429,6 +432,8 @@
 				316FA9F41517BB4D00CC39F2 /* app.h */,
 				316FA9F51517BB4D00CC39F2 /* camera.c */,
 				316FA9F61517BB4D00CC39F2 /* camera.h */,
+				31B1B2D915326B5A006896C3 /* ui.h */,
+				31B1B2DA15326B69006896C3 /* ui.c */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -457,6 +462,7 @@
 				316FAA071517BB4D00CC39F2 /* cx_mesh.c */,
 				316FAA081517BB4D00CC39F2 /* cx_mesh.h */,
 				318A37F01531D7CE00C006A8 /* cx_draw.h */,
+				318A37F21531D91300C006A8 /* cx_draw.c */,
 				316FAA0A1517BB4D00CC39F2 /* cx_shader.c */,
 				316FAA0B1517BB4D00CC39F2 /* cx_shader.h */,
 				316FAA0C1517BB4D00CC39F2 /* cx_string.h */,
@@ -472,7 +478,6 @@
 				31BCB81315195355001A01D5 /* cx_font.h */,
 				31BCB81515195387001A01D5 /* cx_font.c */,
 				316FAA091517BB4D00CC39F2 /* cx_native_ios.m */,
-				318A37F21531D91300C006A8 /* cx_draw.c */,
 			);
 			path = engine;
 			sourceTree = "<group>";
@@ -1066,6 +1071,7 @@
 				31BCC059151E8B9B001A01D5 /* ttpic.c in Sources */,
 				31BCC05A151E8B9B001A01D5 /* ttpload.c in Sources */,
 				318A37F31531D91300C006A8 /* cx_draw.c in Sources */,
+				31B1B2DB15326B69006896C3 /* ui.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

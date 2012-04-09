@@ -6,29 +6,29 @@
 //  Copyright (c) 2011 SonOfLagos. All rights reserved.
 //
 
-attribute vec4 position;
-attribute vec3 normal;
-attribute vec2 texCoord;
+attribute vec4 a_position;
+attribute vec3 a_normal;
+attribute vec2 a_texcoord;
 
-varying lowp vec4 colorVarying;
-varying highp vec2 texCoordVarying;
+uniform mat4 u_mvpMatrix;
+uniform mat3 u_normalMatrix;
 
-uniform mat4 modelViewProjectionMatrix;
-uniform mat3 normalMatrix;
+varying lowp vec4 v_colour;
+varying mediump vec2 v_texcoord;
 
 const float c_zero = 0.0;
+const float c_one = 1.0;
 
-void main()
+void main (void)
 {
-  vec3 eyeNormal = normalize(normalMatrix * normal);
-  vec3 lightPosition = vec3(c_zero, c_zero, 1.0);
-  vec4 diffuseColor = vec4(0.4, 0.4, 1.0, 1.0);
+  vec3 eyeNormal = normalize (u_normalMatrix * a_normal);
+  vec3 lightPosition = vec3 (c_zero, c_zero, c_one);
+  vec4 diffuseColor = vec4 (0.4, 0.4, c_one, c_one);
     
   float nDotVP = max(c_zero, dot(eyeNormal, normalize(lightPosition)));
                  
-  colorVarying = diffuseColor * nDotVP;
-  texCoordVarying = texCoord;
+  v_colour = diffuseColor * nDotVP;
+  v_texcoord = a_texcoord;
   
-  //colorVarying = vec4(1.0, 1.0, 0.0, 1.0);
-  gl_Position = modelViewProjectionMatrix * position;
+  gl_Position = u_mvpMatrix * a_position;
 }

@@ -36,7 +36,7 @@ static cx_graphics_renderstate s_activeRenderstate = CX_GRAPHICS_RENDER_STATE_NO
 
 bool cx_graphics_initialise (cxi32 width, cxi32 height)
 {
-  CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "cx_graphics_initialise: width [%d], height [%d]", width, height);
+  CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "cx_graphics_initialise: width [%d], height [%d]", width, height);
   
   cx_graphics_print_info ();
   
@@ -249,7 +249,7 @@ void _cx_graphics_assert_no_errors (void)
 
 void cx_graphics_print_info (void)
 {
-#if CX_GRAPHICS_DEBUG_LOG
+#if CX_GRAPHICS_DEBUG_LOG_ENABLED
   struct graphics_info
   {
     GLenum type;
@@ -280,11 +280,11 @@ void cx_graphics_print_info (void)
     GLint val;
     glGetIntegerv (type, &val);
    
-    CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "%s: %d", str, val);
+    CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "%s: %d", str, val);
   }
   
   const char *supportedExtensions = (const char *) glGetString (GL_EXTENSIONS);
-  CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG, "%s", supportedExtensions);
+  CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "%s", supportedExtensions);
 #endif
 }
 

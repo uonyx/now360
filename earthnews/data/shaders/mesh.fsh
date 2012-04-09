@@ -6,14 +6,13 @@
 //  Copyright (c) 2011 SonOfLagos. All rights reserved.
 //
 
-varying lowp vec4 colorVarying;
-varying mediump vec2 texCoordVarying;
+uniform sampler2D u_sampler;
 
-uniform sampler2D sampler;
+varying lowp vec4 v_colour;
+varying mediump vec2 v_texcoord;
 
-void main()
+void main (void)
 {
-  //gl_FragColor = colorVarying;
-  //gl_FragColor = texture2D (sampler, texCoordVarying) * colorVarying;
-  gl_FragColor = texture2D (sampler, texCoordVarying);
+  //gl_FragColor = texture2D (u_sampler, v_texcoord) * v_colour;
+  gl_FragColor = texture2D (u_sampler, v_texcoord);
 }

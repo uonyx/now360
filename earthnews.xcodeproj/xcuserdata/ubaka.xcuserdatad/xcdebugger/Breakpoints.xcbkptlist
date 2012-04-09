@@ -65,11 +65,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_shader.c"
-         timestampString = "355592994.449744"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "405"
-         endingLineNumber = "405"
+         startingLineNumber = "333"
+         endingLineNumber = "333"
          landmarkName = "cx_shader_create()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -92,26 +92,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          isPathRelative = "1"
-         filePath = "earthnews/source/app/app.c"
-         timestampString = "355591754.811452"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "92"
-         endingLineNumber = "92"
-         landmarkName = "app_initialise()"
-         landmarkType = "7">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "No"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_shader.c"
-         timestampString = "355592994.449744"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "433"
-         endingLineNumber = "433"
+         startingLineNumber = "358"
+         endingLineNumber = "358"
          landmarkName = "cx_shader_create()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -121,11 +107,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_shader.c"
-         timestampString = "355592994.449744"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "331"
-         endingLineNumber = "331"
+         startingLineNumber = "259"
+         endingLineNumber = "259"
          landmarkName = "cx_shader_configure()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -135,11 +121,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_shader.c"
-         timestampString = "355592994.449744"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "321"
-         endingLineNumber = "321"
+         startingLineNumber = "249"
+         endingLineNumber = "249"
          landmarkName = "cx_shader_configure()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -149,11 +135,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355587908.215359"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "83"
-         endingLineNumber = "83"
+         startingLineNumber = "85"
+         endingLineNumber = "85"
          landmarkName = "cx_font_create()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -162,26 +148,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          isPathRelative = "1"
-         filePath = "earthnews/source/app/app.c"
-         timestampString = "355591754.811452"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "91"
-         endingLineNumber = "91"
-         landmarkName = "app_initialise()"
-         landmarkType = "7">
-      </FileBreakpoint>
-      <FileBreakpoint
-         shouldBeEnabled = "No"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355597651.624537"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "175"
-         endingLineNumber = "175"
+         startingLineNumber = "177"
+         endingLineNumber = "177"
          landmarkName = "cx_font_render()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -191,11 +163,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355597651.624537"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "151"
-         endingLineNumber = "151"
+         startingLineNumber = "153"
+         endingLineNumber = "153"
          landmarkName = "cx_font_render()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -205,11 +177,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355597651.624537"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "139"
-         endingLineNumber = "139"
+         startingLineNumber = "141"
+         endingLineNumber = "141"
          landmarkName = "cx_font_render()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -275,11 +247,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355587908.215359"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "65"
-         endingLineNumber = "65"
+         startingLineNumber = "67"
+         endingLineNumber = "67"
          landmarkName = "cx_font_create()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -289,11 +261,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/app/app.c"
-         timestampString = "355591754.811452"
+         timestampString = "355627759.195381"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "237"
-         endingLineNumber = "237"
+         startingLineNumber = "228"
+         endingLineNumber = "228"
          landmarkName = "app_view_update()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -331,11 +303,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355587908.215359"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "68"
-         endingLineNumber = "68"
+         startingLineNumber = "70"
+         endingLineNumber = "70"
          landmarkName = "cx_font_create()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -345,11 +317,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355587908.215359"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "62"
-         endingLineNumber = "62"
+         startingLineNumber = "64"
+         endingLineNumber = "64"
          landmarkName = "cx_font_create()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -359,11 +331,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "1"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355587908.215359"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "63"
-         endingLineNumber = "63"
+         startingLineNumber = "65"
+         endingLineNumber = "65"
          landmarkName = "cx_font_create()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -386,11 +358,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "355587908.215359"
+         timestampString = "355625016.992718"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "121"
-         endingLineNumber = "121"
+         startingLineNumber = "123"
+         endingLineNumber = "123"
          landmarkName = "cx_font_render()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -425,11 +397,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/app.c"
-         timestampString = "355594023.703057"
+         timestampString = "355627759.195381"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "408"
-         endingLineNumber = "408"
+         startingLineNumber = "382"
+         endingLineNumber = "382"
          landmarkName = "app_render_3d()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -438,11 +410,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/app.c"
-         timestampString = "355591754.811452"
+         timestampString = "355627759.195381"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "342"
-         endingLineNumber = "342"
+         startingLineNumber = "333"
+         endingLineNumber = "333"
          landmarkName = "app_render_2d()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -451,11 +423,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/app.c"
-         timestampString = "355591754.811452"
+         timestampString = "355627759.195381"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "318"
-         endingLineNumber = "318"
+         startingLineNumber = "309"
+         endingLineNumber = "309"
          landmarkName = "app_render()"
          landmarkType = "7">
       </FileBreakpoint>
