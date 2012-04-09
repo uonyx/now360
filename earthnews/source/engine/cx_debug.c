@@ -1,9 +1,8 @@
 //
 //  cx_debug.c
-//  earthnews
 //
-//  Created by Ubaka  Onyechi on 04/01/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 04/01/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #include "cx_debug.h"

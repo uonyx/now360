@@ -2,8 +2,8 @@
 //  camera.c
 //  earthnews
 //
-//  Created by Ubaka  Onyechi on 02/03/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 02/03/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #include "camera.h"

@@ -1,9 +1,8 @@
 //
 //  cx_matrix4x4.h
-//  earthnews
 //
-//  Created by Ubaka  Onyechi on 05/02/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 05/02/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #ifndef CX_MATRIX4X4_H

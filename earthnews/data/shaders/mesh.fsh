@@ -2,8 +2,8 @@
 //  Shader.fsh
 //  testGraphics
 //
-//  Created by Ubaka  Onyechi on 26/12/2011.
-//  Copyright (c) 2011 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 26/12/2011.
+//  Copyright (c) 2011 uonyechi.com. All rights reserved.
 //
 
 uniform sampler2D u_sampler;

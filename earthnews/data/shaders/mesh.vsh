@@ -2,8 +2,8 @@
 //  Shader.vsh
 //  testGraphics
 //
-//  Created by Ubaka  Onyechi on 26/12/2011.
-//  Copyright (c) 2011 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 26/12/2011.
+//  Copyright (c) 2011 uonyechi.com. All rights reserved.
 //
 
 attribute vec4 a_position;

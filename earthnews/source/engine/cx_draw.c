@@ -1,9 +1,8 @@
 //
 //  cx_draw.c
-//  earthnews
 //
-//  Created by Ubaka  Onyechi on 08/04/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 08/04/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #include <OpenGLES/ES2/gl.h>
@@ -26,7 +25,7 @@ static cx_material *s_drawMaterial = NULL;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_initialise (void)
+void cx_draw_init (void)
 {
   s_drawShader = cx_shader_create ("draw", "data/shaders");
   s_drawTexShader = cx_shader_create ("draw_tex", "data/shaders");
@@ -38,7 +37,7 @@ void cx_draw_initialise (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_deinitialise (void)
+void cx_draw_deinit (void)
 {
   cx_shader_destroy (s_drawShader);
   cx_shader_destroy (s_drawTexShader);

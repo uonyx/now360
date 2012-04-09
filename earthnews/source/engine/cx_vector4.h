@@ -1,9 +1,8 @@
 //
 //  cx_vector4.h
-//  earthnews
 //
-//  Created by Ubaka  Onyechi on 01/02/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 01/02/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #ifndef CX_VECTOR4_H
@@ -30,30 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-typedef struct cx_vec4
-{
-  union
-  {
-    struct { cxf32 x, y, z, w; };
-    cxf32 f4 [4];
-    CX_SIMD_VEC4_DECL
-  };
-} CX_ALIGN(16) cx_vec4;
-*/
-
 union cx_vec2
 {
   struct { cxf32 x, y; };
   cxf32 f2 [2];
 };
-/*
-union cx_vec3
-{
-  struct { cxf32 x, y, z; };
-  cxf32 f3 [3];
-};
-*/
+
 union cx_vec4
 {
   struct { cxf32 r, g, b, a; };
@@ -63,7 +44,6 @@ union cx_vec4
 } CX_ALIGN(16);
 
 typedef union cx_vec2 cx_vec2;
-typedef union cx_vec3 cx_vec3;
 typedef union cx_vec4 cx_vec4;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,9 +1,8 @@
 //
 //  cx_colour.h
-//  earthnews
 //
-//  Created by Ubaka  Onyechi on 24/01/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 24/01/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #ifndef CX_COLOUR_H

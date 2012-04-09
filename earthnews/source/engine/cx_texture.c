@@ -1,9 +1,8 @@
 //
-//  cx_texture.c
-//  earthnews
+//  cx_texture.
 //
-//  Created by Ubaka  Onyechi on 19/02/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 19/02/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #include <OpenGLES/ES2/gl.h>

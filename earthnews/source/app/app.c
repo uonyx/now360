@@ -2,17 +2,13 @@
 //  app.c
 //  earthnews
 //
-//  Created by Ubaka  Onyechi on 02/01/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 02/01/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #include "app.h"
 #include "camera.h"
 #include "ui.h"
-
-#include "../engine/cx_matrix4x4.h"
-#include "../engine/cx_time.h"
-#include "../engine/cx_draw.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,12 +57,9 @@ void app_render_3d (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void app_initialise (int width, int height)
-{  
-  cx_time_global_init ();
-  
-  cx_graphics_initialise (width, height);
-  
-  cx_draw_initialise ();
+{ 
+  cx_engine_init ();
+  cx_graphics_set_screen_dimensions (width, height);
   
   ui_initialise ();
   
@@ -108,6 +101,8 @@ void app_initialise (int width, int height)
 
 void app_deinitialise (void)
 {
+  cx_engine_deinit ();
+  
   ui_deinitialise ();
 }
 
@@ -117,9 +112,9 @@ void app_deinitialise (void)
 
 void app_update (void)
 {
-  cx_time_global_update ();
+  cx_system_time_update ();
   
-  float deltaTime = (float) cx_time_global_delta_time ();
+  float deltaTime = (float) cx_system_time_get_delta_time ();
   
   app_view_update (deltaTime);
   
@@ -210,7 +205,7 @@ void app_view_update (float deltaTime)
   cx_mat4x4_translation (&translation, 0.0f, 0.0f, -7.0f);
   
   cx_mat4x4 rotation;
-  //float angle = (float) cx_time_global_total_time () * 6.0f;
+  //float angle = (float) cx_system_time_get_total_time () * 6.0f;
   //cx_mat4x4_rotation (&rotation, cx_rad (angle), 0.0f, 1.0f, 0.0f);
   //cx_mat4x4_rotation_axis_y (&rotation, cx_rad (angle));
   //cx_mat4x4_mul (&s_mvpMatrix, &proj, &rotation);

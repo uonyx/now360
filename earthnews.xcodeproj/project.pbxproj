@@ -13,7 +13,6 @@
 		316FAA2E1517BB4D00CC39F2 /* cx_file.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FA9FC1517BB4D00CC39F2 /* cx_file.c */; };
 		316FAA2F1517BB4D00CC39F2 /* cx_graphics.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FA9FE1517BB4D00CC39F2 /* cx_graphics.c */; };
 		316FAA301517BB4D00CC39F2 /* cx_material.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA001517BB4D00CC39F2 /* cx_material.c */; };
-		316FAA311517BB4D00CC39F2 /* cx_memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA051517BB4D00CC39F2 /* cx_memory.c */; };
 		316FAA321517BB4D00CC39F2 /* cx_mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA071517BB4D00CC39F2 /* cx_mesh.c */; };
 		316FAA331517BB4D00CC39F2 /* cx_native_ios.m in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA091517BB4D00CC39F2 /* cx_native_ios.m */; };
 		316FAA341517BB4D00CC39F2 /* cx_shader.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA0A1517BB4D00CC39F2 /* cx_shader.c */; };
@@ -133,8 +132,6 @@
 		316FAA021517BB4D00CC39F2 /* cx_math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_math.h; sourceTree = "<group>"; };
 		316FAA031517BB4D00CC39F2 /* cx_matrix3x3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_matrix3x3.h; sourceTree = "<group>"; };
 		316FAA041517BB4D00CC39F2 /* cx_matrix4x4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_matrix4x4.h; sourceTree = "<group>"; };
-		316FAA051517BB4D00CC39F2 /* cx_memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_memory.c; sourceTree = "<group>"; };
-		316FAA061517BB4D00CC39F2 /* cx_memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_memory.h; sourceTree = "<group>"; };
 		316FAA071517BB4D00CC39F2 /* cx_mesh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_mesh.c; sourceTree = "<group>"; };
 		316FAA081517BB4D00CC39F2 /* cx_mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_mesh.h; sourceTree = "<group>"; };
 		316FAA091517BB4D00CC39F2 /* cx_native_ios.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = cx_native_ios.m; sourceTree = "<group>"; };
@@ -180,6 +177,7 @@
 		316FAA6F1517C06400CC39F2 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		316FAA701517C06400CC39F2 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		316FAA8C1517C49A00CC39F2 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; path = data; sourceTree = "<group>"; };
+		317EC94C1533508C0092AFCB /* cx_engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_engine.h; sourceTree = "<group>"; };
 		3182B99714B0B6680097A87E /* earthnews.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = earthnews.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3182B99B14B0B6680097A87E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		3182B99D14B0B6680097A87E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -444,6 +442,7 @@
 				31BCC068151E9F04001A01D5 /* stb_truetype */,
 				31BCBDD1151E8B9A001A01D5 /* freetype2 */,
 				316FAA161517BB4D00CC39F2 /* yajl */,
+				317EC94C1533508C0092AFCB /* cx_engine.h */,
 				316FA9F81517BB4D00CC39F2 /* cx_colour.h */,
 				316FA9F91517BB4D00CC39F2 /* cx_debug.c */,
 				316FA9FA1517BB4D00CC39F2 /* cx_debug.h */,
@@ -457,8 +456,9 @@
 				316FAA021517BB4D00CC39F2 /* cx_math.h */,
 				316FAA031517BB4D00CC39F2 /* cx_matrix3x3.h */,
 				316FAA041517BB4D00CC39F2 /* cx_matrix4x4.h */,
-				316FAA051517BB4D00CC39F2 /* cx_memory.c */,
-				316FAA061517BB4D00CC39F2 /* cx_memory.h */,
+				316FAA151517BB4D00CC39F2 /* cx_vector4.h */,
+				316FAA0D1517BB4D00CC39F2 /* cx_system.c */,
+				316FAA0E1517BB4D00CC39F2 /* cx_system.h */,
 				316FAA071517BB4D00CC39F2 /* cx_mesh.c */,
 				316FAA081517BB4D00CC39F2 /* cx_mesh.h */,
 				318A37F01531D7CE00C006A8 /* cx_draw.h */,
@@ -466,15 +466,12 @@
 				316FAA0A1517BB4D00CC39F2 /* cx_shader.c */,
 				316FAA0B1517BB4D00CC39F2 /* cx_shader.h */,
 				316FAA0C1517BB4D00CC39F2 /* cx_string.h */,
-				316FAA0D1517BB4D00CC39F2 /* cx_system.c */,
-				316FAA0E1517BB4D00CC39F2 /* cx_system.h */,
 				316FAA0F1517BB4D00CC39F2 /* cx_texture.c */,
 				316FAA101517BB4D00CC39F2 /* cx_texture.h */,
 				316FAA111517BB4D00CC39F2 /* cx_time.c */,
 				316FAA121517BB4D00CC39F2 /* cx_time.h */,
 				316FAA131517BB4D00CC39F2 /* cx_utility.c */,
 				316FAA141517BB4D00CC39F2 /* cx_utility.h */,
-				316FAA151517BB4D00CC39F2 /* cx_vector4.h */,
 				31BCB81315195355001A01D5 /* cx_font.h */,
 				31BCB81515195387001A01D5 /* cx_font.c */,
 				316FAA091517BB4D00CC39F2 /* cx_native_ios.m */,
@@ -937,7 +934,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0420;
-				ORGANIZATIONNAME = "";
+				ORGANIZATIONNAME = uonyechi.com;
 			};
 			buildConfigurationList = 3182B99114B0B6680097A87E /* Build configuration list for PBXProject "earthnews" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -980,7 +977,6 @@
 				316FAA2E1517BB4D00CC39F2 /* cx_file.c in Sources */,
 				316FAA2F1517BB4D00CC39F2 /* cx_graphics.c in Sources */,
 				316FAA301517BB4D00CC39F2 /* cx_material.c in Sources */,
-				316FAA311517BB4D00CC39F2 /* cx_memory.c in Sources */,
 				316FAA321517BB4D00CC39F2 /* cx_mesh.c in Sources */,
 				316FAA331517BB4D00CC39F2 /* cx_native_ios.m in Sources */,
 				316FAA341517BB4D00CC39F2 /* cx_shader.c in Sources */,

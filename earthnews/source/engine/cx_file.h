@@ -1,9 +1,8 @@
 //
 //  cx_file.h
-//  earthnews
 //
-//  Created by Ubaka  Onyechi on 02/01/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 02/01/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #ifndef CX_FILE_H
@@ -58,8 +57,6 @@ bool cx_file_unload (cx_file *file);
 
 cxu32 cx_file_getsize (const char *filename);
 bool cx_file_getexists (const char *filename);
-
-void cx_file_test (cx_file **file);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

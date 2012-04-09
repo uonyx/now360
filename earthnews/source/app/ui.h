@@ -2,8 +2,8 @@
 //  ui.h
 //  earthnews
 //
-//  Created by Ubaka  Onyechi on 09/04/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Created by Ubaka Onyechi on 09/04/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #ifndef UI_H

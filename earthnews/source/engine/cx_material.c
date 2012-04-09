@@ -1,9 +1,8 @@
 //
 //  cx_material.c
-//  earthnews
 //
 //  Created by Ubaka Onyechi on 26/02/2012.
-//  Copyright (c) 2012 SonOfLagos. All rights reserved.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
 #include <OpenGLES/ES2/gl.h>
