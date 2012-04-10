@@ -36,6 +36,8 @@ static cx_graphics_renderstate s_activeRenderstate = CX_GRAPHICS_RENDER_STATE_NO
 
 bool cx_graphics_init (void)
 {
+  _cx_shader_init_built_in ();
+  
   cx_graphics_print_info ();
   
   cx_mat4x4_identity (&s_modelViewProj);
@@ -51,6 +53,8 @@ bool cx_graphics_init (void)
 
 bool cx_graphics_deinit (void)
 {
+  _cx_shader_deinit_built_in ();
+  
   return true;
 }
 

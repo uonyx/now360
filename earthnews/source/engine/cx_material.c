@@ -15,14 +15,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct cx_material_mappings
+struct cx_material_mapping
 {
   cx_shader_uniform uniform;
   cx_material_property property;
   GLenum openglTextureUnit;
 };
 
-static struct cx_material_mappings s_mappings [CX_NUM_MATERIAL_TEXTURES] = 
+static struct cx_material_mapping s_mappings [CX_NUM_MATERIAL_TEXTURES] = 
 {
   { CX_SHADER_UNIFORM_SAMPLER2D_0, CX_MATERIAL_PROPERTY_AMBIENT,  GL_TEXTURE0 },
   { CX_SHADER_UNIFORM_SAMPLER2D_1, CX_MATERIAL_PROPERTY_DIFFUSE,  GL_TEXTURE1 },
@@ -87,12 +87,10 @@ void cx_material_set_properties (cx_material *material, cx_material_property pro
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_material_render (cx_material *material, const cx_shader *shader)
+void cx_material_render (const cx_material *material, const cx_shader *shader)
 {
   CX_ASSERT (material);
   CX_ASSERT (shader);
-  
-  //glBindVertexArrayOES (0);
   
   GLenum textureUnit;
   cx_shader_uniform uniform;
@@ -101,8 +99,8 @@ void cx_material_render (cx_material *material, const cx_shader *shader)
   
   for (int i = 0; i < CX_NUM_MATERIAL_TEXTURES; i++)
   {
-    property  = s_mappings [i].property;
-    uniform   = s_mappings [i].uniform;
+    property    = s_mappings [i].property;
+    uniform     = s_mappings [i].uniform;
     textureUnit = s_mappings [i].openglTextureUnit;
     
     if ((material->properties & property) == property)
@@ -120,8 +118,28 @@ void cx_material_render (cx_material *material, const cx_shader *shader)
       cx_graphics_assert_no_errors ();
     } 
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_material_render_texture (const cx_texture *texture, cx_material_texture type, const cx_shader *shader)
+{
+  CX_ASSERT (texture);
+  CX_ASSERT (shader);
+
+  GLenum textureUnit         = s_mappings [type].openglTextureUnit;
+  cx_shader_uniform uniform  = s_mappings [type].uniform;
   
-  //glBindVertexArrayOES (0);
+  glActiveTexture (textureUnit);
+  cx_graphics_assert_no_errors ();
+  
+  glBindTexture (GL_TEXTURE_2D, texture->id);
+  cx_graphics_assert_no_errors ();
+  
+  glUniform1i (shader->uniforms [uniform], type);
+  cx_graphics_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

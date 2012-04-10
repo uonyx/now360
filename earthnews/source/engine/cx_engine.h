@@ -20,7 +20,6 @@ static CX_INLINE void cx_engine_init (void)
 {
   cx_system_init ();
   cx_graphics_init ();
-  cx_draw_init ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,7 +28,6 @@ static CX_INLINE void cx_engine_init (void)
 
 static CX_INLINE void cx_engine_deinit (void)
 {
-  cx_draw_deinit ();
   cx_graphics_deinit ();
   cx_system_deinit ();
 }

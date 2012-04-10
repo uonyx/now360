@@ -87,7 +87,8 @@ void cx_material_destroy (cx_material *material);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_material_render (cx_material *material, const cx_shader *shader);
+void cx_material_render (const cx_material *material, const cx_shader *shader);
+void cx_material_render_texture (const cx_texture *texture, cx_material_texture type, const cx_shader *shader);
 void cx_material_attach_texture (cx_material *material, const cx_texture *texture, cx_material_texture type);
 void cx_material_detach_texture (cx_material *material, cx_material_texture type);
 void cx_material_set_properties (cx_material *material, cx_material_property properties);
