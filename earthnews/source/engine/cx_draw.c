@@ -17,8 +17,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cx_shader *s_drawShader = NULL;
-static cx_shader *s_drawTexShader = NULL;
 static cx_material *s_drawMaterial = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,8 +25,6 @@ static cx_material *s_drawMaterial = NULL;
 
 void cx_draw_init (void)
 {
-  s_drawShader = cx_shader_create ("draw", "data/shaders");
-  s_drawTexShader = cx_shader_create ("draw_tex", "data/shaders");
   s_drawMaterial = cx_material_create ("draw_tex");
   cx_material_set_properties (s_drawMaterial, CX_MATERIAL_PROPERTY_AMBIENT);
 }
@@ -39,8 +35,6 @@ void cx_draw_init (void)
 
 void cx_draw_deinit (void)
 {
-  cx_shader_destroy (s_drawShader);
-  cx_shader_destroy (s_drawTexShader);
   cx_material_destroy (s_drawMaterial);
 }
 
@@ -54,7 +48,7 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colou
   
   //cx_graphics_unbind_all_buffers ();
   
-  cx_shader *shader = s_drawShader;
+  cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW);
   
   // enable shader
   cx_shader_use (shader);
@@ -99,7 +93,7 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 u1, cxf
   CX_ASSERT (colour);
   CX_ASSERT (texture);
   
-  cx_shader *shader = s_drawTexShader;
+  cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW_TEX);
   cx_material *material = s_drawMaterial;
   
   // enable shader

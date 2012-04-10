@@ -32,8 +32,7 @@
 
 typedef struct cx_font_impl_stb
 {
-  cx_shader *shader;
-  stbtt_bakedchar *ttfCharData;
+  stbtt_bakedchar *ttfCharData; 
   cx_texture *texture;
   cx_material *material;
 } cx_font_impl;
@@ -68,8 +67,6 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize, cx_shader *shader
   
   cx_texture_gpu_init (fontImpl->texture);
   
-  
-  fontImpl->shader         = shader;
   fontImpl->material       = cx_material_create (mname);
   
   cx_material_attach_texture (fontImpl->material, fontImpl->texture, CX_MATERIAL_TEXTURE_AMBIENT);
@@ -113,8 +110,8 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, co
   CX_ASSERT (colour);
   
   cx_font_impl *fontImpl = (cx_font_impl *) font->fontImpl;
-  cx_shader *shader = fontImpl->shader;
   cx_material *material = fontImpl->material;
+  cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
   
   // use shader
   cx_shader_use (shader);
