@@ -28,7 +28,6 @@ typedef struct ui_element_t ui_element_t;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cx_shader *s_fontShader = NULL;
 static cx_font *s_font = NULL;
 static cx_texture *s_quadTexture = NULL;
 
@@ -38,11 +37,9 @@ static cx_texture *s_quadTexture = NULL;
 
 void ui_initialise (void)
 {
-  s_fontShader = cx_shader_create ("font", "data/shaders");
-  s_font = cx_font_create ("data/fonts/courier_new.ttf", 24.0f, s_fontShader);
+  s_font = cx_font_create ("data/fonts/courier_new.ttf", 24.0f);
   s_quadTexture = cx_texture_create_from_file ("data/textures/avatar.png");
   
-  CX_FATAL_ASSERT (s_fontShader);
   CX_FATAL_ASSERT (s_font);
   CX_FATAL_ASSERT (s_quadTexture);
 }

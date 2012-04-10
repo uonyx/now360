@@ -34,23 +34,16 @@ typedef struct cx_font_impl_stb
 {
   stbtt_bakedchar *ttfCharData; 
   cx_texture *texture;
-  cx_material *material;
 } cx_font_impl;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_font *cx_font_create (const char *filename, cxf32 fontSize, cx_shader *shader)
+cx_font *cx_font_create (const char *filename, cxf32 fontSize)
 {
   CX_ASSERT (filename);
-  CX_ASSERT (shader);
-  
-  const char *fontname = filename;
-  
-  char mname [64];
-  cx_sprintf (mname, 64, "font-%s-material", fontname);
-  
+
   cx_file file;
   
   bool loaded = cx_file_load (&file, filename);
@@ -66,11 +59,6 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize, cx_shader *shader
                         CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, CX_FONT_FIRST_CHAR, CX_FONT_MAX_NUM_FONT_CHARS, fontImpl->ttfCharData);
   
   cx_texture_gpu_init (fontImpl->texture);
-  
-  fontImpl->material       = cx_material_create (mname);
-  
-  cx_material_attach_texture (fontImpl->material, fontImpl->texture, CX_MATERIAL_TEXTURE_AMBIENT);
-  cx_material_set_properties (fontImpl->material, CX_MATERIAL_PROPERTY_AMBIENT);
 
   cx_font *font   = (cx_font *) cx_malloc (sizeof (cx_font));
   font->size      = fontSize;
@@ -93,6 +81,7 @@ void cx_font_destroy (cx_font *font)
   cx_font_impl *font_impl = (cx_font_impl *) font->fontImpl;
   
   cx_texture_destroy (font_impl->texture);
+  
   cx_free (font_impl->ttfCharData);
   cx_free (font->fontImpl);
   cx_free (font);
@@ -110,14 +99,13 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, co
   CX_ASSERT (colour);
   
   cx_font_impl *fontImpl = (cx_font_impl *) font->fontImpl;
-  cx_material *material = fontImpl->material;
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
   
   // use shader
   cx_shader_use (shader);
   
   // set texture
-  cx_material_render (material, shader);
+  cx_material_render_texture (fontImpl->texture, CX_MATERIAL_TEXTURE_AMBIENT, shader);
   
   // set mvp
   cx_mat4x4 mvp;
@@ -175,11 +163,6 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, co
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
 }
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

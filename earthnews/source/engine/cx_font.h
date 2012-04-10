@@ -32,7 +32,7 @@ typedef struct cx_font
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_font *cx_font_create (const char *filename, cxf32 fontsize, cx_shader *shader);
+cx_font *cx_font_create (const char *filename, cxf32 fontsize);
 void cx_font_destroy (cx_font *font);
 void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, const cx_colour *colour);
 
