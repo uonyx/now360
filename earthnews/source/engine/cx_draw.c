@@ -105,6 +105,28 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 u1, cxf
   uv [3].x = u2;
   uv [3].y = v2;
   
+  /*
+   // top left = (0,0)
+  uv [0].x = 0.0f;
+  uv [0].y = 0.0f;
+  uv [1].x = 0.0f;
+  uv [1].y = 1.0f;
+  uv [2].x = 1.0f;
+  uv [2].y = 0.0f;
+  uv [3].x = 1.0f;
+  uv [3].y = 1.0f;
+  
+   // bottom left = (0,0)
+  uv [0].x = 0.0f;
+  uv [0].y = 1.0f;
+  uv [1].x = 0.0f;
+  uv [1].y = 0.0f;
+  uv [2].x = 1.0f;
+  uv [2].y = 1.0f;
+  uv [3].x = 1.0f;
+  uv [3].y = 0.0f;
+  */
+
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_graphics_assert_no_errors ();
   

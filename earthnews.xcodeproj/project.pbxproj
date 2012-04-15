@@ -112,6 +112,7 @@
 		31BCC058151E8B9B001A01D5 /* ttobjs.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBF78151E8B9A001A01D5 /* ttobjs.c */; };
 		31BCC059151E8B9B001A01D5 /* ttpic.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBF7A151E8B9A001A01D5 /* ttpic.c */; };
 		31BCC05A151E8B9B001A01D5 /* ttpload.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBF7C151E8B9A001A01D5 /* ttpload.c */; };
+		31E75CEB153B6D4F00073A8C /* json.c in Sources */ = {isa = PBXBuildFile; fileRef = 31E75CE9153B6D4F00073A8C /* json.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -395,6 +396,8 @@
 		31BCBF7C151E8B9A001A01D5 /* ttpload.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = ttpload.c; sourceTree = "<group>"; };
 		31BCBF7D151E8B9A001A01D5 /* ttpload.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = ttpload.h; sourceTree = "<group>"; };
 		31BCC069151E9F08001A01D5 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_truetype.h; sourceTree = "<group>"; };
+		31E75CE9153B6D4F00073A8C /* json.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = json.c; sourceTree = "<group>"; };
+		31E75CEA153B6D4F00073A8C /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -439,6 +442,7 @@
 		316FA9F71517BB4D00CC39F2 /* engine */ = {
 			isa = PBXGroup;
 			children = (
+				31E75CE8153B6D4F00073A8C /* udp-json-parser */,
 				31BCC068151E9F04001A01D5 /* stb_truetype */,
 				31BCBDD1151E8B9A001A01D5 /* freetype2 */,
 				316FAA161517BB4D00CC39F2 /* yajl */,
@@ -907,6 +911,15 @@
 			path = stb_truetype;
 			sourceTree = "<group>";
 		};
+		31E75CE8153B6D4F00073A8C /* udp-json-parser */ = {
+			isa = PBXGroup;
+			children = (
+				31E75CE9153B6D4F00073A8C /* json.c */,
+				31E75CEA153B6D4F00073A8C /* json.h */,
+			);
+			path = "udp-json-parser";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1068,6 +1081,7 @@
 				31BCC05A151E8B9B001A01D5 /* ttpload.c in Sources */,
 				318A37F31531D91300C006A8 /* cx_draw.c in Sources */,
 				31B1B2DB15326B69006896C3 /* ui.c in Sources */,
+				31E75CEB153B6D4F00073A8C /* json.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

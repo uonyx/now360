@@ -1,6 +1,9 @@
 //
 //  font.fsh
 //
+//  Created by Ubaka Onyechi on 21/03/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//
 
 uniform sampler2D u_sampler;
 

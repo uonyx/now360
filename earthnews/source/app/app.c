@@ -172,7 +172,7 @@ void app_view_update (float deltaTime)
   cx_vec4 center = {{0.0f, 0.0f, 0.0f, 1.0f}};
   
   cx_vec4 axis_x = {{1.0f, 0.0f, 0.0f, 0.0f}};
-  cx_vec4 axis_y = {{0.0f, -1.0f, 0.0f, 0.0f}};
+  cx_vec4 axis_y = {{0.0f, 1.0f, 0.0f, 0.0f}};
   
   camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotationAngleX), &axis_x);
   camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotationAngleY), &axis_y);
@@ -299,8 +299,8 @@ void app_input_zoom (float factor)
 
 void app_render (void)
 {
-  //cx_graphics_clear (cx_colour_black ());
-  cx_graphics_clear (cx_colour_white ());
+  cx_graphics_clear (cx_colour_black ());
+  //cx_graphics_clear (cx_colour_white ());
   
   app_render_3d ();
   app_render_2d ();
@@ -360,7 +360,6 @@ void app_render_3d (void)
   
   cx_graphics_unbind_all_buffers ();
   cx_graphics_activate_renderstate (CX_GRAPHICS_RENDER_STATE_CULL | CX_GRAPHICS_RENDER_STATE_DEPTH_TEST);
-  
   
   //////////////
   // render

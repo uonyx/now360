@@ -7,8 +7,7 @@
 //
 
 #include "ui.h"
-#include "../engine/cx_font.h"
-#include "../engine/cx_draw.h"
+#include "../engine/cx_engine.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +36,8 @@ static cx_texture *s_quadTexture = NULL;
 
 void ui_initialise (void)
 {
-  s_font = cx_font_create ("data/fonts/courier_new.ttf", 24.0f);
+  //s_font = cx_font_create ("data/fonts/courier_new.ttf", 24.0f);
+  s_font = cx_font_create ("data/fonts/verdana.ttf", 24.0f);
   s_quadTexture = cx_texture_create_from_file ("data/textures/avatar.png");
   
   CX_FATAL_ASSERT (s_font);
@@ -83,7 +83,7 @@ void ui_render (void)
   
   cx_draw_quad_texture (x1, y1, x2, y2, u1, v1, u2, v2, cx_colour_white(), s_quadTexture);
   
-  cx_font_render (s_font, "Jack and Jill went up the hill", 4.0f, 36.0f, cx_colour_green ());
+  cx_font_render (s_font, "Jack and Jill went up the ozone layer", 4.0f, 36.0f, cx_colour_green ());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

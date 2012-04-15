@@ -246,7 +246,7 @@ void cx_vertex_data_create_sphere_soa (cxu16 numSlices, cxf32 radius, struct cx_
       vertex = (i * (numSlices + 1) + j) * CX_VERTEX_TEXCOORD_SIZE;
       
       vertexData->texCoords [vertex + 0] = (cxf32) j / (cxf32) numSlices;
-      vertexData->texCoords [vertex + 1] = (1.0f - (cxf32) i) / (cxf32) (numParallels - 1);
+      vertexData->texCoords [vertex + 1] = (cxf32) (i - 1) / (cxf32) (numParallels - 1);
     }
   }
   
@@ -312,7 +312,7 @@ void cx_vertex_data_create_sphere_aos (cxu16 numSlices, cxf32 radius, struct cx_
       cx_vec4_set (position, a0 * radius, a1 * radius, a2 * radius, 1.0f);
       cx_vec4_set (normal, a0, a1, a2, 0.0f);
       texCoord->x = (cxf32) j / (cxf32) numSlices;
-      texCoord->y = (1.0f - (cxf32) i) / (cxf32) (numParallels - 1);
+      texCoord->y = (cxf32) (i - 1) / (cxf32) (numParallels - 1);
 #else
       vertex = (i * (numSlices + 1) + j) * CX_VERTEX_TOTAL_SIZE;
       // position 
@@ -325,7 +325,7 @@ void cx_vertex_data_create_sphere_aos (cxu16 numSlices, cxf32 radius, struct cx_
       vertexData->vertices [vertex + 5] = a2;
       // tex coord
       vertexData->vertices [vertex + 6] = (cxf32) j / (cxf32) numSlices;
-      vertexData->vertices [vertex + 7] = (1.0f - (cxf32) i) / (cxf32) (numParallels - 1);
+      vertexData->vertices [vertex + 7] = (cxf32) (i - 1) / (cxf32) (numParallels - 1);
 #endif      
     }
   }

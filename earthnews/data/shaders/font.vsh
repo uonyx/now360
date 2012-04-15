@@ -1,6 +1,9 @@
 //
 //  font.vsh
 //
+//  Created by Ubaka Onyechi on 21/03/2012.
+//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//
 
 uniform mediump mat4 u_mvpmatrix;
 

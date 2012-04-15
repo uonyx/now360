@@ -12,9 +12,13 @@
 #include "cx_file.h"
 #include "cx_string.h"
 
+#define CX_SHADER_USE_YAJL    0
+
+#if CX_SHADER_USE_YAJL
 #include "yajl_tree.h"
-#include "yajl_parse.h"
-#include "yajl_gen.h"
+#else
+#include "udp-json-parser/json.h"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,6 +76,45 @@ static struct cx_shader_description s_shaderDescriptions [CX_NUM_BUILT_IN_SHADER
 
 struct cx_shader *s_builtInShaders [CX_NUM_BUILT_IN_SHADERS];
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if !CX_SHADER_USE_YAJL
+static cx_shader_attribute cx_get_shader_attribute_from_string (const char *str)
+{
+  int i;
+  
+  for (i = 0; i < CX_NUM_SHADER_ATTRIBUTES; ++i)
+  {
+    if (strcmp (str, s_attribEnumStrings [i]) == 0)
+    {
+      return i;
+    }
+  }
+  
+  return CX_SHADER_ATTRIBUTE_INVALID;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static cx_shader_uniform cx_get_shader_uniform_from_string (const char *str)
+{
+  int i;
+  
+  for (i = 0; i < CX_NUM_SHADER_UNIFORMS; ++i)
+  {
+    if (strcmp (str, s_uniformEnumStrings [i]) == 0)
+    {
+      return i;
+    }
+  }
+  
+  return CX_SHADER_UNIFORM_INVALID;
+}
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +151,7 @@ static bool cx_shader_compile (GLuint *shader, GLenum type, const char *buffer, 
     {
       char *log = (char *) cx_malloc (sizeof(char) * logLength);
       glGetShaderInfoLog (outShader, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "Shader compile log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Shader compile log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -156,7 +199,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "Program link log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Program link log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -180,7 +223,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "Program validate log:\n%s", log);
+      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Program validate log:\n%s", log);
       cx_free (log);
     }
     
@@ -207,14 +250,11 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if CX_SHADER_USE_YAJL
 static bool cx_shader_configure (const char *buffer, cx_shader *shader)
 {
   char errorBuffer [512];
   
-  yajl_gen g = yajl_gen_alloc (NULL);
-  yajl_handle h = yajl_alloc (NULL, NULL, g);
-  yajl_config (h, yajl_allow_trailing_garbage);
   yajl_val root = yajl_tree_parse (buffer, errorBuffer, 512);
   
   if (root == NULL)
@@ -224,7 +264,7 @@ static bool cx_shader_configure (const char *buffer, cx_shader *shader)
       cx_sprintf (errorBuffer, 512, "%s", "Unknown Error");
     }
     
-    CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, errorBuffer);
+    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, errorBuffer);
     CX_FATAL_ERROR ("JSON Parse Error: %s");
     
     return FALSE;
@@ -251,7 +291,7 @@ static bool cx_shader_configure (const char *buffer, cx_shader *shader)
       shader->attributes [i] = glGetAttribLocation (shader->program, attribName);
       
       CX_ASSERT (glGetError() == GL_NO_ERROR);
-      CX_DEBUGLOG_CONSOLE (1, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
+      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
       
       attribCount++;
     }
@@ -282,7 +322,7 @@ static bool cx_shader_configure (const char *buffer, cx_shader *shader)
       shader->uniforms [i] = glGetUniformLocation (shader->program, uniformName);
       
       CX_ASSERT (glGetError() == GL_NO_ERROR);
-      CX_DEBUGLOG_CONSOLE (1, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
+      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
       
       uniformCount++;
     }
@@ -295,11 +335,121 @@ static bool cx_shader_configure (const char *buffer, cx_shader *shader)
 #endif
   
   yajl_tree_free (root);
-  yajl_free (h);
-  yajl_gen_free (g);
   
   return TRUE;
 }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if !CX_SHADER_USE_YAJL
+static bool cx_shader_configure (const char *buffer, cx_shader *shader)
+{
+  char errorBuffer [512];
+  
+  json_settings settings;
+  memset (&settings, 0, sizeof(settings));
+  
+  json_value *root = json_parse_ex (&settings, buffer, errorBuffer);
+  
+  if (root == NULL)
+  {
+    if (strlen (errorBuffer) == 0)
+    {
+      cx_sprintf (errorBuffer, 512, "%s", "Unknown Error");
+    }
+    
+    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, errorBuffer);
+    CX_FATAL_ERROR ("JSON Parse Error: %s");
+    
+    return FALSE;
+  }
+
+#if CX_SHADER_DEBUG
+  CX_FATAL_ASSERT (root->u.object.length == 2);
+  
+  const char *attributes = root->u.object.values [0].name;
+  const char *uniforms = root->u.object.values [1].name;
+  
+  CX_FATAL_ASSERT (strcmp (attributes, "attributes") == 0);
+  CX_FATAL_ASSERT (strcmp (uniforms, "uniforms") == 0);
+#endif
+  
+  unsigned int i;
+  
+  //
+  // attributes
+  //
+
+  int attribCount = 0;
+  json_value *attributeNode = root->u.object.values [0].value;
+  
+  for (i = 0; i < attributeNode->u.object.length; ++i)
+  {
+    const char *attribStr = attributeNode->u.object.values [i].name;
+    json_value *value = attributeNode->u.object.values [i].value;
+    
+    int attribIdx = cx_get_shader_attribute_from_string (attribStr);
+    
+    CX_ASSERT (attribIdx != CX_SHADER_ATTRIBUTE_INVALID);
+    CX_ASSERT (value->type == json_string);
+    
+    const char *attribName = value->u.string.ptr;
+    
+    shader->attributes [attribIdx] = glGetAttribLocation (shader->program, attribName);
+    
+    cx_graphics_assert_no_errors ();
+    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
+     
+    attribCount++;
+  }
+  
+#if CX_DEBUG
+  GLint numAttributes;
+  glGetProgramiv (shader->program, GL_ACTIVE_ATTRIBUTES, &numAttributes);
+  CX_ASSERT (numAttributes <= attribCount);
+#endif
+  
+  //
+  // uniforms
+  //
+  
+  int uniformCount = 0;
+  json_value *uniformNode = root->u.object.values [1].value;
+  
+  for (i = 0; i < uniformNode->u.object.length; ++i)
+  {
+    const char *uniformStr = uniformNode->u.object.values [i].name;
+    json_value *value = uniformNode->u.object.values [i].value;
+    
+    int uniformIdx = cx_get_shader_uniform_from_string (uniformStr);
+    
+    CX_ASSERT (uniformIdx != CX_SHADER_UNIFORM_INVALID);
+    CX_ASSERT (value->type == json_string);
+    
+    const char *uniformName = value->u.string.ptr;
+    
+    shader->uniforms [uniformIdx] = glGetUniformLocation (shader->program, uniformName);
+    
+    cx_graphics_assert_no_errors ();
+    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
+    
+    uniformCount++;
+  }
+  
+#if CX_DEBUG
+  GLint numUniforms;
+  glGetProgramiv (shader->program, GL_ACTIVE_UNIFORMS, &numUniforms);
+  CX_ASSERT (numUniforms <= uniformCount);
+#endif
+  
+  json_value_free (root);
+  
+  return TRUE;
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
