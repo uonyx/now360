@@ -11,7 +11,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_FILE_DEBUG_LOG 1
+#define CX_FILE_DEBUG_LOG_ENABLED   1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +44,7 @@ bool cx_file_load (cx_file *file, const char *filename)
     fseek (file->fp, 0L, SEEK_SET);
     
     // get data
-    file->data = (char *) cx_malloc (sizeof (char) * file->size + 1);
+    file->data = (char *) cx_malloc (sizeof (char) * file->size);
   
     if (file->data)
     {
@@ -52,18 +52,16 @@ bool cx_file_load (cx_file *file, const char *filename)
       CX_ASSERT (bytesRead == file->size);
       CX_REFERENCE_UNUSED_VARIABLE (bytesRead);
       
-      char *data = (char *) file->data;
-      data [file->size] = 0;
       success = true;
     }
     else
     {
-      CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_load: failed to malloc %d bytes", (file->size * sizeof(char)));
+      CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_load: failed to malloc %d bytes", (file->size * sizeof(char)));
     }
   }
   else
   {
-    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_load: failed to open file [%s]", fullFilePath);
+    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_load: failed to open file [%s]", fullFilePath);
   }
   
   return success;
@@ -91,7 +89,7 @@ bool cx_file_unload (cx_file *file)
   }
   else
   {
-    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_unload: failed to close file");
+    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_unload: failed to close file");
   }
   
   return success;
@@ -123,7 +121,7 @@ cxu32 cx_file_getsize (const char *filename)
   }
   else
   {
-    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG, "cx_file_getsize: failed to open file [%s]", fullFilePath);
+    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_getsize: failed to open file [%s]", fullFilePath);
   }
   
   return size;

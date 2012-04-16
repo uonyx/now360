@@ -175,10 +175,10 @@ typedef struct _json_value
 } json_value;
 
 json_value * json_parse
-   (const json_char * json);
+   (const json_char * json, unsigned int json_size);
 
 json_value * json_parse_ex
-   (json_settings * settings, const json_char * json, char * error);
+   (json_settings * settings, const json_char * json, unsigned int json_size, char * error, unsigned int error_size);
 
 void json_value_free (json_value *);
 

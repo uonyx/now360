@@ -187,10 +187,11 @@ const static int
    flag_got_exponent_sign = 32, flag_escaped = 64, flag_string = 128, flag_need_colon = 256,
    flag_done = 512;
 
-json_value * json_parse_ex (json_settings * settings, const json_char * json, char * error_buf)
+json_value * json_parse_ex (json_settings * settings, const json_char * json, unsigned int json_size, char * error_buf, unsigned int error_size)
 {
    json_char error [128];
    unsigned int cur_line;
+   unsigned int char_count;
    const json_char * cur_line_begin, * i;
    json_value * top, * root, * alloc = 0;
    json_state state;
@@ -219,13 +220,19 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 
       cur_line = 1;
       cur_line_begin = json;
+      char_count = 1;
 
-      for (i = json ;; ++ i)
+      for (i = json ;; ++ i, ++char_count)
       {
          json_char b = *i;
 
          if (flags & flag_done)
          {
+            if (char_count == json_size)
+            {
+              break;
+            }
+           
             if (!b)
                break;
 
@@ -660,9 +667,9 @@ e_failed:
    if (error_buf)
    {
       if (*error)
-         strcpy (error_buf, error);
+        strncpy (error_buf, error, error_size);
       else
-         strcpy (error_buf, "Unknown error");
+        strncpy (error_buf, "Unknown error", error_size);
    }
 
    if (state.first_pass)
@@ -681,12 +688,12 @@ e_failed:
    return 0;
 }
 
-json_value * json_parse (const json_char * json)
+json_value * json_parse (const json_char * json, unsigned int json_size)
 {
    json_settings settings;
    memset (&settings, 0, sizeof (json_settings));
 
-   return json_parse_ex (&settings, json, 0);
+   return json_parse_ex (&settings, json, json_size, 0, 0);
 }
 
 void json_value_free (json_value * value)

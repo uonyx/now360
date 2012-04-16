@@ -12,13 +12,7 @@
 #include "cx_file.h"
 #include "cx_string.h"
 
-#define CX_SHADER_USE_YAJL    0
-
-#if CX_SHADER_USE_YAJL
-#include "yajl_tree.h"
-#else
 #include "udp-json-parser/json.h"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +74,7 @@ struct cx_shader *s_builtInShaders [CX_NUM_BUILT_IN_SHADERS];
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if !CX_SHADER_USE_YAJL
+
 static cx_shader_attribute cx_get_shader_attribute_from_string (const char *str)
 {
   int i;
@@ -114,7 +108,7 @@ static cx_shader_uniform cx_get_shader_uniform_from_string (const char *str)
   
   return CX_SHADER_UNIFORM_INVALID;
 }
-#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,109 +244,15 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if CX_SHADER_USE_YAJL
-static bool cx_shader_configure (const char *buffer, cx_shader *shader)
-{
-  char errorBuffer [512];
-  
-  yajl_val root = yajl_tree_parse (buffer, errorBuffer, 512);
-  
-  if (root == NULL)
-  {
-    if (strlen (errorBuffer) == 0)
-    {
-      cx_sprintf (errorBuffer, 512, "%s", "Unknown Error");
-    }
-    
-    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, errorBuffer);
-    CX_FATAL_ERROR ("JSON Parse Error: %s");
-    
-    return FALSE;
-  }
-  
-  int i;
-  
-  //
-  // attributes
-  //
-  
-  int attribCount = 0;
-  for (i = 0; i < CX_NUM_SHADER_ATTRIBUTES; ++i)
-  {
-    const char *attribStr = s_attribEnumStrings [i];
-    const char *attribPath [] = { "attributes", attribStr, NULL };
-    yajl_val attribNode = yajl_tree_get (root, attribPath, yajl_t_any);
-    
-    if (attribNode)
-    {
-      CX_ASSERT (attribNode->type == yajl_t_string);
-      
-      const char *attribName = YAJL_GET_STRING (attribNode);
-      shader->attributes [i] = glGetAttribLocation (shader->program, attribName);
-      
-      CX_ASSERT (glGetError() == GL_NO_ERROR);
-      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
-      
-      attribCount++;
-    }
-  }
 
-#if CX_DEBUG
-  GLint numAttributes;
-  glGetProgramiv (shader->program, GL_ACTIVE_ATTRIBUTES, &numAttributes);
-  CX_ASSERT (numAttributes <= attribCount);
-#endif
-  
-  //
-  // uniforms
-  //
-  
-  int uniformCount = 0;
-  for (i = 0; i < CX_NUM_SHADER_UNIFORMS; ++i)
-  {
-    const char *uniformStr = s_uniformEnumStrings [i];
-    const char *uniformPath [] = { "uniforms", uniformStr, NULL };
-    yajl_val uniformNode = yajl_tree_get (root, uniformPath, yajl_t_any);
-    
-    if (uniformNode)
-    {
-      CX_ASSERT (uniformNode->type == yajl_t_string);
-      
-      const char *uniformName = YAJL_GET_STRING (uniformNode);
-      shader->uniforms [i] = glGetUniformLocation (shader->program, uniformName);
-      
-      CX_ASSERT (glGetError() == GL_NO_ERROR);
-      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
-      
-      uniformCount++;
-    }
-  }
-
-#if CX_DEBUG
-  GLint numUniforms;
-  glGetProgramiv (shader->program, GL_ACTIVE_UNIFORMS, &numUniforms);
-  CX_ASSERT (numUniforms <= uniformCount);
-#endif
-  
-  yajl_tree_free (root);
-  
-  return TRUE;
-}
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#if !CX_SHADER_USE_YAJL
-static bool cx_shader_configure (const char *buffer, cx_shader *shader)
+static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx_shader *shader)
 {
   char errorBuffer [512];
   
   json_settings settings;
   memset (&settings, 0, sizeof(settings));
   
-  json_value *root = json_parse_ex (&settings, buffer, errorBuffer);
+  json_value *root = json_parse_ex (&settings, buffer, bufferSize, errorBuffer, 512);
   
   if (root == NULL)
   {
@@ -449,7 +349,6 @@ static bool cx_shader_configure (const char *buffer, cx_shader *shader)
   
   return TRUE;
 }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -507,7 +406,7 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
   memset (shader->attributes, -1, sizeof (shader->attributes));
   memset (shader->uniforms, -1, sizeof (shader->uniforms));
   
-  success = cx_shader_configure (scFile.data, shader);
+  success = cx_shader_configure (scFile.data, scFile.size, shader);
   CX_FATAL_ASSERT (success);
   
   cx_file_unload (&vsFile);
