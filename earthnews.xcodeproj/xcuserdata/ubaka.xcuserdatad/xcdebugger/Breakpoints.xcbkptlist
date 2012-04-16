@@ -26,7 +26,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "365"
          endingLineNumber = "365"
-         landmarkName = "cx_shader_configure()"
+         landmarkName = "cx_shader_create()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -38,9 +38,7 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "510"
-         endingLineNumber = "510"
-         landmarkName = "cx_shader_create()"
-         landmarkType = "7">
+         endingLineNumber = "510">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "Yes"
