@@ -367,6 +367,7 @@ typedef struct
 
 extern void stbtt_GetBakedQuad(stbtt_bakedchar *chardata, int pw, int ph,  // same data as above
                                int char_index,             // character to display
+                               float sx, float sy,         // uonyechi: scale
                                float *xpos, float *ypos,   // pointers to current position in screen pixel space
                                stbtt_aligned_quad *q,      // output: quad to draw
                                int opengl_fillrule);       // true if opengl fill rule; false if DX9 or earlier
@@ -1782,25 +1783,25 @@ extern int stbtt_BakeFontBitmap(const unsigned char *data, int offset,  // font 
    return bottom_y;
 }
 
-void stbtt_GetBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int char_index, float *xpos, float *ypos, stbtt_aligned_quad *q, int opengl_fillrule)
-{
+void stbtt_GetBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int char_index, float sx, float sy, float *xpos, float *ypos, stbtt_aligned_quad *q, int opengl_fillrule)
+{  
    float d3d_bias = opengl_fillrule ? 0 : -0.5f;
    float ipw = 1.0f / pw, iph = 1.0f / ph;
    stbtt_bakedchar *b = chardata + char_index;
-   int round_x = STBTT_ifloor((*xpos + b->xoff) + 0.5);
-   int round_y = STBTT_ifloor((*ypos + b->yoff) + 0.5);
+   int round_x = STBTT_ifloor((*xpos + (b->xoff * sx)) + 0.5);
+   int round_y = STBTT_ifloor((*ypos + (b->yoff * sy)) + 0.5);
 
    q->x0 = round_x + d3d_bias;
    q->y0 = round_y + d3d_bias;
-   q->x1 = round_x + b->x1 - b->x0 + d3d_bias;
-   q->y1 = round_y + b->y1 - b->y0 + d3d_bias;
+   q->x1 = round_x + ((b->x1 - b->x0) * sx) + d3d_bias;
+   q->y1 = round_y + ((b->y1 - b->y0) * sy) + d3d_bias;
 
    q->s0 = b->x0 * ipw;
    q->t0 = b->y0 * iph;
    q->s1 = b->x1 * ipw;
    q->t1 = b->y1 * iph;
 
-   *xpos += b->xadvance;
+   *xpos += (b->xadvance * sx);
 }
 
 //////////////////////////////////////////////////////////////////////////////

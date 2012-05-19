@@ -23,7 +23,7 @@ void main (void)
 {
   vec3 eyeNormal = normalize (u_normalMatrix * a_normal);
   vec3 lightPosition = vec3 (c_zero, c_zero, c_one);
-  vec4 diffuseColor = vec4 (0.4, 0.4, c_one, c_one);
+  vec4 diffuseColor = vec4 (c_one, c_one, c_one, c_one);
     
   float nDotVP = max(c_zero, dot(eyeNormal, normalize(lightPosition)));
                  

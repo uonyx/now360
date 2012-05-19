@@ -39,7 +39,7 @@ cx_material *cx_material_create (const char *name)
   cx_material *material = (cx_material *) cx_malloc (sizeof (cx_material));
   
 #if CX_MATERIAL_DEBUG
-  material->name        = cx_strdup (name);
+  material->name        = cx_strdup (name, strlen (name));
 #endif
   
   material->ambient     = *cx_colour_white ();

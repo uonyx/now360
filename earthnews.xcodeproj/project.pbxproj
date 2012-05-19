@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3109302A1551FD9000D5AFCD /* earth.c in Sources */ = {isa = PBXBuildFile; fileRef = 310930291551FD9000D5AFCD /* earth.c */; };
+		3109302F15532E8900D5AFCD /* http.m in Sources */ = {isa = PBXBuildFile; fileRef = 3109302E15532E8900D5AFCD /* http.m */; };
 		316FAA2B1517BB4D00CC39F2 /* app.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FA9F31517BB4D00CC39F2 /* app.c */; };
 		316FAA2C1517BB4D00CC39F2 /* camera.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FA9F51517BB4D00CC39F2 /* camera.c */; };
 		316FAA2D1517BB4D00CC39F2 /* cx_debug.c in Sources */ = {isa = PBXBuildFile; fileRef = 316FA9F91517BB4D00CC39F2 /* cx_debug.c */; };
@@ -107,6 +109,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		310930291551FD9000D5AFCD /* earth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = earth.c; sourceTree = "<group>"; };
+		3109302C1551FDAA00D5AFCD /* earth.h */ = {isa = PBXFileReference; path = earth.h; sourceTree = "<group>"; };
+		3109302D15532E7800D5AFCD /* http.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http.h; sourceTree = "<group>"; };
+		3109302E15532E8900D5AFCD /* http.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = http.m; sourceTree = "<group>"; };
 		316FA9F31517BB4D00CC39F2 /* app.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = app.c; sourceTree = "<group>"; };
 		316FA9F41517BB4D00CC39F2 /* app.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = app.h; sourceTree = "<group>"; };
 		316FA9F51517BB4D00CC39F2 /* camera.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = camera.c; sourceTree = "<group>"; };
@@ -406,6 +412,10 @@
 				316FA9F61517BB4D00CC39F2 /* camera.h */,
 				31B1B2D915326B5A006896C3 /* ui.h */,
 				31B1B2DA15326B69006896C3 /* ui.c */,
+				310930291551FD9000D5AFCD /* earth.c */,
+				3109302C1551FDAA00D5AFCD /* earth.h */,
+				3109302D15532E7800D5AFCD /* http.h */,
+				3109302E15532E8900D5AFCD /* http.m */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -1016,6 +1026,8 @@
 				318A37F31531D91300C006A8 /* cx_draw.c in Sources */,
 				31B1B2DB15326B69006896C3 /* ui.c in Sources */,
 				31E75CF5153CD51200073A8C /* json.c in Sources */,
+				3109302A1551FD9000D5AFCD /* earth.c in Sources */,
+				3109302F15532E8900D5AFCD /* http.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

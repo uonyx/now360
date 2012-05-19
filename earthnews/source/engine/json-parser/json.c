@@ -228,7 +228,7 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, un
 
          if (flags & flag_done)
          {
-            if (char_count == json_size)
+            if (char_count >= json_size)
             {
               break;
             }
@@ -275,6 +275,10 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, un
                     {
                         sprintf (error, "Invalid character value `%c` (at %d:%d)", b, cur_line, e_off);
                         goto e_failed;
+                    }
+                    else
+                    {
+                      char_count +=4;
                     }
 
                     uc_b1 = uc_b1 * 16 + uc_b2;
@@ -445,6 +449,9 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, un
 
                         if (*(++ i) != 'r' || *(++ i) != 'u' || *(++ i) != 'e')
                            goto e_unknown_value;
+                        else {
+                          char_count += 3;
+                        }
 
                         if (!new_value (&state, &top, &root, &alloc, json_boolean))
                            goto e_alloc_failure;
@@ -458,6 +465,9 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, un
 
                         if (*(++ i) != 'a' || *(++ i) != 'l' || *(++ i) != 's' || *(++ i) != 'e')
                            goto e_unknown_value;
+                        else {
+                          char_count += 4;
+                        }
 
                         if (!new_value (&state, &top, &root, &alloc, json_boolean))
                            goto e_alloc_failure;
@@ -469,6 +479,9 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, un
 
                         if (*(++ i) != 'u' || *(++ i) != 'l' || *(++ i) != 'l')
                            goto e_unknown_value;
+                        else {
+                          char_count += 3;
+                        }
 
                         if (!new_value (&state, &top, &root, &alloc, json_null))
                            goto e_alloc_failure;
@@ -591,6 +604,7 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, un
          {
             flags &= ~ flag_reproc;
             -- i;
+            --char_count;
          }
 
          if (flags & flag_next)

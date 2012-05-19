@@ -84,6 +84,8 @@ static CX_INLINE void cx_mat4x4_string (char *destBuffer, cxu32 destbufferSize, 
 
 static CX_INLINE void cx_mat4x4_identity (cx_mat4x4 *m)
 {
+  CX_ASSERT (m);
+  
   // column 1
   m->f16 [0] = 1.0f;
   m->f16 [1] = 0.0f;
@@ -112,6 +114,8 @@ static CX_INLINE void cx_mat4x4_identity (cx_mat4x4 *m)
 
 static CX_INLINE void cx_mat4x4_zero (cx_mat4x4 *m)
 {
+  CX_ASSERT (m);
+  
 #ifdef CX_SIMD_NEON
   m->_q128x4.val [0] = vdupq_n_f32 (0.0f);
   m->_q128x4.val [1] = vdupq_n_f32 (0.0f);
@@ -143,6 +147,8 @@ static CX_INLINE void cx_mat4x4_zero (cx_mat4x4 *m)
 
 static CX_INLINE void cx_mat4x4_set (cx_mat4x4 * CX_RESTRICT m, cxf32 f16 [16])
 {
+  CX_ASSERT (m);
+  
 #ifdef CX_SIMD_NEON
   m->_q128x4.val [0] = vld1q_f32 (f16);
   m->_q128x4.val [1] = vld1q_f32 (f16 + 4);
@@ -174,6 +180,9 @@ static CX_INLINE void cx_mat4x4_set (cx_mat4x4 * CX_RESTRICT m, cxf32 f16 [16])
 
 static CX_INLINE void cx_mat4x4_transpose (cx_mat4x4 * CX_RESTRICT t, const cx_mat4x4 * CX_RESTRICT m)
 {
+  CX_ASSERT (m);
+  CX_ASSERT (t);
+  
 #ifdef CX_SIMD_NEON
   t->_q128x4 = vld4q_f32 (m->f16);
 #else
@@ -202,6 +211,9 @@ static CX_INLINE void cx_mat4x4_transpose (cx_mat4x4 * CX_RESTRICT t, const cx_m
 
 static CX_INLINE void cx_mat4x4_get_mat3x3 (cx_mat3x3 *m33, const cx_mat4x4 * CX_RESTRICT m44)
 {
+  CX_ASSERT (m33);
+  CX_ASSERT (m44);
+  
   m33->f9 [0] = m44->f16 [0];
   m33->f9 [1] = m44->f16 [1];
   m33->f9 [2] = m44->f16 [2];
@@ -254,6 +266,7 @@ static CX_INLINE void cx_mat4x4_get_column (const cx_mat4x4 *m, cxi32 index, cx_
   col->w = m->f16 [i + 3];
 #endif
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,14 +277,10 @@ static CX_INLINE void cx_mat4x4_set_row (cx_mat4x4 *m, cxi32 index, const cx_vec
   CX_ASSERT (row);
   CX_ASSERT ((index >= 0) && (index <= 3));
   
-#ifdef CX_SIMD_NEON
-  m->_q128x4.val [index] = row->_q128;
-#else
   m->f16 [index + 0] = row->x;
   m->f16 [index + 4] = row->y;
   m->f16 [index + 8] = row->z;
   m->f16 [index + 12] = row->w;
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -283,15 +292,11 @@ static CX_INLINE void cx_mat4x4_get_row (const cx_mat4x4 *m, cxi32 index, cx_vec
   CX_ASSERT (m);
   CX_ASSERT (row);
   CX_ASSERT ((index >= 0) && (index <= 3));
-  
-#ifdef CX_SIMD_NEON
-  row->_q128 = m->_q128x4.val [index];
-#else
+
   row->x = m->f16 [index + 0];
   row->y = m->f16 [index + 4];
   row->z = m->f16 [index + 8];
   row->w = m->f16 [index + 12];
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -300,6 +305,10 @@ static CX_INLINE void cx_mat4x4_get_row (const cx_mat4x4 *m, cxi32 index, cx_vec
 
 static CX_INLINE void cx_mat4x4_add (cx_mat4x4 * CX_RESTRICT m_out, const cx_mat4x4 * CX_RESTRICT m0, const cx_mat4x4 * CX_RESTRICT m1)
 {
+  CX_ASSERT (m_out);
+  CX_ASSERT (m0);
+  CX_ASSERT (m1);
+  
 #ifdef CX_SIMD_NEON
   m_out->_q128x4.val [0] = vaddq_f32 (m0->_q128x4.val [0], m1->_q128x4.val [0]);
   m_out->_q128x4.val [1] = vaddq_f32 (m0->_q128x4.val [1], m1->_q128x4.val [1]);
@@ -365,6 +374,10 @@ static CX_INLINE void cx_mat4x4_add (cx_mat4x4 * CX_RESTRICT m_out, const cx_mat
 
 static CX_INLINE void cx_mat4x4_sub (cx_mat4x4 * CX_RESTRICT m_out, const cx_mat4x4 * CX_RESTRICT m0, const cx_mat4x4 * CX_RESTRICT m1)
 {
+  CX_ASSERT (m_out);
+  CX_ASSERT (m0);
+  CX_ASSERT (m1);
+  
 #ifdef CX_SIMD_NEON
   m_out->_q128x4.val [0] = vsubq_f32 (m0->_q128x4.val [0], m1->_q128x4.val [0]);
   m_out->_q128x4.val [1] = vsubq_f32 (m0->_q128x4.val [1], m1->_q128x4.val [1]);
@@ -430,7 +443,11 @@ static CX_INLINE void cx_mat4x4_sub (cx_mat4x4 * CX_RESTRICT m_out, const cx_mat
 
 static CX_INLINE void cx_mat4x4_mul (cx_mat4x4 * CX_RESTRICT m_out, const cx_mat4x4 * CX_RESTRICT m0, const cx_mat4x4 * CX_RESTRICT m1)
 {
-#ifdef CX_SIMD_NEON 
+  CX_ASSERT (m_out);
+  CX_ASSERT (m0);
+  CX_ASSERT (m1);
+  
+#ifdef CX_SIMD_NEON
   
 #if 0
   m_out->_q128x4.val [0] = vmulq_n_f32 (m0->_q128x4.val [0], vgetq_lane_f32 (m1->_q128x4.val [0], 0));
@@ -571,6 +588,9 @@ static CX_INLINE void cx_mat4x4_mul (cx_mat4x4 * CX_RESTRICT m_out, const cx_mat
 
 static CX_INLINE void cx_mat4x4_mul_scalar (cx_mat4x4 * CX_RESTRICT m_out, const cx_mat4x4 * CX_RESTRICT m, cxf32 scalar)
 {
+  CX_ASSERT (m_out);
+  CX_ASSERT (m);
+  
 #ifdef CX_SIMD_NEON
   m_out->_q128x4.val [0] = vmulq_n_f32 (m->_q128x4.val [0], scalar);
   m_out->_q128x4.val [1] = vmulq_n_f32 (m->_q128x4.val [1], scalar);
@@ -602,6 +622,10 @@ static CX_INLINE void cx_mat4x4_mul_scalar (cx_mat4x4 * CX_RESTRICT m_out, const
 
 static CX_INLINE void cx_mat4x4_mul_vec4 (cx_vec4 * CX_RESTRICT v_out, const cx_mat4x4 * CX_RESTRICT m, const cx_vec4 * CX_RESTRICT v)
 {
+  CX_ASSERT (v_out);
+  CX_ASSERT (m);
+  CX_ASSERT (v);
+  
   cxf32 vx = v->x;
   cxf32 vy = v->y;
   cxf32 vz = v->z;
@@ -647,6 +671,8 @@ static CX_INLINE void cx_mat4x4_mul_vec4 (cx_vec4 * CX_RESTRICT v_out, const cx_
 
 static CX_INLINE void cx_mat4x4_scale (cx_mat4x4 *m, cxf32 x, cxf32 y, cxf32 z)
 {
+  CX_ASSERT (m);
+  
   cx_mat4x4_identity (m);
   
   m->f16 [0] = x;
@@ -660,6 +686,8 @@ static CX_INLINE void cx_mat4x4_scale (cx_mat4x4 *m, cxf32 x, cxf32 y, cxf32 z)
 
 static CX_INLINE void cx_mat4x4_translation (cx_mat4x4 *m, cxf32 x, cxf32 y, cxf32 z)
 {
+  CX_ASSERT (m);
+  
   m->f16 [0] = 1.0f;
   m->f16 [1] = 0.0f;
   m->f16 [2] = 0.0f;
@@ -684,6 +712,8 @@ static CX_INLINE void cx_mat4x4_translation (cx_mat4x4 *m, cxf32 x, cxf32 y, cxf
 
 static CX_INLINE void cx_mat4x4_rotation (cx_mat4x4 *m, cxf32 rad, cxf32 x, cxf32 y, cxf32 z)
 {
+  CX_ASSERT (m);
+  
   cxf32 sin = cx_sin (rad);
   cxf32 cos = cx_cos (rad);
   cxf32 onesubcos = 1.0f - cos;
@@ -712,6 +742,8 @@ static CX_INLINE void cx_mat4x4_rotation (cx_mat4x4 *m, cxf32 rad, cxf32 x, cxf3
 
 static CX_INLINE void cx_mat4x4_rotation_axis_x (cx_mat4x4 *m, cxf32 rad)
 {
+  CX_ASSERT (m);
+  
   cxf32 sin = cx_sin (rad);
   cxf32 cos = cx_cos (rad);
   
@@ -743,6 +775,8 @@ static CX_INLINE void cx_mat4x4_rotation_axis_x (cx_mat4x4 *m, cxf32 rad)
 
 static CX_INLINE void cx_mat4x4_rotation_axis_y (cx_mat4x4 *m, cxf32 rad)
 {
+  CX_ASSERT (m);
+  
   cxf32 sin = cx_sin (rad);
   cxf32 cos = cx_cos (rad);
   
@@ -774,6 +808,8 @@ static CX_INLINE void cx_mat4x4_rotation_axis_y (cx_mat4x4 *m, cxf32 rad)
 
 static CX_INLINE void cx_mat4x4_rotation_axis_z (cx_mat4x4 *m, cxf32 rad)
 {
+  CX_ASSERT (m);
+  
   cxf32 sin = cx_sin (rad);
   cxf32 cos = cx_cos (rad);
   
@@ -805,6 +841,8 @@ static CX_INLINE void cx_mat4x4_rotation_axis_z (cx_mat4x4 *m, cxf32 rad)
 
 static CX_INLINE void cx_mat4x4_perspective (cx_mat4x4 *m, cxf32 fov, cxf32 aspectRatio, cxf32 near, cxf32 far)
 {
+  CX_ASSERT (m);
+  
   cxf32 d = 1.0f / cx_tan (fov * 0.5f);
   cxf32 nsf = near - far;
   
@@ -835,6 +873,8 @@ static CX_INLINE void cx_mat4x4_perspective (cx_mat4x4 *m, cxf32 fov, cxf32 aspe
 
 static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cxf32 top, cxf32 bottom, cxf32 near, cxf32 far)
 {
+  CX_ASSERT (m);
+  
   cxf32 rsl = right - left;
   cxf32 tsb = top - bottom;
   cxf32 fsn = far - near;
@@ -914,6 +954,8 @@ static CX_INLINE void cx_mat4x4_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRI
 
 static CX_INLINE void cx_mat4x4_string (char *destBuffer, cxu32 destbufferSize, const cx_mat4x4 *m)
 {
+  CX_ASSERT (m);
+  
   cx_sprintf (destBuffer, destbufferSize, "{ \n%.2f, %.2f, %.2f, %.2f,\n%.2f, %.2f, %.2f, %.2f,\n%.2f, %.2f, %.2f, %.2f,\n%.2f, %.2f, %.2f, %.2f\n }", 
                                            m->f16 [0], m->f16 [4], m->f16 [8], m->f16 [12],
                                            m->f16 [1], m->f16 [5], m->f16 [9], m->f16 [13],

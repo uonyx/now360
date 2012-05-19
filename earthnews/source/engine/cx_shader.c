@@ -12,8 +12,6 @@
 #include "cx_file.h"
 #include "cx_string.h"
 
-#include "json-parser/json.h"
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +35,7 @@ static const char *s_attribEnumStrings [CX_NUM_SHADER_ATTRIBUTES] =
 
 static const char *s_uniformEnumStrings [CX_NUM_SHADER_UNIFORMS] =
 {
-  "CX_SHADER_UNIFORM_TRANSFORM_M",
+  "CX_SHADER_UNIFORM_TRANSFORM_P",
   "CX_SHADER_UNIFORM_TRANSFORM_MV",
   "CX_SHADER_UNIFORM_TRANSFORM_MVP",
   "CX_SHADER_UNIFORM_TRANSFORM_N",
@@ -63,13 +61,13 @@ struct cx_shader_description
 
 static struct cx_shader_description s_shaderDescriptions [CX_NUM_BUILT_IN_SHADERS] = 
 {
-  { CX_SHADER_BUILT_IN_FONT,      "font",     "data/shaders" },
-  { CX_SHADER_BUILT_IN_DRAW,      "draw",     "data/shaders" },
-  { CX_SHADER_BUILT_IN_DRAW_TEX,  "draw_tex", "data/shaders" },
+  { CX_SHADER_BUILT_IN_FONT,      "font",         "data/shaders" },
+  { CX_SHADER_BUILT_IN_DRAW,      "draw",         "data/shaders" },
+  { CX_SHADER_BUILT_IN_DRAW_TEX,  "draw_tex",     "data/shaders" },
+  { CX_SHADER_BUILT_IN_POINTS,    "draw_points",  "data/shaders" },
 };
 
 struct cx_shader *s_builtInShaders [CX_NUM_BUILT_IN_SHADERS];
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -267,7 +265,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     return FALSE;
   }
 
-#if CX_SHADER_DEBUG
+#if (CX_SHADER_DEBUG && 0)
   CX_FATAL_ASSERT (root->u.object.length == 2);
   
   const char *attributes = root->u.object.values [0].name;
@@ -401,7 +399,7 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
   
   cx_shader *shader = (cx_shader *) cx_malloc (sizeof(cx_shader));
   shader->program   = shaderProgram;
-  shader->name      = cx_strdup (name);
+  shader->name      = cx_strdup (name, strlen (name));
   
   memset (shader->attributes, -1, sizeof (shader->attributes));
   memset (shader->uniforms, -1, sizeof (shader->uniforms));
@@ -427,7 +425,6 @@ void cx_shader_destroy (cx_shader *shader)
   glDeleteProgram (shader->program);
   
   cx_free (shader->name);
-  
   cx_free (shader);
 }
 
@@ -449,13 +446,16 @@ void cx_shader_write_to_uniform (const cx_shader *shader, enum cx_shader_uniform
 {
   CX_ASSERT (shader);
   CX_ASSERT ((uniform > CX_SHADER_UNIFORM_INVALID) && (uniform < CX_NUM_SHADER_UNIFORMS));
+  
+  GLint location = shader->uniforms [uniform];
+  CX_ASSERT (location >= 0);
  
   switch (type) 
   {
-    case CX_SHADER_DATATYPE_VECTOR3:   { glUniform3fv (shader->uniforms[uniform], 1, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR4:   { glUniform4fv (shader->uniforms[uniform], 1, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX3X3: { glUniformMatrix3fv (shader->uniforms[uniform], 1, GL_FALSE, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX4X4: { glUniformMatrix4fv (shader->uniforms[uniform], 1, GL_FALSE, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR3:   { glUniform3fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR4:   { glUniform4fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_MATRIX3X3: { glUniformMatrix3fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_MATRIX4X4: { glUniformMatrix4fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
     default: { break; }
   }
   

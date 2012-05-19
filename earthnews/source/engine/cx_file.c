@@ -44,13 +44,16 @@ bool cx_file_load (cx_file *file, const char *filename)
     fseek (file->fp, 0L, SEEK_SET);
     
     // get data
-    file->data = (char *) cx_malloc (sizeof (char) * file->size);
+    file->data = (unsigned char *) cx_malloc (sizeof (unsigned char) * (file->size + 1));
   
     if (file->data)
     {
-      size_t bytesRead = fread (file->data, sizeof(char), file->size, file->fp);
+      size_t bytesRead = fread (file->data, sizeof (unsigned char), file->size, file->fp);
       CX_ASSERT (bytesRead == file->size);
       CX_REFERENCE_UNUSED_VARIABLE (bytesRead);
+      
+      unsigned char *data = (unsigned char *) file->data;
+      data [file->size] = 0;
       
       success = true;
     }

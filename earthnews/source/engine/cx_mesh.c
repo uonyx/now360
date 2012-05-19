@@ -20,8 +20,8 @@
 void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader);
 void cx_mesh_gpu_deinit (cx_mesh *mesh);
 
-void cx_vertex_data_create_sphere_soa (cxu16 numSlices, cxf32 radius, struct cx_vertex_data_soa *vertexData);
-void cx_vertex_data_create_sphere_aos (cxu16 numSlices, cxf32 radius, struct cx_vertex_data_aos *vertexData);
+void cx_vertex_data_create_sphere_soa (cxf32 radius, cxu16 numSlices, cxu16 numParallels, struct cx_vertex_data_soa *vertexData);
+void cx_vertex_data_create_sphere_aos (cxf32 radius, cxu16 numSlices, cxu16 numParallels, struct cx_vertex_data_aos *vertexData);
 void cx_vertex_data_destroy_soa (struct cx_vertex_data_soa *vertexData);
 void cx_vertex_data_destroy_aos (struct cx_vertex_data_aos *vertexData);
 
@@ -29,7 +29,7 @@ void cx_vertex_data_destroy_aos (struct cx_vertex_data_aos *vertexData);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_mesh *cx_mesh_create_sphere (cxu16 slices, cxf32 radius, cx_shader *shader, cx_material *material)
+cx_mesh *cx_mesh_create_sphere (cxf32 radius, cxu16 slices, cxu16 parallels, cx_shader *shader, cx_material *material)
 {
   CX_ASSERT (shader);
   
@@ -41,9 +41,9 @@ cx_mesh *cx_mesh_create_sphere (cxu16 slices, cxf32 radius, cx_shader *shader, c
   memset (mesh->vbos, 0, sizeof (mesh->vbos));
   
 #if CX_VERTEX_DATA_AOS
-  cx_vertex_data_create_sphere_aos (slices, radius, &mesh->vertexData);
+  cx_vertex_data_create_sphere_aos (radius, slices, parallels, &mesh->vertexData);
 #else
-  cx_vertex_data_create_sphere_soa (slices, radius, &mesh->vertexData);
+  cx_vertex_data_create_sphere_soa (radius, slices, parallels, &mesh->vertexData);
 #endif
   
   cx_mesh_gpu_init (mesh, shader);
@@ -199,7 +199,7 @@ void cx_mesh_render (cx_mesh *mesh)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_vertex_data_create_sphere_soa (cxu16 numSlices, cxf32 radius, struct cx_vertex_data_soa *vertexData)
+void cx_vertex_data_create_sphere_soa (cxf32 radius, cxu16 numSlices, cxu16 numParallels, struct cx_vertex_data_soa *vertexData)
 {
   // Taken from the utility library for the OpenGL ES 2.0 programming guide
   /// \return The number of indices required for rendering the buffers (the number of indices stored in the indices array
@@ -209,7 +209,6 @@ void cx_vertex_data_create_sphere_soa (cxu16 numSlices, cxf32 radius, struct cx_
   
   cxu16 i;
   cxu16 j;
-  cxu16 numParallels = numSlices / 2;
   cxu16 numVertices = (numParallels + 1) * (numSlices + 1);
   cxu16 numIndices = numParallels * numSlices * 6;
   cxf32 angleStep = (2.0f * CX_PI) / ((cxf32) numSlices);
@@ -246,7 +245,7 @@ void cx_vertex_data_create_sphere_soa (cxu16 numSlices, cxf32 radius, struct cx_
       vertex = (i * (numSlices + 1) + j) * CX_VERTEX_TEXCOORD_SIZE;
       
       vertexData->texCoords [vertex + 0] = (cxf32) j / (cxf32) numSlices;
-      vertexData->texCoords [vertex + 1] = (cxf32) (i - 1) / (cxf32) (numParallels - 1);
+      vertexData->texCoords [vertex + 1] = (cxf32) i / (cxf32) numParallels;
     }
   }
   
@@ -275,13 +274,12 @@ void cx_vertex_data_create_sphere_soa (cxu16 numSlices, cxf32 radius, struct cx_
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_vertex_data_create_sphere_aos (cxu16 numSlices, cxf32 radius, struct cx_vertex_data_aos *vertexData)
+void cx_vertex_data_create_sphere_aos (cxf32 radius, cxu16 numSlices, cxu16 numParallels, struct cx_vertex_data_aos *vertexData)
 {
   CX_ASSERT (vertexData);
   
   cxu16 i, j;
   cxu16 vertex;
-  cxu16 numParallels = numSlices / 2;
   cxu16 numVertices = (numParallels + 1) * (numSlices + 1);
   cxu16 numIndices = numParallels * numSlices * 6;
   cxf32 angleStep = (2.0f * CX_PI) / (cxf32) numSlices;
@@ -325,7 +323,7 @@ void cx_vertex_data_create_sphere_aos (cxu16 numSlices, cxf32 radius, struct cx_
       vertexData->vertices [vertex + 5] = a2;
       // tex coord
       vertexData->vertices [vertex + 6] = (cxf32) j / (cxf32) numSlices;
-      vertexData->vertices [vertex + 7] = (cxf32) (i - 1) / (cxf32) (numParallels - 1);
+      vertexData->vertices [vertex + 7] = (cxf32) i / (cxf32) numParallels;
 #endif      
     }
   }

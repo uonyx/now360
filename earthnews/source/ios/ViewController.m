@@ -106,7 +106,7 @@
 
   [EAGLContext setCurrentContext:self.context];
   
-  app_initialise ((int) view.bounds.size.width, (int) view.bounds.size.height);
+  app_init ((int) view.bounds.size.width, (int) view.bounds.size.height);
   app_update ();
 }
 
@@ -121,7 +121,7 @@
   [EAGLContext setCurrentContext:self.context];
   
   // applicattion deinitialise
-  app_deinitialise ();
+  app_deinit ();
   
   if ([EAGLContext currentContext] == self.context)
   {
@@ -181,7 +181,7 @@
 
 - (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (1, "touchesBegan [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesBegan [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
@@ -203,7 +203,7 @@
 
 - (void) touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (1, "touchesEnded [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesEnded [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
@@ -225,7 +225,7 @@
 
 - (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (1, "touchesMoved [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesMoved [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
@@ -251,7 +251,7 @@
 
 - (void) touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (1, "touchesCancelled [%d]", [[event allTouches] count]);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesCancelled [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];

@@ -58,7 +58,6 @@ static CX_INLINE void cx_vec4_add (cx_vec4 * CX_RESTRICT v_out, const cx_vec4 * 
 static CX_INLINE void cx_vec4_sub (cx_vec4 * CX_RESTRICT v_out, const cx_vec4 * CX_RESTRICT v0, const cx_vec4 * CX_RESTRICT v1);
 static CX_INLINE void cx_vec4_cross (cx_vec4 * CX_RESTRICT v_out, const cx_vec4 * CX_RESTRICT v0, const cx_vec4 * CX_RESTRICT v1);
 static CX_INLINE cxf32 cx_vec4_dot (const cx_vec4 * CX_RESTRICT v0, const cx_vec4 * CX_RESTRICT v1);
-//static CX_INLINE bool cx_vec4_normalize (const cx_vec4 * CX_RESTRICT v, cx_vec4 * CX_RESTRICT v_out);
 static CX_INLINE void cx_vec4_normalize (cx_vec4 *v);
 static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 * CX_RESTRICT v);
 static CX_INLINE cxf32 cx_vec4_lengthSqr (const cx_vec4 * CX_RESTRICT v);
@@ -166,7 +165,6 @@ static CX_INLINE void cx_vec4_sub (cx_vec4 * CX_RESTRICT v_out, const cx_vec4 * 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//static CX_INLINE bool cx_vec4_normalize (const cx_vec4 * CX_RESTRICT v, cx_vec4 * CX_RESTRICT v_out)
 static CX_INLINE void cx_vec4_normalize (cx_vec4 *v)
 {
   cxf32 len = cx_vec4_length (v);
