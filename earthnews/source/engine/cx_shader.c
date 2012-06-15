@@ -442,7 +442,7 @@ void cx_shader_use (const cx_shader *shader)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_write_to_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, cx_shader_datatype type, void *data)
+void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, cx_shader_datatype type, void *data)
 {
   CX_ASSERT (shader);
   CX_ASSERT ((uniform > CX_SHADER_UNIFORM_INVALID) && (uniform < CX_NUM_SHADER_UNIFORMS));
@@ -452,14 +452,40 @@ void cx_shader_write_to_uniform (const cx_shader *shader, enum cx_shader_uniform
  
   switch (type) 
   {
-    case CX_SHADER_DATATYPE_VECTOR3:   { glUniform3fv (location, 1, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR4:   { glUniform4fv (location, 1, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX3X3: { glUniformMatrix3fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX4X4: { glUniformMatrix4fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_FLOAT:      { glUniform1f  (location, *(float *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR2:    { glUniform2fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR3:    { glUniform3fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR4:    { glUniform4fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_MATRIX3X3:  { glUniformMatrix3fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_MATRIX4X4:  { glUniformMatrix4fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
     default: { break; }
   }
   
   cx_graphics_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_set_uniform_2 (const cx_shader *shader, const char *uniformName, cx_shader_datatype type, void *data)
+{
+  CX_ASSERT (shader);
+  CX_ASSERT (uniformName);
+  
+  GLint location = glGetUniformLocation (shader->program, uniformName);
+  CX_ASSERT (location >= 0);
+  
+  switch (type) 
+  {
+    case CX_SHADER_DATATYPE_FLOAT:      { glUniform1f  (location, *(float *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR2:    { glUniform2fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR3:    { glUniform3fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_VECTOR4:    { glUniform4fv (location, 1, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_MATRIX3X3:  { glUniformMatrix3fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
+    case CX_SHADER_DATATYPE_MATRIX4X4:  { glUniformMatrix4fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
+    default: { break; }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

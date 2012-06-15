@@ -182,7 +182,7 @@ void cx_graphics_set_blend_mode (cx_graphics_blend_mode src, cx_graphics_blend_m
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_graphics_activate_renderstate (cx_graphics_renderstate renderstate)
+void cx_graphics_set_renderstate (cx_graphics_renderstate renderstate)
 {
   //CX_ASSERT (renderstate != CX_GRAPHICS_RENDER_STATE_NONE);
   

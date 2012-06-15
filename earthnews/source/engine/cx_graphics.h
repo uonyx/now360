@@ -96,7 +96,7 @@ void cx_graphics_set_blend_mode (cx_graphics_blend_mode src, cx_graphics_blend_m
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void cx_graphics_get_renderstate (cx_graphics_renderstate *renderstate);
-void cx_graphics_activate_renderstate (cx_graphics_renderstate renderstate);
+void cx_graphics_set_renderstate (cx_graphics_renderstate renderstate);
 void cx_graphics_unbind_all_buffers (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,6 +105,7 @@ void cx_graphics_unbind_all_buffers (void);
 
 void cx_graphics_set_transform (cx_graphics_transform transform, const cx_mat4x4 *matrix);
 void cx_graphics_get_transform (cx_graphics_transform transform, cx_mat4x4 *matrix);
+//cx_mat4x4 *cx_graphics_get_transform (cx_graphics_transform transform);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

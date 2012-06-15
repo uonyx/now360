@@ -47,9 +47,10 @@ typedef union cx_mat4x4 cx_mat4x4;
 
 static CX_INLINE void cx_mat4x4_identity (cx_mat4x4 *m);
 static CX_INLINE void cx_mat4x4_zero (cx_mat4x4 *m);
-static CX_INLINE void cx_mat4x4_set (cx_mat4x4 * CX_RESTRICT m, cxf32 f16 [16]);
+static CX_INLINE void cx_mat4x4_set (cx_mat4x4 *m, cxf32 f16 [16]);
+static CX_INLINE void cx_mat4x4_set_mat3x3 (cx_mat4x4 *m44, const cx_mat3x3 *m33);
+static CX_INLINE void cx_mat4x4_get_mat3x3 (cx_mat3x3 *m33, const cx_mat4x4 *m44);
 static CX_INLINE void cx_mat4x4_transpose (cx_mat4x4 * CX_RESTRICT t, const cx_mat4x4 * CX_RESTRICT m);
-static CX_INLINE void cx_mat4x4_get_mat3x3 (cx_mat3x3 *m33, const cx_mat4x4 * CX_RESTRICT m44);
 
 static CX_INLINE void cx_mat4x4_set_column (cx_mat4x4 *m, cxi32 index, const cx_vec4 *col);
 static CX_INLINE void cx_mat4x4_get_column (const cx_mat4x4 *m, cxi32 index, cx_vec4 *col);
@@ -73,6 +74,8 @@ static CX_INLINE void cx_mat4x4_perspective (cx_mat4x4 *m, cxf32 fov, cxf32 aspe
 static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cxf32 top, cxf32 bottom, cxf32 near, cxf32 far);
 static CX_INLINE void cx_mat4x4_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_vec4 * CX_RESTRICT target, const cx_vec4 * CX_RESTRICT updir);
 
+static CX_INLINE cxf32 cx_mat4x4_inverse (cx_mat4x4 * CX_RESTRICT i, const cx_mat4x4 * CX_RESTRICT m);
+static CX_INLINE bool cx_mat4x4_validate (const cx_mat4x4 *m);
 static CX_INLINE void cx_mat4x4_string (char *destBuffer, cxu32 destbufferSize, const cx_mat4x4 *m);
 
 // - determinant? projection (0) or reflection (<0)
@@ -145,7 +148,7 @@ static CX_INLINE void cx_mat4x4_zero (cx_mat4x4 *m)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static CX_INLINE void cx_mat4x4_set (cx_mat4x4 * CX_RESTRICT m, cxf32 f16 [16])
+static CX_INLINE void cx_mat4x4_set (cx_mat4x4 *m, cxf32 f16 [16])
 {
   CX_ASSERT (m);
   
@@ -209,7 +212,27 @@ static CX_INLINE void cx_mat4x4_transpose (cx_mat4x4 * CX_RESTRICT t, const cx_m
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static CX_INLINE void cx_mat4x4_get_mat3x3 (cx_mat3x3 *m33, const cx_mat4x4 * CX_RESTRICT m44)
+static CX_INLINE void cx_mat4x4_set_mat3x3 (cx_mat4x4 *m44, const cx_mat3x3 *m33)
+{
+  CX_ASSERT (m33);
+  CX_ASSERT (m44);
+  
+  m44->f16 [0] = m33->f9 [0];
+  m44->f16 [1] = m33->f9 [1];
+  m44->f16 [2] = m33->f9 [2];
+  m44->f16 [4] = m33->f9 [3];
+  m44->f16 [5] = m33->f9 [4];
+  m44->f16 [6] = m33->f9 [5];
+  m44->f16 [8] = m33->f9 [6];
+  m44->f16 [9] = m33->f9 [7];
+  m44->f16 [10] = m33->f9 [8];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static CX_INLINE void cx_mat4x4_get_mat3x3 (cx_mat3x3 *m33, const cx_mat4x4 *m44)
 {
   CX_ASSERT (m33);
   CX_ASSERT (m44);
@@ -946,6 +969,106 @@ static CX_INLINE void cx_mat4x4_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRI
   float ez = cx_vec4_dot (&forward, eye);
   cx_vec4 e = {{ -ex, -ey, -ez, 1.0f }};
   cx_mat4x4_set_column (m, 3, &e);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static CX_INLINE cxf32 cx_mat4x4_inverse (cx_mat4x4 * CX_RESTRICT i, const cx_mat4x4 * CX_RESTRICT m)
+{
+  cxf32 m0 = m->f16 [0];
+  cxf32 m1 = m->f16 [1];
+  cxf32 m2 = m->f16 [2];
+  cxf32 m3 = m->f16 [3];
+  cxf32 m4 = m->f16 [4];
+  cxf32 m5 = m->f16 [5];
+  cxf32 m6 = m->f16 [6];
+  cxf32 m7 = m->f16 [7];
+  cxf32 m8 = m->f16 [8];
+  cxf32 m9 = m->f16 [9];
+  cxf32 m10 = m->f16 [10];
+  cxf32 m11 = m->f16 [11];
+  cxf32 m12 = m->f16 [12];
+  cxf32 m13 = m->f16 [13];
+  cxf32 m14 = m->f16 [14];
+  cxf32 m15 = m->f16 [15];
+  
+  i->f16 [0] =  (m5 * m10 * m15) - (m5 * m11 * m14) - 
+                (m9 * m6 * m15) + (m9 * m7 * m14) + 
+                (m13 * m6 * m11) - (m13 * m7 * m10);
+  i->f16 [4] =  (-m4 * m10 * m15) + (m4 * m11 * m14) + 
+                (m8 * m6 * m15) - (m8 * m7 * m14) - 
+                (m12 * m6 * m11) + (m12 * m7 * m10);
+  i->f16 [8] =  (m4 * m9 * m15) - (m4 * m11 * m13) - 
+                (m8 * m5 * m15) + (m8 * m7 * m13) + 
+                (m12 * m5 * m11) - (m12 * m7 * m9);
+  i->f16 [12] = (-m4 * m9 * m14) + (m4 * m10 * m13) + 
+                (m8 * m5 * m14) - (m8 * m6 * m13) - 
+                (m12 * m5 * m10) + (m12 * m6 * m9);
+  i->f16 [1] =  (-m1 * m10 * m15) + (m1 * m11 * m14) + 
+                (m9 * m2 * m15) - (m9 * m3 * m14) - 
+                (m13 * m2 * m11) + (m13 * m3 * m10);
+  i->f16 [5] =  (m0 * m10 * m15) - (m0 * m11 * m14) -
+                (m8 * m2 * m15) + (m8 * m3 * m14) +
+                (m12 * m2 * m11) - (m12 * m3 * m10);
+  i->f16 [9] =  (-m0 * m9 * m15) + (m0 * m11 * m13) +
+                (m8 * m1 * m15) - (m8 * m3 * m13) -
+                (m12 * m1 * m11) + (m12 * m3 * m9);
+  i->f16 [13] = (m0 * m9 * m14) - (m0 * m10 * m13) -
+                (m8 * m1 * m14) + (m8 * m2 * m13) +
+                (m12 * m1 * m10) - (m12 * m2 * m9);
+  i->f16 [2] =  (m1 * m6 * m15) - (m1 * m7 * m14) -
+                (m5 * m2 * m15) + (m5 * m3 * m14) +
+                (m13 * m2 * m7) - (m13 * m3 * m6);
+  i->f16 [6] =  (-m0 * m6 * m15) + (m0 * m7 * m14) +
+                (m4 * m2 * m15) - (m4 * m3 * m14) -
+                (m12 * m2 * m7) + (m12 * m3 * m6);
+  i->f16 [10] = (m0 * m5 * m15) - (m0 * m7 * m13) -
+                (m4 * m1 * m15) + (m4 * m3 * m13) +
+                (m12 * m1 * m7) - (m12 * m3 * m5);
+  i->f16 [14] = (-m0 * m5 * m14) + (m0 * m6 * m13) +
+                (m4 * m1 * m14) - (m4 * m2 * m13) -
+                (m12 * m1 * m6) + (m12 * m2 * m5);
+  i->f16 [3] =  (-m1 * m6 * m11) + (m1 * m7 * m10) +
+                (m4 * m2 * m11) - (m4 * m3 * m10) -
+                (m8 * m2 * m7) + (m8 * m3 * m6);
+  i->f16 [7] =  (m0 * m6 * m11) - (m0 * m7 * m10) -
+                (m4 * m2 * m11) + (m4 * m3 * m10) +
+                (m8 * m2 * m7) - (m8 * m3 * m6);
+  i->f16 [11] = (-m0 * m5 * m11) + (m0 * m7 * m9) +
+                (m4 * m1 * m11) - (m4 * m3 * m9) -
+                (m8 * m1 * m7) + (m8 * m3 * m5);
+  i->f16 [15] = (m0 * m5 * m10) - (m0 * m6 * m9) -
+                (m4 * m1 * m10) + (m4 * m2 * m9) +
+                (m8 * m1 * m6) - (m8 * m2 * m5);
+  
+  cxf32 det = (m0 * i->f16 [0]) + (m1 * i->f16 [4]) + (m2 * i->f16 [8]) + (m3 * i->f16 [12]);
+  
+  if (det != 0.0f)
+  {
+    cxf32 invDet = 1.0f / det;
+    
+    cx_mat4x4_mul_scalar (i, i, invDet);
+  }
+  
+  return det;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static CX_INLINE bool cx_mat4x4_validate (const cx_mat4x4 *m)
+{
+  bool valid = true;
+  
+  for (cxu8 i = 0; i < 16; ++i)
+  {
+    valid &= cx_validatef (m->f16 [i]);
+  }
+  
+  return valid;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

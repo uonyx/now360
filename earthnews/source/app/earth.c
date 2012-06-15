@@ -12,30 +12,35 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float longitude, float radius, int slices, int parallels)
+static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float longitude, float radius, int slices, int parallels, cx_vec4 *n)
 {
   // convert lat/long to texture coords;
   
   float tx = (longitude + 180.0f) / 360.0f;
   float ty = 1.0f - ((latitude + 90.0f) / 180.0f);
   
-  CX_REFERENCE_UNUSED_VARIABLE (tx);
-  CX_REFERENCE_UNUSED_VARIABLE (ty);
-  
   // convert texture coords to sphere slices/parallels coords;
   
-  float j = tx * (float) slices;
   float i = ty * (float) parallels;
+  float j = tx * (float) slices;
   
-  CX_REFERENCE_UNUSED_VARIABLE (i);
-  CX_REFERENCE_UNUSED_VARIABLE (j);
+  // convert slices/parallels to world coords
   
-  // conver slices/parallels to world coords
   cxf32 angleStep = (2.0f * CX_PI) / (float) slices;
   
   cxf32 a0 = cx_sin (angleStep * i) * cx_sin (angleStep * j);
   cxf32 a1 = cx_cos (angleStep * i);
   cxf32 a2 = cx_sin (angleStep * i) * cx_cos (angleStep * j);
+  
+  if (n)
+  {
+    n->x = a0;
+    n->y = 0.0f;
+    n->z = a2;
+    n->w = 0.0f;
+    
+    cx_vec4_normalize (n);
+  }
   
   world->x = radius * a0;
   world->y = radius * a1;
@@ -68,16 +73,17 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
     
     data = (struct earth_data_t *) cx_malloc (sizeof (struct earth_data_t));
     
-    unsigned int citycount = root->u.array.length;
+    unsigned int count = root->u.array.length;
     
-    data->citycount = citycount;
-    data->location = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * citycount);
-    data->names = (const char **) cx_malloc (sizeof (char *) * citycount);
-    data->newsFeeds = (const char **) cx_malloc (sizeof (char *) * citycount);
-    data->weatherFeeds = (const char **) cx_malloc (sizeof (char *) * citycount);
+    data->count = count;
+    data->location = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
+    data->normal = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
+    data->names = (const char **) cx_malloc (sizeof (char *) * count);
+    data->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
+    data->weatherFeeds = (const char **) cx_malloc (sizeof (char *) * count);
     
     unsigned int i;
-    for (i = 0; i < citycount; ++i)
+    for (i = 0; i < count; ++i)
     {
       json_value *value = root->u.array.values [i];
       CX_ASSERT (value->type == json_object);
@@ -119,8 +125,9 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
           
           float lat = (float) v->u.object.values [0].value->u.dbl;
           float lon = (float) v->u.object.values [1].value->u.dbl;
+          float r = radius + (radius * 0.01f); // slightly extend radius (for point sprite rendering)
           
-          earth_convert_dd_to_world (&data->location [i], lat, lon, radius, slices, parallels);
+          earth_convert_dd_to_world (&data->location [i], lat, lon, r, slices, parallels, &data->normal [i]);
         }
       }
     }  
@@ -195,7 +202,17 @@ void earth_destroy (earth_t *earth)
 
 void earth_render (earth_t *earth)
 {
+  CX_ASSERT (earth);
   
+  int locCount = earth->data->count;
+  
+  
+  // draw points
+  int i;
+  for (i = 0; i < locCount; ++i)
+  {
+    
+  }
 }
 
 

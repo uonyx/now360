@@ -7,13 +7,13 @@
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/app.c"
-         timestampString = "358990477.909282"
+         filePath = "earthnews/source/engine/cx_utility.c"
+         timestampString = "361411935.272344"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "112"
-         endingLineNumber = "112"
-         landmarkName = "app_init()"
+         startingLineNumber = "101"
+         endingLineNumber = "101"
+         landmarkName = "cx_util_screen_space_to_world_space()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -21,12 +21,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/app.c"
-         timestampString = "359076703.151982"
+         timestampString = "361411935.272344"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "530"
-         endingLineNumber = "530"
-         landmarkName = "app_render_text_3d()"
+         startingLineNumber = "341"
+         endingLineNumber = "341"
+         landmarkName = "app_input_touch_ended()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -34,12 +34,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/app.c"
-         timestampString = "359076703.151982"
+         timestampString = "361411935.272344"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "536"
-         endingLineNumber = "536"
-         landmarkName = "app_render_text_3d()"
+         startingLineNumber = "337"
+         endingLineNumber = "337"
+         landmarkName = "app_input_touch_ended()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -47,38 +47,51 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/app.c"
-         timestampString = "359076703.151982"
+         timestampString = "361411935.272344"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "453"
-         endingLineNumber = "453"
-         landmarkName = "get_screen_coordinates()"
+         startingLineNumber = "338"
+         endingLineNumber = "338"
+         landmarkName = "app_input_touch_ended()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "359079046.570152"
+         filePath = "earthnews/source/app/app.c"
+         timestampString = "361411935.272344"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "148"
-         endingLineNumber = "148"
-         landmarkName = "cx_font_render()"
+         startingLineNumber = "386"
+         endingLineNumber = "386"
+         landmarkName = "app_render_earth_city_text()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/cx_font.c"
-         timestampString = "359079188.223384"
+         filePath = "earthnews/source/engine/cx_utility.c"
+         timestampString = "361411935.272344"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "216"
-         endingLineNumber = "216"
-         landmarkName = "cx_font_get_text_width()"
+         startingLineNumber = "125"
+         endingLineNumber = "125"
+         landmarkName = "cx_util_screen_space_to_world_space()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/engine/cx_utility.c"
+         timestampString = "361411935.272344"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "121"
+         endingLineNumber = "121"
+         landmarkName = "cx_util_screen_space_to_world_space()"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

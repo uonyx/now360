@@ -129,7 +129,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   cx_mat4x4 mvp;
   cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
-  cx_shader_write_to_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
@@ -153,8 +153,8 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
     px = px + (tw * 0.5f);
   }
   
-  char c = *text;
-  while (c)
+  char c = 0;
+  while ((c = *text++))
   {
     if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
     {
@@ -190,9 +190,6 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
       glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
       cx_graphics_assert_no_errors ();
     }
-    
-    ++text;
-    c = *text;
   }
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
@@ -209,11 +206,9 @@ cxf32 cx_font_get_text_width (const cx_font *font, const char *text)
   CX_ASSERT (fontImpl);
   
   cxf32 sx = fontImpl->scaleX;
-  
   cxf32 width = 0.0f;
-  char c = *text;
-  
-  while (c)
+  char c = 0;
+  while ((c = *text++))
   {
     if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
     {

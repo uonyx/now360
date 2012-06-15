@@ -34,7 +34,8 @@ struct earth_data_t
   const char **newsFeeds;
   const char **weatherFeeds;
   cx_vec4 *location;
-  unsigned int citycount;
+  cx_vec4 *normal;
+  unsigned int count;
 };
 
 struct earth_t
@@ -51,7 +52,6 @@ typedef struct earth_t earth_t;
 
 earth_t *earth_create (const char *filename, float radius, int slices, int parallels);
 void earth_destroy (earth_t *earth);
-
 void earth_render (earth_t *earth);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

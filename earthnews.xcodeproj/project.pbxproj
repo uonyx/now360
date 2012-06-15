@@ -110,7 +110,7 @@
 
 /* Begin PBXFileReference section */
 		310930291551FD9000D5AFCD /* earth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = earth.c; sourceTree = "<group>"; };
-		3109302C1551FDAA00D5AFCD /* earth.h */ = {isa = PBXFileReference; path = earth.h; sourceTree = "<group>"; };
+		3109302C1551FDAA00D5AFCD /* earth.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = earth.h; sourceTree = "<group>"; };
 		3109302D15532E7800D5AFCD /* http.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http.h; sourceTree = "<group>"; };
 		3109302E15532E8900D5AFCD /* http.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = http.m; sourceTree = "<group>"; };
 		316FA9F31517BB4D00CC39F2 /* app.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = app.c; sourceTree = "<group>"; };

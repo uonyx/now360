@@ -145,13 +145,13 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
     glBufferData (GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof (cxu16), vertexData->indices, GL_STATIC_DRAW);
     
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [0]);
-    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_POSITION], 3, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
+    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_POSITION], CX_VERTEX_POSITION_SIZE, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
     glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_POSITION]);
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [1]);
-    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_NORMAL], 3, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
+    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_NORMAL], CX_VERTEX_NORMAL_SIZE, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
     glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_NORMAL]);
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [2]);
-    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
+    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_TEXCOORD], CX_VERTEX_TEXCOORD_SIZE, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
     glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_TEXCOORD]);
 
   #endif
