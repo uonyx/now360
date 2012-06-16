@@ -51,6 +51,7 @@ static CX_INLINE void cx_mat4x4_set (cx_mat4x4 *m, cxf32 f16 [16]);
 static CX_INLINE void cx_mat4x4_set_mat3x3 (cx_mat4x4 *m44, const cx_mat3x3 *m33);
 static CX_INLINE void cx_mat4x4_get_mat3x3 (cx_mat3x3 *m33, const cx_mat4x4 *m44);
 static CX_INLINE void cx_mat4x4_transpose (cx_mat4x4 * CX_RESTRICT t, const cx_mat4x4 * CX_RESTRICT m);
+static CX_INLINE cxf32 cx_mat4x4_inverse (cx_mat4x4 * CX_RESTRICT i, const cx_mat4x4 * CX_RESTRICT m);
 
 static CX_INLINE void cx_mat4x4_set_column (cx_mat4x4 *m, cxi32 index, const cx_vec4 *col);
 static CX_INLINE void cx_mat4x4_get_column (const cx_mat4x4 *m, cxi32 index, cx_vec4 *col);
@@ -72,9 +73,6 @@ static CX_INLINE void cx_mat4x4_rotation_axis_z (cx_mat4x4 *m, cxf32 rad);
 
 static CX_INLINE void cx_mat4x4_perspective (cx_mat4x4 *m, cxf32 fov, cxf32 aspectRatio, cxf32 near, cxf32 far);
 static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cxf32 top, cxf32 bottom, cxf32 near, cxf32 far);
-static CX_INLINE void cx_mat4x4_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_vec4 * CX_RESTRICT target, const cx_vec4 * CX_RESTRICT updir);
-
-static CX_INLINE cxf32 cx_mat4x4_inverse (cx_mat4x4 * CX_RESTRICT i, const cx_mat4x4 * CX_RESTRICT m);
 static CX_INLINE bool cx_mat4x4_validate (const cx_mat4x4 *m);
 static CX_INLINE void cx_mat4x4_string (char *destBuffer, cxu32 destbufferSize, const cx_mat4x4 *m);
 
@@ -189,22 +187,39 @@ static CX_INLINE void cx_mat4x4_transpose (cx_mat4x4 * CX_RESTRICT t, const cx_m
 #ifdef CX_SIMD_NEON
   t->_q128x4 = vld4q_f32 (m->f16);
 #else
-  t->f16 [0] = m->f16 [0];
-  t->f16 [1] = m->f16 [4];
-  t->f16 [2] = m->f16 [8];
-  t->f16 [3] = m->f16 [12];
-  t->f16 [4] = m->f16 [1];
-  t->f16 [5] = m->f16 [5];
-  t->f16 [6] = m->f16 [9];
-  t->f16 [7] = m->f16 [13];
-  t->f16 [8] = m->f16 [2];
-  t->f16 [9] = m->f16 [6];
-  t->f16 [10] = m->f16 [10];
-  t->f16 [11] = m->f16 [14];
-  t->f16 [12] = m->f16 [3];
-  t->f16 [13] = m->f16 [7];
-  t->f16 [14] = m->f16 [11];
-  t->f16 [15] = m->f16 [15];
+  cxf32 m0  = m->f16 [0];
+  cxf32 m1  = m->f16 [1];
+  cxf32 m2  = m->f16 [2];
+  cxf32 m3  = m->f16 [3];
+  cxf32 m4  = m->f16 [4];
+  cxf32 m5  = m->f16 [5];
+  cxf32 m6  = m->f16 [6];
+  cxf32 m7  = m->f16 [7];
+  cxf32 m8  = m->f16 [8];
+  cxf32 m9  = m->f16 [9];
+  cxf32 m10 = m->f16 [10];
+  cxf32 m11 = m->f16 [11];
+  cxf32 m12 = m->f16 [12];
+  cxf32 m13 = m->f16 [13];
+  cxf32 m14 = m->f16 [14];
+  cxf32 m15 = m->f16 [15];
+  
+  t->f16 [0] = m0;
+  t->f16 [1] = m4;
+  t->f16 [2] = m8;
+  t->f16 [3] = m12;
+  t->f16 [4] = m1;
+  t->f16 [5] = m5;
+  t->f16 [6] = m9;
+  t->f16 [7] = m13;
+  t->f16 [8] = m2;
+  t->f16 [9] = m6;
+  t->f16 [10] = m10;
+  t->f16 [11] = m14;
+  t->f16 [12] = m3;
+  t->f16 [13] = m7;
+  t->f16 [14] = m11;
+  t->f16 [15] = m15;
 #endif
 }
 
@@ -924,51 +939,6 @@ static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cx
   m->f16 [13] = -tab / tsb;
   m->f16 [14] = -fan / fsn;
   m->f16 [15] = 1.0f;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static CX_INLINE void cx_mat4x4_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_vec4 * CX_RESTRICT target, const cx_vec4 * CX_RESTRICT updir)
-{
-  CX_ASSERT (m);
-  CX_ASSERT (eye);
-  CX_ASSERT (target);
-  CX_ASSERT (updir);
-  
-  CX_ASSERT (eye->w == 1.0f);
-  CX_ASSERT (target->w == 1.0f);
-  CX_ASSERT (updir->w == 0.0f);
-  
-  //////////////////////////////////
-  // build rotation matrix
-  //////////////////////////////////
-  
-  cx_vec4 side, up, forward;
-  cx_vec4 i = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
-  
-  cx_vec4_sub (&forward, target, eye);
-  cx_vec4_normalize (&forward);
-  cx_vec4_cross (&side, &forward, updir);
-  cx_vec4_normalize (&side);
-  cx_vec4_cross (&up, &side, &forward);
-  
-  cx_vec4_negate (&forward); // opengl negate z;
-  
-  // build view to world matrix by transforming rotation and translation
-  // inverting (transpose) rotation matrix
-  cx_mat4x4_set_row (m, 0, &side);
-  cx_mat4x4_set_row (m, 1, &up);
-  cx_mat4x4_set_row (m, 2, &forward);
-  cx_mat4x4_set_row (m, 3, &i);
-  
-  // transform translation 
-  float ex = cx_vec4_dot (&side, eye);
-  float ey = cx_vec4_dot (&up, eye);
-  float ez = cx_vec4_dot (&forward, eye);
-  cx_vec4 e = {{ -ex, -ey, -ez, 1.0f }};
-  cx_mat4x4_set_column (m, 3, &e);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

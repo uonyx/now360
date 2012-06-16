@@ -146,3 +146,49 @@ void cx_util_screen_space_to_world_space (float width, float height, const cx_ma
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_vec4 * CX_RESTRICT target, 
+                      const cx_vec4 * CX_RESTRICT updir)
+{
+  CX_ASSERT (m);
+  CX_ASSERT (eye);
+  CX_ASSERT (target);
+  CX_ASSERT (updir);
+  
+  CX_ASSERT (eye->w == 1.0f);
+  CX_ASSERT (target->w == 1.0f);
+  CX_ASSERT (updir->w == 0.0f);
+  
+  //////////////////////////////////
+  // build rotation matrix
+  //////////////////////////////////
+  
+  cx_vec4 side, up, forward;
+  cx_vec4 i = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
+  
+  cx_vec4_sub (&forward, target, eye);
+  cx_vec4_normalize (&forward);
+  cx_vec4_cross (&side, &forward, updir);
+  cx_vec4_normalize (&side);
+  cx_vec4_cross (&up, &side, &forward);
+  
+  cx_vec4_negate (&forward); // opengl negate z;
+  
+  // build view to world matrix by transforming rotation and translation
+  // inverting (transpose) rotation matrix
+  cx_mat4x4_set_row (m, 0, &side);
+  cx_mat4x4_set_row (m, 1, &up);
+  cx_mat4x4_set_row (m, 2, &forward);
+  cx_mat4x4_set_row (m, 3, &i);
+  
+  // transform translation 
+  float ex = cx_vec4_dot (&side, eye);
+  float ey = cx_vec4_dot (&up, eye);
+  float ez = cx_vec4_dot (&forward, eye);
+  cx_vec4 e = {{ -ex, -ey, -ez, 1.0f }};
+  cx_mat4x4_set_column (m, 3, &e);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////

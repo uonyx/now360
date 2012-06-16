@@ -76,7 +76,7 @@ void app_init (int width, int height)
   http_init ();
   ui_init ();
   
-  camera_init (&s_camera, 65.0f);
+  camera_init (&s_camera, (float) width / (float) height, 65.0f);
   
   s_earth = earth_create ("data/earth_data.json", 1.0f, 64, 32);
   
@@ -159,10 +159,8 @@ void app_view_update (float deltaTime)
   cx_vec4_set (&s_camera.position, 0.0f, 0.0f, 3.0f, 1.0f);
   cx_vec4_set (&s_camera.target, 0.0f, 0.0f, 0.0f, 1.0f);
   
-  // update view and projetion matrix
-  cx_mat4x4 projmatrix;
-  cx_mat4x4_perspective (&projmatrix, cx_rad (s_camera.fov), aspectRatio, DEFAULT_PERSPECTIVE_PROJECTION_NEAR, DEFAULT_PERSPECTIVE_PROJECTION_FAR);
-  
+  // update camera (view and projetion matrix)
+
   // set rotation
   cx_vec4 center = {{0.0f, 0.0f, 0.0f, 1.0f}};
   
@@ -177,6 +175,10 @@ void app_view_update (float deltaTime)
    camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotAngle), &axis);
   */
   
+  // get projection matrix
+  cx_mat4x4 projmatrix;
+  camera_get_projection_matrix (&s_camera, &projmatrix);
+  
   // get view matrix
   cx_mat4x4 viewmatrix;
   camera_get_view_matrix (&s_camera, &viewmatrix);
@@ -187,7 +189,7 @@ void app_view_update (float deltaTime)
   
   cx_mat3x3_identity (&s_normalMatrix); 
   
-  camera_update (&s_camera, 0.0f);
+  camera_update (&s_camera, deltaTime);
   
   cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_P, &projmatrix);
   cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MV, &viewmatrix);
@@ -232,6 +234,60 @@ void app_view_update (float deltaTime)
 
 void app_input_touch_began (float x, float y)
 {
+  // do ray test
+  float screenWidth = cx_graphics_get_screen_width ();
+  float screenHeight = cx_graphics_get_screen_height ();
+ 
+  cx_mat4x4 view, proj;
+  
+  camera_get_projection_matrix (&s_camera, &proj);
+  camera_get_view_matrix (&s_camera, &view);
+  
+  cx_vec2 screen = {{ x * screenWidth, y * screenHeight}};
+  
+  // get ray
+  
+  cx_vec4 rayOrigin, rayDir;
+  
+  cx_util_screen_space_to_world_space (screenWidth, screenHeight, &proj, &view, &screen, &rayDir, 1.0f, true);
+  
+  rayOrigin = s_camera.position;
+  
+  cx_vec4_normalize (&rayDir);
+  
+  // detect if ray and point normal are on a collision course
+  // get closest distance between point and distance and check if less than bounding circle 
+  
+  cx_vec4 normal, position, toPos;
+  int i, c = s_earth->data->count;
+  
+  for (i = 0; i < c; ++i)
+  {
+    const char *city = s_earth->data->names [i];
+    
+    normal = s_earth->data->normal [i];
+    position = s_earth->data->location [i];
+    
+    float dotp = cx_vec4_dot (&normal, &rayDir);
+    if (dotp < 0.0f)
+    {
+      cx_vec4 intersectpt, tmp;
+      
+      cx_vec4_sub (&tmp, &position, &rayOrigin);
+      float t = (cx_vec4_dot (&normal, &tmp)) / dotp;
+      cx_vec4_mul (&tmp, t, &rayDir);
+      cx_vec4_add (&intersectpt, &rayOrigin, &tmp);
+      
+      cx_vec4_sub (&toPos, &position, &intersectpt);
+      float distSqr = cx_vec4_lengthSqr (&toPos);
+      
+      if (distSqr <= (0.025f * 0.025f))
+      {
+        CX_DEBUGLOG_CONSOLE (1, "%s", city);
+        return;
+      } 
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -279,70 +335,6 @@ void app_input_touch_ended (float x, float y)
   s_rotationAccelX = 0.0f;
   s_rotationAccelY = 0.0f;
   s_rotAccel = 0.0f;
-  
-  // do ray test
-  float screenWidth = cx_graphics_get_screen_width ();
-  float screenHeight = cx_graphics_get_screen_height ();
-  float aspectRatio = screenWidth / screenHeight;
-  
-  cx_mat4x4 view, proj;
-  
-  cx_mat4x4_perspective (&proj, cx_rad (s_camera.fov), aspectRatio, DEFAULT_PERSPECTIVE_PROJECTION_NEAR, DEFAULT_PERSPECTIVE_PROJECTION_FAR);
-  camera_get_view_matrix (&s_camera, &view);
-  
-  cx_vec2 screen = {{ x * screenWidth, y * screenHeight}};
-  
-  // get ray
-  
-  cx_vec4 rayOrigin, rayDir;
-  
-  cx_util_screen_space_to_world_space (screenWidth, screenHeight, &proj, &view, &screen, &rayDir, 1.0f, true);
-  
-  rayOrigin = s_camera.position;
-  
-  cx_vec4_normalize (&rayDir);
-  
-  // detect if ray and point normal are on a collision course
-  // get closest distance between point and distance and check if less than bounding circle 
-  
-  int i, c = s_earth->data->count;
-  
-  cx_vec4 normal, position, toPos;
-  
-  CX_DEBUGLOG_CONSOLE (1, "======================================");
-  
-  cx_vec4_normalize (&rayDir);
-  
-  for (i = 0; i < c; ++i)
-  {
-    const char *city = s_earth->data->names [i];
-    
-    normal = s_earth->data->normal [i];
-    position = s_earth->data->location [i];
-    
-    float dotp = cx_vec4_dot (&normal, &rayDir);
-    if (dotp < 0.0f)
-    {      
-      CX_DEBUGLOG_CONSOLE(1, "%s", city);
-      
-      cx_vec4 intersectpt, tmp;
-      cx_vec4_sub (&tmp, &position, &rayOrigin);
-      float t = (cx_vec4_dot (&normal, &tmp)) / dotp;
-      
-      cx_vec4_mul (&tmp, t, &rayDir);
-      cx_vec4_add (&intersectpt, &rayOrigin, &tmp);
-      cx_vec4_sub (&toPos, &position, &intersectpt);
-      
-      float distSqr = cx_vec4_lengthSqr (&toPos);
-      
-      if (distSqr <= (0.025f * 0.025f))
-      {
-        CX_DEBUG_BREAK_ABLE;
-        (void)city;
-        return;
-      } 
-    }
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -366,11 +358,10 @@ static void app_render_earth_city_text (void)
 {
   float screenWidth = cx_graphics_get_screen_width ();
   float screenHeight = cx_graphics_get_screen_height ();
-  float aspectRatio = screenWidth / screenHeight;
   
   cx_mat4x4 view, proj;
   
-  cx_mat4x4_perspective (&proj, cx_rad (s_camera.fov), aspectRatio, DEFAULT_PERSPECTIVE_PROJECTION_NEAR, DEFAULT_PERSPECTIVE_PROJECTION_FAR);
+  camera_get_projection_matrix (&s_camera, &proj);
   camera_get_view_matrix (&s_camera, &view);
   
   // for each point, get 2d point
@@ -387,8 +378,6 @@ static void app_render_earth_city_text (void)
 
     cx_font_set_scale (s_font, scale, scale);
     cx_font_render (s_font, text, screen.x, screen.y, CX_FONT_ALIGNMENT_CENTRE_X, cx_colour_yellow ());
-    
-    CX_DEBUG_BREAK_ABLE;    
   }
 }
 

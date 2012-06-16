@@ -124,10 +124,13 @@ static CX_INLINE void cx_mat3x3_transpose (cx_mat3x3 * CX_RESTRICT t, const cx_m
 
 static CX_INLINE cxf32 cx_mat3x3_determinant (const cx_mat3x3 *m)
 {
+  cxf32 m0 = m->f9 [0];
   cxf32 m1 = m->f9 [1];
   cxf32 m2 = m->f9 [2];
+  cxf32 m3 = m->f9 [3];
   cxf32 m4 = m->f9 [4];
   cxf32 m5 = m->f9 [5];
+  cxf32 m6 = m->f9 [6];
   cxf32 m7 = m->f9 [7];
   cxf32 m8 = m->f9 [8];
   
@@ -135,7 +138,7 @@ static CX_INLINE cxf32 cx_mat3x3_determinant (const cx_mat3x3 *m)
   cxf32 cofactor3 = (m2 * m7) - (m1 * m8);
   cxf32 cofactor6 = (m1 * m5) - (m2 * m4);
   
-  cxf32 det = (m->f9 [0] * cofactor0) + (m->f9 [3] * cofactor3) + (m->f9 [6] * cofactor6);
+  cxf32 det = (m0 * cofactor0) + (m3 * cofactor3) + (m6 * cofactor6);
   
   return det;
 }
