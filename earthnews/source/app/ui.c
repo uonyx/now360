@@ -8,20 +8,8 @@
 
 #include "ui.h"
 #include "../engine/cx_engine.h"
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct ui_element_t
-{
-  cx_vec2 position;
-  cx_vec2 dimension;
-  cx_colour colour;
-  cx_texture *texture;
-};
-
-typedef struct ui_element_t ui_element_t;
+#include "social.h"
+#include "rss.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,9 +69,78 @@ void ui_render (void)
   float u2 = 1.0f;
   float v2 = 1.0f;
   
-  cx_draw_quad_texture (x1, y1, x2, y2, u1, v1, u2, v2, cx_colour_white(), s_quadTexture);
+  cx_draw_quad_texture2 (x1, y1, x2, y2, u1, v1, u2, v2, cx_colour_white(), s_quadTexture);
   
   cx_font_render (s_font, "Jack and Jill went up the ozone layer", 4.0f, 36.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ui_render_element (const ui_element_t *elem)
+{
+  CX_ASSERT (elem);
+  
+  float x1 = elem->position.x;
+  float y1 = elem->position.y;
+  float x2 = x1 + elem->dimension.x;
+  float y2 = y1 + elem->dimension.y;
+  
+  if (elem->bgTexture)
+  {
+    cx_draw_quad_texture (x1, y1, x2, y2, &elem->bgColour, elem->bgTexture);
+  }
+  else
+  {
+    cx_draw_quad_colour (x1, y1, x2, y2, &elem->bgColour);
+  }
+  
+  if (elem->text && *elem->text)
+  {
+    float tx = 4.0f;
+    float ty = 36.0f;
+    
+    cx_font_render (s_font, elem->text, tx, ty, CX_FONT_ALIGNMENT_DEFAULT, &elem->fgColour);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ui_render_element_twitter_entry (const ui_element_t *elem)
+{
+  CX_ASSERT (elem);
+  
+  float x1 = elem->position.x;
+  float y1 = elem->position.y;
+  float x2 = x1 + elem->dimension.x;
+  float y2 = y1 + elem->dimension.y;
+  
+  if (elem->bgTexture)
+  {
+    cx_draw_quad_texture (x1, y1, x2, y2, &elem->bgColour, elem->bgTexture);
+  }
+  else
+  {
+    cx_draw_quad_colour (x1, y1, x2, y2, &elem->bgColour);
+  }
+  
+  if (elem->text && *elem->text)
+  {
+    //social_twitter_tweet_item_t *twitterItem = (social_twitter_tweet_item_t *) elem->userdata;
+    
+    // username
+    // userhandle
+    // date
+    // text
+
+    //const float xmargin = 12.0f;
+    //const float ymargin = 12.0f;
+    
+    //cx_font_render (s_font, elem->text, tx, ty, CX_FONT_ALIGNMENT_DEFAULT, &elem->fgColour);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

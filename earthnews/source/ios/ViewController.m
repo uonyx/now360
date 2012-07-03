@@ -106,6 +106,13 @@
 
   [EAGLContext setCurrentContext:self.context];
   
+
+  /*
+  NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+  NSString *appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
+  NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+  */
+  
   app_init ((int) view.bounds.size.width, (int) view.bounds.size.height);
   app_update ();
 }

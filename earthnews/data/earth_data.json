@@ -227,7 +227,7 @@
   {
   "name": "Lagos",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "http://weather.lagos.com/feed.xml",
+  "weather": "https://news.google.com/news/feeds?q=nigeria&output=rss",
   "location": {
   "latitude": 6.441158,
   "longitude": 3.417877

@@ -10,6 +10,7 @@
 
 #include "cx_system.h"
 #include "cx_time.h"
+#include "cx_thread.h"
 #include "cx_file.h"
 #include "cx_graphics.h"
 #include "cx_utility.h"

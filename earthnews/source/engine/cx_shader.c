@@ -149,12 +149,12 @@ static bool cx_shader_compile (GLuint *shader, GLenum type, const char *buffer, 
 #endif
     
     glDeleteShader (outShader);
-    return FALSE;
+    return false;
   }
   
   *shader = outShader;
   
-  return TRUE;
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +197,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
 #endif
     
     glDeleteProgram (outProgram);
-    return FALSE;
+    return false;
   }
   
 #if CX_DEBUG
@@ -220,7 +220,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     }
     
     glDeleteProgram (outProgram);
-    return FALSE;
+    return false;
   }
 #endif
   
@@ -236,7 +236,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
   
   *program = outProgram;
   
-  return TRUE;
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -245,24 +245,20 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
 
 static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx_shader *shader)
 {
-  char errorBuffer [512];
-  
   json_settings settings;
   memset (&settings, 0, sizeof(settings));
+  
+  char errorBuffer [512];
+  errorBuffer [0] = '\0';
   
   json_value *root = json_parse_ex (&settings, buffer, bufferSize, errorBuffer, 512);
   
   if (root == NULL)
   {
-    if (strlen (errorBuffer) == 0)
-    {
-      cx_sprintf (errorBuffer, 512, "%s", "Unknown Error");
-    }
-    
     CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, errorBuffer);
-    CX_FATAL_ERROR ("JSON Parse Error: %s");
+    CX_FATAL_ERROR ("JSON Parse Error");
     
-    return FALSE;
+    return false;
   }
 
 #if (CX_SHADER_DEBUG && 0)
@@ -345,7 +341,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
   
   json_value_free (root);
   
-  return TRUE;
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -356,7 +352,7 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
 {
   CX_ASSERT (name != NULL);
   
-  BOOL success = FALSE;
+  bool success = false;
 
   char 
     vertexShaderFilename [CX_FILENAME_MAX], 

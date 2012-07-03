@@ -39,17 +39,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 #define HTTP_MAX_NUM_NSCONN 16
 
-static unsigned int s_transactionIdGen = 0;
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static unsigned int s_transactionIdGen = 0;
 static NSMutableArray *s_nsconnFreeList = nil;
 static NSMutableArray *s_nsconnBusyList = nil;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void http_init (void)
 {
@@ -182,9 +184,6 @@ http_transaction_id http_post (const char *url, const void *postdata, int postda
     }
   }
   
-  //HTTPNSConn *nsconn = [[HTTPNSConn alloc] initWith:tId :callback :userdata];
-  
-  
   HTTPNSConn *nsconn = [s_nsconnFreeList objectAtIndex:0];
   CX_ASSERT (nsconn);
   
@@ -207,11 +206,95 @@ http_transaction_id http_post (const char *url, const void *postdata, int postda
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static bool http_percent_encode_unreserved (unsigned char c)
+{
+  if (((c >= '0') && (c <= '9')) ||
+      ((c >= 'a') && (c <= 'z')) ||
+      ((c >= 'A') && (c <= 'Z')) ||
+      ((c == '-') || (c == '.') || (c == '_') || (c == '~')))
+  {
+    return true;
+  }
+  
+  return false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool http_percent_encode (char *dst, unsigned int dstSize, const char *src)
+{
+  CX_ASSERT (src);
+  CX_ASSERT (dst);
+  CX_ASSERT (dstSize);
+  
+  bool success = true;
+  
+  const char *s = src;
+  char *d = dst;
+  
+  unsigned int srcLength = strlen (s);
+  unsigned int dstLength = 0;
+  
+  memset (dst, 0, dstSize * sizeof (char));
+  
+  while (srcLength--)
+  {
+    unsigned char c = *s;
+    
+    // unreserved characters
+    if (http_percent_encode_unreserved (c))
+    {
+      *d++ = (char) c;
+      dstLength++;
+    }
+    // non-ascii characters (80-ff)
+    else if ((c >= 128) && (c <= 255))
+    {
+      unsigned char utf8Octets [16];
+      int numOctets = cx_str_char_to_utf8_char(utf8Octets, 16, c);
+      
+			for (int i = 0; i < numOctets; i++)
+			{
+				unsigned char utf8c = utf8Octets [i];
+        
+				char enc [16];
+        cx_sprintf (enc, 16, "%%%02x", utf8c);
+        
+        d = cx_strcat (d, dstSize, enc);
+        dstLength += strlen (enc);
+			}
+    }
+    // ascii control characters, reserved characters, unsafe characters
+    else
+    {
+      char enc [16];
+      cx_sprintf (enc, 16, "%%%02x", c);
+    
+      d = cx_strcat (d, dstSize, enc);
+      dstLength += strlen (enc);
+    }
+    
+    if (dstLength >= dstSize)
+    {
+      success = false;
+      break;
+    }
+    
+    s++;
+  }
+  
+  return success;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @implementation HTTPNSConn
 
@@ -267,28 +350,25 @@ http_transaction_id http_post (const char *url, const void *postdata, int postda
 {
   NSMutableData *data = self->respdata;
   
-  if (data && [data length])
+  self->resp.data = [data bytes];
+  self->resp.dataSize = [data length];
+  
+  http_response_callback responseCallback = self->callback;
+  
+  if (responseCallback)
   {
-    http_response_callback responseCallback = self->callback;
-    
-    if (responseCallback)
-    {
-      self->resp.data = [data bytes];
-      self->resp.dataSize = [data length];
-      
-      responseCallback (tId, &self->resp, self->callbackUserdata);
-    }
-    
-    [data resetBytesInRange:NSMakeRange(0, [data length])];
-    [data setLength:0];
-    
-    [self setTId:HTTP_TRANSACTION_ID_INVALID];
-    [self setCallback:NULL];
-    [self setCallbackUserdata:NULL];
-    
-    [s_nsconnBusyList removeObject:self];
-    [s_nsconnFreeList addObject:self];
+    responseCallback (self->tId, &self->resp, self->callbackUserdata);
   }
+  
+  [data resetBytesInRange:NSMakeRange(0, [data length])];
+  [data setLength:0];
+  
+  [self setTId:HTTP_TRANSACTION_ID_INVALID];
+  [self setCallback:NULL];
+  [self setCallbackUserdata:NULL];
+  
+  [s_nsconnBusyList removeObject:self];
+  [s_nsconnFreeList addObject:self];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -300,17 +380,10 @@ http_transaction_id http_post (const char *url, const void *postdata, int postda
   NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;  
   NSInteger statusCode = [httpResponse statusCode];
   
-  self->resp.statusCode = statusCode;
   self->resp.error = HTTP_CONNECTION_OK;
+  self->resp.statusCode = statusCode;
   
-  if (statusCode == 200)
-  {
-  }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (1, "didReceiveResponse: HTTP POST failed: Server Response Status Code [%d]", statusCode);
-  }
-
+  CX_DEBUGLOG_CONSOLE (1, "didReceiveResponse: HTTP request: Server Response Status Code [%d]", statusCode);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -330,7 +403,18 @@ http_transaction_id http_post (const char *url, const void *postdata, int postda
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
   CX_DEBUGLOG_CONSOLE (1, "didFailWithError: Connection error: Internet offline maybe");
+  
   self->resp.error = HTTP_CONNECTION_ERROR;
+  self->resp.statusCode = -1;
+  self->resp.data = NULL;
+  self->resp.dataSize = 0;
+  
+  http_response_callback responseCallback = self->callback;
+  
+  if (responseCallback)
+  {
+    responseCallback (self->tId, &self->resp, self->callbackUserdata);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

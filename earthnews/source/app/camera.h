@@ -39,9 +39,11 @@ typedef struct camera_t camera_t;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void camera_init (camera_t *camera, float aspectRatio, float fov);
 void camera_look_at (camera_t *camera, const cx_vec4 *target);
 void camera_update (camera_t *camera, float deltaTime);
+
+camera_t *camera_create (float aspectRatio, float fov);
+void camera_destroy (camera_t *camera);
 
 void camera_zoom (camera_t *camera, float factor);
 void camera_rotate_view (camera_t *camera, float angle, const cx_vec4 *axis);

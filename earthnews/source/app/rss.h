@@ -1,32 +1,42 @@
 //
-//  cx_draw.h
+//  rss.h
+//  earthnews
 //
-//  Created by Ubaka Onyechi on 08/04/2012.
+//  Created by Ubaka Onyechi on 02/07/2012.
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#ifndef CX_DRAW_H
-#define CX_DRAW_H
+#ifndef EARTHNEWS_RSS_H
+#define EARTHNEWS_RSS_H
+
+#include "../engine/cx_system.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "cx_system.h"
-#include "cx_colour.h"
-#include "cx_texture.h"
+typedef struct rss_feed_item_t
+{
+  const char *title;
+  const char *link;
+  const char *date;
+  struct rss_feed_item_t *next;
+} rss_feed_item_t;
+
+typedef struct rss_feed_t
+{
+  rss_feed_item_t *items;
+  unsigned int lastRefreshTime;
+  
+  bool dataReady;
+} rss_feed_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colour *colour);
-void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colour *colour, const cx_texture *texture);
-void cx_draw_quad_texture2 (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
-                           const cx_colour *colour, const cx_texture *texture);
-
-void cx_draw_points_colour (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colour);
-void cx_draw_point_texture (void);
+void rss_get_feed (rss_feed_t *feed, const char *url);
+void rss_release_feed (rss_feed_t *feed);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

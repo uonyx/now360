@@ -1,74 +1,63 @@
 //
-//  ui.h
+//  social.h
 //  earthnews
 //
-//  Created by Ubaka Onyechi on 09/04/2012.
+//  Created by Ubaka Onyechi on 21/06/2012.
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#ifndef UI_H
-#define UI_H
+#ifndef EARTHNEWS_SOCIAL_H
+#define EARTHNEWS_SOCIAL_H
+
+#include "../engine/cx_system.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "../engine/cx_colour.h"
-#include "../engine/cx_texture.h"
+#define SOCIAL_TWITTER_API_SEARCH_RPP   (15)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct ui_element_t
+typedef struct social_twitter_tweet_item_t
 {
-  cx_vec2 position;
-  cx_vec2 dimension;
-  cx_colour bgColour;
-  cx_colour fgColour;
-  cx_texture *bgTexture;
-  const char *text;
-  void *userdata;
-  struct ui_element_t *next;
-};
+  const char *username;
+  const char *userhandle;
+  const char *tweet;
+  const char *date;
+  struct social_twitter_tweet_item_t *next;
+} social_twitter_tweet_item_t;
 
-struct ui_twitter_element_t
+typedef struct social_twitter_tweets_t
 {
-  struct ui_element_t *elem;
-};
-
-struct ui_list_t
-{
-  cx_vec2 position;
-  cx_vec2 dimension;
-  cx_colour bgColour;
-  cx_colour fgColour;
-  cx_texture *bgTexture;
-  
-  float interspacing; // vertical list (y)
-  struct ui_element_t *child;
-};
-
-typedef struct ui_element_t ui_element_t;
-typedef struct ui_list_t ui_list_t;
+  social_twitter_tweet_item_t *items;
+  time_t lastUpdateTime;
+  bool dataReady;
+} social_twitter_tweets_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ui_render_element_twitter_entry (const ui_element_t *elem);
-void ui_render_element (const ui_element_t *elem);
-void ui_render_list (const ui_list_t *elem);
-
+typedef void (*social_twitter_api_search_callback) (social_twitter_tweets_t *tweets);
+                                                   
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ui_init (void);
-void ui_deinit (void);
+bool social_twitter_init (void);
+void social_twiiter_user_login (void);
 
-void ui_update (void);
-void ui_render (void);
+void social_twitter_api_search (social_twitter_tweets_t *tweets, const char *query);
+void social_twitter_release (social_twitter_tweets_t *tweets);
+
+#if 0
+void social_twitter_api_search (const char *query, social_twitter_api_search_callback fn, void *userdata);
+void social_twitter_api_search2 (const char *query, float lat, float lon, float radiusKm);
+#endif
+void socail_twitter_update ();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

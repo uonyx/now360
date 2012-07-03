@@ -10,6 +10,7 @@
 #include "camera.h"
 #include "ui.h"
 #include "http.h"
+#include "social.h"
 #include "earth.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,8 +24,7 @@
 
 static earth_t *s_earth = NULL;
 static cx_font *s_font = NULL;
-static camera_t s_camera;
-static cx_mat3x3 s_normalMatrix;
+static camera_t *s_camera = NULL;
 
 static cx_vec2 s_rotaxis;
 static float s_rotAccel = 0.0f;
@@ -42,6 +42,8 @@ static float s_rotationAccelY = 0.0f; //20.0f;
 #define VIEW_ROTATION_MAX_SPEED       45.0f
 #define VIEW_ROTATION_BRAKING_FACTOR  3.0f
 
+static int g_selectedCity = -1;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,39 +56,39 @@ void app_render_3d (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void app_http_callback (http_transaction_id tId, const http_response *response, void *userdata);
-void app_http_callback (http_transaction_id tId, const http_response *response, void *userdata)
-{
-  CX_ASSERT (response);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void app_init (int width, int height)
 { 
   cx_engine_init_params params;
   memset (&params, 0, sizeof (params));
+  
   params.screenWidth = width;
   params.screenHeight = height;
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
-  
   http_init ();
   ui_init ();
   
-  camera_init (&s_camera, (float) width / (float) height, 65.0f);
+  cx_file file;
+  cx_file_load (&file, "data/rss.txt");
   
+#if 0
+  rss_feed_t feed;
+  app_parse_xml (&feed, file.data, file.size);
+#endif
+  
+  s_camera = camera_create ((float) width / (float) height, 65.0f);
   s_earth = earth_create ("data/earth_data.json", 1.0f, 64, 32);
-  
-  cx_mat3x3_identity (&s_normalMatrix);
 
   s_rotaxis.x = 1.0f;
   s_rotaxis.y = 0.0f;  
   s_font = cx_font_create ("data/fonts/courier_new.ttf", 36);  
 
-  //http_get ("http://uonyechi.com", NULL, 0, 30, app_http_callback, NULL);
+  
+  //const char *url = "https://news.google.com/news/feeds?q=nigeria&output=rss";
+  //http_transaction_id id = http_get (url, NULL, 0, 30, app_http_callback, NULL);
+  //CX_REFERENCE_UNUSED_VARIABLE (id);
+  
+  //social_twitter_api_search ("Lagos OR Nigeria");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,8 +158,8 @@ void app_view_update (float deltaTime)
   //s_rotAngle = cx_clamp(s_rotAngle, -90.0f, 90.0f);
   
 #if 1
-  cx_vec4_set (&s_camera.position, 0.0f, 0.0f, 3.0f, 1.0f);
-  cx_vec4_set (&s_camera.target, 0.0f, 0.0f, 0.0f, 1.0f);
+  cx_vec4_set (&s_camera->position, 0.0f, 0.0f, 3.0f, 1.0f);
+  cx_vec4_set (&s_camera->target, 0.0f, 0.0f, 0.0f, 1.0f);
   
   // update camera (view and projetion matrix)
 
@@ -167,8 +169,8 @@ void app_view_update (float deltaTime)
   cx_vec4 axis_x = {{-1.0f, 0.0f, 0.0f, 0.0f}};
   cx_vec4 axis_y = {{0.0f, -1.0f, 0.0f, 0.0f}};
   
-  camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotationAngleX), &axis_x);
-  camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotationAngleY), &axis_y);
+  camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngleX), &axis_x);
+  camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngleY), &axis_y);
   
   /*
    cx_vec4 axis = {{s_rotaxis.x, s_rotaxis.y, 0.0f, 0.0f}};
@@ -177,19 +179,17 @@ void app_view_update (float deltaTime)
   
   // get projection matrix
   cx_mat4x4 projmatrix;
-  camera_get_projection_matrix (&s_camera, &projmatrix);
+  camera_get_projection_matrix (s_camera, &projmatrix);
   
   // get view matrix
   cx_mat4x4 viewmatrix;
-  camera_get_view_matrix (&s_camera, &viewmatrix);
+  camera_get_view_matrix (s_camera, &viewmatrix);
   
   // compute modelviewprojection matrix
   cx_mat4x4 mvpMatrix;
   cx_mat4x4_mul (&mvpMatrix, &projmatrix, &viewmatrix);
   
-  cx_mat3x3_identity (&s_normalMatrix); 
-  
-  camera_update (&s_camera, deltaTime);
+  camera_update (s_camera, deltaTime);
   
   cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_P, &projmatrix);
   cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MV, &viewmatrix);
@@ -240,8 +240,8 @@ void app_input_touch_began (float x, float y)
  
   cx_mat4x4 view, proj;
   
-  camera_get_projection_matrix (&s_camera, &proj);
-  camera_get_view_matrix (&s_camera, &view);
+  camera_get_projection_matrix (s_camera, &proj);
+  camera_get_view_matrix (s_camera, &view);
   
   cx_vec2 screen = {{ x * screenWidth, y * screenHeight}};
   
@@ -251,7 +251,7 @@ void app_input_touch_began (float x, float y)
   
   cx_util_screen_space_to_world_space (screenWidth, screenHeight, &proj, &view, &screen, &rayDir, 1.0f, true);
   
-  rayOrigin = s_camera.position;
+  rayOrigin = s_camera->position;
   
   cx_vec4_normalize (&rayDir);
   
@@ -284,6 +284,7 @@ void app_input_touch_began (float x, float y)
       if (distSqr <= (0.025f * 0.025f))
       {
         CX_DEBUGLOG_CONSOLE (1, "%s", city);
+        g_selectedCity = i;
         return;
       } 
     }
@@ -345,9 +346,7 @@ void app_input_zoom (float factor)
 {
   float f = 1.0f - factor;
   
-  s_camera.fov += f;
-  
-  s_camera.fov = cx_clamp (s_camera.fov, 30.0f, 90.0f);
+  s_camera->fov = cx_clamp (s_camera->fov + f, 30.0f, 90.0f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -361,8 +360,8 @@ static void app_render_earth_city_text (void)
   
   cx_mat4x4 view, proj;
   
-  camera_get_projection_matrix (&s_camera, &proj);
-  camera_get_view_matrix (&s_camera, &view);
+  camera_get_projection_matrix (s_camera, &proj);
+  camera_get_view_matrix (s_camera, &view);
   
   // for each point, get 2d point
   float scale;
@@ -373,11 +372,12 @@ static void app_render_earth_city_text (void)
   {
     const char *text = s_earth->data->names [i];
     const cx_vec4 *pos = &s_earth->data->location [i];
+    const cx_colour *colour = (i == g_selectedCity) ? cx_colour_green () : cx_colour_yellow ();
     
     cx_util_world_space_to_screen_space (screenWidth, screenHeight, &proj, &view, pos, &screen, &scale);
 
     cx_font_set_scale (s_font, scale, scale);
-    cx_font_render (s_font, text, screen.x, screen.y, CX_FONT_ALIGNMENT_CENTRE_X, cx_colour_yellow ());
+    cx_font_render (s_font, text, screen.x, screen.y, CX_FONT_ALIGNMENT_CENTRE_X, colour);
   }
 }
 
@@ -390,6 +390,9 @@ static void app_render_earth (void)
   cx_mat4x4 mvpMatrix;
   cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
   
+  cx_mat3x3 normalMatrix;
+  cx_mat3x3_identity (&normalMatrix);
+  
   // get mesh
   cx_mesh *mesh = s_earth->visual->mesh;
   
@@ -398,7 +401,7 @@ static void app_render_earth (void)
   
   // set uniforms
   cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvpMatrix.f16);
-  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, CX_SHADER_DATATYPE_MATRIX3X3, s_normalMatrix.f9);
+  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, CX_SHADER_DATATYPE_MATRIX3X3, normalMatrix.f9);
   
   cx_mesh_render (mesh);
   cx_draw_points_colour (s_earth->data->count, s_earth->data->location, cx_colour_red ());
