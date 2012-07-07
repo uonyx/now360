@@ -1148,7 +1148,9 @@
 					earthnews/source/engine/freetype2/include,
 				);
 				INFOPLIST_FILE = "earthnews/resource_ios/earthnews-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = 2;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wstrict-aliasing",
@@ -1175,7 +1177,9 @@
 					earthnews/source/engine/freetype2/include,
 				);
 				INFOPLIST_FILE = "earthnews/resource_ios/earthnews-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = 2;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wstrict-aliasing",

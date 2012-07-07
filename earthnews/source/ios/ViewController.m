@@ -69,43 +69,12 @@
   view.drawableStencilFormat = GLKViewDrawableStencilFormatNone;
   view.drawableMultisample = GLKViewDrawableMultisample4X;
   
-  /*
-  NSString *vertShaderPathname, *fragShaderPathname;
-  
-  // Create and compile vertex shader.
-  vertShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"vsh"];
-
-  // Create and compile fragment shader.
-  fragShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"fsh"];
-  
-  NSLog(@"vert :%@\n", vertShaderPathname);
-  NSLog(@"frag :%@\n", fragShaderPathname);
-  
-  const char *cVert = [vertShaderPathname cStringUsingEncoding:NSASCIIStringEncoding];
-  const char *cFrag = [fragShaderPathname cStringUsingEncoding:NSASCIIStringEncoding];
-  
-  FILE *fp = fopen (cVert, "rb");
-  
-  if (fp)
-  {
-    fclose (fp);
-    
-    fp = fopen (cFrag, "rb");
-    
-    if (fp)
-    {
-      fclose (fp);
-    }
-  }
-  */
-  
   UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc]
                                             initWithTarget:self action:@selector(handlePinchGesture:)];
   [self.view addGestureRecognizer:pinchGesture];
   [pinchGesture release];
 
   [EAGLContext setCurrentContext:self.context];
-  
 
   /*
   NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -114,6 +83,7 @@
   */
   
   app_init ((int) view.bounds.size.width, (int) view.bounds.size.height);
+  //app_init ((int) view.bounds.size.height, (int) view.bounds.size.width);
   app_update ();
 }
 
@@ -168,6 +138,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+- (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+  [EAGLContext setCurrentContext:self.context];
+  
+  int w = (int) self.view.bounds.size.width;
+  int h = (int) self.view.bounds.size.height;
+  
+  app_reset (w, h);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 - (void) update
 {
   app_update ();
@@ -195,8 +179,8 @@
   
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
 
-  float screen_width = self.view.frame.size.width;
-  float screen_height = self.view.frame.size.height;
+  float screen_width = self.view.bounds.size.width;
+  float screen_height = self.view.bounds.size.height;
   
   float normalised_x = currTouchPoint.x / screen_width;
   float normalised_y = currTouchPoint.y / screen_height;
@@ -217,8 +201,8 @@
   
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
-  float screen_width = self.view.frame.size.width;
-  float screen_height = self.view.frame.size.height;
+  float screen_width = self.view.bounds.size.width;
+  float screen_height = self.view.bounds.size.height;
   
   float normalised_x = currTouchPoint.x / screen_width;
   float normalised_y = currTouchPoint.y / screen_height;
@@ -241,8 +225,8 @@
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "prev: x = %.1f, y = %.1f", prevTouchPoint.x, prevTouchPoint.y);
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "curr: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
-  float screen_width = self.view.frame.size.width;
-  float screen_height = self.view.frame.size.height;
+  float screen_width = self.view.bounds.size.width;
+  float screen_height = self.view.bounds.size.height;
   
   float normalised_x = currTouchPoint.x / screen_width;
   float normalised_y = currTouchPoint.y / screen_height;
@@ -265,8 +249,8 @@
   
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
-  float screen_width = self.view.frame.size.width;
-  float screen_height = self.view.frame.size.height;
+  float screen_width = self.view.bounds.size.width;
+  float screen_height = self.view.bounds.size.height;
   
   float normalised_x = currTouchPoint.x / screen_width;
   float normalised_y = currTouchPoint.y / screen_height;

@@ -15,6 +15,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define DEBUG_LOG 0
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *TWITTER_SEARCH_API_URL              = "http://search.twitter.com/search.json";
 const int   TWITTER_SEARCH_API_REQUEST_TIMEOUT  = 10;
 
@@ -37,7 +43,7 @@ typedef struct social_twitter_api_search_request_t social_twitter_api_search_req
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool social_twitter_search_parse (social_twitter_tweets_t *tweets, const char *data, int dataSize);
+
 void social_twitter_search_http_callback (http_transaction_id tId, const http_response *response, void *userdata);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -90,6 +96,8 @@ void social_twitter_api_search (social_twitter_tweets_t *tweets, const char *que
   CX_ASSERT (tweets);
   CX_ASSERT (query);
 
+  tweets->dataReady = false;
+  
   //////////////////
   // url
   //////////////////
@@ -155,6 +163,9 @@ void social_twitter_search_http_callback (http_transaction_id tId, const http_re
         CX_DEBUGLOG_CONSOLE (1, jsondata);
         social_twitter_search_parse (tweets, jsondata, jsondataSize);
         
+        tweets->dataReady = true;
+        tweets->lastUpdateTime = cx_time_get_utc_time ();
+        
         break;
       }
       
@@ -199,8 +210,6 @@ bool social_twitter_search_parse (social_twitter_tweets_t *tweets, const char *d
   {
     CX_ASSERT (root->type == json_object);
     
-    const char *max_id = NULL;
-    
     unsigned int i, c;
     for (i = 0, c = root->u.object.length; i < c; ++i)
     {
@@ -209,30 +218,29 @@ bool social_twitter_search_parse (social_twitter_tweets_t *tweets, const char *d
       
       if (strcmp (name, "max_id") == 0)
       {
-        CX_ASSERT (value->type == json_string);
-        max_id = value->u.string.ptr;
+        CX_ASSERT (value->type == json_integer);
+        tweets->maxId = value->u.integer;
       }
       else if (strcmp (name, "results") == 0)
       {
         CX_ASSERT (value->type == json_array);
-        
-        social_twitter_tweet_item_t *tweetItem = tweets->items;
         
         json_value **avalues = value->u.array.values;
         unsigned int alength = value->u.array.length;
         unsigned int j;
         for (j = 0; j < alength; ++j)
         {
-          json_value *avalue = avalues [i];
+          json_value *avalue = avalues [j];
           CX_ASSERT (avalue->type == json_object);
           
           //
           // for memory optimisation, do a pre-pass for one-time malloc of stringdatabuffer for all strings for tweet_item/all tweets
           //
           
-          tweetItem = (social_twitter_tweet_item_t *) cx_malloc (sizeof (social_twitter_tweet_item_t));
+          social_twitter_tweet_item_t *tweetItem = (social_twitter_tweet_item_t *) cx_malloc (sizeof (social_twitter_tweet_item_t));
           memset (tweetItem, 0, sizeof (social_twitter_tweet_item_t));
-        
+          CX_DEBUGLOG_CONSOLE (DEBUG_LOG, "=====entry=====");
+          
           int done = 0;
           unsigned int k, n;
           for (k = 0, n = avalue->u.object.length; k < n; ++k)
@@ -244,24 +252,28 @@ bool social_twitter_search_parse (social_twitter_tweets_t *tweets, const char *d
             {
               CX_ASSERT (pvalue->type == json_string);
               tweetItem->date = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->date);
               done++;
             }
             else if (strcmp (pname, "from_user") == 0)
             {
               CX_ASSERT (pvalue->type == json_string);
               tweetItem->userhandle = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->userhandle);
               done++;
             }
             else if (strcmp (pname, "from_user_name") == 0)
             {
               CX_ASSERT (pvalue->type == json_string);
               tweetItem->username = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->username);
               done++;
             }
             else if (strcmp (pname, "text") == 0)
             {
               CX_ASSERT (pvalue->type == json_string);
               tweetItem->tweet = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->tweet);
               done++;
             }
             
@@ -271,7 +283,8 @@ bool social_twitter_search_parse (social_twitter_tweets_t *tweets, const char *d
             }
           }
           
-          tweetItem = tweetItem->next;
+          tweetItem->next = tweets->items;
+          tweets->items = tweetItem;
         }
       }
     }

@@ -33,6 +33,7 @@ typedef struct social_twitter_tweet_item_t
 typedef struct social_twitter_tweets_t
 {
   social_twitter_tweet_item_t *items;
+  unsigned int maxId;
   time_t lastUpdateTime;
   bool dataReady;
 } social_twitter_tweets_t;
@@ -58,6 +59,8 @@ void social_twitter_api_search (const char *query, social_twitter_api_search_cal
 void social_twitter_api_search2 (const char *query, float lat, float lon, float radiusKm);
 #endif
 void socail_twitter_update ();
+
+bool social_twitter_search_parse (social_twitter_tweets_t *tweets, const char *data, int dataSize);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

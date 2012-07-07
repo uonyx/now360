@@ -30,6 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void app_init (int width, int height);
+void app_reset (int width, int height);
 void app_deinit (void);
 void app_update (void);
 void app_render (void);

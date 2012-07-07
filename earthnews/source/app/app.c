@@ -10,6 +10,7 @@
 #include "camera.h"
 #include "ui.h"
 #include "http.h"
+#include "rss.h"
 #include "social.h"
 #include "earth.h"
 
@@ -52,9 +53,21 @@ void app_test_code (void);
 void app_render_2d (void);
 void app_render_3d (void);
 
+
+static cx_font *s_fontui = NULL;
+void app_render_tweets (social_twitter_tweets_t *tweets);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+social_twitter_tweets_t tweets;
+
+void app_reset (int width, int height)
+{
+  cx_graphics_set_screen_dimensions (width, height);
+  s_camera->aspectRatio = (float) width / (float) height;
+}
 
 void app_init (int width, int height)
 { 
@@ -68,27 +81,105 @@ void app_init (int width, int height)
   http_init ();
   ui_init ();
   
-  cx_file file;
-  cx_file_load (&file, "data/rss.txt");
-  
-#if 0
-  rss_feed_t feed;
-  app_parse_xml (&feed, file.data, file.size);
-#endif
-  
   s_camera = camera_create ((float) width / (float) height, 65.0f);
   s_earth = earth_create ("data/earth_data.json", 1.0f, 64, 32);
 
   s_rotaxis.x = 1.0f;
   s_rotaxis.y = 0.0f;  
   s_font = cx_font_create ("data/fonts/courier_new.ttf", 36);  
-
+  
+#if 1
+  cx_file file0, file1;
+  cx_file_load (&file0, "data/rss.txt");
+  cx_file_load (&file1, "data/twitter.txt");
+  
+  rss_feed_t rssFeed;
+  memset (&rssFeed, 0, sizeof (rss_feed_t));
+  rss_parse_xml (&rssFeed, file0.data, file0.size);
+  
+  
+  memset (&tweets, 0, sizeof (social_twitter_tweets_t));
+  social_twitter_search_parse (&tweets, file1.data, file1.size);
+  
+  rss_feed_item_t *rssItem = rssFeed.items;
+  while (rssItem)
+  {
+    CX_DEBUGLOG_CONSOLE(1, "====rss=====");
+    CX_DEBUGLOG_CONSOLE(1, rssItem->date);
+    CX_DEBUGLOG_CONSOLE(1, rssItem->link);
+    CX_DEBUGLOG_CONSOLE(1, rssItem->title);
+    rssItem = rssItem->next;
+  }
+  
+  social_twitter_tweet_item_t *twItem = tweets.items;
+  while (twItem)
+  {
+    CX_DEBUGLOG_CONSOLE(1, "===twitter===");
+    CX_DEBUGLOG_CONSOLE(1, twItem->date);
+    CX_DEBUGLOG_CONSOLE(1, twItem->userhandle);
+    CX_DEBUGLOG_CONSOLE(1, twItem->username);
+    CX_DEBUGLOG_CONSOLE(1, twItem->tweet);
+    twItem = twItem->next;
+  }
+  
+  CX_DEBUG_BREAK_ABLE;
+#endif
   
   //const char *url = "https://news.google.com/news/feeds?q=nigeria&output=rss";
   //http_transaction_id id = http_get (url, NULL, 0, 30, app_http_callback, NULL);
   //CX_REFERENCE_UNUSED_VARIABLE (id);
   
   //social_twitter_api_search ("Lagos OR Nigeria");
+  
+  s_fontui = cx_font_create ("data/fonts/verdana.ttf", 10.0f);
+}
+
+void app_render_tweets (social_twitter_tweets_t *tweets)
+{
+  float screenWidth = cx_graphics_get_screen_width ();
+  float screenHeight = cx_graphics_get_screen_height ();
+  //float aspectRatio = screenWidth / screenHeight;
+
+  const float width = 360.0f;
+  const float height = screenHeight;
+  
+  float x1 = screenWidth - width - 40.0f;
+  float y1 = 0.0f;
+  float x2 = x1 + width;
+  float y2 = y1 + height;
+  
+  cx_colour colour = *cx_colour_blue ();
+  colour.a = 0.5f;
+  
+  cx_draw_quad_colour (x1, y1, x2, y2, &colour);
+  
+  int max_rpp = 15;
+  
+  float itemHeight = height / (float) max_rpp;
+  
+  float itemTextSpacingY = 10.0f; //(itemHeight * 0.2f);
+  
+  float tx = x1 + 10.0f;
+  float ty = y1 + 12.0f;
+  
+  if (tweets)
+  {
+    social_twitter_tweet_item_t *twItem = tweets->items;
+    while (twItem)
+    {    
+      char name [128];
+      cx_sprintf(name, 128, "%s @%s", twItem->username, twItem->userhandle);
+      cx_font_render (s_fontui, name, tx, ty, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
+      
+      float tty = ty + itemTextSpacingY;
+      //cx_font_render (s_fontui, twItem->tweet, tx, tty, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+      cx_font_render_word_wrap (s_fontui, twItem->tweet, tx, tty, x2, y2, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+      
+      ty += itemHeight;
+      
+      twItem = twItem->next;
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,9 +350,9 @@ void app_input_touch_began (float x, float y)
   // get closest distance between point and distance and check if less than bounding circle 
   
   cx_vec4 normal, position, toPos;
-  int i, c = s_earth->data->count;
   
-  for (i = 0; i < c; ++i)
+  int i, c;
+  for (i = 0, c = s_earth->data->count; i < c; ++i)
   {
     const char *city = s_earth->data->names [i];
     
@@ -442,6 +533,8 @@ void app_render_2d (void)
   
   app_render_earth_city_text ();
   ui_render ();
+  
+  app_render_tweets (&tweets);
   
   //////////////
   // end
