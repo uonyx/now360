@@ -22,11 +22,9 @@
 
 #define CX_FONT_TEXTURE_WIDTH       (512)
 #define CX_FONT_TEXTURE_HEIGHT      (512)
-
 #define CX_FONT_MAX_NUM_FONT_CHARS  (96)
 #define CX_FONT_FIRST_CHAR          (32)
 #define CX_FONT_LAST_CHAR           (CX_FONT_FIRST_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
-
 #define CX_FONT_MAX_TEXT_LENGTH     (512)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -248,14 +246,14 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
     cxf32 tw = cx_font_get_text_width (font, text);
     px = px + (tw * 0.5f);
   }
-
+  
   cxf32 ox = px;
   cxf32 bw = w - ox;
+  cxf32 tw = 0.0f;
   
   char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
   cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   
-  float tw = 0.0f;
   char c = 0;
   char *t = textBuffer; 
   char *lastSpacePos = NULL;
