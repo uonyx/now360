@@ -249,14 +249,13 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
     px = px + (tw * 0.5f);
   }
 
-
   cxf32 ox = px;
   cxf32 bw = w - ox;
-  float wordWidth = 0.0f;
   
   char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
   cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   
+  float tw = 0.0f;
   char c = 0;
   char *t = textBuffer; 
   char *lastSpacePos = NULL;
@@ -265,17 +264,17 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
     if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
     {
       stbtt_bakedchar *bakedChar = fontImpl->ttfCharData + (c - CX_FONT_FIRST_CHAR);
-      wordWidth += bakedChar->xadvance * sx;
+      tw += bakedChar->xadvance * sx;
       
       if (c == 0x20)
       {
         lastSpacePos = t;
       }
       
-      if ((wordWidth > bw) && lastSpacePos)
+      if ((tw > bw) && lastSpacePos)
       {
         *lastSpacePos = '\n';
-        wordWidth = 0.0f;
+        tw = 0.0f;
       }
     }
     
