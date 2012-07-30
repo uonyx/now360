@@ -10,11 +10,9 @@
 #include "cx_matrix4x4.h"
 #include "cx_graphics.h"
 
+#include "stb_truetype/stb_truetype.h"
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
-
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype/stb_truetype.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,8 +65,7 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
   cx_texture_gpu_init (fontImpl->texture);
 
   cx_font *font   = (cx_font *) cx_malloc (sizeof (cx_font));
-  font->size      = fontSize;
-  font->fontImpl  = fontImpl;
+  font->fontdata  = fontImpl;
   
   cx_file_unload (&file);
   
@@ -82,14 +79,13 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
 void cx_font_destroy (cx_font *font)
 {
   CX_ASSERT (font);
-  CX_ASSERT (font->fontImpl);
+  CX_ASSERT (font->fontdata);
   
-  cx_font_impl *font_impl = (cx_font_impl *) font->fontImpl;
+  cx_font_impl *font_impl = (cx_font_impl *) font->fontdata;
   
   cx_texture_destroy (font_impl->texture);
-  
   cx_free (font_impl->ttfCharData);
-  cx_free (font->fontImpl);
+  cx_free (font->fontdata);
   cx_free (font);
 }
 
@@ -101,7 +97,7 @@ void cx_font_set_scale (const cx_font *font, cxf32 x, cxf32 y)
 {
   CX_ASSERT (font);
   
-  cx_font_impl *fontImpl = (cx_font_impl *) font->fontImpl;
+  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   
   fontImpl->scaleX = x;
   fontImpl->scaleY = y;
@@ -114,11 +110,11 @@ void cx_font_set_scale (const cx_font *font, cxf32 x, cxf32 y)
 void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx_font_alignment alignment, const cx_colour *colour)
 {
   CX_ASSERT (font);
-  CX_ASSERT (font->fontImpl);
+  CX_ASSERT (font->fontdata);
   CX_ASSERT (text);
   CX_ASSERT (colour);
   
-  cx_font_impl *fontImpl = (cx_font_impl *) font->fontImpl;
+  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
   
   // use shader
@@ -139,10 +135,10 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_graphics_assert_no_errors ();
   
-  cxf32 px = x;
-  cxf32 py = y;
   cxf32 sx = fontImpl->scaleX;
   cxf32 sy = fontImpl->scaleY;
+  cxf32 px = x;
+  cxf32 py = y + (fontImpl->height * sy);
   
   if (alignment & CX_FONT_ALIGNMENT_CENTRE_X)
   {
@@ -202,15 +198,15 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, cxf32 y, cxf32 w, cxf32 h, 
+cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, cxf32 y, cxf32 w, cxf32 h, 
                                cx_font_alignment alignment, const cx_colour *colour)
 {
   CX_ASSERT (font);
-  CX_ASSERT (font->fontImpl);
+  CX_ASSERT (font->fontdata);
   CX_ASSERT (text);
   CX_ASSERT (colour);
   
-  cx_font_impl *fontImpl = (cx_font_impl *) font->fontImpl;
+  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
   
   // use shader
@@ -231,10 +227,10 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_graphics_assert_no_errors ();
   
-  cxf32 px = x;
-  cxf32 py = y;
   cxf32 sx = fontImpl->scaleX;
   cxf32 sy = fontImpl->scaleY;
+  cxf32 px = x;
+  cxf32 py = y + (fontImpl->height * sy);
   
   if (alignment & CX_FONT_ALIGNMENT_CENTRE_X)
   {
@@ -247,17 +243,24 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
     px = px + (tw * 0.5f);
   }
   
+  if (alignment & CX_FONT_ALIGNMENT_CENTRE_Y)
+  {
+    cxf32 th = cx_font_get_height (font);
+    py = py + (th * 0.5f);
+  }
+  
   cxf32 ox = px;
   cxf32 bw = w - ox;
   cxf32 tw = 0.0f;
   
   char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
-  cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  //cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  cx_str_html_unescape (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   
   char c = 0;
   char *t = textBuffer; 
   char *lastSpacePos = NULL;
-  while ((c = *t))
+  while ((c = *t++))
   {
     if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
     {
@@ -275,9 +278,10 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
         tw = 0.0f;
       }
     }
-    
-    t++;
   }
+  
+  cxi32 newlines = 0;
+  cxf32 fontHeight = fontImpl->height * sy;
   
   c = 0;
   t = textBuffer; 
@@ -286,7 +290,8 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
     if (c == '\n')
     {
       px = ox;
-      py += (fontImpl->height * sy);
+      py += fontHeight;
+      newlines++;
     }
     else if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
     {
@@ -326,6 +331,8 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+  
+  return newlines;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,9 +342,9 @@ void cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, c
 cxf32 cx_font_get_text_width (const cx_font *font, const char *text)
 {
   CX_ASSERT (font);
+  CX_ASSERT (font->fontdata);
   
-  cx_font_impl *fontImpl = (cx_font_impl *) font->fontImpl;
-  CX_ASSERT (fontImpl);
+  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   
   cxf32 sx = fontImpl->scaleX;
   cxf32 width = 0.0f;
@@ -349,12 +356,22 @@ cxf32 cx_font_get_text_width (const cx_font *font, const char *text)
       stbtt_bakedchar *bakedChar = fontImpl->ttfCharData + (c - CX_FONT_FIRST_CHAR);
       width += bakedChar->xadvance * sx;
     }
-    
-    ++text;
-    c = *text;
   }
   
   return width;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cxf32 cx_font_get_height (const cx_font *font)
+{
+  CX_ASSERT (font);
+  CX_ASSERT (font->fontdata);
+  
+  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
+  return (fontImpl->height * fontImpl->scaleY);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

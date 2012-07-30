@@ -231,8 +231,8 @@ static CX_INLINE bool cx_validatef (cxf32 x)
   
   n.f = x;
   
-  cxu32 exponent  = n.i & 0x7f800000;
-  cxu32 mantissa  = n.i & 0x007fffff;
+  cxu32 exponent = n.i & 0x7f800000;
+  cxu32 mantissa = n.i & 0x007fffff;
   
   // check for infinity
   if ((exponent == 0x7f800000) && (mantissa == 0))

@@ -10,9 +10,9 @@
 #include "camera.h"
 #include "ui.h"
 #include "http.h"
-#include "rss.h"
-#include "social.h"
+#include "feeds.h"
 #include "earth.h"
+#include "webview.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +27,6 @@ static earth_t *s_earth = NULL;
 static cx_font *s_font = NULL;
 static camera_t *s_camera = NULL;
 
-static cx_vec2 s_rotaxis;
 static float s_rotAccel = 0.0f;
 static float s_rotSpeed = 0.0f;
 static float s_rotAngle = 0.0f;
@@ -45,6 +44,9 @@ static float s_rotationAccelY = 0.0f; //20.0f;
 
 static int g_selectedCity = -1;
 
+twitter_feed_t *s_twitterFeeds = NULL;
+news_feed_t *s_rssFeeds = NULL;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,55 +55,106 @@ void app_test_code (void);
 void app_render_2d (void);
 void app_render_3d (void);
 
-
-static cx_font *s_fontui = NULL;
-void app_render_tweets (social_twitter_tweets_t *tweets);
+void app_earth_hit_test (float x, float y);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-social_twitter_tweets_t tweets;
 
 void app_reset (int width, int height)
 {
   cx_graphics_set_screen_dimensions (width, height);
   s_camera->aspectRatio = (float) width / (float) height;
+  
+  ui_screen_reset ((float)width, (float) height);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void app_init (int width, int height)
 { 
+  //
+  // engine
+  //
+  
   cx_engine_init_params params;
   memset (&params, 0, sizeof (params));
-  
   params.screenWidth = width;
   params.screenHeight = height;
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
+  
+  //
+  // http
+  //
+  
   http_init ();
-  ui_init ();
+  
+  //
+  // ui
+  //
+  
+  ui_init ((float) width, (float) height);
+  
+  //
+  // webview
+  //
+  
+  web_view_init ((float) width, (float) height);
+  
+  //
+  // camera
+  //
   
   s_camera = camera_create ((float) width / (float) height, 65.0f);
+  
+  //
+  // earth
+  //
+  
   s_earth = earth_create ("data/earth_data.json", 1.0f, 64, 32);
 
-  s_rotaxis.x = 1.0f;
-  s_rotaxis.y = 0.0f;  
-  s_font = cx_font_create ("data/fonts/courier_new.ttf", 36);  
+  //
+  // feeds
+  //
+  
+  s_twitterFeeds = cx_malloc (sizeof (twitter_feed_t) * s_earth->data->count);
+  memset (s_twitterFeeds, 0, sizeof (twitter_feed_t) * s_earth->data->count);
+  
+  s_rssFeeds = cx_malloc (sizeof (news_feed_t) * s_earth->data->count);
+  memset (s_rssFeeds, 0, sizeof (news_feed_t) * s_earth->data->count);
+  
+  //
+  // font 
+  //
+  
+  s_font = cx_font_create ("data/fonts/courier_new.ttf", 36);
+  
+  //
+  // test code
+  //
   
 #if 1
-  cx_file file0, file1;
+  cx_file file0, file1, file2;
   cx_file_load (&file0, "data/rss.txt");
   cx_file_load (&file1, "data/twitter.txt");
+  cx_file_load (&file2, "data/weather.txt");
   
-  rss_feed_t rssFeed;
-  memset (&rssFeed, 0, sizeof (rss_feed_t));
-  rss_parse_xml (&rssFeed, file0.data, file0.size);
+  news_feed_t rssFeed;
+  memset (&rssFeed, 0, sizeof (news_feed_t));
+  feeds_news_parse (&rssFeed, file0.data, file0.size);
   
+  twitter_feed_t tweets;
+  memset (&tweets, 0, sizeof (twitter_feed_t));
+  feeds_twitter_parse (&tweets, file1.data, file1.size);
   
-  memset (&tweets, 0, sizeof (social_twitter_tweets_t));
-  social_twitter_search_parse (&tweets, file1.data, file1.size);
+  weather_feed_t weather;
+  memset(&weather, 0, sizeof (weather_feed_t));
+  feeds_weather_parse (&weather, file2.data, file2.size);
   
-  rss_feed_item_t *rssItem = rssFeed.items;
+  news_feed_item_t *rssItem = rssFeed.items;
   while (rssItem)
   {
     CX_DEBUGLOG_CONSOLE(1, "====rss=====");
@@ -111,75 +164,19 @@ void app_init (int width, int height)
     rssItem = rssItem->next;
   }
   
-  social_twitter_tweet_item_t *twItem = tweets.items;
+  twitter_tweet_t *twItem = tweets.items;
   while (twItem)
   {
     CX_DEBUGLOG_CONSOLE(1, "===twitter===");
     CX_DEBUGLOG_CONSOLE(1, twItem->date);
     CX_DEBUGLOG_CONSOLE(1, twItem->userhandle);
     CX_DEBUGLOG_CONSOLE(1, twItem->username);
-    CX_DEBUGLOG_CONSOLE(1, twItem->tweet);
+    CX_DEBUGLOG_CONSOLE(1, twItem->text);
     twItem = twItem->next;
   }
   
   CX_DEBUG_BREAK_ABLE;
 #endif
-  
-  //const char *url = "https://news.google.com/news/feeds?q=nigeria&output=rss";
-  //http_transaction_id id = http_get (url, NULL, 0, 30, app_http_callback, NULL);
-  //CX_REFERENCE_UNUSED_VARIABLE (id);
-  
-  //social_twitter_api_search ("Lagos OR Nigeria");
-  
-  s_fontui = cx_font_create ("data/fonts/verdana.ttf", 10.0f);
-}
-
-void app_render_tweets (social_twitter_tweets_t *tweets)
-{
-  float screenWidth = cx_graphics_get_screen_width ();
-  float screenHeight = cx_graphics_get_screen_height ();
-  //float aspectRatio = screenWidth / screenHeight;
-
-  const float width = 360.0f;
-  const float height = screenHeight;
-  
-  float x1 = screenWidth - width - 40.0f;
-  float y1 = 0.0f;
-  float x2 = x1 + width;
-  float y2 = y1 + height;
-  
-  cx_colour colour = *cx_colour_blue ();
-  colour.a = 0.5f;
-  
-  cx_draw_quad_colour (x1, y1, x2, y2, &colour);
-  
-  int max_rpp = 15;
-  
-  float itemHeight = height / (float) max_rpp;
-  
-  float itemTextSpacingY = 10.0f; //(itemHeight * 0.2f);
-  
-  float tx = x1 + 10.0f;
-  float ty = y1 + 12.0f;
-  
-  if (tweets)
-  {
-    social_twitter_tweet_item_t *twItem = tweets->items;
-    while (twItem)
-    {    
-      char name [128];
-      cx_sprintf(name, 128, "%s @%s", twItem->username, twItem->userhandle);
-      cx_font_render (s_fontui, name, tx, ty, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
-      
-      float tty = ty + itemTextSpacingY;
-      //cx_font_render (s_fontui, twItem->tweet, tx, tty, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
-      cx_font_render_word_wrap (s_fontui, twItem->tweet, tx, tty, x2, y2, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
-      
-      ty += itemHeight;
-      
-      twItem = twItem->next;
-    }
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,8 +201,6 @@ void app_update (void)
   float deltaTime = (float) cx_system_time_get_delta_time ();
   
   app_view_update (deltaTime);
-  
-  ui_update ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -243,7 +238,8 @@ void app_view_update (float deltaTime)
   if (s_rotAccel == 0.0f)
   {
     s_rotSpeed *= decelerationFactor;
-  }  
+  }
+  
   s_rotSpeed += (s_rotAccel * deltaTime);
   s_rotAngle += (s_rotSpeed * deltaTime);
   //s_rotAngle = cx_clamp(s_rotAngle, -90.0f, 90.0f);
@@ -262,11 +258,6 @@ void app_view_update (float deltaTime)
   
   camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngleX), &axis_x);
   camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngleY), &axis_y);
-  
-  /*
-   cx_vec4 axis = {{s_rotaxis.x, s_rotaxis.y, 0.0f, 0.0f}};
-   camera_rotate_around_point (&s_camera, &center, cx_rad (s_rotAngle), &axis);
-  */
   
   // get projection matrix
   cx_mat4x4 projmatrix;
@@ -315,7 +306,6 @@ void app_view_update (float deltaTime)
   cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_P, &proj);
   cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MV, &transformation);
   cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
-
 #endif
 }
 
@@ -324,6 +314,36 @@ void app_view_update (float deltaTime)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void app_input_touch_began (float x, float y)
+{
+  float screenX = x * cx_graphics_get_screen_width ();
+  float screenY = y * cx_graphics_get_screen_height ();
+  
+  bool hideWebView = true;
+  
+  if (g_selectedCity > -1)
+  {
+    const char *url = ui_rss_hit_test (&s_rssFeeds [g_selectedCity], screenX, screenY);
+    if (url)
+    {
+      web_view_launch_url (url);
+      hideWebView = false;
+      
+      CX_DEBUGLOG_CONSOLE (1, "PING! [x = %.2f, y = %.2f", screenX, screenY);
+    }
+  }
+  
+  if (hideWebView)
+  {
+    if (web_view_is_shown ())
+    {
+      web_view_hide (true);
+    }
+  }
+  
+  app_earth_hit_test (x, y);
+}
+
+void app_earth_hit_test (float x, float y)
 {
   // do ray test
   float screenWidth = cx_graphics_get_screen_width ();
@@ -351,6 +371,8 @@ void app_input_touch_began (float x, float y)
   
   cx_vec4 normal, position, toPos;
   
+  int cityIndex = -1;
+  
   int i, c;
   for (i = 0, c = s_earth->data->count; i < c; ++i)
   {
@@ -375,10 +397,20 @@ void app_input_touch_began (float x, float y)
       if (distSqr <= (0.025f * 0.025f))
       {
         CX_DEBUGLOG_CONSOLE (1, "%s", city);
-        g_selectedCity = i;
-        return;
+        cityIndex = i;
+        break;
       } 
     }
+  }
+  
+  if (cityIndex > -1)
+  {
+    const char *n = s_earth->data->names [cityIndex];
+    
+    feeds_twitter_search (&s_twitterFeeds [cityIndex], n);
+    feeds_news_search (&s_rssFeeds [cityIndex], n);
+    
+    g_selectedCity = cityIndex;
   }
 }
 
@@ -391,8 +423,8 @@ void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
   float dx = x - prev_x;
   float dy = y - prev_y;
   
-  float w = 768.0f;
-  float h = 1024.0f;
+  float w = cx_graphics_get_screen_width ();
+  float h = cx_graphics_get_screen_height ();
   
   s_rotationAccelX = dy * 10.0f * w;
   s_rotationAccelY = dx * 10.0f * h;
@@ -402,15 +434,6 @@ void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
   if (length > 0.0f)
   {
     s_rotAccel = length * (10.0f * 1024.0f);
-    
-    dx /= length;
-    dy /= length;
-    
-    float perp_dx = dy;
-    float perp_dy = -dx;
-    
-    s_rotaxis.x = perp_dx;
-    s_rotaxis.y = perp_dy;
   }
   else
   {
@@ -532,9 +555,14 @@ void app_render_2d (void)
   //////////////
   
   app_render_earth_city_text ();
-  ui_render ();
   
-  app_render_tweets (&tweets);
+  ui_render();
+  
+  if (g_selectedCity > -1)
+  {
+    ui_render_twitter_feed (&s_twitterFeeds [g_selectedCity]);
+    ui_render_rss_feed (&s_rssFeeds [g_selectedCity]);
+  }
   
   //////////////
   // end

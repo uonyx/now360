@@ -124,14 +124,15 @@
 
 - (BOOL) shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
 {
-  if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) 
+  if ((toInterfaceOrientation == UIInterfaceOrientationPortrait) ||
+      (toInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown))
   {
-    return (toInterfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
-  } 
-  else 
-  {
-    return YES;
+    return NO;
   }
+  
+  return YES;
+  
+  //if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

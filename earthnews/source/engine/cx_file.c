@@ -25,6 +25,8 @@ extern void cx_native_get_filepath_from_resource (const char *filename, char *de
 
 bool cx_file_load (cx_file *file, const char *filename)
 {
+  CX_ASSERT (file);
+  
   bool success = false;
   
   char fullFilePath [512];

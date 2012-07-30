@@ -7,141 +7,69 @@
 
 #include "cx_string.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#define UTF8_MASK_BITS                0x3F
-#define UTF8_MASK_BYTE                0x80
-#define UTF8_MASK_2BYTES              0xC0
-#define UTF8_MASK_3BYTES              0xE0
-#define UTF8_MASK_4BYTES              0xF0
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxi32 cx_str_char_to_utf8_char (unsigned char *dst, cxu32 dstSize, cxu32 src)
+cxi32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src)
 {
+  CX_ASSERT (src);
   CX_ASSERT (dst);
-  CX_ASSERT (dstSize >= 4);
+  CX_ASSERT (dstSize);
   
-  cxi32 i;
-  cxi32 len = 0;
-  unsigned char *d = dst;
-  unsigned char dest_value;
+  const char *s = src;
+  cxu32 len = 0;
+  char ch = 0;
   
-  if (src <= 0x0000007F)
+  while ((ch = *s))
   {
-    *d = (unsigned char)src;
+    if (ch == '&')
+    {
+      if ((s [1] == 'q') && (s [2] == 'u') && (s [3] == 'o') && (s [4] == 't') && (s [5] == ';')) // &quot
+      {
+        s += 6;
+        ch = '\"';
+      }
+      else if ((s [1] == 'a') && (s [2] == 'p') && (s [3] == 'o') && (s [4] == 's') && (s [5] == ';')) // &apos
+      {
+        s += 6;
+        ch = '\'';
+      }
+      else if ((s [1] == 'a') && (s [2] == 'm') && (s [3] == 'p') && (s [4] == ';')) // &amp
+      {
+        s += 5;
+        ch = '&';
+      }
+      else if ((s [1] == 'g') && (s [2] == 't') && (s [3] == ';')) // &gt
+      {
+        s += 4;
+        ch = '>';
+      }
+      else if ((s [1] == 'l') && (s [2] == 't') && (s [3] == ';')) // &lt
+      {
+        s += 4;
+        ch = '<';
+      }
+      else 
+      {
+        s++;
+      }
+    }
+    else 
+    {
+      s++;
+    }
     
-    len = 1;
+    CX_ASSERT (len < dstSize);
+    dst [len++] = ch;
   }
-  else if (src <= 0x000007FF)
-  {
-    dest_value = UTF8_MASK_2BYTES;
-    
-    i = (src >> 6) & 0x1F;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    d ++;
-    
-    dest_value = UTF8_MASK_BYTE;
-    
-    i = src & UTF8_MASK_BITS;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    len = 2;
-  }
-  else if (src <= 0x0000FFFF)
-  {
-    dest_value = UTF8_MASK_3BYTES;
-    
-    i = (src >> 12) & 0x0F;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    d ++;
-    
-    dest_value = UTF8_MASK_BYTE;
-    
-    i = (src >> 6) & UTF8_MASK_BITS;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    d ++;
-    
-    dest_value = UTF8_MASK_BYTE;
-    
-    i = src & UTF8_MASK_BITS;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    len = 3;
-  }
-  else
-  {
-    CX_ASSERT (src <= 0x0010FFFF);
-    
-    dest_value = UTF8_MASK_4BYTES;
-    
-    i = (src >> 18) & 0x07;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    d ++;
-    
-    dest_value = UTF8_MASK_BYTE;
-    
-    i = (src >> 12) & UTF8_MASK_BITS;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    d ++;
-    
-    dest_value = UTF8_MASK_BYTE;
-    
-    i = (src >> 6) & UTF8_MASK_BITS;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    d ++;
-    
-    dest_value = UTF8_MASK_BYTE;
-    
-    i = src & UTF8_MASK_BITS;
-    
-    dest_value |= (unsigned char)i;
-    
-    *d = dest_value;
-    
-    len = 4;
-  }
+  
+  CX_ASSERT (len < dstSize);
+  dst [len] = 0;
   
   return len;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
