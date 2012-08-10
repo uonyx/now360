@@ -7,14 +7,14 @@
 //
 
 #import "cx_http.h"
-#import "../engine/cx_engine.h"
+#import "cx_string.h"
 #import <Foundation/Foundation.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@interface CX_HTTPNSConn : NSObject <NSURLConnectionDelegate>
+@interface CXNSURLConnection : NSObject <NSURLConnectionDelegate>
 {
   NSURLConnection *conn;
   NSMutableData *respdata;
@@ -45,7 +45,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static unsigned int s_transactionIdGen = 0;
+static bool s_initialised = false;
+static unsigned int s_requestIdFactory = 0;
 static NSMutableArray *s_nsconnFreeList = nil;
 static NSMutableArray *s_nsconnBusyList = nil;
 
@@ -53,44 +54,59 @@ static NSMutableArray *s_nsconnBusyList = nil;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_http_init (void)
+bool _cx_http_init (void)
 {
+  CX_ASSERT (!s_initialised);
+  
+  s_requestIdFactory = 0;
+  
   s_nsconnFreeList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
   s_nsconnBusyList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
   
   for (cxu32 i = 0; i < CX_HTTP_MAX_NUM_NSCONN; ++i)
   {
-    CX_HTTPNSConn *nsconn = [[CX_HTTPNSConn alloc] init];
+    CXNSURLConnection *nsconn = [[CXNSURLConnection alloc] init];
     [s_nsconnFreeList addObject:nsconn];
   }
+  
+  s_initialised = true;
+  
+  return s_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_http_deinit (void)
+bool _cx_http_deinit (void)
 {
-  for (cxu32 i = 0; i < [s_nsconnFreeList count]; ++i)
+  if (s_initialised)
   {
-    CX_HTTPNSConn *nsconn = [s_nsconnFreeList objectAtIndex:i];
+    for (cxu32 i = 0; i < [s_nsconnFreeList count]; ++i)
+    {
+      CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:i];
+      
+      [s_nsconnFreeList removeObject:nsconn];
+      
+      [nsconn release];
+    }
     
-    [s_nsconnFreeList removeObject:nsconn];
+    for (cxu32 i = 0; i < [s_nsconnBusyList count]; ++i)
+    {
+      CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
+      
+      [s_nsconnBusyList removeObject:nsconn];
+      
+      [nsconn release];
+    }
     
-    [nsconn release];
+    [s_nsconnFreeList release];
+    [s_nsconnBusyList release];
+    
+    s_initialised = false;
   }
   
-  for (cxu32 i = 0; i < [s_nsconnBusyList count]; ++i)
-  {
-    CX_HTTPNSConn *nsconn = [s_nsconnBusyList objectAtIndex:i];
-    
-    [s_nsconnBusyList removeObject:nsconn];
-    
-    [nsconn release];
-  }
-  
-  [s_nsconnFreeList release];
-  [s_nsconnBusyList release];
+  return !s_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +121,7 @@ cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers,
   CX_ASSERT (s_nsconnFreeList);
   CX_ASSERT (s_nsconnBusyList);
   
-  cx_http_request_id tId = s_transactionIdGen++;
+  cx_http_request_id tId = s_requestIdFactory++;
   
   NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url encoding:NSASCIIStringEncoding]];
   NSMutableURLRequest *nsrequest = [NSMutableURLRequest requestWithURL:nsurl 
@@ -124,7 +140,7 @@ cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers,
     }
   }
   
-  CX_HTTPNSConn *nsconn = [s_nsconnFreeList objectAtIndex:0];
+  CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:0];
   CX_ASSERT (nsconn);
   
   [nsconn setTId:tId];
@@ -151,7 +167,7 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
   CX_ASSERT (s_nsconnFreeList);
   CX_ASSERT (s_nsconnBusyList);
   
-  cx_http_request_id tId = s_transactionIdGen++;
+  cx_http_request_id tId = s_requestIdFactory++;
   
   NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url encoding:NSASCIIStringEncoding]];
   NSMutableURLRequest *nsrequest = [NSMutableURLRequest requestWithURL:nsurl 
@@ -184,7 +200,7 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
     }
   }
   
-  CX_HTTPNSConn *nsconn = [s_nsconnFreeList objectAtIndex:0];
+  CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:0];
   CX_ASSERT (nsconn);
   
   [nsconn setTId:tId];
@@ -261,7 +277,7 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation CX_HTTPNSConn
+@implementation CXNSURLConnection
 
 @synthesize conn;
 @synthesize tId;
@@ -302,6 +318,7 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
 
 - (void)dealloc
 {
+  //[self->conn cancel];
   [self->conn release];
   [self->respdata release];
   [super dealloc];

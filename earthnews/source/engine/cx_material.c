@@ -109,13 +109,13 @@ void cx_material_render (const cx_material *material, const cx_shader *shader)
       CX_ASSERT (texture);
       
       glActiveTexture (textureUnit);
-      cx_graphics_assert_no_errors ();
+      cx_gdi_assert_no_errors ();
       
       glBindTexture (GL_TEXTURE_2D, texture->id);
-      cx_graphics_assert_no_errors ();
+      cx_gdi_assert_no_errors ();
       
       glUniform1i (shader->uniforms [uniform], i);
-      cx_graphics_assert_no_errors ();
+      cx_gdi_assert_no_errors ();
     } 
   }
 }
@@ -133,13 +133,13 @@ void cx_material_render_texture (const cx_texture *texture, cx_material_texture 
   cx_shader_uniform uniform  = s_mappings [type].uniform;
   
   glActiveTexture (textureUnit);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glBindTexture (GL_TEXTURE_2D, texture->id);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glUniform1i (shader->uniforms [uniform], type);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

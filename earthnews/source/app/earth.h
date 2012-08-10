@@ -32,7 +32,7 @@ struct earth_data_t
 {
   const char **names;
   const char **newsFeeds;
-  const char **weatherFeeds;
+  const char **weatherId;
   cx_vec4 *location;
   cx_vec4 *normal;
   unsigned int count;

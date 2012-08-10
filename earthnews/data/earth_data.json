@@ -2,7 +2,7 @@
   {
   "name": "Abidjan",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "IVXX0001",
+  "weather": "1339615",
   "location": {
   "latitude": 5.3363889,
   "longitude": -4.0266667
@@ -11,7 +11,7 @@
   {
   "name": "Accra",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "GHXX0001",
+  "weather": "1326075",
   "location": {
   "latitude": 5.555717,
   "longitude": -0.196306
@@ -20,7 +20,7 @@
   {
   "name": "Algiers",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "AGXX0001",
+  "weather": "1253079",
   "location": {
   "latitude": 36.752887,
   "longitude": 3.042048
@@ -29,7 +29,7 @@
   {
   "name": "Amsterdam",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "NLXX0002",
+  "weather": "727232",
   "location": {
   "latitude": 52.3738007,
   "longitude": 4.8909347
@@ -38,7 +38,7 @@
   {
   "name": "Athens",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "GRXX0004",
+  "weather": "946738",
   "location": {
   "latitude": 37.97918,
   "longitude": 23.716647
@@ -47,7 +47,7 @@
   {
   "name": "Beijing",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "CHXX0008",
+  "weather": "2151330",
   "location": {
   "latitude": 39.904667,
   "longitude": 116.408198
@@ -56,7 +56,7 @@
   {
   "name": "Belfast",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "UKXX0015",
+  "weather": "44544",
   "location": {
   "latitude": 54.5972686,
   "longitude": -5.9301088
@@ -65,7 +65,7 @@
   {
   "name": "Belgrade",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "SRXX0005",
+  "weather": "532697",
   "location": {
   "latitude": 44.802416,
   "longitude": 20.465601
@@ -74,7 +74,7 @@
   {
   "name": "Berlin",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "GMXX0007",
+  "weather": "638242",
   "location": {
   "latitude": 52.5234051,
   "longitude": 13.4113999
@@ -83,7 +83,7 @@
   {
   "name": "Brussels",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "BEXX0005",
+  "weather": "968019",
   "location": {
   "latitude": 50.8462807,
   "longitude": 4.3547273
@@ -92,7 +92,7 @@
   {
   "name": "Bucharest",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "ROXX0003",
+  "weather": "868274",
   "location": {
   "latitude": 44.430481,
   "longitude": 26.12298
@@ -101,7 +101,7 @@
   {
   "name": "Budapest",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "HUXX0002",
+  "weather": "804365",
   "location": {
   "latitude": 47.4984056,
   "longitude": 19.0407578
@@ -110,7 +110,7 @@
   {
   "name": "Buenos Aires",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "ARBA0009",
+  "weather": "468739",
   "location": {
   "latitude": -34.6084175,
   "longitude": -58.3731613
@@ -119,7 +119,7 @@
   {
   "name": "Cairo",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "EGXX0004",
+  "weather": "1521894",
   "location": {
   "latitude": 30.064742,
   "longitude": 31.249509
@@ -128,7 +128,7 @@
   {
   "name": "Cardiff",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "UKXX0030",
+  "weather": "15127",
   "location": {
   "latitude": 51.4813069,
   "longitude": -3.1804979
@@ -137,7 +137,7 @@
   {
   "name": "Copenhagen",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "DAXX0009",
+  "weather": "554890",
   "location": {
   "latitude": 55.6762944,
   "longitude": 12.5681157
@@ -146,7 +146,7 @@
   {
   "name": "Dakar",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "SGXX0001",
+  "weather": "1411986",
   "location": {
   "latitude": 14.75,
   "longitude": -17.3333333
@@ -155,7 +155,7 @@
   {
   "name": "Dhaka",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "BGXX0003",
+  "weather": "1915035",
   "location": {
   "latitude": 23.709921,
   "longitude": 90.407143
@@ -164,7 +164,7 @@
   {
   "name": "Dublin",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "EIXX0014",
+  "weather": "560743",
   "location": {
   "latitude": 53.344104,
   "longitude": -6.2674937
@@ -173,7 +173,7 @@
   {
   "name": "Edinburgh",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "UKXX0052",
+  "weather": "19344",
   "location": {
   "latitude": 55.9501755,
   "longitude": -3.1875359
@@ -182,7 +182,7 @@
   {
   "name": "Istanbul",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "TUXX0014",
+  "weather": "2344116",
   "location": {
   "latitude": 41.012379,
   "longitude": 28.975926
@@ -191,7 +191,7 @@
   {
   "name": "Jakarta",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "IDXX0022",
+  "weather": "1047378",
   "location": {
   "latitude": -6.211544,
   "longitude": 106.845172
@@ -200,7 +200,7 @@
   {
   "name": "Johannesburg",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "SFXX0023",
+  "weather": "1582504",
   "location": {
   "latitude": -26.201452,
   "longitude": 28.045488
@@ -209,7 +209,7 @@
   {
   "name": "Karachi",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "PKXX0008",
+  "weather": "2211096",
   "location": {
   "latitude": 24.893379,
   "longitude": 67.028061
@@ -218,7 +218,7 @@
   {
   "name": "Kinshasa",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "CGXX0005",
+  "weather": "1290062",
   "location": {
   "latitude": -4.320836,
   "longitude": 15.29866
@@ -227,7 +227,7 @@
   {
   "name": "Lagos",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "NIXX0012",
+  "weather": "1398823",
   "location": {
   "latitude": 6.441158,
   "longitude": 3.417877
@@ -236,7 +236,7 @@
   {
   "name": "Lima",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "PEXX0011",
+  "weather": "418440",
   "location": {
   "latitude": -12.093084,
   "longitude": -77.046491
@@ -245,7 +245,7 @@
   {
   "name": "London",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "UKXX0085",
+  "weather": "44418",
   "location": {
   "latitude": 51.5001524,
   "longitude": -0.1262362
@@ -254,7 +254,7 @@
   {
   "name": "Los Angeles",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "USCA0638",
+  "weather": "2442047",
   "location": {
   "latitude": 34.0522342,
   "longitude": -118.2436849
@@ -263,7 +263,7 @@
   {
   "name": "Madrid",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "SPXX0050",
+  "weather": "766273",
   "location": {
   "latitude": 40.4166909,
   "longitude": -3.7003454
@@ -272,7 +272,7 @@
   {
   "name": "Manila",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "RPXX0017",
+  "weather": "1199477",
   "location": {
   "latitude": 14.6010326,
   "longitude": 120.9761599
@@ -281,7 +281,7 @@
   {
   "name": "Mexico City",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "MXDF0132",
+  "weather": "116545",
   "location": {
   "latitude": 19.4270499,
   "longitude": -99.1275711
@@ -290,7 +290,7 @@
   {
   "name": "Montreal",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "CAXX0301",
+  "weather": "3534",
   "location": {
   "latitude": 45.545447,
   "longitude": -73.639076
@@ -299,7 +299,7 @@
   {
   "name": "Moscow",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "RSXX0063",
+  "weather": "2122265",
   "location": {
   "latitude": 55.755786,
   "longitude": 37.617633
@@ -308,7 +308,7 @@
   {
   "name": "Nairobi",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "KEXX0009",
+  "weather": "1528488",
   "location": {
   "latitude": -1.274359,
   "longitude": 36.813106
@@ -317,7 +317,7 @@
   {
   "name": "New Delhi",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "INXX0096",
+  "weather": "2295019",
   "location": {
   "latitude": 28.635308,
   "longitude": 77.22496
@@ -326,7 +326,7 @@
   {
   "name": "New York",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "USNY0996",
+  "weather": "2459115",
   "location": {
   "latitude": 40.7142691,
   "longitude": -74.0059729
@@ -344,7 +344,7 @@
   {
   "name": "Rio de Janeiro",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "BRXX0201",
+  "weather": "615702",
   "location": {
   "latitude": -22.9035393,
   "longitude": -43.2095869
@@ -353,7 +353,7 @@
   {
   "name": "Rome",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "ITXX0067",
+  "weather": "721943",
   "location": {
   "latitude": 41.8954656,
   "longitude": 12.4823243
@@ -362,7 +362,7 @@
   {
   "name": "San Francisco",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "USCA0987",
+  "weather": "2487956",
   "location": {
   "latitude": 37.7749295,
   "longitude": -122.4194155
@@ -371,7 +371,7 @@
   {
   "name": "Seoul",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "KSXX0037",
+  "weather": "1132599",
   "location": {
   "latitude": 37.566535,
   "longitude": 126.9779692
@@ -380,7 +380,7 @@
   {
   "name": "Tehran",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "IRXX0018",
+  "weather": "2251945",
   "location": {
   "latitude": 35.696216,
   "longitude": 51.422945
@@ -389,7 +389,7 @@
   {
   "name": "Tokyo",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "JAXX0085",
+  "weather": "1118370",
   "location": {
   "latitude": 35.6894875,
   "longitude": 139.6917064

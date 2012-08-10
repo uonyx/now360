@@ -7,7 +7,6 @@
 //
 
 #include "feeds.h"
-#include "http.h"
 #include "../engine/cx_engine.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15,6 +14,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define DEBUG_LOG 0
+
+#define WEATHER_YAHOO  1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +28,36 @@ const int TWITTER_API_SEARCH_RPP        = 15;
 
 const char *NEWS_SEARCH_API_URL         = "https://news.google.com/news/feeds";
 const char *TWITTER_SEARCH_API_URL      = "http://search.twitter.com/search.json";
-const char *WEATHER_SEARCH_API_URL      = "http://rss.weather.com/weather/local/";
+#if WEATHER_YAHOO
+const char *WEATHER_SEARCH_API_URL      = "http://weather.yahooapis.com/forecastrss";
+#else
+const char *WEATHER_SEARCH_API_URL      = "http://rss.weather.com/weather/local";
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum weather_image_code
+{
+  // tick
+  
+  WEATHER_IMAGE_SUNNY_DAY,
+  WEATHER_IMAGE_SUNNY_NIGHT,
+  WEATHER_IMAGE_CLOUDY_DAY,
+  WEATHER_IMAGE_CLOUDY_NIGHT,
+  WEATHER_IMAGE_PARTLY_CLOUDY_DAY,
+  WEATHER_IMAGE_PARTLY_CLOUDY_NIGHT,
+  WEATHER_IMAGE_RAIN_DAY,
+  WEATHER_IMAGE_RAIN_NIGHT,
+  WEATHER_IMAGE_SNOW_DAY,
+  WEATHER_IMAGE_SNOW_NIGHT,
+  WEATHER_IMAGE_THUNDERSTORM_DAY,
+  WEATHER_IMAGE_THUNDERSTORM_NIGHT,
+  WEATHER_IMAGE_FOG_DAY,
+  WEATHER_IMAGE_FOG_NIGHT,
+  NUM_WEATHER_IMAGES
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,22 +67,22 @@ void feeds_news_clean (news_feed_t *feed);
 void feeds_twitter_clean (twitter_feed_t *feed);
 void feeds_weather_clean (weather_feed_t *feed);
 
-void news_http_callback (http_transaction_id tId, const http_response *response, void *userdata);
-void twitter_http_callback (http_transaction_id tId, const http_response *response, void *userdata);
-void weather_http_callback (http_transaction_id tId, const http_response *response, void *userdata);
+void news_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
+void twitter_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
+void weather_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void news_http_callback (http_transaction_id tId, const http_response *response, void *userdata)
+void news_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata)
 {
   CX_ASSERT (response);
   CX_ASSERT (userdata);
   
   news_feed_t *feed = (news_feed_t *) userdata;
   
-  if (response->error == HTTP_CONNECTION_ERROR)
+  if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
     // no internet connection ?
   }
@@ -109,7 +139,7 @@ void feeds_news_search (news_feed_t *feed, const char *query)
   
   // q
   char q [256];
-  http_percent_encode (q, 256, query);
+  cx_http_percent_encode (q, 256, query);
   
   CX_DEBUGLOG_CONSOLE (1, "%s", q);
   
@@ -120,7 +150,7 @@ void feeds_news_search (news_feed_t *feed, const char *query)
   
   CX_DEBUGLOG_CONSOLE (1, "%s", request);
   
-  http_get (request, NULL, 0, NEWS_HTTP_REQUEST_TIMEOUT, news_http_callback, feed);
+  cx_http_get (request, NULL, 0, NEWS_HTTP_REQUEST_TIMEOUT, news_http_callback, feed);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,9 +168,9 @@ void feeds_news_clean (news_feed_t *feed)
   {
     next = item->next;
     
-    cx_free ((void *)item->date);
-    cx_free ((void *)item->link);
-    cx_free ((void *)item->title);
+    cx_free ((void *) item->date);
+    cx_free ((void *) item->link);
+    cx_free ((void *) item->title);
     cx_free (item);
     
     item = next;
@@ -150,7 +180,7 @@ void feeds_news_clean (news_feed_t *feed)
   
   if (feed->link)
   {
-    cx_free ((void *)feed->link);
+    cx_free ((void *) feed->link);
     feed->link = NULL;
   }
 }
@@ -162,111 +192,86 @@ void feeds_news_clean (news_feed_t *feed)
 bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
+  CX_ASSERT (data);
   
-  bool success = true;
+  bool success = false;
   
-  xmlDocPtr doc; /* the resulting document tree */
-  
-  doc = xmlReadMemory (data, dataSize, "noname.xml", NULL, 0);
-  
-  if (doc) 
+  cx_xml_doc doc;
+
+  cx_xml_doc_create (&doc, data, dataSize);
+
+  if (doc)
   {
-    xmlNode *rootnode = xmlDocGetRootElement (doc);
+    cx_xml_node rootNode = cx_xml_doc_get_root_node (doc);
+    cx_xml_node channelNode = cx_xml_node_get_child (rootNode, "channel", NULL);
+    cx_xml_node child = cx_xml_node_get_first_child (channelNode);
     
-    CX_ASSERT (xmlStrcmp (rootnode->name, (xmlChar *) "rss") == 0);
-    
-    xmlNode *channelNode = rootnode->children;
-    
-    if (channelNode)
+    while (child)
     {
-      xmlNode *child1 = channelNode->children;
+      const char *name = cx_xml_node_get_name (child);
       
-      while (child1)
+      if (strcmp (name, "item") == 0)
       {
-        if (xmlStrcmp (child1->name, (xmlChar *) "item") == 0)
+        cx_xml_node title = cx_xml_node_get_child (child, "title", NULL);
+        cx_xml_node link = cx_xml_node_get_child (child, "link", NULL);
+        cx_xml_node pubDate = cx_xml_node_get_child (child, "pubDate", NULL);
+        
+        news_feed_item_t *rssItem = cx_malloc (sizeof (news_feed_item_t));
+        memset (rssItem, 0, sizeof (news_feed_item_t));
+        
+        rssItem->title = cx_xml_node_get_content (title);
+        rssItem->date = cx_xml_node_get_content (pubDate);
+        
+        // strip out redirect url
+        const char *linkContent = cx_xml_node_get_content (link);
+        const char *http = "http://";
+        const char *c = linkContent;    // original
+        const char *s = linkContent;    // save
+        
+        while (c)
         {
-          news_feed_item_t *rssItem = cx_malloc (sizeof (news_feed_item_t));
-          memset (rssItem, 0, sizeof (news_feed_item_t));
+          c = strstr (c, http);
           
-          xmlNode *child2 = child1->children;
-          
-          while (child2)
+          if (c)
           {
-            xmlChar *content = xmlNodeGetContent (child2);
-            const char *c = (const char *) content;
-            
-            if (xmlStrcmp (child2->name, (xmlChar *) "title") == 0)
-            {
-              CX_DEBUGLOG_CONSOLE (c, c);
-              rssItem->title = cx_strdup (c, strlen (c));
-            }
-            else if (xmlStrcmp (child2->name, (xmlChar *) "link") == 0)
-            {
-              // strip out redirect url
-              const char *http = "http://";
-              const char *o = c;    // original
-              const char *s = c;    // save
-              
-              while (c)
-              {
-                c = strstr (c, http);
-                
-                if (c)
-                {
-                  s = c;
-                  c += strlen (http);
-                }
-              }
-              
-              CX_ASSERT (s);
-              
-              if (!s)
-              {
-                s = o;
-              }
-              
-              CX_DEBUGLOG_CONSOLE (s, s);
-              
-              rssItem->link = cx_strdup (s, strlen (s));
-            }
-            else if (xmlStrcmp (child2->name, (xmlChar *) "pubDate") == 0)
-            {
-              CX_DEBUGLOG_CONSOLE (c, c);
-              rssItem->date = cx_strdup (c, strlen (c));
-            }
-            
-            xmlFree (content);
-            
-            child2 = child2->next;
+            s = c;
+            c += strlen (http);
           }
-          
-          rssItem->next = feed->items;
-          feed->items = rssItem;
-        }
-        else if (xmlStrcmp (child1->name, (xmlChar *) "link") == 0)
-        {
-          xmlChar *content = xmlNodeGetContent (child1);
-          const char *c = (const char *) content;
-          CX_DEBUGLOG_CONSOLE (c, c);
-          
-          feed->link = cx_strdup (c, strlen (c));
-          
-          xmlFree (content);
         }
         
-        child1 = child1->next;
+        CX_ASSERT (s);
+        
+        if (!s)
+        {
+          s = linkContent;
+        }
+        
+        // ***************************** //
+        // ESCAPE URLS WITH '%' IN THEM! //
+        // ***************************** //
+        
+        CX_DEBUGLOG_CONSOLE (s, s);
+        
+        rssItem->link = cx_strdup (s, strlen (s));
+      
+        cx_free ((void *) linkContent);
+        
+        rssItem->next = feed->items;
+        feed->items = rssItem;
+        
       }
+      else if (strcmp (name, "link") == 0)
+      {
+        feed->link  = cx_xml_node_get_content (child);
+      }
+      
+      child = cx_xml_node_get_next_sibling (child);
     }
     
-    xmlFreeDoc (doc);
+    success = true;
+    
+    cx_xml_doc_destroy (&doc);
   }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (1, "Failed to parse document\n");
-    success = false;
-  }
-  
-  //xmlCleanupParser ();
   
   return success;
 }
@@ -279,14 +284,14 @@ bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void twitter_http_callback (http_transaction_id tId, const http_response *response, void *userdata)
+void twitter_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata)
 {
   CX_ASSERT (response);
   CX_ASSERT (userdata);
   
   twitter_feed_t *feed = (twitter_feed_t *) userdata;
   
-  if (response->error == HTTP_CONNECTION_ERROR)
+  if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
     // no internet connection ?
   }
@@ -360,7 +365,7 @@ void feeds_twitter_search (twitter_feed_t *feed, const char *query)
   
   // q
   char q [256];
-  http_percent_encode (q, 256, query);
+  cx_http_percent_encode (q, 256, query);
   
   CX_DEBUGLOG_CONSOLE (1, "%s", q);
   
@@ -371,7 +376,7 @@ void feeds_twitter_search (twitter_feed_t *feed, const char *query)
   
   CX_DEBUGLOG_CONSOLE (1, "%s", request);
   
-  http_get (request, NULL, 0, TWITTER_HTTP_REQUEST_TIMEOUT, twitter_http_callback, feed);
+  cx_http_get (request, NULL, 0, TWITTER_HTTP_REQUEST_TIMEOUT, twitter_http_callback, feed);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -525,14 +530,14 @@ bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void weather_http_callback (http_transaction_id tId, const http_response *response, void *userdata)
+void weather_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata)
 {
   CX_ASSERT (response);
   CX_ASSERT (userdata);
   
   weather_feed_t *feed = (weather_feed_t *) userdata;
   
-  if (response->error == HTTP_CONNECTION_ERROR)
+  if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
     // no internet connection ?
   }
@@ -589,11 +594,15 @@ void feeds_weather_search (weather_feed_t *feed, const char *query)
   
   char request [512];
   
-  cx_sprintf (request, 512, "%s%s?cm_ven=LWO&cm_cat=rss&par=LWO_rss", url, query);
+#if WEATHER_YAHOO
+  cx_sprintf (request, 512, "%s?w=%s&u=c", url, query);
+#else
+  cx_sprintf (request, 512, "%s/%s?cm_ven=LWO&cm_cat=rss&par=LWO_rss", url, query);
+#endif
   
   CX_DEBUGLOG_CONSOLE (1, "%s", request);
   
-  http_get (request, NULL, 0, WEATHER_HTTP_REQUEST_TIMEOUT, weather_http_callback, feed);
+  cx_http_get (request, NULL, 0, WEATHER_HTTP_REQUEST_TIMEOUT, weather_http_callback, feed);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -604,10 +613,10 @@ void feeds_weather_clean (weather_feed_t *feed)
 {
   CX_ASSERT (feed);
   
-  if (feed->imageUrl)
+  if (feed->date)
   {
-    cx_free ((void *)feed->imageUrl);
-    feed->imageUrl = NULL;
+    cx_free ((void *)feed->date);
+    feed->date = NULL;
   }
 }
 
@@ -615,146 +624,62 @@ void feeds_weather_clean (weather_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_info_parse (void);
-void feeds_weather_info_parse ()
-{
-  // find > read temperature
-  // find http:
-  
-}
-
 bool feeds_weather_parse (weather_feed_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
+  CX_ASSERT (data);
+  CX_ASSERT (dataSize > 0);
   
-  bool success = true;
+  bool success = false;
+  
+  // find > read temperature
+  // find http:
   
   cx_xml_doc doc;
   
   cx_xml_doc_create (&doc, data, dataSize);
   
-  cx_xml_node rootNode = cx_xml_doc_get_root_node (doc);
-  
-  CX_ASSERT (rootNode);
-  
-  cx_xml_node channelNode = cx_xml_node_get_child (rootNode, "channel");
-  
-  CX_ASSERT (channelNode);
-  
-  cx_xml_node itemNode = cx_xml_node_get_child (channelNode, "item");
-  
-  bool found = false;
-  
-  while (itemNode && !found)
-  {
-    cx_xml_node titleNode = cx_xml_node_get_child (itemNode, "title");
+  if (doc)
+  {  
+    cx_xml_node rootNode = cx_xml_doc_get_root_node (doc);
+    cx_xml_node channelNode = cx_xml_node_get_child (rootNode, "channel", NULL);
+    cx_xml_node itemNode = cx_xml_node_get_child (channelNode, "item", NULL);
+    cx_xml_node conditionNode = cx_xml_node_get_child (itemNode, "condition", "yweather");
     
-    const char *title = cx_xml_node_get_content (titleNode);
-        
-    if (strstr (title, "Current Weather Conditions In"))
-    {
-      cx_xml_node descNode = cx_xml_node_get_child (itemNode, "description");
+    const char *temp = cx_xml_node_get_attr (conditionNode, "temp");
+    const char *code = cx_xml_node_get_attr (conditionNode, "code");
+    const char *date = cx_xml_node_get_attr (conditionNode, "date");
+    
+    int tempCelsius = atoi (temp);
+    int conditionCode = atoi (code);
 
-      const char *description = cx_xml_node_get_content (descNode);
-      
-      // get image URL
-      char imageURL [512];
-      int imageURLLength = 0;
-      
-      const char *s = "src=\"";
-      const char *k = strstr (description, s);
-      
-      if (k)
-      {
-        k += strlen (s);
-        
-        while (*k != '\"')
-        {
-          CX_ASSERT (imageURLLength < 512);
-          imageURL [imageURLLength++] = *k++;
-        }
-      }
-      
-      imageURL [imageURLLength] = 0;
-      
-      CX_DEBUG_BREAK_ABLE;
-      
-      
-      // get temperature
-    }
-        
-        
-    found = true;
+    char oclock [8];
+    int hour, minute;
     
-    itemNode = cx_xml_node_get_next_sibling (itemNode);
+    //  "Wed, 30 Nov 2005 1:56 pm PST" (RFC822 Section 5 format)
+    sscanf (date, "%*s %*d %*s %*d %d:%d %s %*s", &hour, &minute, oclock);
     
-  }
-  
-  cx_xml_doc_destroy (&doc);
-  
-  
-  
-#if 0
-  xmlDocPtr doc; /* the resulting document tree */
-  
-  doc = xmlReadMemory (data, dataSize, "noname.xml", NULL, 0);
-  
-  if (doc) 
-  {
-    xmlNode *rootnode = xmlDocGetRootElement (doc);
-    
-    CX_ASSERT (xmlStrcmp (rootnode->name, (xmlChar *) "rss") == 0);
-    
-    xmlNode *channelNode = rootnode->children;
-    
-    if (channelNode)
+    if (strcmp (oclock, "pm") == 0)
     {
-      xmlNode *child1 = channelNode->children;
-      
-      while (child1)
-      {
-        if (xmlStrcmp (child1->name, (xmlChar *) "item") == 0)
-        {
-          xmlNode *child2 = child1->children;
-          
-          while (child2)
-          {
-            xmlChar *content = xmlNodeGetContent (child2);
-            const char *c = (const char *) content;
-            
-            
-            if (xmlStrcmp (child2->name, (xmlChar *) "title") == 0)
-            {
-              CX_DEBUGLOG_CONSOLE (c, c);
-              rssItem->title = cx_strdup (c, strlen (c));
-            }
-            else if (xmlStrcmp (child2->name, (xmlChar *) "pubDate") == 0)
-            {
-              CX_DEBUGLOG_CONSOLE (c, c);
-              rssItem->date = cx_strdup (c, strlen (c));
-            }
-            
-            xmlFree (content);
-            
-            child2 = child2->next;
-          }
-          
-        }
-        
-        child1 = child1->next;
-      }
+      hour += (hour == 12) ? 0 : 12;
+    }
+    else if ((strcmp (oclock, "am") == 0) && (hour == 12))
+    {
+      hour = 0;
     }
     
-    xmlFreeDoc (doc);
+    cx_free ((void *) temp);
+    cx_free ((void *) code);
+    cx_free ((void *) date);
+    
+    feed->celsius = tempCelsius;
+    feed->conditionCode = conditionCode;
+    cx_sprintf (feed->time, 8, "%02d:%02d", hour, minute);
+    
+    cx_xml_doc_destroy (&doc);
+    
+    success = true;
   }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (1, "Failed to parse document\n");
-    success = false;
-  }
-  
-  //xmlCleanupParser ();
-#endif
   
   return success;
 }

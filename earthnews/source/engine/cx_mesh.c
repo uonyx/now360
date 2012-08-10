@@ -89,7 +89,7 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
   
   glGenVertexArraysOES (1, &mesh->vao);
   glBindVertexArrayOES (mesh->vao);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   {
     glGenBuffers (CX_VERTEX_BUFFER_COUNT, mesh->vbos);
@@ -111,7 +111,7 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
     glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, mesh->vbos [1]);
     glBufferData (GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof (cxu16), vertexData->indices, GL_STATIC_DRAW);
     
-    cx_graphics_assert_no_errors ();
+    cx_gdi_assert_no_errors ();
     
   #if CX_VERTEX_DATA_AOS_STRUCT
     glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
@@ -157,7 +157,7 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
   #endif
   }
   
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

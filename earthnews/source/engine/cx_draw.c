@@ -30,22 +30,22 @@ void cx_draw_points_colour (cxi32 numPoints, const cx_vec4 *pos, const cx_colour
   
   // set mvp
   cx_mat4x4 mvp, p, mv;
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MV, &mv);
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_P, &p);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MV, &mv);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_P, &p);
   
   //cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MV, CX_SHADER_DATATYPE_MATRIX4X4, mv.f16);
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_P, CX_SHADER_DATATYPE_MATRIX4X4, p.f16);
   
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, (void*) pos);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glDrawArrays (GL_POINTS, 0, numPoints);
 }
@@ -58,7 +58,7 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colou
 {
   CX_ASSERT (colour);
   
-  //cx_graphics_unbind_all_buffers ();
+  //cx_gdi_unbind_all_buffers ();
   
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW);
   
@@ -67,7 +67,7 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colou
   
   // set mvp
   cx_mat4x4 mvp;
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   
@@ -83,16 +83,16 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colou
   pos [3].y = y2;
   
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
 }
@@ -116,7 +116,7 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colo
   
   // set mvp
   cx_mat4x4 mvp;
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   
@@ -158,14 +158,14 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, const cx_colo
   */
   
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos);
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
@@ -190,7 +190,7 @@ void cx_draw_quad_texture2 (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 u1, cx
   
   // set mvp
   cx_mat4x4 mvp;
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   
@@ -219,14 +219,14 @@ void cx_draw_quad_texture2 (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 u1, cx
   uv [3].y = v2;
   
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos);
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);

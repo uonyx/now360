@@ -1,5 +1,5 @@
 //
-//  cx_graphics_shader.c
+//  cx_gdi_shader.c
 //
 //  Created by Ubaka Onyechi on 29/01/2012.
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
@@ -52,6 +52,8 @@ static const char *s_uniformEnumStrings [CX_NUM_SHADER_UNIFORMS] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static bool s_initialised = false;
+
 struct cx_shader_description
 {
   cx_shader_built_in type;
@@ -68,6 +70,46 @@ static struct cx_shader_description s_shaderDescriptions [CX_NUM_BUILT_IN_SHADER
 };
 
 struct cx_shader *s_builtInShaders [CX_NUM_BUILT_IN_SHADERS];
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_built_in_init (void);
+void cx_shader_built_in_deinit (void);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool _cx_shader_init (void)
+{
+  CX_ASSERT (!s_initialised);
+  
+  memset (s_builtInShaders, 0, sizeof (s_builtInShaders));
+  
+  cx_shader_built_in_init ();
+  
+  s_initialised = true;
+  
+  return s_initialised;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool _cx_shader_deinit (void)
+{
+  if (s_initialised)
+  {
+    cx_shader_built_in_deinit ();
+    
+    s_initialised = false;
+  }
+
+  return !s_initialised;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,7 +336,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     
     shader->attributes [attribIdx] = glGetAttribLocation (shader->program, attribName);
     
-    cx_graphics_assert_no_errors ();
+    cx_gdi_assert_no_errors ();
     CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
      
     attribCount++;
@@ -327,7 +369,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     
     shader->uniforms [uniformIdx] = glGetUniformLocation (shader->program, uniformName);
     
-    cx_graphics_assert_no_errors ();
+    cx_gdi_assert_no_errors ();
     CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
     
     uniformCount++;
@@ -431,7 +473,7 @@ void cx_shader_destroy (cx_shader *shader)
 void cx_shader_use (const cx_shader *shader)
 {
   glUseProgram (shader->program);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -457,7 +499,7 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     default: { break; }
   }
   
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -488,7 +530,7 @@ void cx_shader_set_uniform_2 (const cx_shader *shader, const char *uniformName, 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void _cx_shader_init_built_in (void)
+void cx_shader_built_in_init (void)
 {
   // create built in shaders
   for (cxi16 i = 0; i < CX_NUM_BUILT_IN_SHADERS; ++i)
@@ -507,12 +549,13 @@ void _cx_shader_init_built_in (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void _cx_shader_deinit_built_in (void)
+void cx_shader_built_in_deinit (void)
 {
   // destroy built in shaders
   for (cxi16 i = 0; i < CX_NUM_BUILT_IN_SHADERS; ++i)
   {
     cx_shader *shader = s_builtInShaders [i];
+    
     cx_shader_destroy (shader);
   }
 }
@@ -523,6 +566,7 @@ void _cx_shader_deinit_built_in (void)
 
 cx_shader *cx_shader_get_built_in (cx_shader_built_in type)
 {
+  CX_ASSERT (s_initialised);
   CX_ASSERT ((type > CX_SHADER_BUILT_IN_INVALID) && (type < CX_NUM_BUILT_IN_SHADERS));
   
   return s_builtInShaders [type];

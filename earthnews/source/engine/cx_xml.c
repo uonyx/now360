@@ -16,7 +16,9 @@
 
 void cx_xml_doc_create (cx_xml_doc *doc, const char *data, cxu32 dataSize)
 {
-  xmlDocPtr xmlDoc = xmlReadMemory (data, dataSize, "noname.xml", NULL, 0);
+  //xmlDocPtr xmlDoc = xmlReadMemory (data, dataSize, "noname.xml", NULL, 0);
+  
+  xmlDocPtr xmlDoc = xmlParseMemory (data, dataSize);
   
   *doc = xmlDoc;
 }
@@ -54,7 +56,7 @@ cx_xml_node cx_xml_doc_get_root_node (cx_xml_doc doc)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_xml_node cx_xml_node_get_child (cx_xml_node node, const char *name)
+cx_xml_node cx_xml_node_get_child (cx_xml_node node, const char *name, const char *nsprefix)
 {
   CX_ASSERT (node);
   
@@ -66,9 +68,22 @@ cx_xml_node cx_xml_node_get_child (cx_xml_node node, const char *name)
   
   while (child)
   {
+    const char *cn = (const char *) child->name;
+    (void) cn;
+    
     if (xmlStrcmp (child->name, xmlname) == 0)
     {
-      break;
+      if (nsprefix)
+      {
+        if (child->ns && (xmlStrcmp (child->ns->prefix, (const xmlChar *) nsprefix)) == 0)
+        {
+          break;
+        }
+      }
+      else
+      {
+        break;
+      }
     }
     
     child = child->next;
@@ -162,6 +177,8 @@ const char *cx_xml_node_get_content (cx_xml_node node)
   
   const char *content = (const char *) xmlNodeGetContent (xmlnode);
   
+  // free
+  
   return content;
 }
 
@@ -169,17 +186,20 @@ const char *cx_xml_node_get_content (cx_xml_node node)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_xml_attr cx_xml_node_get_attr (cx_xml_node node)
+const char *cx_xml_node_get_attr (cx_xml_node node, const char *name)
 {
   CX_ASSERT (node);
+  CX_ASSERT (name);
   
-  /*
   xmlNodePtr xmlnode = (xmlNodePtr) node;
   
-  xmlGetProp(<#xmlNodePtr node#>, <#const xmlChar *name#>)
-  */
+  const xmlChar *xmlname = (const xmlChar *) name;
   
-  return NULL;
+  const char *content = (const char *) xmlGetProp (xmlnode, xmlname);
+  
+  // free
+  
+  return content;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -125,7 +125,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   // set mvp
   cx_mat4x4 mvp;
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   
@@ -133,7 +133,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
 
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   cxf32 sx = fontImpl->scaleX;
   cxf32 sy = fontImpl->scaleY;
@@ -183,10 +183,10 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
       glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos);
       glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv);
       
-      cx_graphics_assert_no_errors ();
+      cx_gdi_assert_no_errors ();
       
       glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-      cx_graphics_assert_no_errors ();
+      cx_gdi_assert_no_errors ();
     }
   }
   
@@ -217,7 +217,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   
   // set mvp
   cx_mat4x4 mvp;
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   
@@ -225,7 +225,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
   
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   cxf32 sx = fontImpl->scaleX;
   cxf32 sy = fontImpl->scaleY;
@@ -322,10 +322,10 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
       glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos);
       glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv);
       
-      cx_graphics_assert_no_errors ();
+      cx_gdi_assert_no_errors ();
       
       glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-      cx_graphics_assert_no_errors ();
+      cx_gdi_assert_no_errors ();
     }
   }
   

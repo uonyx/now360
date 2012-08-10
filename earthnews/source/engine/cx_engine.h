@@ -15,21 +15,27 @@
 #include "cx_xml.h"
 #include "cx_graphics.h"
 #include "cx_utility.h"
+#include "cx_http.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct cx_engine_init_params
-{
-  int screenWidth, screenHeight;
-};
-
-typedef struct cx_engine_init_params cx_engine_init_params;
-typedef unsigned int cx_engine_init_flags;
 
 #define CX_ENGINE_INIT_GRAPHICS   0x1
-#define CX_ENGINE_INIT_ALL        (CX_ENGINE_INIT_GRAPHICS)
+#define CX_ENGINE_INIT_NETWORK    0x2
+#define CX_ENGINE_INIT_ALL        (CX_ENGINE_INIT_GRAPHICS | CX_ENGINE_INIT_NETWORK)
+
+typedef cxu32 cx_engine_init_flags;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct cx_engine_init_params
+{
+  cxi32 screenWidth;
+  cxi32 screenHeight;
+} cx_engine_init_params;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,16 +43,21 @@ typedef unsigned int cx_engine_init_flags;
 
 static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init_params *params)
 {
-  cx_system_init ();
+  _cx_system_init ();
   
   if ((flags & CX_ENGINE_INIT_GRAPHICS) == CX_ENGINE_INIT_GRAPHICS)
   {
-    cx_graphics_init ();
+    CX_ASSERT (params);
     
-    if (params)
-    {
-      cx_graphics_set_screen_dimensions (params->screenWidth, params->screenHeight);
-    }
+    _cx_shader_init ();
+    _cx_gdi_init ();
+    
+    cx_gdi_set_screen_dimensions (params->screenWidth, params->screenHeight);
+  }
+  
+  if ((flags & CX_ENGINE_INIT_NETWORK) == CX_ENGINE_INIT_NETWORK)
+  {
+    _cx_http_init ();
   }
 }
 
@@ -56,8 +67,15 @@ static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init
 
 static CX_INLINE void cx_engine_deinit (void)
 {
-  cx_graphics_deinit ();
-  cx_system_deinit ();
+  // graphics
+  _cx_shader_deinit ();
+  _cx_gdi_deinit ();
+  
+  // network
+  _cx_http_deinit ();
+  
+  // system
+  _cx_system_deinit ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

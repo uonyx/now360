@@ -8,8 +8,7 @@
 
 #include "app.h"
 #include "camera.h"
-#include "ui.h"
-#include "http.h"
+#include "render.h"
 #include "feeds.h"
 #include "earth.h"
 #include "webview.h"
@@ -45,7 +44,9 @@ static float s_rotationAccelY = 0.0f; //20.0f;
 static int g_selectedCity = -1;
 
 twitter_feed_t *s_twitterFeeds = NULL;
-news_feed_t *s_rssFeeds = NULL;
+news_feed_t *s_newsFeeds = NULL;
+weather_feed_t *s_weatherFeeds = NULL;
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,10 +64,10 @@ void app_earth_hit_test (float x, float y);
 
 void app_reset (int width, int height)
 {
-  cx_graphics_set_screen_dimensions (width, height);
+  cx_gdi_set_screen_dimensions (width, height);
   s_camera->aspectRatio = (float) width / (float) height;
   
-  ui_screen_reset ((float)width, (float) height);
+  render_screen_reset ((float)width, (float) height);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,16 +88,10 @@ void app_init (int width, int height)
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
   //
-  // http
-  //
-  
-  http_init ();
-  
-  //
   // ui
   //
   
-  ui_init ((float) width, (float) height);
+  render_init ((float) width, (float) height);
   
   //
   // webview
@@ -120,11 +115,16 @@ void app_init (int width, int height)
   // feeds
   //
   
-  s_twitterFeeds = cx_malloc (sizeof (twitter_feed_t) * s_earth->data->count);
-  memset (s_twitterFeeds, 0, sizeof (twitter_feed_t) * s_earth->data->count);
+  int cityCount = s_earth->data->count;
   
-  s_rssFeeds = cx_malloc (sizeof (news_feed_t) * s_earth->data->count);
-  memset (s_rssFeeds, 0, sizeof (news_feed_t) * s_earth->data->count);
+  s_twitterFeeds = cx_malloc (sizeof (twitter_feed_t) * cityCount);
+  memset (s_twitterFeeds, 0, sizeof (twitter_feed_t) * cityCount);
+  
+  s_newsFeeds = cx_malloc (sizeof (news_feed_t) * cityCount);
+  memset (s_newsFeeds, 0, sizeof (news_feed_t) * cityCount);
+  
+  s_weatherFeeds = cx_malloc (sizeof (weather_feed_t) * cityCount);
+  memset (s_weatherFeeds, 0, sizeof (weather_feed_t) * cityCount);
   
   //
   // font 
@@ -140,7 +140,7 @@ void app_init (int width, int height)
   cx_file file0, file1, file2;
   cx_file_load (&file0, "data/rss.txt");
   cx_file_load (&file1, "data/twitter.txt");
-  cx_file_load (&file2, "data/weather.txt");
+  cx_file_load (&file2, "data/weather2.txt");
   
   news_feed_t rssFeed;
   memset (&rssFeed, 0, sizeof (news_feed_t));
@@ -185,7 +185,7 @@ void app_init (int width, int height)
 
 void app_deinit (void)
 {
-  ui_deinit ();
+  render_deinit ();
   
   cx_engine_deinit ();
 }
@@ -209,7 +209,7 @@ void app_update (void)
 
 void app_view_update (float deltaTime)
 {
-  float aspectRatio = cx_graphics_get_aspect_ratio ();
+  float aspectRatio = cx_gdi_get_aspect_ratio ();
   CX_REFERENCE_UNUSED_VARIABLE (aspectRatio);
   
   const float maxRotationSpeed = 40.0f;
@@ -273,9 +273,9 @@ void app_view_update (float deltaTime)
   
   camera_update (s_camera, deltaTime);
   
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_P, &projmatrix);
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MV, &viewmatrix);
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &projmatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &viewmatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
   
 #else
   cx_mat4x4 proj;
@@ -303,9 +303,9 @@ void app_view_update (float deltaTime)
   cx_mat4x4 mvpMatrix;
   cx_mat4x4_mul (&mvpMatrix, &proj, &transformation);
   
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_P, &proj);
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MV, &transformation);
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &proj);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &transformation);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
 #endif
 }
 
@@ -315,17 +315,18 @@ void app_view_update (float deltaTime)
 
 void app_input_touch_began (float x, float y)
 {
-  float screenX = x * cx_graphics_get_screen_width ();
-  float screenY = y * cx_graphics_get_screen_height ();
+  float screenX = x * cx_gdi_get_screen_width ();
+  float screenY = y * cx_gdi_get_screen_height ();
   
   bool hideWebView = true;
   
   if (g_selectedCity > -1)
   {
-    const char *url = ui_rss_hit_test (&s_rssFeeds [g_selectedCity], screenX, screenY);
+    const char *url = render_news_feed_hit_test (&s_newsFeeds [g_selectedCity], screenX, screenY);
     if (url)
     {
       web_view_launch_url (url);
+      
       hideWebView = false;
       
       CX_DEBUGLOG_CONSOLE (1, "PING! [x = %.2f, y = %.2f", screenX, screenY);
@@ -343,11 +344,15 @@ void app_input_touch_began (float x, float y)
   app_earth_hit_test (x, y);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void app_earth_hit_test (float x, float y)
 {
   // do ray test
-  float screenWidth = cx_graphics_get_screen_width ();
-  float screenHeight = cx_graphics_get_screen_height ();
+  float screenWidth = cx_gdi_get_screen_width ();
+  float screenHeight = cx_gdi_get_screen_height ();
  
   cx_mat4x4 view, proj;
   
@@ -382,6 +387,7 @@ void app_earth_hit_test (float x, float y)
     position = s_earth->data->location [i];
     
     float dotp = cx_vec4_dot (&normal, &rayDir);
+    
     if (dotp < 0.0f)
     {
       cx_vec4 intersectpt, tmp;
@@ -406,9 +412,11 @@ void app_earth_hit_test (float x, float y)
   if (cityIndex > -1)
   {
     const char *n = s_earth->data->names [cityIndex];
+    const char *w = s_earth->data->weatherId [cityIndex];
     
     feeds_twitter_search (&s_twitterFeeds [cityIndex], n);
-    feeds_news_search (&s_rssFeeds [cityIndex], n);
+    feeds_news_search (&s_newsFeeds [cityIndex], n);
+    feeds_weather_search (&s_weatherFeeds [cityIndex], w);
     
     g_selectedCity = cityIndex;
   }
@@ -423,8 +431,8 @@ void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
   float dx = x - prev_x;
   float dy = y - prev_y;
   
-  float w = cx_graphics_get_screen_width ();
-  float h = cx_graphics_get_screen_height ();
+  float w = cx_gdi_get_screen_width ();
+  float h = cx_gdi_get_screen_height ();
   
   s_rotationAccelX = dy * 10.0f * w;
   s_rotationAccelY = dx * 10.0f * h;
@@ -469,8 +477,8 @@ void app_input_zoom (float factor)
 
 static void app_render_earth_city_text (void)
 {
-  float screenWidth = cx_graphics_get_screen_width ();
-  float screenHeight = cx_graphics_get_screen_height ();
+  float screenWidth = cx_gdi_get_screen_width ();
+  float screenHeight = cx_gdi_get_screen_height ();
   
   cx_mat4x4 view, proj;
   
@@ -492,6 +500,9 @@ static void app_render_earth_city_text (void)
 
     cx_font_set_scale (s_font, scale, scale);
     cx_font_render (s_font, text, screen.x, screen.y, CX_FONT_ALIGNMENT_CENTRE_X, colour);
+    
+    screen.y += 3.0f;
+    render_weather_feed (&s_weatherFeeds [i], &screen);
   }
 }
 
@@ -502,7 +513,7 @@ static void app_render_earth_city_text (void)
 static void app_render_earth (void)
 {
   cx_mat4x4 mvpMatrix;
-  cx_graphics_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
+  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
   
   cx_mat3x3 normalMatrix;
   cx_mat3x3_identity (&normalMatrix);
@@ -531,14 +542,14 @@ void app_render_2d (void)
   // begin
   //////////////
   
-  cx_graphics_unbind_all_buffers ();
-  cx_graphics_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND);
-  cx_graphics_set_blend_mode (CX_GRAPHICS_BLEND_MODE_SRC_ALPHA, CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
-  cx_graphics_enable_z_buffer (false);
+  cx_gdi_unbind_all_buffers ();
+  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND);
+  cx_gdi_set_blend_mode (CX_GRAPHICS_BLEND_MODE_SRC_ALPHA, CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_enable_z_buffer (false);
   
   // set 2d mvp matrix
-  float screenWidth = cx_graphics_get_screen_width ();
-  float screenHeight = cx_graphics_get_screen_height ();
+  float screenWidth = cx_gdi_get_screen_width ();
+  float screenHeight = cx_gdi_get_screen_height ();
   
   cx_mat4x4 orthoProjMatrix;
   cx_mat4x4 orthoViewMatrix;
@@ -546,9 +557,9 @@ void app_render_2d (void)
   cx_mat4x4_ortho (&orthoProjMatrix, 0.0f, screenWidth, 0.0f, screenHeight, DEFAULT_ORTHOGRAPHIC_PROJECTION_NEAR, DEFAULT_ORTHOGRAPHIC_PROJECTION_FAR); 
   cx_mat4x4_identity (&orthoViewMatrix);
   
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_P, &orthoProjMatrix);
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MV, &orthoViewMatrix);
-  cx_graphics_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &orthoProjMatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &orthoProjMatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &orthoViewMatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &orthoProjMatrix);
   
   //////////////
   // render
@@ -556,19 +567,19 @@ void app_render_2d (void)
   
   app_render_earth_city_text ();
   
-  ui_render();
+  render_test ();
   
   if (g_selectedCity > -1)
   {
-    ui_render_twitter_feed (&s_twitterFeeds [g_selectedCity]);
-    ui_render_rss_feed (&s_rssFeeds [g_selectedCity]);
+    render_twitter_feed (&s_twitterFeeds [g_selectedCity]);
+    render_news_feed (&s_newsFeeds [g_selectedCity]);
   }
   
   //////////////
   // end
   //////////////
   
-  cx_graphics_enable_z_buffer (true);
+  cx_gdi_enable_z_buffer (true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -581,9 +592,9 @@ void app_render_3d (void)
   // begin
   //////////////
   
-  cx_graphics_unbind_all_buffers ();
-  cx_graphics_set_renderstate (CX_GRAPHICS_RENDER_STATE_CULL | CX_GRAPHICS_RENDER_STATE_DEPTH_TEST);
-  cx_graphics_enable_z_buffer (true);
+  cx_gdi_unbind_all_buffers ();
+  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_CULL | CX_GRAPHICS_RENDER_STATE_DEPTH_TEST);
+  cx_gdi_enable_z_buffer (true);
   
   //////////////
   // render
@@ -602,7 +613,7 @@ void app_render_3d (void)
 
 void app_render (void)
 {
-  cx_graphics_clear (cx_colour_black ());
+  cx_gdi_clear (cx_colour_black ());
   
   app_render_3d ();
   
@@ -631,7 +642,7 @@ void app_test_code (void)
     float r = rand () / (RAND_MAX + 1.0f);
     memset (mat16, r, sizeof(mat16));
     
-    //cx_vec4_set(&vectors [i], r, r * i, r * i * 2.0f, r * i * 0.5f);
+    //cx_vec4_set (&vectors [i], r, r * i, r * i * 2.0f, r * i * 0.5f);
     cx_mat4x4_set (&matrices [i], mat16);
   }
   

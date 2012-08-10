@@ -79,9 +79,8 @@ typedef void (*cx_http_response_callback) (cx_http_request_id tId, const cx_http
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_http_init (void);
-
-void cx_http_deinit (void);
+bool _cx_http_init (void);
+bool _cx_http_deinit (void);
 
 cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers, cxi32 headerCount, cxi32 timeout, 
                                 cx_http_response_callback callback, void *userdata);

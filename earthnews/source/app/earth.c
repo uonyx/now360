@@ -80,7 +80,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
     data->normal = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
     data->names = (const char **) cx_malloc (sizeof (char *) * count);
     data->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
-    data->weatherFeeds = (const char **) cx_malloc (sizeof (char *) * count);
+    data->weatherId = (const char **) cx_malloc (sizeof (char *) * count);
     
     unsigned int i;
     for (i = 0; i < count; ++i)
@@ -110,7 +110,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
         {
           CX_ASSERT (v->type == json_string);
           
-          data->weatherFeeds [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+          data->weatherId [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
         }
         else if (strcmp (vn, "location") == 0)
         {

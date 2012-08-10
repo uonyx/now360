@@ -152,10 +152,10 @@ void cx_texture_gpu_init (cx_texture *texture)
   CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->compressed [%s]", texture->compressed ? "true" : "false");
   
   glGenTextures (1, &texture->id);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   glBindTexture (GL_TEXTURE_2D, texture->id);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   if (texture->compressed)
   {
@@ -185,22 +185,22 @@ void cx_texture_gpu_init (cx_texture *texture)
       }
     }
   }
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   // generate mipmaps
   glGenerateMipmap (GL_TEXTURE_2D);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   // set up filters
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
   
   // set up coordinate wrapping
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,7 +212,7 @@ void cx_texture_gpu_deinit (cx_texture *texture)
   CX_ASSERT (texture);
   
   glDeleteTextures (1, &texture->id);
-  cx_graphics_assert_no_errors ();
+  cx_gdi_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
