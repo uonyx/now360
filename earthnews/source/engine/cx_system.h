@@ -21,7 +21,7 @@
 
 #define CX_SYSTEM_CUSTOM_MEMORY_ALLOCATOR_ENABLED     0
 
-#define cx_malloc(X)  malloc(X)
+#define cx_malloc(X)  _cx_malloc(X)
 #define cx_free(X)    free(X)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

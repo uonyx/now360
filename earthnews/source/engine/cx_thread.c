@@ -29,20 +29,26 @@ static void *cx_thread_pthread_func (void *data)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_thread *cx_thread_create (const char *name, cx_thread_func func, void *userdata)
+cx_thread *cx_thread_create (const char *name, cx_thread_type type, cx_thread_func func, void *userdata)
 {
   cx_thread *thread = cx_malloc (sizeof (cx_thread));
   
   thread->func = func;
   thread->userdata = userdata;
   
-  int ret = pthread_create (&thread->id, NULL, cx_thread_pthread_func, thread);
+  pthread_attr_t attr;
+  pthread_attr_init (&attr);
+  pthread_attr_setdetachstate (&attr, type);
+  
+  int ret = pthread_create (&thread->thread, &attr, cx_thread_pthread_func, thread);
   
   if (ret != 0)
   {
     cx_free (thread);
     thread = NULL;
   }
+  
+  pthread_attr_destroy (&attr);
   
   return thread;
 }
@@ -66,7 +72,7 @@ void cx_thread_mutex_init (cx_thread_mutex *mutex)
 {
   CX_ASSERT (mutex);
   
-  //*mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_init (mutex, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,6 +81,7 @@ void cx_thread_mutex_init (cx_thread_mutex *mutex)
 
 void cx_thread_mutex_deinit (cx_thread_mutex *mutex)
 {
+  pthread_mutex_destroy (mutex);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

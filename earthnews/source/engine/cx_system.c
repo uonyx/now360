@@ -69,7 +69,12 @@ bool _cx_system_deinit (void)
 void *_cx_malloc (size_t size)
 {
   CX_ASSERT (s_initialised);
-  return malloc (size);
+  
+  void *block = malloc (size);
+  
+  memset (block, 0, size);
+  
+  return block;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +84,7 @@ void *_cx_malloc (size_t size)
 void _cx_free (void *data)
 {
   CX_ASSERT (s_initialised);
+  
   free (data);
 }
 

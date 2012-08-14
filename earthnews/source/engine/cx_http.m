@@ -14,17 +14,37 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define CX_HTTP_DEBUG_LOG_ENABLED   1
+#define CX_HTTP_MAX_NUM_NSCONN      16
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct cx_http_request
+{
+  const char *url;
+  cx_http_request_field *headers;
+  cxu32 headerCount;
+  cxu32 timeout;
+  void *nsconn;
+} cx_http_request;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 @interface CXNSURLConnection : NSObject <NSURLConnectionDelegate>
 {
   NSURLConnection *conn;
   NSMutableData *respdata;
-  cx_http_request_id tId;
+  cx_http_request_id rId;
   cx_http_response resp;
   cx_http_response_callback callback;
   void *callbackUserdata;
 }
 
-@property cx_http_request_id tId;
+@property cx_http_request_id rId;
 @property cx_http_response_callback callback;
 @property void *callbackUserdata;
 @property (nonatomic, retain) NSURLConnection *conn;
@@ -39,14 +59,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_HTTP_MAX_NUM_NSCONN 16
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static bool s_initialised = false;
-static unsigned int s_requestIdFactory = 0;
+static unsigned int s_requesrIdFactory = 0;
 static NSMutableArray *s_nsconnFreeList = nil;
 static NSMutableArray *s_nsconnBusyList = nil;
 
@@ -58,7 +72,7 @@ bool _cx_http_init (void)
 {
   CX_ASSERT (!s_initialised);
   
-  s_requestIdFactory = 0;
+  s_requesrIdFactory = 0;
   
   s_nsconnFreeList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
   s_nsconnBusyList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
@@ -116,12 +130,11 @@ bool _cx_http_deinit (void)
 cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers, int headerCount, int timeout, 
                                 cx_http_response_callback callback, void *userdata)
 {
-  CX_ASSERT (url);
-  
   CX_ASSERT (s_nsconnFreeList);
   CX_ASSERT (s_nsconnBusyList);
+  CX_ASSERT (url);
   
-  cx_http_request_id tId = s_requestIdFactory++;
+  cx_http_request_id rId = s_requesrIdFactory++;
   
   NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url encoding:NSASCIIStringEncoding]];
   NSMutableURLRequest *nsrequest = [NSMutableURLRequest requestWithURL:nsurl 
@@ -143,7 +156,7 @@ cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers,
   CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:0];
   CX_ASSERT (nsconn);
   
-  [nsconn setTId:tId];
+  [nsconn setRId:rId];
   [nsconn setCallback:callback];
   [nsconn setCallbackUserdata:userdata];
   
@@ -154,7 +167,7 @@ cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers,
   
   [nsconn setConn:conn];
   
-  return tId;
+  return rId;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,7 +180,7 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
   CX_ASSERT (s_nsconnFreeList);
   CX_ASSERT (s_nsconnBusyList);
   
-  cx_http_request_id tId = s_requestIdFactory++;
+  cx_http_request_id rId = s_requesrIdFactory++;
   
   NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url encoding:NSASCIIStringEncoding]];
   NSMutableURLRequest *nsrequest = [NSMutableURLRequest requestWithURL:nsurl 
@@ -203,7 +216,7 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
   CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:0];
   CX_ASSERT (nsconn);
   
-  [nsconn setTId:tId];
+  [nsconn setRId:rId];
   [nsconn setCallback:callback];
   [nsconn setCallbackUserdata:userdata];
   
@@ -214,7 +227,31 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
   
   [nsconn setConn:conn];
   
-  return tId;
+  return rId;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_http_cancel (cx_http_request_id requestId)
+{
+  CX_ASSERT (requestId > CX_HTTP_REQUEST_ID_INVALID);
+  
+  for (cxu32 i = 0, c = [s_nsconnBusyList count]; i < c; ++i)
+  {
+    CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
+    
+    if (nsconn.rId == requestId)
+    {
+      [nsconn.conn cancel];
+      
+      [s_nsconnBusyList removeObject:nsconn];
+      [s_nsconnFreeList addObject:nsconn];
+      
+      break;
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -245,15 +282,15 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
     }
     else // ascii control characters, reserved characters, unsafe characters
     {
-      cxi32 enc_size = cx_sprintf (enc, 16, "%%%02x", c);
+      cxi32 encSize = cx_sprintf (enc, 16, "%%%02x", c);
 #if 1
-      for (cxi32 i = 0; i < enc_size; ++i)
+      for (cxi32 i = 0; i < encSize; ++i)
       {
         CX_ASSERT (len < dstSize);
         dst [len++] = enc [i];
       }
 #else
-      CX_ASSERT ((len + enc_size) < dstSize); CX_REFERENCE_UNUSED_VARIABLE (enc_size);
+      CX_ASSERT ((len + encSize) < dstSize); CX_REFERENCE_UNUSED_VARIABLE (encSize);
       dst [len++] = enc [0];
       dst [len++] = enc [1];
       dst [len++] = enc [2];
@@ -264,6 +301,7 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
   }
   
   CX_ASSERT (len < dstSize);
+  
   dst [len] = 0;
   
   return len;
@@ -279,10 +317,18 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
 
 @implementation CXNSURLConnection
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 @synthesize conn;
-@synthesize tId;
+@synthesize rId;
 @synthesize callback;
 @synthesize callbackUserdata;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 - (id)init
 {
@@ -296,6 +342,10 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
   
   return self;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 - (id)initWith: (cx_http_request_id)transactionId: (cx_http_response_callback)responseCallback: (void *)userdata;
 {
@@ -339,13 +389,13 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
   
   if (responseCallback)
   {
-    responseCallback (self->tId, &self->resp, self->callbackUserdata);
+    responseCallback (self->rId, &self->resp, self->callbackUserdata);
   }
   
   [data resetBytesInRange:NSMakeRange(0, [data length])];
   [data setLength:0];
   
-  [self setTId:CX_HTTP_REQUEST_ID_INVALID];
+  [self setRId:CX_HTTP_REQUEST_ID_INVALID];
   [self setCallback:NULL];
   [self setCallbackUserdata:NULL];
   
@@ -365,7 +415,7 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
   self->resp.error = CX_HTTP_CONNECTION_OK;
   self->resp.statusCode = statusCode;
   
-  CX_DEBUGLOG_CONSOLE (1, "cx_http: didReceiveResponse: HTTP request: Server Response Status Code [%d]", statusCode);
+  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didReceiveResponse: HTTP request: Server Response Status Code [%d]", statusCode);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -384,7 +434,7 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
-  CX_DEBUGLOG_CONSOLE (1, "cx_http: didFailWithError: Connection error: Internet offline maybe");
+  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didFailWithError: Connection error: Internet offline maybe");
   
   self->resp.error = CX_HTTP_CONNECTION_ERROR;
   self->resp.statusCode = -1;
@@ -395,7 +445,7 @@ cxu32 cx_http_percent_encode (char *dst, cxu32 dstSize, const char *src)
   
   if (responseCallback)
   {
-    responseCallback (self->tId, &self->resp, self->callbackUserdata);
+    responseCallback (self->rId, &self->resp, self->callbackUserdata);
   }
 }
 
