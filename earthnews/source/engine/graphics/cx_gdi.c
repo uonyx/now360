@@ -8,7 +8,7 @@
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 
-#include "cx_graphics.h"
+#include "cx_gdi.h"
 #include "cx_math.h"
 #include "cx_file.h"
 #include "cx_string.h"

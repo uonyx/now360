@@ -5,12 +5,13 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#include "cx_font.h"
-#include "cx_file.h"
-#include "cx_matrix4x4.h"
-#include "cx_graphics.h"
+#include "../system/cx_file.h"
+#include "../system/cx_matrix4x4.h"
+#include "../3rdparty/stb_truetype/stb_truetype.h"
 
-#include "stb_truetype/stb_truetype.h"
+#include "cx_font.h"
+#include "cx_gdi.h"
+
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 

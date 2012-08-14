@@ -8,14 +8,15 @@
 #ifndef CX_ENGINE_H
 #define CX_ENGINE_H
 
-#include "cx_system.h"
-#include "cx_time.h"
-#include "cx_thread.h"
-#include "cx_file.h"
-#include "cx_xml.h"
-#include "cx_graphics.h"
-#include "cx_utility.h"
-#include "cx_http.h"
+#include "system/cx_system.h"
+#include "system/cx_time.h"
+#include "system/cx_thread.h"
+#include "system/cx_file.h"
+#include "system/cx_xml.h"
+#include "system/cx_utility.h"
+#include "graphics/cx_gdi.h"
+#include "graphics/cx_font.h"
+#include "network/cx_http.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -269,7 +269,7 @@ int main(int arg, char **argv)
 ////   INTEGRATION WITH RUNTIME LIBRARIES
 ////
 
-#include "../cx_system.h"
+#include "../../system/cx_system.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 
 #ifdef STB_TRUETYPE_IMPLEMENTATION
