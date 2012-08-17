@@ -19,34 +19,41 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void (*cx_thread_func)(void *userdata);
-
-struct cx_thread
-{
-  pthread_t thread;
-  cx_thread_func func;
-  void *userdata;
-  
-  bool finished;
-  bool executing;
-  bool cancelled;
-};
-
-struct cx_thread_event
-{
-  pthread_cond_t event;
-  pthread_mutex_t mutex;
-};
-
-typedef pthread_mutex_t cx_thread_mutex;
-typedef struct cx_thread_event cx_thread_event;
-typedef struct cx_thread cx_thread;
 typedef enum 
 {
   CX_THREAD_TYPE_INVALID,
   CX_THREAD_TYPE_JOINABLE = PTHREAD_CREATE_JOINABLE,
   CX_THREAD_TYPE_DETACHED = PTHREAD_CREATE_DETACHED,
 } cx_thread_type;
+
+typedef enum {
+  CX_THREAD_EXIT_STATUS_SUCCESS,
+  CX_THREAD_EXIT_STATUS_FAILURE
+} cx_thread_exit_status;
+
+typedef cx_thread_exit_status (*cx_thread_func)(void *userdata);
+
+typedef struct cx_thread
+{
+  const char *name;
+  pthread_t id;
+  cx_thread_type type;
+  cx_thread_func func;
+  void *userdata;
+  
+  bool finished;
+  bool executing;
+  bool cancelled;
+} cx_thread;
+
+typedef struct cx_thread_monitor
+{
+  pthread_cond_t cond;
+  pthread_mutex_t mutex;
+  cxi32 sigcount; // protects against logical error of calling signal before wait & useful for debug
+} cx_thread_monitor;
+
+typedef pthread_mutex_t cx_thread_mutex;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,14 +62,16 @@ typedef enum
 cx_thread *cx_thread_create (const char *name, cx_thread_type type, cx_thread_func func, void *userdata);
 void cx_thread_destroy (cx_thread *thread);
 
+void cx_thread_join (cx_thread *thread, cx_thread_exit_status *exitStatus);
+void cx_thread_detach (cx_thread *thread);
 void cx_thread_cancel (cx_thread *thread);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_thread_mutex_init (cx_thread_mutex *mutex);
-void cx_thread_mutex_deinit (cx_thread_mutex *mutex);
+bool cx_thread_mutex_init (cx_thread_mutex *mutex);
+bool cx_thread_mutex_deinit (cx_thread_mutex *mutex);
 
 void cx_thread_mutex_lock (cx_thread_mutex *mutex);
 void cx_thread_mutex_unlock (cx_thread_mutex *mutex);
@@ -71,11 +80,12 @@ void cx_thread_mutex_unlock (cx_thread_mutex *mutex);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_thread_event_init (cx_thread_event *event);
-void cx_thread_event_deinit (cx_thread_event *event);
+bool cx_thread_monitor_init (cx_thread_monitor *monitor);
+bool cx_thread_monitor_deinit (cx_thread_monitor *monitor);
 
-bool cx_thread_event_wait (cx_thread_event *event, cxi32 timeout);
-void cx_thread_event_signal (cx_thread_event *event);
+void cx_thread_monitor_signal (cx_thread_monitor *monitor);
+void cx_thread_monitor_wait (cx_thread_monitor *monitor);
+bool cx_thread_monitor_wait_timed (cx_thread_monitor *monitor, cxu32 timeout);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
