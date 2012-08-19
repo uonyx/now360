@@ -32,6 +32,8 @@
 		3127E30015DAFF6400793C60 /* cx_mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2F615DAFF6400793C60 /* cx_mesh.c */; };
 		3127E30115DAFF6400793C60 /* cx_shader.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2F815DAFF6400793C60 /* cx_shader.c */; };
 		3127E30215DAFF6400793C60 /* cx_texture.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2FA15DAFF6400793C60 /* cx_texture.c */; };
+		3127E30A15E00F6D00793C60 /* worker.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30915E00F6D00793C60 /* worker.c */; };
+		3127E30D15E0557400793C60 /* cx_list.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30C15E0557200793C60 /* cx_list.c */; };
 		316FAA691517C01900CC39F2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA651517C01900CC39F2 /* InfoPlist.strings */; };
 		316FAA6A1517C01900CC39F2 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */; };
 		316FAA711517C06400CC39F2 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA6D1517C06400CC39F2 /* AppDelegate.m */; };
@@ -173,6 +175,10 @@
 		3127E2F915DAFF6400793C60 /* cx_shader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_shader.h; sourceTree = "<group>"; };
 		3127E2FA15DAFF6400793C60 /* cx_texture.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_texture.c; sourceTree = "<group>"; };
 		3127E2FB15DAFF6400793C60 /* cx_texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_texture.h; sourceTree = "<group>"; };
+		3127E30715E00F5800793C60 /* worker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = worker.h; sourceTree = "<group>"; };
+		3127E30915E00F6D00793C60 /* worker.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = worker.c; sourceTree = "<group>"; };
+		3127E30B15E0555B00793C60 /* cx_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_list.h; sourceTree = "<group>"; };
+		3127E30C15E0557200793C60 /* cx_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_list.c; sourceTree = "<group>"; };
 		316FAA631517C01900CC39F2 /* earthnews-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "earthnews-Info.plist"; sourceTree = "<group>"; };
 		316FAA641517C01900CC39F2 /* earthnews-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "earthnews-Prefix.pch"; sourceTree = "<group>"; };
 		316FAA661517C01900CC39F2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -433,6 +439,8 @@
 				3127E2B615D38FDC00793C60 /* social.m */,
 				3127E2B715D38FDC00793C60 /* webview.h */,
 				3127E2B815D38FDC00793C60 /* webview.m */,
+				3127E30715E00F5800793C60 /* worker.h */,
+				3127E30915E00F6D00793C60 /* worker.c */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -462,6 +470,8 @@
 				3127E2D515DAFD7E00793C60 /* cx_vector4.h */,
 				3127E2D615DAFD7E00793C60 /* cx_xml.c */,
 				3127E2D715DAFD7E00793C60 /* cx_xml.h */,
+				3127E30B15E0555B00793C60 /* cx_list.h */,
+				3127E30C15E0557200793C60 /* cx_list.c */,
 			);
 			path = system;
 			sourceTree = "<group>";
@@ -1102,6 +1112,8 @@
 				3127E30015DAFF6400793C60 /* cx_mesh.c in Sources */,
 				3127E30115DAFF6400793C60 /* cx_shader.c in Sources */,
 				3127E30215DAFF6400793C60 /* cx_texture.c in Sources */,
+				3127E30A15E00F6D00793C60 /* worker.c in Sources */,
+				3127E30D15E0557400793C60 /* cx_list.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

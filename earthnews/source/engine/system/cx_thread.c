@@ -20,11 +20,13 @@ static void *cx_thread_pthread_func (void *data)
   
   pthread_setname_np (thread->name);
   
+  cx_thread_monitor_wait (&thread->start);
+  
   cx_thread_exit_status exitStatus = CX_THREAD_EXIT_STATUS_SUCCESS;
   
   if (thread->func)
   {
-    exitStatus = thread->func (thread->userdata);
+    exitStatus = thread->func (thread->funcUserData);
   }
   
   pthread_exit ((void *) exitStatus);
@@ -41,9 +43,11 @@ cx_thread *cx_thread_create (const char *name, cx_thread_type type, cx_thread_fu
   cx_thread *thread = cx_malloc (sizeof (cx_thread));
   
   thread->func = func;
-  thread->userdata = userdata;
+  thread->funcUserData = userdata;
   thread->name = name;
   thread->type = type;
+  
+  cx_thread_monitor_init (&thread->start);
   
   pthread_attr_t attr;
   pthread_attr_init (&attr);
@@ -69,8 +73,32 @@ cx_thread *cx_thread_create (const char *name, cx_thread_type type, cx_thread_fu
 void cx_thread_destroy (cx_thread *thread)
 {
   CX_ASSERT (thread);
+ 
+  cx_thread_monitor_deinit (&thread->start);
   
   cx_free (thread);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_thread_start (cx_thread *thread)
+{
+  CX_ASSERT (thread);
+  
+  cx_thread_monitor_signal (&thread->start);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_thread_cancel (cx_thread *thread)
+{
+  CX_ASSERT (thread);
+  
+  //pthread_cancel (thread->id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,12 +222,11 @@ bool cx_thread_monitor_deinit (cx_thread_monitor *monitor)
   
   int rc = pthread_mutex_destroy (&monitor->mutex);
   
-  if (rc == 0)
-  {
-    rc = pthread_cond_destroy (&monitor->cond);
-    
-    ret = (rc == 0);
-  }
+  ret = (rc == 0);
+  
+  rc = pthread_cond_destroy (&monitor->cond);
+  
+  ret &= (rc == 0);
   
   return ret;
 }

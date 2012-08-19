@@ -74,6 +74,8 @@ void *_cx_malloc (size_t size)
   
   memset (block, 0, size);
   
+  CX_FATAL_ASSERT (block);
+  
   return block;
 }
 

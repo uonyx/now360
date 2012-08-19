@@ -28,23 +28,11 @@ typedef enum
 
 typedef enum {
   CX_THREAD_EXIT_STATUS_SUCCESS,
-  CX_THREAD_EXIT_STATUS_FAILURE
+  CX_THREAD_EXIT_STATUS_FAILURE,
+  CX_THREAD_EXIT_STATUS_CANCELLED
 } cx_thread_exit_status;
 
 typedef cx_thread_exit_status (*cx_thread_func)(void *userdata);
-
-typedef struct cx_thread
-{
-  const char *name;
-  pthread_t id;
-  cx_thread_type type;
-  cx_thread_func func;
-  void *userdata;
-  
-  bool finished;
-  bool executing;
-  bool cancelled;
-} cx_thread;
 
 typedef struct cx_thread_monitor
 {
@@ -55,6 +43,17 @@ typedef struct cx_thread_monitor
 
 typedef pthread_mutex_t cx_thread_mutex;
 
+typedef struct cx_thread
+{
+  const char *name;
+  pthread_t id;
+  cx_thread_type type;
+  cx_thread_func func;
+  void *funcUserData;
+  cx_thread_monitor start;
+  bool cancel;
+} cx_thread;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,9 +61,11 @@ typedef pthread_mutex_t cx_thread_mutex;
 cx_thread *cx_thread_create (const char *name, cx_thread_type type, cx_thread_func func, void *userdata);
 void cx_thread_destroy (cx_thread *thread);
 
+void cx_thread_start (cx_thread *thread);
+void cx_thread_cancel (cx_thread *thread);
+
 void cx_thread_join (cx_thread *thread, cx_thread_exit_status *exitStatus);
 void cx_thread_detach (cx_thread *thread);
-void cx_thread_cancel (cx_thread *thread);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
