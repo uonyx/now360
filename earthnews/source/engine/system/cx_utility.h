@@ -25,11 +25,11 @@ bool cx_util_is_power_of_2 (cxu32 num);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_util_world_space_to_screen_space (float width, float height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
-                                          const cx_vec4 *world, cx_vec2 *screen, float *zScale);
+void cx_util_world_space_to_screen_space (cxf32 width, cxf32 height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
+                                          const cx_vec4 *world, cx_vec2 *screen, cxf32 *depth, cxf32 *zScale);
 
-void cx_util_screen_space_to_world_space (float width, float height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
-                                          const cx_vec2 *screen, cx_vec4 *world, float ciipz, bool ray);
+void cx_util_screen_space_to_world_space (cxf32 width, cxf32 height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
+                                          const cx_vec2 *screen, cx_vec4 *world, cxf32 depth, bool ray);
 
 void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_vec4 * CX_RESTRICT target, 
                       const cx_vec4 * CX_RESTRICT updir);

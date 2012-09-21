@@ -18,7 +18,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static int s_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] = 
+static cxu8 s_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] = 
 {
   4,  /* CX_TEXTURE_FORMAT_RGB */
   4,  /* CX_TEXTURE_FORMAT_RGBA */
@@ -28,8 +28,6 @@ static int s_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] =
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#define CX_TEXTURE_DB 0
 
 typedef struct cx_texture_node 
 {
@@ -47,15 +45,17 @@ extern bool cx_native_load_png (const char *filename, cx_texture *texture);
 
 bool cx_texture_load_png (cx_texture *texture, const char *filename)
 {
+  bool success = false;
+  
   if (cx_native_load_png (filename, texture))
   {
-    CX_ASSERT (cx_util_is_power_of_2 ((cxu32) texture->width));
-    CX_ASSERT (cx_util_is_power_of_2 ((cxu32) texture->height));
+    texture->npot = (!cx_util_is_power_of_2 (texture->width)) || 
+                    (!cx_util_is_power_of_2 (texture->height));
     
-    return true;
+    success = true;
   }
   
-  return false;
+  return success;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,14 +67,15 @@ cx_texture *cx_texture_create (cxu32 width, cxu32 height, cx_texture_format form
   CX_ASSERT ((format > CX_TEXTURE_FORMAT_INVALID) && (format < CX_TEXTURE_NUM_FORMATS));
   
   cx_texture *texture = (cx_texture *) cx_malloc (sizeof (cx_texture));
-  
+
   texture->id         = 0;
   texture->width      = width;
   texture->height     = height;
   texture->format     = format;
   texture->dataSize   = width * height * sizeof (cxu8) * s_texture_format_pixel_size [format];
   texture->data       = (cxu8 *) cx_malloc (texture->dataSize);
-  texture->compressed = false;
+  texture->compressed = 0;
+  texture->npot       = (!cx_util_is_power_of_2 (width)) || (!cx_util_is_power_of_2 (height));
   
   //cx_texture_gpu_init (texture);
   
@@ -188,20 +189,37 @@ void cx_texture_gpu_init (cx_texture *texture)
   }
   cx_gdi_assert_no_errors ();
   
-  // generate mipmaps
-  glGenerateMipmap (GL_TEXTURE_2D);
-  cx_gdi_assert_no_errors ();
+  bool npotExtensionSupported = false;
   
-  // set up filters
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  cx_gdi_assert_no_errors ();
-  
-  // set up coordinate wrapping
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  cx_gdi_assert_no_errors ();
+  if (!npotExtensionSupported && texture->npot)
+  {
+    // set up filters
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    cx_gdi_assert_no_errors ();
+    
+    // set up coordinate wrapping
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    cx_gdi_assert_no_errors ();
+  }
+  else
+  {
+    // generate mipmaps
+    glGenerateMipmap (GL_TEXTURE_2D);
+    cx_gdi_assert_no_errors ();
+    
+    // set up filters
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    cx_gdi_assert_no_errors ();
+    
+    // set up coordinate wrapping
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    cx_gdi_assert_no_errors ();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

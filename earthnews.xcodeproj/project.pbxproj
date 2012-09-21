@@ -13,7 +13,6 @@
 		3127E2BC15D38FDC00793C60 /* feeds.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2AF15D38FDC00793C60 /* feeds.c */; };
 		3127E2BD15D38FDC00793C60 /* render.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2B115D38FDC00793C60 /* render.c */; };
 		3127E2BF15D38FDC00793C60 /* social.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2B615D38FDC00793C60 /* social.m */; };
-		3127E2C015D38FDC00793C60 /* webview.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2B815D38FDC00793C60 /* webview.m */; };
 		3127E2D815DAFD7E00793C60 /* cx_debug.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2C215DAFD7E00793C60 /* cx_debug.c */; };
 		3127E2D915DAFD7E00793C60 /* cx_file.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2C515DAFD7E00793C60 /* cx_file.c */; };
 		3127E2DA15DAFD7E00793C60 /* cx_native_ios.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2CA15DAFD7E00793C60 /* cx_native_ios.m */; };
@@ -34,6 +33,7 @@
 		3127E30215DAFF6400793C60 /* cx_texture.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2FA15DAFF6400793C60 /* cx_texture.c */; };
 		3127E30A15E00F6D00793C60 /* worker.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30915E00F6D00793C60 /* worker.c */; };
 		3127E30D15E0557400793C60 /* cx_list.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30C15E0557200793C60 /* cx_list.c */; };
+		3127E31115F3F18500793C60 /* browser.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E31015F3F18100793C60 /* browser.m */; };
 		316FAA691517C01900CC39F2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA651517C01900CC39F2 /* InfoPlist.strings */; };
 		316FAA6A1517C01900CC39F2 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */; };
 		316FAA711517C06400CC39F2 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA6D1517C06400CC39F2 /* AppDelegate.m */; };
@@ -131,8 +131,6 @@
 		3127E2B215D38FDC00793C60 /* render.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = render.h; sourceTree = "<group>"; };
 		3127E2B515D38FDC00793C60 /* social.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = social.h; sourceTree = "<group>"; };
 		3127E2B615D38FDC00793C60 /* social.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = social.m; sourceTree = "<group>"; };
-		3127E2B715D38FDC00793C60 /* webview.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = webview.h; sourceTree = "<group>"; };
-		3127E2B815D38FDC00793C60 /* webview.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = webview.m; sourceTree = "<group>"; };
 		3127E2C215DAFD7E00793C60 /* cx_debug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_debug.c; sourceTree = "<group>"; };
 		3127E2C315DAFD7E00793C60 /* cx_debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_debug.h; sourceTree = "<group>"; };
 		3127E2C415DAFD7E00793C60 /* cx_defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_defines.h; sourceTree = "<group>"; };
@@ -179,6 +177,8 @@
 		3127E30915E00F6D00793C60 /* worker.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = worker.c; sourceTree = "<group>"; };
 		3127E30B15E0555B00793C60 /* cx_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_list.h; sourceTree = "<group>"; };
 		3127E30C15E0557200793C60 /* cx_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_list.c; sourceTree = "<group>"; };
+		3127E30F15F3F17F00793C60 /* browser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = browser.h; sourceTree = "<group>"; };
+		3127E31015F3F18100793C60 /* browser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = browser.m; sourceTree = "<group>"; };
 		316FAA631517C01900CC39F2 /* earthnews-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "earthnews-Info.plist"; sourceTree = "<group>"; };
 		316FAA641517C01900CC39F2 /* earthnews-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "earthnews-Prefix.pch"; sourceTree = "<group>"; };
 		316FAA661517C01900CC39F2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -425,6 +425,8 @@
 		3127E2A815D38FDC00793C60 /* app */ = {
 			isa = PBXGroup;
 			children = (
+				3127E30F15F3F17F00793C60 /* browser.h */,
+				3127E31015F3F18100793C60 /* browser.m */,
 				3127E2A915D38FDC00793C60 /* app.c */,
 				3127E2AA15D38FDC00793C60 /* app.h */,
 				3127E2AB15D38FDC00793C60 /* camera.c */,
@@ -437,8 +439,6 @@
 				3127E2B215D38FDC00793C60 /* render.h */,
 				3127E2B515D38FDC00793C60 /* social.h */,
 				3127E2B615D38FDC00793C60 /* social.m */,
-				3127E2B715D38FDC00793C60 /* webview.h */,
-				3127E2B815D38FDC00793C60 /* webview.m */,
 				3127E30715E00F5800793C60 /* worker.h */,
 				3127E30915E00F6D00793C60 /* worker.c */,
 			);
@@ -1093,7 +1093,6 @@
 				3127E2BC15D38FDC00793C60 /* feeds.c in Sources */,
 				3127E2BD15D38FDC00793C60 /* render.c in Sources */,
 				3127E2BF15D38FDC00793C60 /* social.m in Sources */,
-				3127E2C015D38FDC00793C60 /* webview.m in Sources */,
 				3127E2D815DAFD7E00793C60 /* cx_debug.c in Sources */,
 				3127E2D915DAFD7E00793C60 /* cx_file.c in Sources */,
 				3127E2DA15DAFD7E00793C60 /* cx_native_ios.m in Sources */,
@@ -1114,6 +1113,7 @@
 				3127E30215DAFF6400793C60 /* cx_texture.c in Sources */,
 				3127E30A15E00F6D00793C60 /* worker.c in Sources */,
 				3127E30D15E0557400793C60 /* cx_list.c in Sources */,
+				3127E31115F3F18500793C60 /* browser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

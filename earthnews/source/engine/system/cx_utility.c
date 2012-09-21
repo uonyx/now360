@@ -20,14 +20,15 @@ bool cx_util_is_power_of_2 (cxu32 n)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_util_world_space_to_screen_space (float width, float height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
-                                          const cx_vec4 *world, cx_vec2 *screen, float *zScale)
+void cx_util_world_space_to_screen_space (cxf32 width, cxf32 height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
+                                          const cx_vec4 *world, cx_vec2 *screen, cxf32 *depth, cxf32 *zScale)
 {
   // transforms pos from world space to screen space
   
   CX_ASSERT (proj);
   CX_ASSERT (view);
   CX_ASSERT (screen);
+  CX_ASSERT (depth);
   CX_ASSERT (world);
   CX_ASSERT (world->w == 1.0f);
   
@@ -47,16 +48,25 @@ void cx_util_world_space_to_screen_space (float width, float height, const cx_ma
   screen->x = (clip.x + 1.0f) * 0.5f * width;
   screen->y = (-clip.y + 1.0f) * 0.5f * height; // y is inverted in screen coordinates
   
+  // clip.z should be in the range (-1, 1). if so, rescale to the range (0, 1) for depth value.
+  
+  *depth = (clip.z + 1.0f) * 0.5f;
+  CX_REFERENCE_UNUSED_VARIABLE (depth);
+#if 0
+  CX_DEBUGLOG_CONSOLE (1, "-----");
+  CX_DEBUGLOG_CONSOLE (1, "clip.z = %.3f", clip.z);
+  CX_DEBUGLOG_CONSOLE (1, "depth  = %.3f", *depth);
+#endif
   if (zScale)
   {
 #if 1
-    float w = 1.0f;
+    cxf32 w = 1.0f;
     cx_vec4 eye0 = {{ (w * 0.5f), (w * 0.5f), eye.z, eye.w }};
     
     cx_vec4 proj0;
     cx_mat4x4_mul_vec4 (&proj0, proj, &eye0);
     
-    float zs = proj0.x / proj0.w;
+    cxf32 zs = proj0.x / proj0.w;
 #else
     cx_vec4 eye0, proj0, proj1;
     
@@ -67,7 +77,7 @@ void cx_util_world_space_to_screen_space (float width, float height, const cx_ma
     
     cx_mat4x4_mul_vec4 (&proj1, proj, &eye0); // to clip space
     
-    float zs = (proj1.x / proj1.w) - (proj0.x / proj0.w);
+    cxf32 zs = (proj1.x / proj1.w) - (proj0.x / proj0.w);
 #endif
     
     *zScale = zs;
@@ -78,24 +88,24 @@ void cx_util_world_space_to_screen_space (float width, float height, const cx_ma
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_util_screen_space_to_world_space (float width, float height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
-                                           const cx_vec2 *screen, cx_vec4 *world, float clipz, bool ray)
+void cx_util_screen_space_to_world_space (cxf32 width, cxf32 height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
+                                           const cx_vec2 *screen, cx_vec4 *world, cxf32 depth, bool ray)
 {
   // to clip space
   cx_vec4 clip;
   clip.x = ((screen->x / (0.5f * width)) - 1.0f);
   clip.y = (-(screen->y / (0.5f * height)) + 1.0f);
-  clip.z = (2.0f * clipz) - 1.0f;
+  clip.z = (2.0f * depth) - 1.0f;
   clip.w = 1.0f;
   
   CX_ASSERT (cx_vec4_validate (&clip));
   
   // to view (eye) space
-  float a = proj->f16 [0]; 
-  float b = proj->f16 [5]; 
-  float c = proj->f16 [10];
-  float d = proj->f16 [14];
-  float e = proj->f16 [11];
+  cxf32 a = proj->f16 [0]; 
+  cxf32 b = proj->f16 [5]; 
+  cxf32 c = proj->f16 [10];
+  cxf32 d = proj->f16 [14];
+  cxf32 e = proj->f16 [11];
   
   cx_vec4 eye;
   eye.x = clip.x / a;

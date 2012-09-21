@@ -6,6 +6,7 @@
 //
 
 uniform mediump mat4 u_mvpmatrix;
+uniform mediump float u_z;
 
 attribute mediump vec2 a_position;
 attribute lowp vec4 a_colour;
@@ -19,5 +20,5 @@ void main (void)
   v_colour = a_colour;
   v_texcoord = a_texcoord;
   
-  gl_Position = u_mvpmatrix * vec4 (a_position, 0.0, 1.0);
+  gl_Position = u_mvpmatrix * vec4 (a_position, u_z, 1.0);
 }

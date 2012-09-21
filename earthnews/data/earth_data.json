@@ -54,15 +54,6 @@
   }
   },
   {
-  "name": "Belfast",
-  "news": "http://news.lagos.com/feed.xml",
-  "weather": "44544",
-  "location": {
-  "latitude": 54.5972686,
-  "longitude": -5.9301088
-  }
-  },
-  {
   "name": "Belgrade",
   "news": "http://news.lagos.com/feed.xml",
   "weather": "532697",
@@ -78,15 +69,6 @@
   "location": {
   "latitude": 52.5234051,
   "longitude": 13.4113999
-  }
-  },
-  {
-  "name": "Brussels",
-  "news": "http://news.lagos.com/feed.xml",
-  "weather": "968019",
-  "location": {
-  "latitude": 50.8462807,
-  "longitude": 4.3547273
   }
   },
   {
@@ -123,15 +105,6 @@
   "location": {
   "latitude": 30.064742,
   "longitude": 31.249509
-  }
-  },
-  {
-  "name": "Cardiff",
-  "news": "http://news.lagos.com/feed.xml",
-  "weather": "15127",
-  "location": {
-  "latitude": 51.4813069,
-  "longitude": -3.1804979
   }
   },
   {
@@ -335,7 +308,7 @@
   {
   "name": "Paris",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "FRXX0076",
+  "weather": "615702",
   "location": {
   "latitude": 48.8566667,
   "longitude": 2.3509871
@@ -344,7 +317,7 @@
   {
   "name": "Rio de Janeiro",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "615702",
+  "weather": "455825",
   "location": {
   "latitude": -22.9035393,
   "longitude": -43.2095869

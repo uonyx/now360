@@ -17,6 +17,7 @@ typedef struct task_t
 {
   task_func func;
   void *userdata;
+  task_status *status;
   struct task_t *next;
 } task_t;
 
@@ -84,9 +85,7 @@ static task_t *task_list_pop_front (task_t *head, task_t **front, int *count)
 
 static cx_thread_exit_status worker_thread_func (void *data)
 {
-  cx_thread_exit_status exitStatus;
-  
-  exitStatus = CX_THREAD_EXIT_STATUS_SUCCESS;
+  cx_thread_exit_status exitStatus = CX_THREAD_EXIT_STATUS_SUCCESS;
   
   while (1)
   {
@@ -101,6 +100,11 @@ static cx_thread_exit_status worker_thread_func (void *data)
     while (task)
     {
       task->func (task->userdata);
+    
+      if (task->status)
+      {
+        *task->status = TASK_STATUS_COMPLETE;
+      }
       
       task->func = NULL;
       task->userdata = NULL;
@@ -109,7 +113,6 @@ static cx_thread_exit_status worker_thread_func (void *data)
       s_taskFreeList = task_list_insert_back (s_taskFreeList, task, &s_taskFreeListCount);
       s_taskBusyList = task_list_pop_front (s_taskBusyList, &task, &s_taskBusyListCount);
     }
-    
     
     cx_thread_mutex_unlock (&s_sharedDataMutex);
   }
@@ -182,7 +185,7 @@ void worker_update (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool worker_add_task (task_func func, void *userdata)
+bool worker_add_task (task_func func, void *userdata, task_status *status)
 {
   CX_FATAL_ASSERT (s_thread);
   CX_ASSERT (func);
@@ -197,12 +200,25 @@ bool worker_add_task (task_func func, void *userdata)
   
   if (task)
   {
+    if (status)
+    {
+      *status = TASK_STATUS_INPROGRESS;
+    }
+    
     task->func = func;
     task->userdata = userdata;
+    task->status = status;
     
     s_taskBusyList = task_list_insert_back (s_taskBusyList, task, &s_taskBusyListCount);
     
     success = true;
+  }
+  else
+  {
+    if (status)
+    {
+      *status = TASK_STATUS_INVALID;
+    }
   }
   
   cx_thread_mutex_unlock (&s_sharedDataMutex);

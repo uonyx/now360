@@ -11,20 +11,22 @@
 #include "render.h"
 #include "feeds.h"
 #include "earth.h"
-#include "webview.h"
+#include "browser.h"
+#include "worker.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define DEFAULT_PERSPECTIVE_PROJECTION_NEAR   (0.1f)
-#define DEFAULT_PERSPECTIVE_PROJECTION_FAR    (100.0f)
-#define DEFAULT_ORTHOGRAPHIC_PROJECTION_NEAR  (-1.0f)
-#define DEFAULT_ORTHOGRAPHIC_PROJECTION_FAR   (1.0f)
+#define CAMERA_PROJECTION_PERSPECTIVE_NEAR   (0.1f)
+#define CAMERA_PROJECTION_PERSPECTIVE_FAR    (100.0f)
+#define CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR  (-1.0f)
+#define CAMERA_PROJECTION_ORTHOGRAPHIC_FAR   (1.0f)
 
 static earth_t *s_earth = NULL;
 static cx_font *s_font = NULL;
 static camera_t *s_camera = NULL;
+static browser_def_t s_browserDef;
 
 static float s_rotAccel = 0.0f;
 static float s_rotSpeed = 0.0f;
@@ -52,6 +54,9 @@ weather_feed_t *s_weatherFeeds = NULL;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int g_currentWeatherCity = -1;
+void app_get_weather (void);
+
 void app_test_code (void);
 void app_render_2d (void);
 void app_render_3d (void);
@@ -62,28 +67,37 @@ void app_earth_hit_test (float x, float y);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void app_reset (int width, int height)
+void app_reset (float width, float height)
 {
-  cx_gdi_set_screen_dimensions (width, height);
-  s_camera->aspectRatio = (float) width / (float) height;
+  s_camera->aspectRatio = width / height;
   
-  render_screen_reset ((float)width, (float) height);
+  cx_gdi_set_screen_dimensions ((int) width, (int) height);
+  
+  s_browserDef.width  = 778.0f;
+  s_browserDef.height = 620.0f;
+  s_browserDef.posX   = 0.0f + ((width - s_browserDef.width) * 0.5f);
+  s_browserDef.posY   = 0.0f + ((height - s_browserDef.height) * 0.5f);
+  
+  render_screen_reset (width, height);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void app_init (int width, int height)
+
+void app_init (void *rootViewController, float width, float height)
 { 
+  CX_ASSERT (rootViewController);
+  
   //
   // engine
   //
   
   cx_engine_init_params params;
   memset (&params, 0, sizeof (params));
-  params.screenWidth = width;
-  params.screenHeight = height;
+  params.screenWidth = (int) width;
+  params.screenHeight = (int) height;
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
@@ -91,19 +105,26 @@ void app_init (int width, int height)
   // ui
   //
   
-  render_init ((float) width, (float) height);
+  render_init (width, height);
   
   //
-  // webview
+  // browser
   //
+
+  browser_init (rootViewController);
   
-  web_view_init ((float) width, (float) height);
+  memset (&s_browserDef, 0, sizeof (s_browserDef));
+  
+  s_browserDef.width  = 778.0f;
+  s_browserDef.height = 620.0f;
+  s_browserDef.posX   = 0.0f + ((width - s_browserDef.width) * 0.5f);
+  s_browserDef.posY   = 0.0f + ((height - s_browserDef.height) * 0.5f);
   
   //
   // camera
   //
   
-  s_camera = camera_create ((float) width / (float) height, 65.0f);
+  s_camera = camera_create (width / height, 65.0f);
   
   //
   // earth
@@ -130,13 +151,14 @@ void app_init (int width, int height)
   // font 
   //
   
-  s_font = cx_font_create ("data/fonts/courier_new.ttf", 36);
+  //s_font = cx_font_create ("data/fonts/courier_new.ttf", 36);
+  s_font = cx_font_create ("data/fonts/verdana.ttf", 28);
   
   //
   // test code
   //
   
-#if 1
+#if 0
   cx_file file0, file1, file2;
   cx_file_load (&file0, "data/rss.txt");
   cx_file_load (&file1, "data/twitter.txt");
@@ -177,6 +199,12 @@ void app_init (int width, int height)
   
   CX_DEBUG_BREAK_ABLE;
 #endif
+  
+  
+  
+  const char *w = s_earth->data->weatherId [0];
+  feeds_weather_search (&s_weatherFeeds [0], w);
+  g_currentWeatherCity = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,6 +227,8 @@ void app_update (void)
   cx_system_time_update ();
   
   float deltaTime = (float) cx_system_time_get_delta_time ();
+  
+  //CX_DEBUGLOG_CONSOLE (1, "%.2f", deltaTime);
   
   app_view_update (deltaTime);
 }
@@ -245,7 +275,7 @@ void app_view_update (float deltaTime)
   //s_rotAngle = cx_clamp(s_rotAngle, -90.0f, 90.0f);
   
 #if 1
-  cx_vec4_set (&s_camera->position, 0.0f, 0.0f, 3.0f, 1.0f);
+  cx_vec4_set (&s_camera->position, 0.0f, 0.0f, 2.0f, 1.0f);
   cx_vec4_set (&s_camera->target, 0.0f, 0.0f, 0.0f, 1.0f);
   
   // update camera (view and projetion matrix)
@@ -271,25 +301,21 @@ void app_view_update (float deltaTime)
   cx_mat4x4 mvpMatrix;
   cx_mat4x4_mul (&mvpMatrix, &projmatrix, &viewmatrix);
   
-  camera_update (s_camera, deltaTime);
+  //camera_update (s_camera, deltaTime);
   
   cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &projmatrix);
   cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &viewmatrix);
   cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
   
 #else
+  
   cx_mat4x4 proj;
-  cx_mat4x4_perspective (&proj, cx_rad (65.0f), aspectRatio, DEFAULT_PERSPECTIVE_PROJECTION_NEAR, DEFAULT_PERSPECTIVE_PROJECTION_FAR);
+  cx_mat4x4_perspective (&proj, cx_rad (65.0f), aspectRatio, CAMERA_PROJECTION_PERSPECTIVE_NEAR, CAMERA_PROJECTION_PERSPECTIVE_FAR);
   
   cx_mat4x4 translation;
   cx_mat4x4_translation (&translation, 0.0f, 0.0f, -5.0f);
   
   cx_mat4x4 rotation;
-  //float angle = (float) cx_system_time_get_total_time () * 6.0f;
-  //cx_mat4x4_rotation (&rotation, cx_rad (angle), 0.0f, 1.0f, 0.0f);
-  //cx_mat4x4_rotation_axis_y (&rotation, cx_rad (angle));
-  //cx_mat4x4_mul (&s_mvpMatrix, &proj, &rotation);
-  
   cx_mat4x4 rotx, roty;
   cx_mat4x4_rotation_axis_x (&rotx, cx_rad (s_rotationAngleX));
   cx_mat4x4_rotation_axis_y (&roty, cx_rad (s_rotationAngleY));
@@ -298,15 +324,16 @@ void app_view_update (float deltaTime)
   cx_mat4x4 transformation;
   cx_mat4x4_mul (&transformation, &translation, &rotation);
   
-  cx_mat3x3_identity (&s_normalMatrix);
-  
   cx_mat4x4 mvpMatrix;
   cx_mat4x4_mul (&mvpMatrix, &proj, &transformation);
   
   cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &proj);
   cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &transformation);
   cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
+  
 #endif
+  
+  app_get_weather ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,33 +342,47 @@ void app_view_update (float deltaTime)
 
 void app_input_touch_began (float x, float y)
 {
-  float screenX = x * cx_gdi_get_screen_width ();
-  float screenY = y * cx_gdi_get_screen_height ();
+  float touchX = x * cx_gdi_get_screen_width ();
+  float touchY = y * cx_gdi_get_screen_height ();
   
-  bool hideWebView = true;
+  //bool hideWebView = true;
   
-  if (g_selectedCity > -1)
+  if (browser_is_active ())
   {
-    const char *url = render_news_feed_hit_test (&s_newsFeeds [g_selectedCity], screenX, screenY);
-    if (url)
+    bool handled = browser_input_update (&s_browserDef, touchX, touchY);
+    
+    if (!handled)
     {
-      web_view_launch_url (url);
-      
-      hideWebView = false;
-      
-      CX_DEBUGLOG_CONSOLE (1, "PING! [x = %.2f, y = %.2f", screenX, screenY);
+      browser_hide (true); // if shown?
     }
   }
-  
-  if (hideWebView)
+  else
   {
-    if (web_view_is_shown ())
-    {
-      web_view_hide (true);
-    }
-  }
   
-  app_earth_hit_test (x, y);
+    if (g_selectedCity > -1)
+    {
+      const char *url = render_news_feed_hit_test (&s_newsFeeds [g_selectedCity], touchX, touchY);
+      
+      if (url)
+      {
+        browser_launch_url (url);
+
+        //hideWebView = false;
+        
+        CX_DEBUGLOG_CONSOLE (0, "PING! [x = %.2f, y = %.2f", touchX, touchY);
+      }
+    }
+    
+  #if 0
+    if (hideWebView)
+    {
+      browser_hide (true); // if shown?
+    }
+  #endif
+    
+    app_earth_hit_test (x, y);
+    
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,7 +400,7 @@ void app_earth_hit_test (float x, float y)
   camera_get_projection_matrix (s_camera, &proj);
   camera_get_view_matrix (s_camera, &view);
   
-  cx_vec2 screen = {{ x * screenWidth, y * screenHeight}};
+  cx_vec2 screen = {{ x * screenWidth, y * screenHeight }};
   
   // get ray
   
@@ -412,13 +453,38 @@ void app_earth_hit_test (float x, float y)
   if (cityIndex > -1)
   {
     const char *n = s_earth->data->names [cityIndex];
-    const char *w = s_earth->data->weatherId [cityIndex];
+    //const char *w = s_earth->data->weatherId [cityIndex];
     
     feeds_twitter_search (&s_twitterFeeds [cityIndex], n);
     feeds_news_search (&s_newsFeeds [cityIndex], n);
-    feeds_weather_search (&s_weatherFeeds [cityIndex], w);
+    //feeds_weather_search (&s_weatherFeeds [cityIndex], w);
     
     g_selectedCity = cityIndex;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void app_get_weather (void)
+{
+  if ((g_currentWeatherCity != -1) && (g_currentWeatherCity < s_earth->data->count))
+  {
+    if (s_weatherFeeds [g_currentWeatherCity].dataReady)
+    {
+      ++g_currentWeatherCity;
+      
+      if (g_currentWeatherCity < s_earth->data->count)
+      {
+        const char *w = s_earth->data->weatherId [g_currentWeatherCity];
+        feeds_weather_search (&s_weatherFeeds [g_currentWeatherCity], w);
+      }
+      else
+      {
+        g_currentWeatherCity = -1;
+      }
+    }
   }
 }
 
@@ -486,23 +552,32 @@ static void app_render_earth_city_text (void)
   camera_get_view_matrix (s_camera, &view);
   
   // for each point, get 2d point
-  float scale;
+  float depth, scale;
   cx_vec2 screen;
   
-  int i, c = s_earth->data->count;
-  for (i = 0; i < c; ++i)
+  
+  float zfar = CAMERA_PROJECTION_ORTHOGRAPHIC_FAR;
+  float znear = CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR;
+  
+  int i, c;
+  
+  for (i = 0, c = s_earth->data->count; i < c; ++i)
   {
     const char *text = s_earth->data->names [i];
     const cx_vec4 *pos = &s_earth->data->location [i];
     const cx_colour *colour = (i == g_selectedCity) ? cx_colour_green () : cx_colour_yellow ();
     
-    cx_util_world_space_to_screen_space (screenWidth, screenHeight, &proj, &view, pos, &screen, &scale);
+    cx_util_world_space_to_screen_space (screenWidth, screenHeight, &proj, &view, pos, &screen, &depth, &scale);
 
-    cx_font_set_scale (s_font, scale, scale);
-    cx_font_render (s_font, text, screen.x, screen.y, CX_FONT_ALIGNMENT_CENTRE_X, colour);
+    float clipz = (2.0f * depth) - 1.0f;
+    float z = ((clipz + (zfar + znear) / (zfar - znear)) * (zfar - znear)) / -2.0f;
     
-    screen.y += 3.0f;
-    render_weather_feed (&s_weatherFeeds [i], &screen);
+    cx_font_set_scale (s_font, scale, scale);
+    cx_font_render (s_font, text, screen.x, screen.y, z, CX_FONT_ALIGNMENT_CENTRE_X, colour);
+    
+    screen.y -= 6.0f;
+    
+    render_weather_feed (&s_weatherFeeds [i], &screen, z);
   }
 }
 
@@ -529,7 +604,9 @@ static void app_render_earth (void)
   cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, CX_SHADER_DATATYPE_MATRIX3X3, normalMatrix.f9);
   
   cx_mesh_render (mesh);
-  cx_draw_points_colour (s_earth->data->count, s_earth->data->location, cx_colour_red ());
+  
+  // draw points
+  //cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -551,29 +628,41 @@ void app_render_2d (void)
   float screenWidth = cx_gdi_get_screen_width ();
   float screenHeight = cx_gdi_get_screen_height ();
   
-  cx_mat4x4 orthoProjMatrix;
-  cx_mat4x4 orthoViewMatrix;
+  cx_mat4x4 proj, view;
   
-  cx_mat4x4_ortho (&orthoProjMatrix, 0.0f, screenWidth, 0.0f, screenHeight, DEFAULT_ORTHOGRAPHIC_PROJECTION_NEAR, DEFAULT_ORTHOGRAPHIC_PROJECTION_FAR); 
-  cx_mat4x4_identity (&orthoViewMatrix);
+  cx_mat4x4_ortho (&proj, 0.0f, screenWidth, 0.0f, screenHeight, CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR, CAMERA_PROJECTION_ORTHOGRAPHIC_FAR); 
+  cx_mat4x4_identity (&view);
   
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &orthoProjMatrix);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &orthoViewMatrix);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &orthoProjMatrix);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &proj);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &view);
+  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &proj);
+  
+  render_test ();
+  render_fps ();
   
   //////////////
   // render
   //////////////
-  
+#if 1
+  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND | CX_GRAPHICS_RENDER_STATE_DEPTH_TEST);
+  cx_gdi_set_blend_mode (CX_GRAPHICS_BLEND_MODE_SRC_ALPHA, CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_enable_z_buffer (true);
   app_render_earth_city_text ();
-  
-  render_test ();
+  cx_gdi_enable_z_buffer (false);
+  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND);
+#else
+  app_render_earth_city_text ();
+#endif
   
   if (g_selectedCity > -1)
   {
     render_twitter_feed (&s_twitterFeeds [g_selectedCity]);
     render_news_feed (&s_newsFeeds [g_selectedCity]);
   }
+  
+  // render browser
+  
+  browser_render (&s_browserDef, 1.0f);
   
   //////////////
   // end

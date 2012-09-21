@@ -108,7 +108,8 @@ void cx_font_set_scale (const cx_font *font, cxf32 x, cxf32 y)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx_font_alignment alignment, const cx_colour *colour)
+void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cxf32 z, 
+                     cx_font_alignment alignment, const cx_colour *colour)
 {
   CX_ASSERT (font);
   CX_ASSERT (font->fontdata);
@@ -130,6 +131,8 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
   
+  cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
+  
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
 
@@ -150,6 +153,12 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   {
     cxf32 tw = cx_font_get_text_width (font, text);
     px = px + (tw * 0.5f);
+  }
+  
+  if (alignment & CX_FONT_ALIGNMENT_CENTRE_Y)
+  {
+    cxf32 th = cx_font_get_height (font);
+    py = py - (th * 0.5f);
   }
   
   char c = 0;
@@ -200,7 +209,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, cxf32 y, cxf32 w, cxf32 h, 
-                               cx_font_alignment alignment, const cx_colour *colour)
+                               cxf32 z, cx_font_alignment alignment, const cx_colour *colour)
 {
   CX_ASSERT (font);
   CX_ASSERT (font->fontdata);
@@ -221,6 +230,8 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
+  
+  cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
@@ -247,7 +258,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   if (alignment & CX_FONT_ALIGNMENT_CENTRE_Y)
   {
     cxf32 th = cx_font_get_height (font);
-    py = py + (th * 0.5f);
+    py = py - (th * 0.5f);
   }
   
   cxf32 ox = px;
@@ -261,7 +272,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   char c = 0;
   char *t = textBuffer; 
   char *lastSpacePos = NULL;
-  while ((c = *t++))
+  while ((c = *t))
   {
     if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
     {
@@ -279,6 +290,8 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
         tw = 0.0f;
       }
     }
+    
+    t++;
   }
   
   cxi32 newlines = 0;

@@ -60,8 +60,8 @@ typedef enum cx_shader_uniform
   CX_SHADER_UNIFORM_SAMPLER2D_2,
   CX_SHADER_UNIFORM_SAMPLER2D_3,
   
-  CX_NUM_SHADER_UNIFORMS,
   CX_SHADER_UNIFORM_USER_DEFINED,
+  CX_NUM_SHADER_UNIFORMS,
 }
 cx_shader_uniform;
 
@@ -73,9 +73,10 @@ typedef enum cx_shader_built_in
 {
   CX_SHADER_BUILT_IN_INVALID = -1,
   CX_SHADER_BUILT_IN_FONT,
-  CX_SHADER_BUILT_IN_DRAW,
-  CX_SHADER_BUILT_IN_DRAW_TEX,
-  CX_SHADER_BUILT_IN_POINTS,
+  CX_SHADER_BUILT_IN_DRAW_QUAD,
+  CX_SHADER_BUILT_IN_DRAW_QUAD_TEX,
+  CX_SHADER_BUILT_IN_DRAW_POINTS,
+  CX_SHADER_BUILT_IN_DRAW_POINTS_TEX,
   
   CX_NUM_BUILT_IN_SHADERS
 } cx_shader_built_in;
@@ -86,13 +87,16 @@ typedef enum cx_shader_built_in
 
 typedef enum cx_shader_datatype
 {
-  CX_SHADER_DATATYPE_INVALID,
+  CX_SHADER_DATATYPE_INVALID = -1,
   CX_SHADER_DATATYPE_FLOAT,
   CX_SHADER_DATATYPE_VECTOR2,
   CX_SHADER_DATATYPE_VECTOR3,
   CX_SHADER_DATATYPE_VECTOR4,
   CX_SHADER_DATATYPE_MATRIX3X3,
   CX_SHADER_DATATYPE_MATRIX4X4,
+  CX_SHADER_DATATYPE_SAMPLER2D,
+  
+  CX_NUM_SHADER_DATATYPES,
 }
 cx_shader_datatype;
 
@@ -129,7 +133,7 @@ void cx_shader_destroy (cx_shader *shader);
 
 void cx_shader_use (const cx_shader *shader);
 void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, cx_shader_datatype type, void *data);
-void cx_shader_set_uniform_2 (const cx_shader *shader, const char *uniformName, cx_shader_datatype type, void *data);
+void cx_shader_set_uniform_2 (const cx_shader *shader, const char *uniformName, cx_shader_datatype type, void *data, cxi32 count);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

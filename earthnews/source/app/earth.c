@@ -125,7 +125,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
           
           float lat = (float) v->u.object.values [0].value->u.dbl;
           float lon = (float) v->u.object.values [1].value->u.dbl;
-          float r = radius + (radius * 0.01f); // slightly extend radius (for point sprite rendering)
+          float r = radius + (radius * 0.015f); // slightly extend radius (for point sprite rendering)
           
           earth_convert_dd_to_world (&data->location [i], lat, lon, r, slices, parallels, &data->normal [i]);
         }

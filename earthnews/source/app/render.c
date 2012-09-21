@@ -13,27 +13,23 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum 
-{
-  UI_FONT_SIZE_10,
-  UI_FONT_SIZE_12,
-  UI_FONT_SIZE_14,
-  UI_FONT_SIZE_18,
-  UI_FONT_SIZE_20,
-  UI_FONT_SIZE_24,
-  NUM_UI_FONTS
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static cx_font *s_font [NUM_UI_FONTS];
 static cx_texture *s_quadTexture = NULL;
 static float s_screenWidth = 0.0f;
 static float s_screenHeight = 0.0f;
 
 cx_texture *g_weatherIcons [NUM_WEATHER_CONDITION_CODES];
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const cx_font *render_get_ui_font (ui_font_size_t fontSize)
+{
+  CX_ASSERT ((fontSize > UI_FONT_SIZE_INVALID) && (fontSize < NUM_UI_FONTS));
+  
+  return s_font [fontSize];
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,8 +50,9 @@ void render_init (float screenWidth, float screenHeight)
   s_font [UI_FONT_SIZE_20] = cx_font_create (fontname, 20.0f);
   s_font [UI_FONT_SIZE_24] = cx_font_create (fontname, 24.0f);
   
-  s_quadTexture = cx_texture_create_from_file ("data/textures/avatar.png");
-  
+  //s_quadTexture = cx_texture_create_from_file ("data/textures/avatar.png");
+  s_quadTexture = cx_texture_create_from_file ("data/textures/notallcaps0.png");
+  //s_quadTexture = cx_texture_create_from_file ("data/browser_icons/icon066w.png");
   
   // weather icons
   
@@ -99,27 +96,65 @@ void render_screen_reset (float screenWidth, float screenHeight)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void render_fps (void)
+{
+  static float fps = 0.0f;
+  static float totalTime = 0.0f;
+  static unsigned int frameCount = 0;
+
+  frameCount++;
+  
+  float deltaTime = (float) cx_system_time_get_delta_time ();
+  
+  //CX_DEBUGLOG_CONSOLE (1, "%.2f", deltaTime);
+  
+  totalTime += deltaTime;
+  
+  if (totalTime >= 1.0f)
+  {
+    fps = (float) frameCount / totalTime;
+    frameCount = 0;
+    totalTime = 0.0f;
+  }
+  
+  fps = 1.0f/ deltaTime;
+  
+  char fpsStr [32];
+  
+  cx_sprintf (fpsStr, 32, "%.2f", fps);
+  
+  cx_font *font = s_font [UI_FONT_SIZE_12];
+  
+  cx_font_render (font, fpsStr, 2.0f, 12.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_red ());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void render_test (void)
 {
+#if 1
   float x1 = 60.0f;
   float y1 = 100.0f;
-  float x2 = x1 + 100.0f;
-  float y2 = y1 + 100.0f;
+  float x2 = x1 + (float) s_quadTexture->width;
+  float y2 = y1 + (float) s_quadTexture->height;
   
-  cx_draw_quad_colour (x1, y1, x2, y2, cx_colour_blue ());
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, cx_colour_blue (), NULL);
   
-  x1 += 100.0f;
-  x2 += 100.0f;
+  x1 = x2;
+  x2 = x1 + (float) s_quadTexture->width;
   
   float u1 = 0.0f;
   float v1 = 0.0f;
   float u2 = 1.0f;
   float v2 = 1.0f;
   
-  cx_draw_quad_texture2 (x1, y1, x2, y2, u1, v1, u2, v2, cx_colour_white(), s_quadTexture);
+  cx_draw_quad2 (x1, y1, x2, y2, -0.936f, u1, v1, u2, v2, cx_colour_green (), s_quadTexture);
   
   cx_font *font = s_font [UI_FONT_SIZE_18];
-  cx_font_render (font, "Jack and Jill went up the ozone layer", 4.0f, 36.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
+  cx_font_render (font, "Jack and Jill went up the ozone layer", 4.0f, 36.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -141,9 +176,13 @@ void render_twitter_feed (twitter_feed_t *feed)
     float y2 = y1 + height;
     
     cx_colour colour = *cx_colour_blue ();
-    colour.a = 0.5f;
     
-    cx_draw_quad_colour (x1, y1, x2, y2, &colour);
+    colour.r = 0.2f;
+    colour.g = 0.2f;
+    colour.b = 0.2f;
+    colour.a = 0.7f;
+    
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, &colour, NULL);
     
     int max_rpp = 15;
     
@@ -156,7 +195,7 @@ void render_twitter_feed (twitter_feed_t *feed)
     float ty = y1 + 12.0f;
     
     cx_font *font0 = s_font [UI_FONT_SIZE_14];
-    cx_font *font1 = s_font [UI_FONT_SIZE_18];
+    //cx_font *font1 = s_font [UI_FONT_SIZE_18];
     //cx_font_set_scale (s_fontui, 1.0f, 1.0f);
     
     char name [128];
@@ -165,13 +204,14 @@ void render_twitter_feed (twitter_feed_t *feed)
     while (tweet)
     {
       cx_sprintf (name, 128, "%s @%s", tweet->username, tweet->userhandle);
-      cx_font_render (font1, name, tx, ty, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
+      cx_font_render (font0, name, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
       
       float tty = ty + itemTextSpacingY;
       
-      int lines = cx_font_render_word_wrap (font0, tweet->text, tx, tty, x2, y2, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+      int lines = cx_font_render_word_wrap (font0, tweet->text, tx, tty, x2 - 24.0f, y2, 0.0f, 
+                                            CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
       
-      float fontHeight = cx_font_get_height (font0) * (lines + 3);
+      float fontHeight = cx_font_get_height (font0) * (lines + 2);
       
       ty += fontHeight;
       
@@ -212,9 +252,9 @@ void render_news_feed (news_feed_t *feed)
     
     cx_colour colours [3];
     
-    cx_colour_set (&colours [0], 1.0f, 0.0f, 0.0f, 0.8f);
-    cx_colour_set (&colours [1], 0.0f, 1.0f, 0.0f, 0.8f);
-    cx_colour_set (&colours [2], 0.0f, 0.0f, 1.0f, 0.8f);
+    cx_colour_set (&colours [0], 1.0f, 0.0f, 0.0f, 0.45f);
+    cx_colour_set (&colours [1], 0.0f, 1.0f, 0.0f, 0.45f);
+    cx_colour_set (&colours [2], 0.0f, 0.0f, 1.0f, 0.45f);
     
     float h = cx_font_get_height (font);
     
@@ -222,16 +262,16 @@ void render_news_feed (news_feed_t *feed)
     {
       float w = cx_font_get_text_width (font, news->title);
       
-      cx_draw_quad_colour (tx, ty, tx + w, ty + h, &colours [count % 3]);
+      cx_draw_quad (tx, ty, tx + w, ty + h, 0.0f, &colours [count % 3], NULL);
       
-      cx_font_render (font, news->title, tx, ty, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+      cx_font_render (font, news->title, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
       
       ty += itemSpacingY;
       
       news = news->next;
     }
     
-    cx_font_render (font, "More news...", tx, ty, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+    cx_font_render (font, "More news...", tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
   }
 }
 
@@ -239,7 +279,7 @@ void render_news_feed (news_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void render_weather_feed (weather_feed_t *feed, cx_vec2 *pos)
+void render_weather_feed (weather_feed_t *feed, cx_vec2 *pos, float posz)
 {
   CX_ASSERT (feed);
   CX_ASSERT (pos);
@@ -259,7 +299,7 @@ void render_weather_feed (weather_feed_t *feed, cx_vec2 *pos)
     float x2 = x1 + w;
     float y2 = y1 + h;
     
-    cx_draw_quad_texture (x1, y1, x2, y2, cx_colour_white (), image);
+    cx_draw_quad (x1, y1, x2, y2, posz, cx_colour_white (), image);
   }
 }
 
@@ -338,11 +378,11 @@ void render_ui_element (const ui_element_t *elem)
   
   if (elem->bgTexture)
   {
-    cx_draw_quad_texture (x1, y1, x2, y2, &elem->bgColour, elem->bgTexture);
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, &elem->bgColour, elem->bgTexture);
   }
   else
   {
-    cx_draw_quad_colour (x1, y1, x2, y2, &elem->bgColour);
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, &elem->bgColour, NULL);
   }
   
   if (elem->text && *elem->text)
@@ -350,7 +390,7 @@ void render_ui_element (const ui_element_t *elem)
     float tx = 4.0f;
     float ty = 36.0f;
     
-    cx_font_render (s_font[0], elem->text, tx, ty, CX_FONT_ALIGNMENT_DEFAULT, &elem->fgColour);
+    cx_font_render (s_font[0], elem->text, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &elem->fgColour);
   }
 }
 

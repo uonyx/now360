@@ -57,14 +57,15 @@ typedef struct cx_texture
   cxu32 id;
   
   void *data;
-  cxi32 dataSize;
+  cxu32 dataSize;
   
-  cxi32 width;
-  cxi32 height;
+  cxu32 width;
+  cxu32 height;
   
   cx_texture_format format;
   
-  bool compressed;
+  cxu32 compressed : 1;
+  cxu32 npot : 1;
   
 } cx_texture;
 

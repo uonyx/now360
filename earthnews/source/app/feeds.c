@@ -6,8 +6,9 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#include "feeds.h"
 #include "../engine/cx_engine.h"
+#include "feeds.h"
+#include "worker.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,6 +64,10 @@ enum weather_image_code
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize);
+bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize);
+bool feeds_weather_parse (weather_feed_t *feed, const char *data, int dataSize);
+
 void feeds_news_clear (news_feed_t *feed);
 void feeds_twitter_clear (twitter_feed_t *feed);
 void feeds_weather_clear (weather_feed_t *feed);
@@ -103,13 +108,14 @@ void news_http_callback (cx_http_request_id tId, const cx_http_response *respons
       CX_REFERENCE_UNUSED_VARIABLE (parsed);
       
       feed->dataReady = true;
-      feed->dataPending = true;
       feed->lastUpdate = cx_time_get_utc_time ();
     }
     else
     {
     }
   }
+  
+  feed->dataPending = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,6 +195,15 @@ void feeds_news_clear (news_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void feeds_news_render (news_feed_t *feed)
+{
+  CX_ASSERT (feed);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
@@ -249,7 +264,7 @@ bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
         // ESCAPE URLS WITH '%' IN THEM! //
         // ***************************** //
         
-        CX_DEBUGLOG_CONSOLE (s, s);
+        //CX_DEBUGLOG_CONSOLE (s, s);
         
         rssItem->link = cx_strdup (s, strlen (s));
       
@@ -302,21 +317,28 @@ void twitter_http_callback (cx_http_request_id tId, const cx_http_response *resp
       {
         int jsondataSize = response->dataSize;
         char *jsondata = cx_malloc (sizeof (char) * (jsondataSize + 1));
-        memcpy (jsondata, response->data, jsondataSize);
-        jsondata [jsondataSize] = 0;
         
-        // send jsondata to new thread to parse
-        CX_DEBUGLOG_CONSOLE (1, jsondata);
-        
-        feeds_twitter_clear (feed);
-        
-        bool parsed = feeds_twitter_parse (feed, jsondata, jsondataSize);
-        CX_ASSERT (parsed);
-        CX_REFERENCE_UNUSED_VARIABLE (parsed);
-        
-        feed->dataReady = true;
-        feed->dataPending = false;
-        feed->lastUpdate = cx_time_get_utc_time ();
+        if (jsondataSize && (jsondataSize > 0))
+        {
+          memcpy (jsondata, response->data, jsondataSize);
+          jsondata [jsondataSize] = 0;
+          
+          // send jsondata to new thread to parse
+          CX_DEBUGLOG_CONSOLE (1, jsondata);
+          
+          feeds_twitter_clear (feed);
+          
+          bool parsed = feeds_twitter_parse (feed, jsondata, jsondataSize);
+          CX_ASSERT (parsed);
+          CX_REFERENCE_UNUSED_VARIABLE (parsed);
+          
+          feed->dataReady = true;
+          feed->lastUpdate = cx_time_get_utc_time ();
+        }
+        else
+        {
+          CX_DEBUGLOG_CONSOLE (1, "twitter_http_callback: Warning: JSON data size [%d]", jsondataSize);
+        }
         
         break;
       }
@@ -337,6 +359,8 @@ void twitter_http_callback (cx_http_request_id tId, const cx_http_response *resp
       }
     }
   }
+  
+  feed->dataPending = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -528,6 +552,34 @@ bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0
+struct temp
+{
+  char *data;
+  int dataSize;
+  weather_feed_t *feed;
+};
+
+static void async_task (void *data)
+{
+  struct temp *t = (struct temp *) data;
+  weather_feed_t *feed = t->feed;
+  char *xmldata = t->data;
+  int xmldataSize = t->dataSize;
+  
+  // send xmldata to new thread to parse
+  feeds_weather_clear (feed);
+  
+  bool parsed = feeds_weather_parse (feed, xmldata, xmldataSize);
+  CX_ASSERT (parsed);
+  CX_REFERENCE_UNUSED_VARIABLE (parsed);
+  
+  feed->dataReady = true;
+  feed->dataPending = false;
+  feed->lastUpdate = cx_time_get_utc_time ();
+}
+#endif
+
 void weather_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata)
 {
   CX_ASSERT (response);
@@ -558,11 +610,20 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
       feed->dataReady = true;
       feed->dataPending = false;
       feed->lastUpdate = cx_time_get_utc_time ();
+#if 0
+      struct temp t;
+      t.data = xmldata;
+      t.dataSize = xmldataSize;
+      t.feed = feed;
+      worker_add_task (async_task, (void*) &t, NULL);
+#endif
     }
     else
     {
     }
   }
+  
+  feed->dataPending = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -583,6 +644,7 @@ void feeds_weather_search (weather_feed_t *feed, const char *query)
   
   feed->dataReady = false;
   feed->dataPending = true;
+  feed->q = query;
   
   // url
   

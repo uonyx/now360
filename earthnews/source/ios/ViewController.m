@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-
+#import "AppDelegate.h"
 #import "../app/app.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,13 +76,19 @@
 
   [EAGLContext setCurrentContext:self.context];
 
+  [self setPreferredFramesPerSecond:60];
+  
   /*
   NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
   NSString *appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
   NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   */
   
-  app_init ((int) view.bounds.size.width, (int) view.bounds.size.height);
+  AppDelegate* appDelegate = (((AppDelegate*) [UIApplication sharedApplication].delegate));
+  UIViewController *rootViewController = [appDelegate.window rootViewController];
+  
+  app_init (rootViewController, (int) view.bounds.size.width, (int) view.bounds.size.height);
+  
   //app_init ((int) view.bounds.size.height, (int) view.bounds.size.width);
   app_update ();
 }
@@ -155,6 +161,8 @@
 
 - (void) update
 {
+  //CX_DEBUGLOG_CONSOLE (1, "framesPerSecond: %d", self.framesPerSecond);
+  
   app_update ();
 }
 
