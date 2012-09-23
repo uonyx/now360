@@ -61,7 +61,7 @@ void app_test_code (void);
 void app_render_2d (void);
 void app_render_3d (void);
 
-void app_earth_hit_test (float x, float y);
+void app_earth_hit_test (float screenX, float screenY, float screenWidth, float screenHeight);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -340,67 +340,16 @@ void app_view_update (float deltaTime)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void app_input_touch_began (float x, float y)
-{
-  float touchX = x * cx_gdi_get_screen_width ();
-  float touchY = y * cx_gdi_get_screen_height ();
-  
-  //bool hideWebView = true;
-  
-  if (browser_is_active ())
-  {
-    bool handled = browser_input_update (&s_browserDef, touchX, touchY);
-    
-    if (!handled)
-    {
-      browser_hide (true); // if shown?
-    }
-  }
-  else
-  {
-  
-    if (g_selectedCity > -1)
-    {
-      const char *url = render_news_feed_hit_test (&s_newsFeeds [g_selectedCity], touchX, touchY);
-      
-      if (url)
-      {
-        browser_launch_url (url);
-
-        //hideWebView = false;
-        
-        CX_DEBUGLOG_CONSOLE (0, "PING! [x = %.2f, y = %.2f", touchX, touchY);
-      }
-    }
-    
-  #if 0
-    if (hideWebView)
-    {
-      browser_hide (true); // if shown?
-    }
-  #endif
-    
-    app_earth_hit_test (x, y);
-    
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void app_earth_hit_test (float x, float y)
+void app_earth_hit_test (float screenX, float screenY, float screenWidth, float screenHeight)
 {
   // do ray test
-  float screenWidth = cx_gdi_get_screen_width ();
-  float screenHeight = cx_gdi_get_screen_height ();
  
   cx_mat4x4 view, proj;
   
   camera_get_projection_matrix (s_camera, &proj);
   camera_get_view_matrix (s_camera, &view);
   
-  cx_vec2 screen = {{ x * screenWidth, y * screenHeight }};
+  cx_vec2 screen = {{ screenX , screenY }};
   
   // get ray
   
@@ -492,6 +441,42 @@ void app_get_weather (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void app_input_touch_began (float x, float y)
+{
+  float screenWidth = cx_gdi_get_screen_width ();
+  float screenHeight = cx_gdi_get_screen_height ();
+  float touchX = x * screenWidth;
+  float touchY = y * screenHeight;
+  
+  if (browser_is_open ())
+  {
+    if (!browser_handle_input (&s_browserDef, BROWSER_INPUT_TOUCH_BEGIN, touchX, touchY))
+    {
+      bool closed = browser_close ();
+      CX_REFERENCE_UNUSED_VARIABLE (closed);
+    }
+  }
+  else
+  {
+    app_earth_hit_test (touchX, touchY, screenWidth, screenHeight);
+    
+    if (g_selectedCity > -1)
+    {
+      const char *url = render_news_feed_hit_test (&s_newsFeeds [g_selectedCity], touchX, touchY);
+      
+      if (url)
+      {
+        bool opened = browser_open (url);
+        CX_REFERENCE_UNUSED_VARIABLE (opened);
+      }
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
 {
   float dx = x - prev_x;
@@ -521,6 +506,16 @@ void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
 
 void app_input_touch_ended (float x, float y)
 {
+  float screenWidth = cx_gdi_get_screen_width ();
+  float screenHeight = cx_gdi_get_screen_height ();
+  float touchX = x * screenWidth;
+  float touchY = y * screenHeight;
+  
+  if (browser_is_open ())
+  {
+    browser_handle_input (&s_browserDef, BROWSER_INPUT_TOUCH_END, touchX, touchY);
+  }
+  
   s_rotationAccelX = 0.0f;
   s_rotationAccelY = 0.0f;
   s_rotAccel = 0.0f;
@@ -554,7 +549,6 @@ static void app_render_earth_city_text (void)
   // for each point, get 2d point
   float depth, scale;
   cx_vec2 screen;
-  
   
   float zfar = CAMERA_PROJECTION_ORTHOGRAPHIC_FAR;
   float znear = CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR;
@@ -643,6 +637,7 @@ void app_render_2d (void)
   //////////////
   // render
   //////////////
+  
 #if 1
   cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND | CX_GRAPHICS_RENDER_STATE_DEPTH_TEST);
   cx_gdi_set_blend_mode (CX_GRAPHICS_BLEND_MODE_SRC_ALPHA, CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA);

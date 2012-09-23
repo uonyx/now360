@@ -83,13 +83,16 @@
   NSString *appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
   NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   */
-  
+#if 0
   AppDelegate* appDelegate = (((AppDelegate*) [UIApplication sharedApplication].delegate));
   UIViewController *rootViewController = [appDelegate.window rootViewController];
   
-  app_init (rootViewController, (int) view.bounds.size.width, (int) view.bounds.size.height);
+  UIWindow *appWindow = [[UIApplication sharedApplication] keyWindow];
+  UIViewController *rvc = appWindow.rootViewController;
+  (void) rvc;
+#endif
   
-  //app_init ((int) view.bounds.size.height, (int) view.bounds.size.width);
+  app_init (self, (int) view.bounds.size.width, (int) view.bounds.size.height);
   app_update ();
 }
 
