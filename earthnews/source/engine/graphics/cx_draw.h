@@ -20,8 +20,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const cx_colour *colour, const cx_texture *texture);
-void cx_draw_quad2 (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
+void cx_draw_quad (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 rot, 
+                   const cx_colour *colour, const cx_texture *texture);
+
+void cx_draw_quad_uv (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 rot, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
                     const cx_colour *colour, const cx_texture *texture);
 
 void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colour, const cx_texture *texture);

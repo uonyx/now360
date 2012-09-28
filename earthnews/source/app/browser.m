@@ -159,9 +159,10 @@ typedef enum
 
 typedef struct browser_button_t
 {
-  cx_texture *image;
+  cx_texture *image, *altImage;
+  cx_colour colour, altColour;
   browser_button_draw_style drawStyle;
-  bool enable;
+  bool alt;
 } browser_button_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,21 +200,41 @@ bool browser_init (void *container)
   s_webview = nil;
   s_webviewDelegate = [[WebViewDelegate alloc] init];
   
-  cx_texture *dirButton = cx_texture_create_from_file ("data/browser_icons/icon066.png");
-  cx_texture *refreshButton = cx_texture_create_from_file ("data/browser_icons/icon072.png");
+  //cx_texture *dirButton = cx_texture_create_from_file ("data/browser_icons/icon066.png");
+  //cx_texture *refreshButton = cx_texture_create_from_file ("data/browser_icons/icon072.png");
+
+  cx_texture *dirButton = cx_texture_create_from_file ("data/browser_icons/bicon_arrow_16.png");
+  cx_texture *refreshButton = cx_texture_create_from_file ("data/browser_icons/bicon_refr_16.png");
+  cx_texture *stopButton = cx_texture_create_from_file("data/browser_icons/bicon_x_16.png");
   
   CX_ASSERT (dirButton);
   CX_ASSERT (refreshButton);
   
+  memset (s_touch, false, sizeof (s_touch));
+  memset (s_buttons, 0, sizeof (s_buttons));
+  
+  cx_colour colour1, colour2;
+  
+  cx_colour_set (&colour1, 0.3f, 0.3f, 0.3f, 1.0f);
+  cx_colour_set (&colour2, 0.6f, 0.6f, 0.6f, 1.0f);
+  
   s_buttons [BROWSER_BUTTON_ID_BACK].image = dirButton;
+  s_buttons [BROWSER_BUTTON_ID_BACK].altImage = dirButton;
+  s_buttons [BROWSER_BUTTON_ID_BACK].colour = colour1;
+  s_buttons [BROWSER_BUTTON_ID_BACK].altColour = colour2;
   s_buttons [BROWSER_BUTTON_ID_BACK].drawStyle = BROWSER_BUTTON_DRAW_STYLE_FLIP_HORIZONTAL;
-  s_buttons [BROWSER_BUTTON_ID_BACK].enable = false;
+  
   s_buttons [BROWSER_BUTTON_ID_FORWARD].image = dirButton;
+  s_buttons [BROWSER_BUTTON_ID_FORWARD].altImage = dirButton;
+  s_buttons [BROWSER_BUTTON_ID_FORWARD].colour = colour1;
+  s_buttons [BROWSER_BUTTON_ID_FORWARD].altColour = colour2;
   s_buttons [BROWSER_BUTTON_ID_FORWARD].drawStyle = BROWSER_BUTTON_DRAW_STYLE_NONE;
-  s_buttons [BROWSER_BUTTON_ID_FORWARD].enable = false;
+  
   s_buttons [BROWSER_BUTTON_ID_REFRESH].image = refreshButton;
+  s_buttons [BROWSER_BUTTON_ID_REFRESH].altImage = stopButton;
+  s_buttons [BROWSER_BUTTON_ID_REFRESH].colour = colour1;
+  s_buttons [BROWSER_BUTTON_ID_REFRESH].altColour = colour1;
   s_buttons [BROWSER_BUTTON_ID_REFRESH].drawStyle = BROWSER_BUTTON_DRAW_STYLE_NONE;
-  s_buttons [BROWSER_BUTTON_ID_REFRESH].enable = false;
   
 #if BROWSER_CACHE_ENABLED
 #if 0
@@ -466,7 +487,7 @@ void browser_render (const browser_def_t *browserDef, float opacity)
     cx_colour bdcolour;
     cx_colour_set (&bdcolour, 0.0f, 0.0f, 0.0f, alpha * 0.6f);
     
-    cx_draw_quad (bdx1, bdy1, bdx2, bdy2, 0.0f, &bdcolour, NULL);
+    cx_draw_quad (bdx1, bdy1, bdx2, bdy2, 0.0f, 0.0f, &bdcolour, NULL);
     
     ///////////////////////
     // toolbar
@@ -481,7 +502,7 @@ void browser_render (const browser_def_t *browserDef, float opacity)
     //cx_colour_set (&tbcolour, 0.3f, 0.3f, 0.3f, alpha); // grey
     cx_colour_set (&tbcolour, 0.7f, 0.7f, 0.7f, alpha); // grey
     
-    cx_draw_quad (tbx1, tby1, tbx2, tby2, 0.0f, &tbcolour, NULL);
+    cx_draw_quad (tbx1, tby1, tbx2, tby2, 0.0f, 0.0f, &tbcolour, NULL);
     
     //////////////////////////
     // loading icon && title
@@ -510,21 +531,37 @@ void browser_render (const browser_def_t *browserDef, float opacity)
     // buttons
     ///////////////////////
     
-    s_buttons [BROWSER_BUTTON_ID_BACK].enable    = s_webview.canGoBack;
-    s_buttons [BROWSER_BUTTON_ID_FORWARD].enable = s_webview.canGoForward;
-    s_buttons [BROWSER_BUTTON_ID_REFRESH].enable = !s_webview.isLoading;
+    s_buttons [BROWSER_BUTTON_ID_BACK].alt    = !s_webview.canGoBack;
+    s_buttons [BROWSER_BUTTON_ID_FORWARD].alt = !s_webview.canGoForward;
+    s_buttons [BROWSER_BUTTON_ID_REFRESH].alt = s_webview.isLoading;
 
     float tbEndX = tbx2 - toolbarMargin;
     
     for (int i = 0, c = NUM_BROWSER_BUTTON_IDS; i < c; ++i)
     {
-      bool buttonHeld = s_touch [i];
-      bool buttonEnabled = s_buttons [i].enable;
-      cx_texture *button = s_buttons [i].image;
+
+      cx_texture *buttonImage = NULL;
+      cx_colour *buttonColour = NULL;
+    
+      bool buttonHeld    = s_touch [i];
+      bool buttonEnabled = !s_buttons [i].alt;
       browser_button_draw_style drawStyle = s_buttons [i].drawStyle;
       
-      float buttonWidth = (float) button->width;
-      float buttonHeight = (float) button->height;
+      if (buttonEnabled)
+      {
+        buttonImage = s_buttons [i].image;
+        buttonColour = &s_buttons [i].colour;
+      }
+      else
+      {
+        buttonImage = s_buttons [i].altImage;
+        buttonColour = &s_buttons [i].altColour;
+      }
+      
+      buttonColour->a = alpha;
+      
+      float buttonWidth = (float) buttonImage->width;
+      float buttonHeight = (float) buttonImage->height;
       
       float bx1 = tbEndX - buttonWidth;
       float by1 = tby1 + ((toolbarHeight - buttonHeight) * 0.5f);
@@ -565,28 +602,18 @@ void browser_render (const browser_def_t *browserDef, float opacity)
     
       if (buttonHeld)
       {
+        cx_colour touchColour;
+        cx_colour_set (&touchColour, 0.2f, 0.8f, 0.2f, alpha);
+        
         float bhx1 = tbEndX - buttonWidth - s_buttonSpacing;
         float bhy1 = tby1;
         float bhx2 = bhx1 + buttonWidth + (s_buttonSpacing + s_buttonSpacing);
         float bhy2 = bhy1 + toolbarHeight;
         
-        cx_draw_quad (bhx1, bhy1, bhx2, bhy2, 0.0f, cx_colour_blue (), NULL);
+        cx_draw_quad (bhx1, bhy1, bhx2, bhy2, 0.0f, 0.0f, &touchColour, NULL);
       }
       
-
-      cx_colour buttonColour;
-      //cx_colour_set (&buttonColour, 0.90f, 0.90f, 0.98f, alpha); // lavender
-      
-      if (buttonEnabled)
-      {
-        cx_colour_set (&buttonColour, 1.0f, 1.0f, 1.0f, alpha);
-      }
-      else
-      {
-        cx_colour_set (&buttonColour, 1.0f, 0.2f, 0.0f, alpha);
-      }
-      
-      cx_draw_quad2 (bx1, by1, bx2, by2, 0.0f, u1, v1, u2, v2, &buttonColour, button);
+      cx_draw_quad_uv (bx1, by1, bx2, by2, 0.0f, 0.0f, u1, v1, u2, v2, buttonColour, buttonImage);
       
       tbEndX = bx1 - s_buttonSpacing;
     }
@@ -633,12 +660,12 @@ bool browser_handle_input (const browser_def_t *browserDef, browser_input input,
       cx_texture *button = s_buttons [i].image;
       
       float buttonWidth = (float) button->width;
-      float buttonHeight = (float) button->height;
+      //float buttonHeight = (float) button->height;
       
       float bx1 = tbEndX - buttonWidth;
-      float by1 = tby1 + ((toolbarHeight - buttonHeight) * 0.5f);
+      float by1 = tby1; // + ((toolbarHeight - buttonHeight) * 0.5f);
       float bx2 = bx1 + buttonWidth;
-      float by2 = by1 + buttonHeight;
+      float by2 = tby2; //by1 + buttonHeight;
       
       if ((touchX >= bx1) && (touchX <= bx2))
       {
@@ -669,7 +696,15 @@ bool browser_handle_input (const browser_def_t *browserDef, browser_input input,
       }
       else if (refresh)
       {
-        [s_webview reload];
+        if ([s_webview isLoading])
+        {
+          [s_webview stopLoading];
+        }
+        else
+        {
+          [s_webview reload];
+        }
+        
         handled = true;
       }
       

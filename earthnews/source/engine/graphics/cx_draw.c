@@ -17,8 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const cx_colour *colour);
-void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
+void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, const cx_colour *colour);
+void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
                            const cx_colour *colour, const cx_texture *texture);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colou
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const cx_colour *colour)
+void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, const cx_colour *colour)
 {
   CX_ASSERT (colour);
   
@@ -85,9 +85,9 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const
   cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
-  
   cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
   
+  // position attribute
   cx_vec2 pos [4];
   
   pos [0].x = x1;
@@ -98,6 +98,25 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const
   pos [2].y = y1;
   pos [3].x = x2;
   pos [3].y = y2;
+  
+  // rotation by r radians about the origin ox, oy
+  cxf32 ox = (x1 + x2) * 0.5f;
+  cxf32 oy = (y1 + y2) * 0.5f;
+  
+  cxf32 sin = cx_sin (r);
+  cxf32 cos = cx_cos (r);
+  
+  for (cxu8 i = 0; i < 4; ++i)
+  {
+    cxf32 vx = pos [i].x - ox;
+    cxf32 vy = pos [i].y - oy;
+    
+    cxf32 rx = (cos * vx) - (sin * vy);
+    cxf32 ry = (sin * vx) + (cos * vy);
+    
+    pos [i].x = rx + ox;
+    pos [i].y = ry + oy;
+  }
   
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_gdi_assert_no_errors ();
@@ -118,7 +137,8 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, const cx_colour *colour, const cx_texture *texture)
+void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, 
+                           cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, const cx_colour *colour, const cx_texture *texture)
 {
   CX_ASSERT (colour);
   CX_ASSERT (texture);
@@ -131,81 +151,15 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   // render texture
   cx_material_render_texture (texture, CX_MATERIAL_TEXTURE_AMBIENT, shader);
   
-#if 0
-  float rotangleDeg = 5.0f;
-  
-  cxf32 rad = cx_rad (rotangleDeg);
-  
-  cx_mat4x4 p, v, mvp;
-  
-  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_P, &p);
-  
-  cx_mat4x4_rotation_axis_z (&v, rad);
-  
-  cx_mat4x4_mul (&mvp, &p, &v);
-  
-#endif
-  
-#if 0
-  float rotangleDeg = 0.0f;
-  
-  cxf32 rad = cx_rad (rotangleDeg);
-  cxf32 sin = cx_sin (rad);
-  cxf32 cos = cx_cos (rad);
-  //cxf32 rotMatrix [4] = { cos, sin, -sin, cos };
-
-  cxf32 p0x = (cos * x1) - (sin * y1);
-  cxf32 p0y = (sin * x1) + (cos * y1);
-
-  cxf32 p1x = (cos * x1) - (sin * y2);
-  cxf32 p1y = (sin * x1) + (cos * y2);
-  
-  cxf32 p2x = (cos * x2) - (sin * y1);
-  cxf32 p2y = (sin * x2) + (cos * y1);
-  
-  cxf32 p3x = (cos * x2) - (sin * y2);
-  cxf32 p3y = (sin * x2) + (cos * y2);
-  
-  cx_mat4x4 mvp;
-  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_P, &mvp);
-#endif
-  
   // set mvp
-#if 1
   cx_mat4x4 mvp;
   cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvp);
-#endif
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
-  
   cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
   
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-  
-  cx_vec2 pos [4];
-  cx_vec2 uv [4];
-  
-#if 0
-  pos [0].x = p0x;
-  pos [0].y = p0y;
-  pos [1].x = p1x;
-  pos [1].y = p1y;
-  pos [2].x = p2x;
-  pos [2].y = p2y;
-  pos [3].x = p3x;
-  pos [3].y = p3y;
-#else
-  pos [0].x = x1;
-  pos [0].y = y1;
-  pos [1].x = x1;
-  pos [1].y = y2;
-  pos [2].x = x2;
-  pos [2].y = y1;
-  pos [3].x = x2;
-  pos [3].y = y2;
-#endif
-  
+  cx_vec2 uv [4], pos [4];
+
   uv [0].x = u1;
   uv [0].y = v1;
   uv [1].x = u1;
@@ -214,6 +168,33 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   uv [2].y = v1;
   uv [3].x = u2;
   uv [3].y = v2;
+  
+  pos [0].x = x1;
+  pos [0].y = y1;
+  pos [1].x = x1;
+  pos [1].y = y2;
+  pos [2].x = x2;
+  pos [2].y = y1;
+  pos [3].x = x2;
+  pos [3].y = y2;
+  
+  cxf32 ox = (x1 + x2) * 0.5f;
+  cxf32 oy = (y1 + y2) * 0.5f;
+  
+  cxf32 sin = cx_sin (r);
+  cxf32 cos = cx_cos (r);
+  
+  for (cxu8 i = 0; i < 4; ++i)
+  {
+    cxf32 vx = pos [i].x - ox;
+    cxf32 vy = pos [i].y - oy;
+    
+    cxf32 rx = (cos * vx) - (sin * vy);
+    cxf32 ry = (sin * vx) + (cos * vy);
+    
+    pos [i].x = rx + ox;
+    pos [i].y = ry + oy;
+  }
   
   /*
   // top left = (0,0)
@@ -239,6 +220,9 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
    uv [3].y = 0.0f;
    */
   
+  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+  
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_gdi_assert_no_errors ();
   
@@ -257,15 +241,15 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const cx_colour *colour, const cx_texture *texture)
+void cx_draw_quad (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, const cx_colour *colour, const cx_texture *texture)
 {
   if (texture)
   {
-    cx_draw_quad_texture (x1, y1, x2, y2, z, 0.0f, 0.0f, 1.0f, 1.0f, colour, texture);
+    cx_draw_quad_texture (x1, y1, x2, y2, z, r, 0.0f, 0.0f, 1.0f, 1.0f, colour, texture);
   }
   else 
   {
-    cx_draw_quad_colour (x1, y1, x2, y2, z, colour);
+    cx_draw_quad_colour (x1, y1, x2, y2, z, r, colour);
   }
 }
 
@@ -273,10 +257,12 @@ void cx_draw_quad (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, const cx_col
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad2 (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
+void cx_draw_quad_uv (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
                     const cx_colour *colour, const cx_texture *texture)
 {
-  cx_draw_quad_texture (x1, y1, x2, y2, z, u1, v1, u2, v2, colour, texture);
+  CX_ASSERT (texture);
+  
+  cx_draw_quad_texture (x1, y1, x2, y2, z, r, u1, v1, u2, v2, colour, texture);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

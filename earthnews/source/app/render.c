@@ -140,7 +140,7 @@ void render_test (void)
   float x2 = x1 + (float) s_quadTexture->width;
   float y2 = y1 + (float) s_quadTexture->height;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, cx_colour_blue (), NULL);
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, cx_colour_blue (), NULL);
   
   x1 = x2;
   x2 = x1 + (float) s_quadTexture->width;
@@ -150,7 +150,7 @@ void render_test (void)
   float u2 = 1.0f;
   float v2 = 1.0f;
   
-  cx_draw_quad2 (x1, y1, x2, y2, -0.936f, u1, v1, u2, v2, cx_colour_green (), s_quadTexture);
+  cx_draw_quad_uv (x1, y1, x2, y2, -0.936f, 0.0f, u1, v1, u2, v2, cx_colour_green (), s_quadTexture);
   
   cx_font *font = s_font [UI_FONT_SIZE_18];
   cx_font_render (font, "Jack and Jill went up the ozone layer", 4.0f, 36.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
@@ -182,7 +182,7 @@ void render_twitter_feed (twitter_feed_t *feed)
     colour.b = 0.2f;
     colour.a = 0.7f;
     
-    cx_draw_quad (x1, y1, x2, y2, 0.0f, &colour, NULL);
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colour, NULL);
     
     int max_rpp = 15;
     
@@ -262,7 +262,7 @@ void render_news_feed (news_feed_t *feed)
     {
       float w = cx_font_get_text_width (font, news->title);
       
-      cx_draw_quad (tx, ty, tx + w, ty + h, 0.0f, &colours [count % 3], NULL);
+      cx_draw_quad (tx, ty, tx + w, ty + h, 0.0f, 0.0f, &colours [count % 3], NULL);
       
       cx_font_render (font, news->title, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
       
@@ -299,7 +299,7 @@ void render_weather_feed (weather_feed_t *feed, cx_vec2 *pos, float posz)
     float x2 = x1 + w;
     float y2 = y1 + h;
     
-    cx_draw_quad (x1, y1, x2, y2, posz, cx_colour_white (), image);
+    cx_draw_quad (x1, y1, x2, y2, posz, 0.0f, cx_colour_white (), image);
   }
 }
 
@@ -378,11 +378,11 @@ void render_ui_element (const ui_element_t *elem)
   
   if (elem->bgTexture)
   {
-    cx_draw_quad (x1, y1, x2, y2, 0.0f, &elem->bgColour, elem->bgTexture);
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &elem->bgColour, elem->bgTexture);
   }
   else
   {
-    cx_draw_quad (x1, y1, x2, y2, 0.0f, &elem->bgColour, NULL);
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &elem->bgColour, NULL);
   }
   
   if (elem->text && *elem->text)

@@ -8,11 +8,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/browser.m"
-         timestampString = "370117846.304735"
+         timestampString = "370335086.069447"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "329"
-         endingLineNumber = "329"
+         startingLineNumber = "350"
+         endingLineNumber = "350"
          landmarkName = "browser_open()"
          landmarkType = "7">
       </FileBreakpoint>
