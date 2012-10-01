@@ -402,6 +402,7 @@
 		31BCBF7B151E8B9A001A01D5 /* ttpic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = ttpic.h; sourceTree = "<group>"; };
 		31BCBF7C151E8B9A001A01D5 /* ttpload.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = ttpload.c; sourceTree = "<group>"; };
 		31BCBF7D151E8B9A001A01D5 /* ttpload.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = ttpload.h; sourceTree = "<group>"; };
+		31CE5D961618A82D00500B11 /* cx_vector2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_vector2.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -456,6 +457,8 @@
 				3127E2C715DAFD7E00793C60 /* cx_math.h */,
 				3127E2C815DAFD7E00793C60 /* cx_matrix3x3.h */,
 				3127E2C915DAFD7E00793C60 /* cx_matrix4x4.h */,
+				31CE5D961618A82D00500B11 /* cx_vector2.h */,
+				3127E2D515DAFD7E00793C60 /* cx_vector4.h */,
 				3127E2CA15DAFD7E00793C60 /* cx_native_ios.m */,
 				3127E2CB15DAFD7E00793C60 /* cx_string.c */,
 				3127E2CC15DAFD7E00793C60 /* cx_string.h */,
@@ -467,7 +470,6 @@
 				3127E2D215DAFD7E00793C60 /* cx_time.h */,
 				3127E2D315DAFD7E00793C60 /* cx_utility.c */,
 				3127E2D415DAFD7E00793C60 /* cx_utility.h */,
-				3127E2D515DAFD7E00793C60 /* cx_vector4.h */,
 				3127E2D615DAFD7E00793C60 /* cx_xml.c */,
 				3127E2D715DAFD7E00793C60 /* cx_xml.h */,
 				3127E30B15E0555B00793C60 /* cx_list.h */,

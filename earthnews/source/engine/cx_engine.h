@@ -17,6 +17,8 @@
 
 #include "graphics/cx_gdi.h"
 #include "graphics/cx_font.h"
+#include "graphics/cx_mesh.h"
+#include "graphics/cx_draw.h"
 
 #include "network/cx_http.h"
 

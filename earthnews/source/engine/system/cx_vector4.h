@@ -29,12 +29,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-union cx_vec2
-{
-  struct { cxf32 x, y; };
-  cxf32 f2 [2];
-};
-
 union cx_vec4
 {
   struct { cxf32 r, g, b, a; };
@@ -43,7 +37,6 @@ union cx_vec4
   CX_SIMD_VEC4_DECL
 } CX_ALIGN(16);
 
-typedef union cx_vec2 cx_vec2;
 typedef union cx_vec4 cx_vec4;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,8 +52,8 @@ static CX_INLINE void cx_vec4_sub (cx_vec4 * CX_RESTRICT v_out, const cx_vec4 * 
 static CX_INLINE void cx_vec4_cross (cx_vec4 * CX_RESTRICT v_out, const cx_vec4 * CX_RESTRICT v0, const cx_vec4 * CX_RESTRICT v1);
 static CX_INLINE cxf32 cx_vec4_dot (const cx_vec4 * CX_RESTRICT v0, const cx_vec4 * CX_RESTRICT v1);
 static CX_INLINE void cx_vec4_normalize (cx_vec4 *v);
-static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 * CX_RESTRICT v);
-static CX_INLINE cxf32 cx_vec4_lengthSqr (const cx_vec4 * CX_RESTRICT v);
+static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 *v);
+static CX_INLINE cxf32 cx_vec4_lengthSqr (const cx_vec4 *v);
 static CX_INLINE bool cx_vec4_validate (const cx_vec4 *v);
 static CX_INLINE void cx_vec4_string (const cx_vec4 *v, char *destBuffer, cxu32 destbufferSize);
 
@@ -197,7 +190,7 @@ static CX_INLINE void cx_vec4_normalize (cx_vec4 *v)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 * CX_RESTRICT v)
+static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 *v)
 {
   CX_ASSERT (cx_vec4_validate (v));
   
@@ -212,7 +205,7 @@ static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 * CX_RESTRICT v)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static CX_INLINE cxf32 cx_vec4_lengthSqr (const cx_vec4 * CX_RESTRICT v)
+static CX_INLINE cxf32 cx_vec4_lengthSqr (const cx_vec4 *v)
 {
   CX_ASSERT (cx_vec4_validate (v));
   

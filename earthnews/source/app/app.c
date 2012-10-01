@@ -23,31 +23,42 @@
 #define CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR  (-1.0f)
 #define CAMERA_PROJECTION_ORTHOGRAPHIC_FAR   (1.0f)
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define DEBUG_VIEW_ROTATION_OLD 0
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static earth_t *s_earth = NULL;
 static cx_font *s_font = NULL;
 static camera_t *s_camera = NULL;
 static browser_def_t s_browserDef;
 
-static float s_rotAccel = 0.0f;
-static float s_rotSpeed = 0.0f;
-static float s_rotAngle = 0.0f;
-
+#if DEBUG_VIEW_ROTATION_OLD
 static float s_rotationAngleX = 0.0f;
 static float s_rotationSpeedX = 0.0f;
-static float s_rotationAccelX = 0.0f; //20.0f;
-
+static float s_rotationAccelX = 0.0f;
 static float s_rotationAngleY = 0.0f;
 static float s_rotationSpeedY = 0.0f;
-static float s_rotationAccelY = 0.0f; //20.0f;
-
-#define VIEW_ROTATION_MAX_SPEED       45.0f
-#define VIEW_ROTATION_BRAKING_FACTOR  3.0f
+static float s_rotationAccelY = 0.0f;
+#else
+static cx_vec2 s_rotTouchBegin;
+static cx_vec2 s_rotTouchEnd;
+static cx_vec2 s_rotationSpeed;
+static cx_vec2 s_rotationAngle;
+#endif
 
 static int g_selectedCity = -1;
 
 twitter_feed_t *s_twitterFeeds = NULL;
 news_feed_t *s_newsFeeds = NULL;
 weather_feed_t *s_weatherFeeds = NULL;
+
+void app_input_touch_update (float deltaTime);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,6 +166,22 @@ void app_init (void *rootViewController, float width, float height)
   s_font = cx_font_create ("data/fonts/verdana.ttf", 28);
   
   //
+  // other
+  //
+#if !DEBUG_VIEW_ROTATION_OLD
+  memset (&s_rotTouchBegin, 0, sizeof (s_rotTouchBegin));
+  memset (&s_rotTouchEnd, 0, sizeof (s_rotTouchEnd));
+  memset (&s_rotationSpeed, 0, sizeof (s_rotationSpeed));
+  memset (&s_rotationAngle, 0, sizeof (s_rotationAngle));
+  
+  s_rotationAngle.x = 180.0f;
+#endif
+  
+  const char *w = s_earth->data->weatherId [0];
+  feeds_weather_search (&s_weatherFeeds [0], w);
+  g_currentWeatherCity = 0;
+  
+  //
   // test code
   //
   
@@ -199,12 +226,6 @@ void app_init (void *rootViewController, float width, float height)
   
   CX_DEBUG_BREAK_ABLE;
 #endif
-  
-  
-  
-  const char *w = s_earth->data->weatherId [0];
-  feeds_weather_search (&s_weatherFeeds [0], w);
-  g_currentWeatherCity = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -228,6 +249,8 @@ void app_update (void)
   
   float deltaTime = (float) cx_system_time_get_delta_time ();
   
+  deltaTime = cx_min (deltaTime, (1.0f / 60.0f));
+  
   //CX_DEBUGLOG_CONSOLE (1, "%.2f", deltaTime);
   
   app_view_update (deltaTime);
@@ -242,37 +265,7 @@ void app_view_update (float deltaTime)
   float aspectRatio = cx_gdi_get_aspect_ratio ();
   CX_REFERENCE_UNUSED_VARIABLE (aspectRatio);
   
-  const float maxRotationSpeed = 40.0f;
-  const float decelerationFactor = 0.80f;
-  
-  s_rotationSpeedX += (s_rotationAccelX * deltaTime);
-  s_rotationSpeedY += (s_rotationAccelY * deltaTime);
-  
-  s_rotationSpeedX = cx_clamp (s_rotationSpeedX, -maxRotationSpeed, maxRotationSpeed);
-  s_rotationSpeedY = cx_clamp (s_rotationSpeedY, -maxRotationSpeed, maxRotationSpeed);
-  
-  if (s_rotationAccelX == 0.0f)
-  {
-    s_rotationSpeedX *= decelerationFactor;
-  }
-  
-  if (s_rotationAccelY == 0.0f)
-  {
-    s_rotationSpeedY *= decelerationFactor;
-  }
-  
-  s_rotationAngleX += (s_rotationSpeedX * deltaTime);
-  s_rotationAngleY += (s_rotationSpeedY * deltaTime);
-  s_rotationAngleX = cx_clamp (s_rotationAngleX, -89.9f, 89.9f);
-  
-  if (s_rotAccel == 0.0f)
-  {
-    s_rotSpeed *= decelerationFactor;
-  }
-  
-  s_rotSpeed += (s_rotAccel * deltaTime);
-  s_rotAngle += (s_rotSpeed * deltaTime);
-  //s_rotAngle = cx_clamp(s_rotAngle, -90.0f, 90.0f);
+  app_input_touch_update (deltaTime);
   
 #if 1
   cx_vec4_set (&s_camera->position, 0.0f, 0.0f, 2.0f, 1.0f);
@@ -286,8 +279,13 @@ void app_view_update (float deltaTime)
   cx_vec4 axis_x = {{-1.0f, 0.0f, 0.0f, 0.0f}};
   cx_vec4 axis_y = {{0.0f, -1.0f, 0.0f, 0.0f}};
   
+#if DEBUG_VIEW_ROTATION_OLD
   camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngleX), &axis_x);
   camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngleY), &axis_y);
+#else
+  camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngle.y), &axis_x);
+  camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngle.x), &axis_y);
+#endif
   
   // get projection matrix
   cx_mat4x4 projmatrix;
@@ -443,10 +441,11 @@ void app_get_weather (void)
 
 void app_input_touch_began (float x, float y)
 {
-  float screenWidth = cx_gdi_get_screen_width ();
-  float screenHeight = cx_gdi_get_screen_height ();
-  float touchX = x * screenWidth;
-  float touchY = y * screenHeight;
+  float sw = cx_gdi_get_screen_width ();
+  float sh = cx_gdi_get_screen_height ();
+  
+  float touchX = x * sw;
+  float touchY = y * sh;
   
   if (browser_is_open ())
   {
@@ -458,7 +457,7 @@ void app_input_touch_began (float x, float y)
   }
   else
   {
-    app_earth_hit_test (touchX, touchY, screenWidth, screenHeight);
+    app_earth_hit_test (touchX, touchY, sw, sh);
     
     if (g_selectedCity > -1)
     {
@@ -471,6 +470,14 @@ void app_input_touch_began (float x, float y)
       }
     }
   }
+  
+  
+#if !DEBUG_VIEW_ROTATION_OLD
+  s_rotTouchBegin.x = x * sw * 0.25f;
+  s_rotTouchBegin.y = y * sh * 0.25f;
+  s_rotTouchEnd.x = x * sw * 0.25f;
+  s_rotTouchEnd.y = y * sh * 0.25f;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -479,25 +486,25 @@ void app_input_touch_began (float x, float y)
 
 void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
 {
+  float sw = cx_gdi_get_screen_width ();
+  float sh = cx_gdi_get_screen_height ();
+  
+#if DEBUG_VIEW_ROTATION_OLD
+  
   float dx = x - prev_x;
   float dy = y - prev_y;
   
-  float w = cx_gdi_get_screen_width ();
-  float h = cx_gdi_get_screen_height ();
+  float accelerationFactor = 30.0f;
   
-  s_rotationAccelX = dy * 10.0f * w;
-  s_rotationAccelY = dx * 10.0f * h;
+  s_rotationAccelX = dy * sh * accelerationFactor;
+  s_rotationAccelY = dx * sw * accelerationFactor;
   
-  float length = cx_sqrt ((dx * dx) + (dy * dy));
+#else
   
-  if (length > 0.0f)
-  {
-    s_rotAccel = length * (10.0f * 1024.0f);
-  }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (1, "app_input_touch_moved: length [%.3f] <= 0", length);
-  }
+  s_rotTouchEnd.x = x * sw * 0.25f;
+  s_rotTouchEnd.y = y * sh * 0.25f;
+  
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -506,19 +513,126 @@ void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
 
 void app_input_touch_ended (float x, float y)
 {
-  float screenWidth = cx_gdi_get_screen_width ();
-  float screenHeight = cx_gdi_get_screen_height ();
-  float touchX = x * screenWidth;
-  float touchY = y * screenHeight;
+  float sw = cx_gdi_get_screen_width ();
+  float sh = cx_gdi_get_screen_height ();
+  
+  float touchX = x * sw;
+  float touchY = y * sh;
   
   if (browser_is_open ())
   {
     browser_handle_input (&s_browserDef, BROWSER_INPUT_TOUCH_END, touchX, touchY);
   }
   
+#if DEBUG_VIEW_ROTATION_OLD
+  
   s_rotationAccelX = 0.0f;
   s_rotationAccelY = 0.0f;
-  s_rotAccel = 0.0f;
+  
+#else
+  
+  s_rotTouchEnd.x = x * sw * 0.25f;
+  s_rotTouchEnd.y = y * sh * 0.25f;
+  
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void app_input_touch_update (float deltaTime)
+{
+#if DEBUG_VIEW_ROTATION_OLD 
+  
+  const float maxRotationSpeed = 60.0f;
+  const float decelerationFactor = 0.9f;
+  
+  s_rotationSpeedX += (s_rotationAccelX * deltaTime);
+  s_rotationSpeedY += (s_rotationAccelY * deltaTime);
+  
+  s_rotationSpeedX = cx_clamp (s_rotationSpeedX, -maxRotationSpeed, maxRotationSpeed);
+  s_rotationSpeedY = cx_clamp (s_rotationSpeedY, -maxRotationSpeed, maxRotationSpeed);
+  
+  if (s_rotationAccelX == 0.0f)
+  {
+    s_rotationSpeedX *= decelerationFactor;
+  }
+  
+  if (s_rotationAccelY == 0.0f)
+  {
+    s_rotationSpeedY *= decelerationFactor;
+  }
+  
+  s_rotationAngleX += (s_rotationSpeedX * deltaTime);
+  s_rotationAngleY += (s_rotationSpeedY * deltaTime);
+  s_rotationAngleX = cx_clamp (s_rotationAngleX, -89.9f, 89.9f);
+  
+#else
+  
+  const float MaxSpeed = 60.0f;
+  CX_REFERENCE_UNUSED_VARIABLE (MaxSpeed);
+  
+  float sw = cx_gdi_get_screen_width ();
+  float sh = cx_gdi_get_screen_height ();
+  
+  CX_REFERENCE_UNUSED_VARIABLE (sw);
+  CX_REFERENCE_UNUSED_VARIABLE (sh);
+  
+  cx_vec2 tdist;
+  
+  tdist.x = s_rotTouchEnd.x - s_rotTouchBegin.x;
+  tdist.y = s_rotTouchEnd.y - s_rotTouchBegin.y;
+  
+#if 0
+  cx_vec2 accel;
+  
+  accel.x = tdist.x - s_rotationSpeed.x;
+  accel.y = tdist.y - s_rotationSpeed.x;
+  
+  s_rotationSpeed.x += (accel.x * deltaTime);
+  s_rotationSpeed.y += (accel.y * deltaTime);
+  
+  s_rotationSpeed.x = cx_clamp (s_rotationSpeed.x, -MaxSpeed, MaxSpeed);
+  s_rotationSpeed.y = cx_clamp (s_rotationSpeed.y, -MaxSpeed, MaxSpeed);
+  
+  s_rotTouchBegin.x += (s_rotationSpeed.x * deltaTime);
+  s_rotTouchBegin.y += (s_rotationSpeed.y * deltaTime);
+  
+  s_rotationAngle.x += (s_rotationSpeed.x * deltaTime);
+  s_rotationAngle.y += (s_rotationSpeed.y * deltaTime);
+#elif 0
+  //tdist.x *= (sw / MaxSpeed);
+  //tdist.y *= (sh / MaxSpeed);
+  
+  tdist.x *= (MaxSpeed / sw);
+  tdist.y *= (MaxSpeed / sh);
+  
+  s_rotationSpeed.x += (tdist.x * deltaTime);
+  s_rotationSpeed.y += (tdist.y * deltaTime);
+  
+  s_rotationSpeed.x = cx_clamp (s_rotationSpeed.x, -MaxSpeed, MaxSpeed);
+  s_rotationSpeed.y = cx_clamp (s_rotationSpeed.y, -MaxSpeed, MaxSpeed);
+  
+  s_rotTouchBegin.x += (s_rotationSpeed.x * deltaTime);
+  s_rotTouchBegin.y += (s_rotationSpeed.y * deltaTime);
+  
+  s_rotationAngle.x += (s_rotationSpeed.x * deltaTime);
+  s_rotationAngle.y += (s_rotationSpeed.y * deltaTime);
+#else
+  CX_DEBUGLOG_CONSOLE (0, "tdist.x: %.3f, tdist.y: %.3f", tdist.x, tdist.y);
+  
+  s_rotTouchBegin.x += (tdist.x * deltaTime);
+  s_rotTouchBegin.y += (tdist.y * deltaTime);
+  
+  s_rotationAngle.x += (tdist.x * deltaTime);
+  s_rotationAngle.y += (tdist.y * deltaTime);
+#endif
+  
+  s_rotationAngle.x = fmodf (s_rotationAngle.x, 360.0f);
+  s_rotationAngle.y = cx_clamp (s_rotationAngle.y, -89.9f, 89.9f);
+  
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

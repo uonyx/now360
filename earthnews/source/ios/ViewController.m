@@ -182,9 +182,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int touchCount = 0;
+
 - (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "===========================[%d]=", touchCount);
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesBegan [%d]", [[event allTouches] count]);
+  
+  if ([[event allTouches] count] > 1)
+  {
+    return;
+  }
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
@@ -198,6 +206,8 @@
   float normalised_y = currTouchPoint.y / screen_height;
   
   app_input_touch_began (normalised_x, normalised_y);
+  
+  touchCount++;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,6 +217,11 @@
 - (void) touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesEnded [%d]", [[event allTouches] count]);
+  
+  if ([[event allTouches] count] > 1)
+  {
+    return;
+  }
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
@@ -230,12 +245,17 @@
 {
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesMoved [%d]", [[event allTouches] count]);
   
+  if ([[event allTouches] count] > 1)
+  {
+    return;
+  }
+  
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
   CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
   
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "prev: x = %.1f, y = %.1f", prevTouchPoint.x, prevTouchPoint.y);
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "curr: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, " prev: x = %.1f, y = %.1f", prevTouchPoint.x, prevTouchPoint.y);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, " curr: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.bounds.size.width;
   float screen_height = self.view.bounds.size.height;

@@ -8,9 +8,11 @@
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 
+#include "../system/cx_vector2.h"
 #include "../system/cx_matrix4x4.h"
 #include "cx_draw.h"
 #include "cx_gdi.h"
+#include "cx_material.h"
 #include "cx_shader.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define BROWSER_DEBUG_LOG_ENABLED   1
+#define BROWSER_DEBUG_LOG_ENABLED   0
 #define BROWSER_CACHE_ENABLED       1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +44,8 @@ NSMutableString *g_browserTitle = nil;
     case UIWebViewNavigationTypeLinkClicked:  
     { 
       CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeLinkClicked)");
+      //[webView stringByEvaluatingJavaScriptFromString:@"document.body.innerHTML = \"\";"];
+      //[webView loadRequest:request];
       break; 
     }
     case UIWebViewNavigationTypeFormSubmitted:  
@@ -178,6 +180,12 @@ static const float        s_buttonSpacing = 12.0f;
 static UIWebView         *s_webview = nil;
 static WebViewDelegate   *s_webviewDelegate = nil;
 static UIViewController  *s_rootViewController = nil;
+static float              s_rotation = 0.0f;
+static float              s_rotTarget = 0.0f;
+static float              s_rotValue = 0.0f;
+static float              s_rotSpeed = 0.0f;
+static float              s_rampTime = 0.0f;
+static bool               s_wloading = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,8 +241,8 @@ bool browser_init (void *container)
   s_buttons [BROWSER_BUTTON_ID_REFRESH].image = refreshButton;
   s_buttons [BROWSER_BUTTON_ID_REFRESH].altImage = stopButton;
   s_buttons [BROWSER_BUTTON_ID_REFRESH].colour = colour1;
-  s_buttons [BROWSER_BUTTON_ID_REFRESH].altColour = colour1;
-  s_buttons [BROWSER_BUTTON_ID_REFRESH].drawStyle = BROWSER_BUTTON_DRAW_STYLE_NONE;
+  s_buttons [BROWSER_BUTTON_ID_REFRESH].altColour = colour2;
+  s_buttons [BROWSER_BUTTON_ID_REFRESH].drawStyle = BROWSER_BUTTON_DRAW_STYLE_FLIP_HORIZONTAL;
   
 #if BROWSER_CACHE_ENABLED
 #if 0
@@ -533,7 +541,7 @@ void browser_render (const browser_def_t *browserDef, float opacity)
     
     s_buttons [BROWSER_BUTTON_ID_BACK].alt    = !s_webview.canGoBack;
     s_buttons [BROWSER_BUTTON_ID_FORWARD].alt = !s_webview.canGoForward;
-    s_buttons [BROWSER_BUTTON_ID_REFRESH].alt = s_webview.isLoading;
+    s_buttons [BROWSER_BUTTON_ID_REFRESH].alt = false; //s_webview.isLoading;
 
     float tbEndX = tbx2 - toolbarMargin;
     
@@ -613,7 +621,55 @@ void browser_render (const browser_def_t *browserDef, float opacity)
         cx_draw_quad (bhx1, bhy1, bhx2, bhy2, 0.0f, 0.0f, &touchColour, NULL);
       }
       
-      cx_draw_quad_uv (bx1, by1, bx2, by2, 0.0f, 0.0f, u1, v1, u2, v2, buttonColour, buttonImage);
+      float r = 0;
+      
+      if (i == BROWSER_BUTTON_ID_REFRESH)
+      {
+        bool prevloading = s_wloading;
+        s_wloading = s_webview.isLoading;
+        
+        if (!prevloading && s_wloading)
+        {
+          s_rotTarget = 360.0f;
+          s_rampTime = 0.0f;
+          s_rotValue = s_rotSpeed;
+          
+          CX_DEBUGLOG_CONSOLE (1, "FAST SON!!!*********");
+        }
+        else if (prevloading && !s_wloading)
+        {
+          s_rotTarget = 0.0f;
+          s_rampTime = 0.0f;
+          s_rotValue = s_rotSpeed;
+          
+          CX_DEBUGLOG_CONSOLE (1, "SLOW SON!!!*********");
+        }
+      
+        const float rampTotalTime = 0.5f;
+        
+        float dt = cx_min ((float) cx_system_time_get_delta_time (), 1/60.0f);
+      
+        s_rampTime += dt;
+        
+        float t = s_rampTime / rampTotalTime;
+        
+        t = cx_clamp (t, 0.0f, 1.0f);
+        
+        s_rotSpeed = s_rotValue + ((s_rotTarget - s_rotValue) * t);
+        
+        s_rotation += s_rotSpeed * dt;
+        
+        s_rotation = fmodf (s_rotation, 360.0f);
+        
+        r = cx_rad (s_rotation);
+        
+        if (s_rotSpeed > CX_EPSILON)
+        {
+          buttonColour = &s_buttons [i].altColour;
+        }
+      }
+      
+      cx_draw_quad_uv (bx1, by1, bx2, by2, 0.0f, r, u1, v1, u2, v2, buttonColour, buttonImage);
       
       tbEndX = bx1 - s_buttonSpacing;
     }
@@ -698,7 +754,7 @@ bool browser_handle_input (const browser_def_t *browserDef, browser_input input,
       {
         if ([s_webview isLoading])
         {
-          [s_webview stopLoading];
+          //[s_webview stopLoading];
         }
         else
         {

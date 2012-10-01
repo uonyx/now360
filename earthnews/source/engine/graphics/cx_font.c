@@ -9,6 +9,7 @@
 #include "../system/cx_matrix4x4.h"
 #include "../3rdparty/stb_truetype/stb_truetype.h"
 
+#include "../system/cx_vector2.h"
 #include "cx_font.h"
 #include "cx_gdi.h"
 
