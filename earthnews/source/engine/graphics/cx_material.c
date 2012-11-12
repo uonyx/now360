@@ -103,11 +103,27 @@ void cx_material_render (const cx_material *material, const cx_shader *shader)
     uniform     = s_mappings [i].uniform;
     textureUnit = s_mappings [i].openglTextureUnit;
     
+    /*
     if ((material->properties & property) == property)
     {
       texture = material->textures [i];
       CX_ASSERT (texture);
       
+      glActiveTexture (textureUnit);
+      cx_gdi_assert_no_errors ();
+      
+      glBindTexture (GL_TEXTURE_2D, texture->id);
+      cx_gdi_assert_no_errors ();
+      
+      glUniform1i (shader->uniforms [uniform], i);
+      cx_gdi_assert_no_errors ();
+    }
+    */
+    
+    texture = material->textures [i];
+    
+    if (texture)
+    {      
       glActiveTexture (textureUnit);
       cx_gdi_assert_no_errors ();
       
@@ -161,8 +177,8 @@ void cx_material_attach_texture (cx_material *material, const cx_texture *textur
 
 void cx_material_detach_texture (cx_material *material, cx_material_texture type)
 {
-  //const cx_texture *texture = material->textures [type];
-  //CX_ASSERT (texture);
+  CX_ASSERT (material);
+  CX_ASSERT ((type >= 0) && (type < CX_NUM_MATERIAL_TEXTURES));
   
   material->textures [type] = NULL;
 }

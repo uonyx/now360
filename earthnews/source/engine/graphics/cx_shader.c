@@ -50,15 +50,16 @@ static const char *s_uniformEnumStrings [CX_NUM_SHADER_UNIFORMS] =
   "CX_SHADER_UNIFORM_USER_DEFINED",
 };
 
-static GLenum s_glTypeMapping [CX_NUM_SHADER_DATATYPES] = 
+static GLenum s_glTextureUnits [] = 
 {
-  GL_FLOAT,       // CX_SHADER_DATATYPE_FLOAT,
-  GL_FLOAT_VEC2,  // CX_SHADER_DATATYPE_VECTOR2,
-  GL_FLOAT_VEC3,  // CX_SHADER_DATATYPE_VECTOR3,
-  GL_FLOAT_VEC4,  // CX_SHADER_DATATYPE_VECTOR4,
-  GL_FLOAT_MAT3,  // CX_SHADER_DATATYPE_MATRIX3X3,
-  GL_FLOAT_MAT4,  // CX_SHADER_DATATYPE_MATRIX4X4,
-  GL_SAMPLER_2D,  // CX_SHADER_DATATYPE_SAMPLER2D,
+  GL_TEXTURE0,
+  GL_TEXTURE1,
+  GL_TEXTURE2,
+  GL_TEXTURE3,
+  GL_TEXTURE4,
+  GL_TEXTURE5,
+  GL_TEXTURE6,
+  GL_TEXTURE7,
 };
 
 static bool s_initialised = false;
@@ -528,12 +529,13 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_set_uniform_2 (const cx_shader *shader, const char *uniformName, cx_shader_datatype type, void *data, cxi32 count)
+void cx_shader_set_float (const cx_shader *shader, const char *name, cxf32 *f, cxi32 count)
 {
   CX_ASSERT (shader);
-  CX_ASSERT (uniformName);
+  CX_ASSERT (name);
+  CX_ASSERT (f);
   
-  GLint location = glGetUniformLocation (shader->program, uniformName);
+  GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
   
 #if CX_SHADER_DEBUG
@@ -542,19 +544,149 @@ void cx_shader_set_uniform_2 (const cx_shader *shader, const char *uniformName, 
   glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
   
   CX_ASSERT (count == usize);
-  CX_ASSERT (utype == s_glTypeMapping [type]);
+  CX_ASSERT (utype == GL_FLOAT);
 #endif
   
-  switch (type) 
-  {
-    case CX_SHADER_DATATYPE_FLOAT:      { glUniform1f  (location, *(float *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR2:    { glUniform2fv (location, count, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR3:    { glUniform3fv (location, count, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR4:    { glUniform4fv (location, count, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX3X3:  { glUniformMatrix3fv (location, count, GL_FALSE, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX4X4:  { glUniformMatrix4fv (location, count, GL_FALSE, (GLfloat *) data); break; }
-    default:                            { break; }
-  }
+  glUniform1fv (location, count, f); 
+  cx_gdi_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_set_vector2 (const cx_shader *shader, const char *name, const cx_vec2 *vec2, cxi32 count)
+{
+  CX_ASSERT (shader);
+  CX_ASSERT (name);
+  CX_ASSERT (vec2);
+  
+  GLint location = glGetUniformLocation (shader->program, name);
+  CX_ASSERT (location >= 0);
+  
+#if CX_SHADER_DEBUG
+  GLint usize;
+  GLenum utype;
+  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+  
+  CX_ASSERT (count == usize);
+  CX_ASSERT (utype == GL_FLOAT_VEC2);
+#endif
+  
+  glUniform2fv (location, count, vec2->f2);
+  cx_gdi_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_set_vector4 (const cx_shader *shader, const char *name, const cx_vec4 *vec4, cxi32 count)
+{
+  CX_ASSERT (shader);
+  CX_ASSERT (name);
+  CX_ASSERT (vec4);
+  
+  GLint location = glGetUniformLocation (shader->program, name);
+  CX_ASSERT (location >= 0);
+  
+#if CX_SHADER_DEBUG
+  GLint usize;
+  GLenum utype;
+  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+  
+  CX_ASSERT (count == usize);
+  CX_ASSERT (utype == GL_FLOAT_VEC4);
+#endif
+  
+  glUniform4fv (location, count, vec4->f4);
+  cx_gdi_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_set_matrix3x3 (const cx_shader *shader, const char *name, const cx_mat3x3 *mat3x3, cxi32 count)
+{
+  CX_ASSERT (shader);
+  CX_ASSERT (name);
+  CX_ASSERT (mat3x3);
+  
+  GLint location = glGetUniformLocation (shader->program, name);
+  CX_ASSERT (location >= 0);
+  
+#if CX_SHADER_DEBUG
+  GLint usize;
+  GLenum utype;
+  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+  
+  CX_ASSERT (count == usize);
+  CX_ASSERT (utype == GL_FLOAT_MAT3);
+#endif
+  
+  glUniform4fv (location, count, mat3x3->f9);
+  cx_gdi_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_set_matrix4x4 (const cx_shader *shader, const char *name, const cx_mat4x4 *mat4x4, cxi32 count)
+{
+  CX_ASSERT (shader);
+  CX_ASSERT (name);
+  CX_ASSERT (mat4x4);
+  
+  GLint location = glGetUniformLocation (shader->program, name);
+  CX_ASSERT (location >= 0);
+  
+#if CX_SHADER_DEBUG
+  GLint usize;
+  GLenum utype;
+  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+  
+  CX_ASSERT (count == usize);
+  CX_ASSERT (utype == GL_FLOAT_MAT4);
+#endif
+  
+  glUniform4fv (location, count, mat4x4->f16);
+  cx_gdi_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_texture *texture, cxu32 sampler)
+{
+  CX_ASSERT (shader);
+  CX_ASSERT (name);
+  CX_ASSERT (texture);
+  CX_ASSERT ((sampler < (sizeof (s_glTextureUnits) / sizeof (GLenum))));
+  
+  GLint location = glGetUniformLocation (shader->program, name);
+  CX_ASSERT (location >= 0);
+  
+#if CX_SHADER_DEBUG
+  GLint usize;
+  GLenum utype;
+  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+  
+  CX_ASSERT (utype == GL_SAMPLER_2D);
+#endif
+ 
+  GLenum textureUnit = s_glTextureUnits [sampler];
+  
+  glActiveTexture (textureUnit);
+  cx_gdi_assert_no_errors ();
+  
+  glBindTexture (GL_TEXTURE_2D, texture->id);
+  cx_gdi_assert_no_errors ();
+  
+  glUniform1i (location, sampler);
+  cx_gdi_assert_no_errors ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

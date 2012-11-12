@@ -391,11 +391,11 @@ void cx_vertex_data_sphere_compute_tangents_aos (struct cx_vertex_data_aos *vert
   
   cx_vec4 *tan1 = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * vertCount * 2);
   cx_vec4 *tan2 = tan1 + vertCount;
-  
-  cxi32 index = 0;
-  
+
   CX_ASSERT ((triCount * 3) == vertexData->numIndices);
   
+  cxi32 index = 0;
+
   for (cxi32 i = 0; i < triCount; ++i)
   {
     CX_ASSERT (index < vertexData->numIndices);
@@ -493,15 +493,15 @@ void cx_vertex_data_sphere_compute_tangents_aos (struct cx_vertex_data_aos *vert
     {
       // normalize 
       cx_vec4_mul (tangent, (1.0f / tlen), tangent);
+      
+      // calculate handedness
+      
+      cx_vec4 cross;
+      cx_vec4_cross (&cross, n, t);
+      
+      cxf32 dotp2 = cx_vec4_dot (&cross, &tan2 [i]);
+      tangent->w = (dotp2 < 0.0f) ? -1.0f : 1.0f;
     }
-    
-    // calculate handedness
-    
-    cx_vec4 cross;
-    cx_vec4_cross (&cross, n, t);
-    
-    cxf32 dotp2 = cx_vec4_dot (&cross, &tan2 [i]);
-    tangent->w = (dotp2 < 0.0f) ? -1.0f : 1.0f;
   }
   
   cx_free (tan1);

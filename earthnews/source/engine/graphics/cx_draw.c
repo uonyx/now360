@@ -125,8 +125,8 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32
   cx_mat4x4 mvp;
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
-  cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);  
+  cx_shader_set_float (shader, "u_z", &z, 1);
   
   // position attribute
   cx_vec2 pos [4];
@@ -197,7 +197,7 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
-  cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
+  cx_shader_set_float (shader, "u_z", &z, 1);
   
   cx_vec2 uv [4], pos [4];
 

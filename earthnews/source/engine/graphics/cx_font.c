@@ -131,8 +131,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
-  
-  cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
+  cx_shader_set_float (shader, "u_z", &z, 1);
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
@@ -231,8 +230,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
-  
-  cx_shader_set_uniform_2 (shader, "u_z", CX_SHADER_DATATYPE_FLOAT, (void *) &z, 1);
+  cx_shader_set_float (shader, "u_z", &z, 1);
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
