@@ -62,11 +62,13 @@ void _cx_outputLog (const char *file, int line, const char *format, ...)
 {
   va_list arg_list;
   
-  fprintf (stderr, "%s %d:", file, line);
   va_start (arg_list, format);
+  
+  fprintf (stderr, "%s %d:", file, line);
   vfprintf (stderr, format, arg_list);
-  va_end (arg_list);
   fprintf (stderr, "\n");
+  
+  va_end (arg_list);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

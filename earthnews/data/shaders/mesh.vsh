@@ -8,6 +8,7 @@
 
 attribute vec4 a_position;
 attribute vec3 a_normal;
+attribute vec4 a_tangent;
 attribute vec2 a_texcoord;
 
 uniform mat4 u_mvpMatrix;
@@ -29,6 +30,9 @@ void main (void)
                  
   v_colour = diffuseColor * nDotVP;
   v_texcoord = a_texcoord;
+
+  vec4 use = a_tangent;
+  use.w = 0.0;
   
   gl_Position = u_mvpMatrix * a_position;
 }

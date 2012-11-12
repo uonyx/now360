@@ -8,6 +8,7 @@
 
 #include "../engine/cx_engine.h"
 #include "feeds.h"
+#include "render.h"
 #include "worker.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,6 +65,12 @@ enum weather_image_code
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static cx_texture *s_weatherIcons [NUM_WEATHER_CONDITION_CODES];
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize);
 bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize);
 bool feeds_weather_parse (weather_feed_t *feed, const char *data, int dataSize);
@@ -75,6 +82,42 @@ void feeds_weather_clear (weather_feed_t *feed);
 void news_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
 void twitter_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
 void weather_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool feeds_init (void)
+{
+  char weatherFilename [512];
+  
+  for (int i = 0; i < NUM_WEATHER_CONDITION_CODES; ++i)
+  {
+    cx_sprintf (weatherFilename, 512, "data/weather_icons/a%d.png", i);
+    
+    const char *f = weatherFilename;
+    
+    s_weatherIcons [i] = cx_texture_create_from_file (f);
+    
+    CX_ASSERT (s_weatherIcons [i]);
+  }
+  
+  return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool feeds_deinit (void)
+{
+  for (unsigned int i = 0; i < NUM_WEATHER_CONDITION_CODES; ++i)
+  {
+    cx_texture_destroy (s_weatherIcons [i]);
+  }
+  
+  return true;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,47 +165,6 @@ void news_http_callback (cx_http_request_id tId, const cx_http_response *respons
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_news_search (news_feed_t *feed, const char *query)
-{
-  CX_ASSERT (feed);
-  CX_ASSERT (query);
-  
-  // google: "https://news.google.com/news/feeds?q=lagos&output=rss"
-  
-  if (feed->dataPending)
-  {
-    return;
-  }
-
-  feed->dataReady = false;
-  feed->dataPending = true;
-  
-  // url
-  
-  const char *url = NEWS_SEARCH_API_URL;
-  
-  // parameters
-  
-  // q
-  char q [256];
-  cx_http_percent_encode (q, 256, query);
-  
-  CX_DEBUGLOG_CONSOLE (1, "%s", q);
-  
-  // request
-  
-  char request [512];
-  cx_sprintf (request, 512, "%s?q=%s&output=rss", url, q);
-  
-  CX_DEBUGLOG_CONSOLE (1, "%s", request);
-  
-  cx_http_get (request, NULL, 0, NEWS_HTTP_REQUEST_TIMEOUT, news_http_callback, feed);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void feeds_news_clear (news_feed_t *feed)
 {
   CX_ASSERT (feed);
@@ -195,9 +197,168 @@ void feeds_news_clear (news_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void feeds_news_search (news_feed_t *feed, const char *query)
+{
+  CX_ASSERT (feed);
+  CX_ASSERT (query);
+  
+  // google: "https://news.google.com/news/feeds?q=lagos&output=rss"
+  
+  if (feed->dataPending)
+  {
+    return;
+  }
+  
+  feed->dataReady = false;
+  feed->dataPending = true;
+  
+  // url
+  
+  const char *url = NEWS_SEARCH_API_URL;
+  
+  // parameters
+  
+  // q
+  char q [256];
+  cx_http_percent_encode (q, 256, query);
+  
+  CX_DEBUGLOG_CONSOLE (1, "%s", q);
+  
+  // request
+  
+  char request [512];
+  cx_sprintf (request, 512, "%s?q=%s&output=rss", url, q);
+  
+  CX_DEBUGLOG_CONSOLE (1, "%s", request);
+  
+  cx_http_get (request, NULL, 0, NEWS_HTTP_REQUEST_TIMEOUT, news_http_callback, feed);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void feeds_news_render (news_feed_t *feed)
 {
   CX_ASSERT (feed);
+  
+  if (feed->dataReady)
+  {
+    const cx_font *font = render_get_ui_font (UI_FONT_SIZE_12);
+    const int maxNumDisplayItems = 8;
+    /* const float width = 400.0f; */
+    const float height = 180.0f;
+    const float posX = 0.0f;
+    const float posY = 588.0f;
+    const float marginX = 12.0f;
+    const float marginY = 6.0f;
+    /* const float textHeight = cx_font_get_height (font); */
+    const float itemSpacingY = height / (float) maxNumDisplayItems;
+    
+    int count = maxNumDisplayItems - 2;
+    news_feed_item_t *news = feed->items;
+    
+    float tx = posX + marginX;
+    float ty = posY + marginY;
+    
+    cx_colour colours [3];
+    
+    cx_colour_set (&colours [0], 1.0f, 0.0f, 0.0f, 0.45f);
+    cx_colour_set (&colours [1], 0.0f, 1.0f, 0.0f, 0.45f);
+    cx_colour_set (&colours [2], 0.0f, 0.0f, 1.0f, 0.45f);
+    
+    float h = cx_font_get_height (font);
+    
+    while (news && count--)
+    {
+      float w = cx_font_get_text_width (font, news->title);
+      
+      cx_draw_quad (tx, ty, tx + w, ty + h, 0.0f, 0.0f, &colours [count % 3], NULL);
+      
+      cx_font_render (font, news->title, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+      
+      ty += itemSpacingY;
+      
+      news = news->next;
+    }
+    
+    cx_font_render (font, "More news...", tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool feeds_news_get_item (news_feed_item_t *feedItem, news_feed_t *feed, float touchX, float touchY)
+{
+  CX_ASSERT (feed);
+  CX_ASSERT (feedItem);
+  
+  bool found = false;
+  
+  if (feed->dataReady)
+  {
+    memset (feedItem, 0, sizeof (news_feed_item_t));
+    
+    const int maxNumDisplayItems = 8;
+    /* const float width = 400.0f; */
+    const float height = 180.0f;
+    const float posX = 0.0f;
+    const float posY = 588.0f;
+    const float marginX = 12.0f;
+    const float marginY = 6.0f;
+    const float itemSpacingY = height / (float) maxNumDisplayItems;
+    
+    int count = maxNumDisplayItems - 2;
+    news_feed_item_t *news = feed->items;
+    
+    float tx = posX + marginX;
+    float ty = posY + marginY;
+    
+    const cx_font *font = render_get_ui_font (UI_FONT_SIZE_12);
+    
+    while (news && count--)
+    {
+      float w = cx_font_get_text_width (font, news->title);
+      
+      if ((touchX >= tx) && (touchX <= (tx + w)))
+      {
+        if ((touchY >= ty) && (touchY <= (ty + itemSpacingY)))
+        {
+          found = true;
+          
+          *feedItem = *news;
+          
+          break;
+        }
+      }
+      
+      ty += itemSpacingY;
+      
+      news = news->next;
+    }
+    
+    if (!found)
+    {
+      const char *moreNews = "More news...";
+      
+      float w = cx_font_get_text_width (font, moreNews);
+      
+      if ((touchX >= tx) && (touchX <= (tx + w)))
+      {
+        if ((touchY >= ty) && (touchY <= (ty + itemSpacingY)))
+        {
+          feedItem->link = feed->link;
+          feedItem->title = moreNews;
+          
+          found = true;
+        }
+      }
+    }
+  }
+  
+  return found;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -433,6 +594,71 @@ void feeds_twitter_clear (twitter_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void feeds_twitter_render (twitter_feed_t *feed)
+{
+  CX_ASSERT (feed);
+  
+  if (feed->dataReady)
+  {
+    const float width = 360.0f;
+    const float height = cx_gdi_get_screen_height ();
+    
+    float x1 = cx_gdi_get_screen_width() - width;
+    float y1 = 0.0f;
+    float x2 = x1 + width;
+    float y2 = y1 + height;
+    
+    cx_colour colour = *cx_colour_blue ();
+    
+    colour.r = 0.2f;
+    colour.g = 0.2f;
+    colour.b = 0.2f;
+    colour.a = 0.7f;
+    
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colour, NULL);
+    
+    int max_rpp = 15;
+    
+    float itemHeight = height / (float) max_rpp;
+    (void)itemHeight;
+    
+    float itemTextSpacingY = 10.0f; //(itemHeight * 0.2f);
+    
+    float tx = x1 + 10.0f;
+    float ty = y1 + 12.0f;
+    
+    const cx_font *font0 = render_get_ui_font (UI_FONT_SIZE_14);
+    //cx_font *font1 = s_font [UI_FONT_SIZE_18];
+    //cx_font_set_scale (s_fontui, 1.0f, 1.0f);
+    
+    char name [128];
+    twitter_tweet_t *tweet = feed->items;
+    
+    while (tweet)
+    {
+      cx_sprintf (name, 128, "%s @%s", tweet->username, tweet->userhandle);
+      cx_font_render (font0, name, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
+      
+      float tty = ty + itemTextSpacingY;
+      
+      int lines = cx_font_render_word_wrap (font0, tweet->text, tx, tty, x2 - 24.0f, y2, 0.0f, 
+                                            CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
+      
+      float fontHeight = cx_font_get_height (font0) * (lines + 2);
+      
+      ty += fontHeight;
+      
+      //ty += itemHeight;
+      
+      tweet = tweet->next;
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
@@ -624,6 +850,33 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
   }
   
   feed->dataPending = false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void feeds_weather_render (weather_feed_t *feed, float x, float y, float z)
+{
+  CX_ASSERT (feed);
+  
+  if (feed->dataReady && 
+      (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
+      (feed->conditionCode < NUM_WEATHER_CONDITION_CODES))
+  {
+    cx_texture *image = s_weatherIcons [feed->conditionCode];
+    CX_ASSERT (image);
+    
+    float w = (float) image->width;
+    float h = (float) image->height;
+    
+    float x1 = x - (w * 0.5f);
+    float y1 = y - (h * 0.5f);
+    float x2 = x1 + w;
+    float y2 = y1 + h;
+    
+    cx_draw_quad (x1, y1, x2, y2, z, 0.0f, cx_colour_white (), image);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

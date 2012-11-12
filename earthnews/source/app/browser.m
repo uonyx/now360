@@ -301,7 +301,7 @@ void browser_clear_cache (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool browser_open (const char *url)
+bool browser_open (const char *url, const char *title)
 {
   CX_ASSERT (url);
   
@@ -337,16 +337,15 @@ bool browser_open (const char *url)
     // launch view
     ///////////////////////
     
-    NSString *nsurlStirng = [NSString stringWithCString:url encoding:NSASCIIStringEncoding];
-    NSURL *nsurl = [NSURL URLWithString:nsurlStirng];
+    NSString *nsurlString = [NSString stringWithCString:url encoding:NSASCIIStringEncoding];
     
 #if BROWSER_CACHE_ENABLED
     const int requestTimeoutSecs = 30;
-    NSURLRequest *request = [NSURLRequest requestWithURL:nsurl 
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:nsurlString] 
                                              cachePolicy:NSURLRequestReturnCacheDataElseLoad 
                                          timeoutInterval:requestTimeoutSecs];
 #else
-    NSURLRequest *request = [NSURLRequest requestWithURL:nsurl];
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:nsurlStirng]];
 #endif
     
     [s_webview loadRequest:request];
@@ -357,7 +356,14 @@ bool browser_open (const char *url)
     
     browser_set_hidden (false);
     
-    [g_browserTitle setString:nsurlStirng];
+    if (title)
+    {
+      [g_browserTitle setString:[NSString stringWithCString:title encoding:NSASCIIStringEncoding]];
+    }
+    else
+    {
+      [g_browserTitle setString:nsurlString];
+    }
     
     success = true;
   }
@@ -468,19 +474,19 @@ bool browser_get_hidden (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void browser_render (const browser_def_t *browserDef, float opacity)
+void browser_render (const browser_rect_t *browserRect, float opacity)
 {
-  CX_ASSERT (browserDef);
+  CX_ASSERT (browserRect);
   
   //if (s_webview && !s_webview.isHidden)
   if (s_webview)
   {
     float toolbarHeight = s_toolbarHeight; 
     float toolbarMargin = s_toolbarMargin;
-    float viewPosX      = browserDef->posX;
-    float viewPosY      = browserDef->posY + toolbarHeight;
-    float viewWidth     = browserDef->width;
-    float viewHeight    = browserDef->height - toolbarHeight;
+    float viewPosX      = browserRect->posX;
+    float viewPosY      = browserRect->posY + toolbarHeight;
+    float viewWidth     = browserRect->width;
+    float viewHeight    = browserRect->height - toolbarHeight;
     float alpha         = opacity * [[[s_webview layer] presentationLayer] opacity];
   
     ///////////////////////
@@ -501,9 +507,9 @@ void browser_render (const browser_def_t *browserDef, float opacity)
     // toolbar
     ///////////////////////
     
-    float tbx1 = browserDef->posX;
-    float tby1 = browserDef->posY;
-    float tbx2 = tbx1 + browserDef->width;
+    float tbx1 = browserRect->posX;
+    float tby1 = browserRect->posY;
+    float tbx2 = tbx1 + browserRect->width;
     float tby2 = tby1 + toolbarHeight;
     
     cx_colour tbcolour;
@@ -683,9 +689,9 @@ void browser_render (const browser_def_t *browserDef, float opacity)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool browser_handle_input (const browser_def_t *browserDef, browser_input input, float touchX, float touchY)
+bool browser_handle_input (const browser_rect_t *browserRect, browser_input input, float touchX, float touchY)
 {
-  CX_ASSERT (browserDef);
+  CX_ASSERT (browserRect);
   
   bool handled = false;
   
@@ -694,9 +700,9 @@ bool browser_handle_input (const browser_def_t *browserDef, browser_input input,
     float toolbarHeight = s_toolbarHeight; 
     float toolbarMargin = s_toolbarMargin;
     
-    float tbx1 = browserDef->posX;
-    float tby1 = browserDef->posY;
-    float tbx2 = tbx1 + browserDef->width;
+    float tbx1 = browserRect->posX;
+    float tby1 = browserRect->posY;
+    float tbx2 = tbx1 + browserRect->width;
     float tby2 = tby1 + toolbarHeight;
     
     if ((touchX >= tbx1) && (touchX <= tbx2))
@@ -705,7 +711,7 @@ bool browser_handle_input (const browser_def_t *browserDef, browser_input input,
       {
         handled = true;
       }
-    }    
+    }
     
     memset (s_touch, false, sizeof (s_touch));
     

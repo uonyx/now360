@@ -29,8 +29,8 @@
 #define CX_MATERIAL_PROPERTY_NONE       0x0
 #define CX_MATERIAL_PROPERTY_AMBIENT    0x1
 #define CX_MATERIAL_PROPERTY_DIFFUSE    0x2
-#define CX_MATERIAL_PROPERTY_BUMP       0x4
-#define CX_MATERIAL_PROPERTY_SPECULAR   0x8
+#define CX_MATERIAL_PROPERTY_SPECULAR   0x4
+#define CX_MATERIAL_PROPERTY_BUMP       0x8
 
 typedef cxu32 cx_material_property;
 
@@ -42,8 +42,8 @@ typedef enum cx_material_texture
 {
   CX_MATERIAL_TEXTURE_AMBIENT,
   CX_MATERIAL_TEXTURE_DIFFUSE,
-  CX_MATERIAL_TEXTURE_BUMP,
   CX_MATERIAL_TEXTURE_SPECULAR,
+  CX_MATERIAL_TEXTURE_BUMP,
   
   CX_NUM_MATERIAL_TEXTURES,
   
@@ -61,9 +61,9 @@ typedef struct cx_material
   const cx_texture *textures [CX_NUM_MATERIAL_TEXTURES];
   
   cx_colour ambient;
-  cx_colour diffuse;
-  cx_colour specular;
-  cx_colour emmissive;
+  cx_colour diffuse;    // texture (diffuse map). same as ambient?
+  cx_colour specular;   // grayscale (gloss map). single channel?
+  cx_colour emmissive;  // texture (glow map). night time
   
   cxf32 shininess;
   cxu32 properties;

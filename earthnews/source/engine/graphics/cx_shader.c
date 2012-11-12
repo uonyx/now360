@@ -61,11 +61,11 @@ static GLenum s_glTypeMapping [CX_NUM_SHADER_DATATYPES] =
   GL_SAMPLER_2D,  // CX_SHADER_DATATYPE_SAMPLER2D,
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static bool s_initialised = false;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct cx_shader_description
 {
@@ -77,10 +77,11 @@ struct cx_shader_description
 static struct cx_shader_description s_shaderDescriptions [CX_NUM_BUILT_IN_SHADERS] = 
 {
   { CX_SHADER_BUILT_IN_FONT,              "font",         "data/shaders" },
-  { CX_SHADER_BUILT_IN_DRAW_QUAD,         "quad2",         "data/shaders" },
+  { CX_SHADER_BUILT_IN_DRAW_QUAD,         "quad2",        "data/shaders" },
   { CX_SHADER_BUILT_IN_DRAW_QUAD_TEX,     "quad_tex",     "data/shaders" },
   { CX_SHADER_BUILT_IN_DRAW_POINTS,       "points",       "data/shaders" },
-  { CX_SHADER_BUILT_IN_DRAW_POINTS_TEX,   "points",   "data/shaders" },
+  { CX_SHADER_BUILT_IN_DRAW_POINTS_TEX,   "points",       "data/shaders" },
+  { CX_SHADER_BUILT_IN_DRAW_LINES,        "lines",        "data/shaders" },
 };
 
 struct cx_shader *s_builtInShaders [CX_NUM_BUILT_IN_SHADERS];
@@ -348,7 +349,11 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     
     const char *attribName = value->u.string.ptr;
     
-    shader->attributes [attribIdx] = glGetAttribLocation (shader->program, attribName);
+    int attribLocation = glGetAttribLocation (shader->program, attribName);
+    
+    CX_ASSERT ((attribLocation >= 0) && "unused attribute");
+    
+    shader->attributes [attribIdx] = attribLocation;
     
     cx_gdi_assert_no_errors ();
     CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);

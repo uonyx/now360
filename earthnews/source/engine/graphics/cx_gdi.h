@@ -20,11 +20,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_GRAPHICS_DEBUG                     (CX_DEBUG && 1)
-#define CX_GRAPHICS_DEBUG_LOG_ENABLED         (CX_DEBUG && 1)
+#define CX_GDI_DEBUG                      (CX_DEBUG && 1)
+#define CX_GDI_DEBUG_LOG_ENABLED          (CX_DEBUG && 1)
 
-#if CX_GRAPHICS_DEBUG
-#define cx_gdi_assert_no_errors()             _cx_gdi_assert_no_errors ()
+#if CX_GDI_DEBUG
+#define cx_gdi_assert_no_errors()         _cx_gdi_assert_no_errors ()
 #else
 #define cx_gdi_assert_no_errors()
 #endif
@@ -33,10 +33,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_GRAPHICS_RENDER_STATE_NONE         0x0
-#define CX_GRAPHICS_RENDER_STATE_CULL         0x1
-#define CX_GRAPHICS_RENDER_STATE_DEPTH_TEST   0x2
-#define CX_GRAPHICS_RENDER_STATE_BLEND        0x4
+#define CX_GDI_RENDER_STATE_NONE          0x0
+#define CX_GDI_RENDER_STATE_CULL          0x1
+#define CX_GDI_RENDER_STATE_DEPTH_TEST    0x2
+#define CX_GDI_RENDER_STATE_BLEND         0x4
 
 typedef cxu32 cx_gdi_renderstate;
 
@@ -46,19 +46,18 @@ typedef cxu32 cx_gdi_renderstate;
 
 typedef enum
 {
-  CX_GRAPHICS_BLEND_MODE_INVALID = -1,
-  CX_GRAPHICS_BLEND_MODE_SRC_ALPHA,
-  CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA,
-  
-  CX_NUM_GRAPHICS_BLEND_MODES
+  CX_GDI_BLEND_MODE_INVALID = -1,
+  CX_GDI_BLEND_MODE_SRC_ALPHA,
+  CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA,
+  CX_NUM_GDI_BLEND_MODES
 } cx_gdi_blend_mode;
 
 typedef enum
 {
-  CX_GRAPHICS_TRANSFORM_P,
-  CX_GRAPHICS_TRANSFORM_MV,
-  CX_GRAPHICS_TRANSFORM_MVP,
-  CX_NUM_GRAPHICS_TRANSFORMS,
+  CX_GDI_TRANSFORM_P,
+  CX_GDI_TRANSFORM_MV,
+  CX_GDI_TRANSFORM_MVP,
+  CX_NUM_GDI_TRANSFORMS,
 } cx_gdi_transform;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

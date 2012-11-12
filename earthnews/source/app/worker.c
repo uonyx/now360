@@ -15,6 +15,7 @@
 
 typedef struct task_t
 {
+  task_id id;
   task_func func;
   void *userdata;
   task_status *status;
@@ -37,6 +38,8 @@ static int s_taskBusyListCount = 0;
 static cx_thread *s_thread = NULL;
 static cx_thread_monitor s_threadMonitor;
 static cx_thread_mutex s_sharedDataMutex;
+
+static task_id s_taskIdFactory = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,12 +188,12 @@ void worker_update (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool worker_add_task (task_func func, void *userdata, task_status *status)
+task_id worker_add_task (task_func func, void *userdata, task_status *status)
 {
   CX_FATAL_ASSERT (s_thread);
   CX_ASSERT (func);
   
-  bool success = false;
+  task_id taskId = TASK_ID_INVALID;
   
   task_t *task = NULL;
   
@@ -205,13 +208,14 @@ bool worker_add_task (task_func func, void *userdata, task_status *status)
       *status = TASK_STATUS_INPROGRESS;
     }
     
+    task->id = s_taskIdFactory++;
     task->func = func;
     task->userdata = userdata;
     task->status = status;
     
     s_taskBusyList = task_list_insert_back (s_taskBusyList, task, &s_taskBusyListCount);
     
-    success = true;
+    taskId = task->id;
   }
   else
   {
@@ -223,7 +227,7 @@ bool worker_add_task (task_func func, void *userdata, task_status *status)
   
   cx_thread_mutex_unlock (&s_sharedDataMutex);
   
-  return success;
+  return taskId;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

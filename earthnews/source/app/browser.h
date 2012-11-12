@@ -23,7 +23,7 @@ typedef struct browser_rect_t
 {
   float posX, posY;
   float width, height;
-} browser_def_t;
+} browser_rect_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,12 +42,12 @@ typedef enum
 bool browser_init (void *container);
 bool browser_deinit (void);
 
-bool browser_open (const char *url);
+bool browser_open (const char *url, const char *title);
 bool browser_close (void);
 bool browser_is_open (void);
 
-void browser_render (const browser_def_t *browserDef, float opacity);
-bool browser_handle_input (const browser_def_t *browserDef, browser_input input, float touchX, float touchY);
+void browser_render (const browser_rect_t *browserDef, float opacity);
+bool browser_handle_input (const browser_rect_t *browserDef, browser_input input, float touchX, float touchY);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

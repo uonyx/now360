@@ -36,7 +36,7 @@
 static earth_t *s_earth = NULL;
 static cx_font *s_font = NULL;
 static camera_t *s_camera = NULL;
-static browser_def_t s_browserDef;
+static browser_rect_t s_browserRect;
 
 #if DEBUG_VIEW_ROTATION_OLD
 static float s_rotationAngleX = 0.0f;
@@ -52,14 +52,12 @@ static cx_vec2 s_rotationSpeed;
 static cx_vec2 s_rotationAngle;
 #endif
 
-static int g_selectedCity = -1;
-
-twitter_feed_t *s_twitterFeeds = NULL;
-news_feed_t *s_newsFeeds = NULL;
-weather_feed_t *s_weatherFeeds = NULL;
+static int s_selectedCity = -1;
+static twitter_feed_t *s_twitterFeeds = NULL;
+static news_feed_t *s_newsFeeds = NULL;
+static weather_feed_t *s_weatherFeeds = NULL;
 
 void app_input_touch_update (float deltaTime);
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,12 +82,12 @@ void app_reset (float width, float height)
   
   cx_gdi_set_screen_dimensions ((int) width, (int) height);
   
-  s_browserDef.width  = 778.0f;
-  s_browserDef.height = 620.0f;
-  s_browserDef.posX   = 0.0f + ((width - s_browserDef.width) * 0.5f);
-  s_browserDef.posY   = 0.0f + ((height - s_browserDef.height) * 0.5f);
-  
   render_screen_reset (width, height);
+  
+  s_browserRect.width  = 778.0f;
+  s_browserRect.height = 620.0f;
+  s_browserRect.posX   = 0.0f + ((width - s_browserRect.width) * 0.5f);
+  s_browserRect.posY   = 0.0f + ((height - s_browserRect.height) * 0.5f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,12 +122,12 @@ void app_init (void *rootViewController, float width, float height)
 
   browser_init (rootViewController);
   
-  memset (&s_browserDef, 0, sizeof (s_browserDef));
+  memset (&s_browserRect, 0, sizeof (s_browserRect));
   
-  s_browserDef.width  = 778.0f;
-  s_browserDef.height = 620.0f;
-  s_browserDef.posX   = 0.0f + ((width - s_browserDef.width) * 0.5f);
-  s_browserDef.posY   = 0.0f + ((height - s_browserDef.height) * 0.5f);
+  s_browserRect.width  = 778.0f;
+  s_browserRect.height = 620.0f;
+  s_browserRect.posX   = 0.0f + ((width - s_browserRect.width) * 0.5f);
+  s_browserRect.posY   = 0.0f + ((height - s_browserRect.height) * 0.5f);
   
   //
   // camera
@@ -138,7 +136,7 @@ void app_init (void *rootViewController, float width, float height)
   s_camera = camera_create (width / height, 65.0f);
   
   //
-  // earth
+  // earth data
   //
   
   s_earth = earth_create ("data/earth_data.json", 1.0f, 64, 32);
@@ -146,6 +144,8 @@ void app_init (void *rootViewController, float width, float height)
   //
   // feeds
   //
+  
+  feeds_init ();
   
   int cityCount = s_earth->data->count;
   
@@ -224,7 +224,7 @@ void app_init (void *rootViewController, float width, float height)
     twItem = twItem->next;
   }
   
-  CX_DEBUG_BREAK_ABLE;
+  CX_DEBUG_BREAKABLE_EXPR;
 #endif
 }
 
@@ -234,6 +234,8 @@ void app_init (void *rootViewController, float width, float height)
 
 void app_deinit (void)
 {
+  feeds_deinit ();
+  
   render_deinit ();
   
   cx_engine_deinit ();
@@ -301,9 +303,9 @@ void app_view_update (float deltaTime)
   
   //camera_update (s_camera, deltaTime);
   
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &projmatrix);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &viewmatrix);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_P, &projmatrix);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &viewmatrix);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
   
 #else
   
@@ -325,9 +327,9 @@ void app_view_update (float deltaTime)
   cx_mat4x4 mvpMatrix;
   cx_mat4x4_mul (&mvpMatrix, &proj, &transformation);
   
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &proj);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &transformation);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_P, &proj);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &transformation);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
   
 #endif
   
@@ -381,17 +383,25 @@ void app_earth_hit_test (float screenX, float screenY, float screenWidth, float 
       cx_vec4 intersectpt, tmp;
       
       cx_vec4_sub (&tmp, &position, &rayOrigin);
+      
       float t = (cx_vec4_dot (&normal, &tmp)) / dotp;
+      
       cx_vec4_mul (&tmp, t, &rayDir);
+      
       cx_vec4_add (&intersectpt, &rayOrigin, &tmp);
       
+      // get distance (squared)
+      
       cx_vec4_sub (&toPos, &position, &intersectpt);
+      
       float distSqr = cx_vec4_lengthSqr (&toPos);
       
       if (distSqr <= (0.025f * 0.025f))
       {
         CX_DEBUGLOG_CONSOLE (1, "%s", city);
+        
         cityIndex = i;
+        
         break;
       } 
     }
@@ -406,7 +416,7 @@ void app_earth_hit_test (float screenX, float screenY, float screenWidth, float 
     feeds_news_search (&s_newsFeeds [cityIndex], n);
     //feeds_weather_search (&s_weatherFeeds [cityIndex], w);
     
-    g_selectedCity = cityIndex;
+    s_selectedCity = cityIndex;
   }
 }
 
@@ -449,7 +459,7 @@ void app_input_touch_began (float x, float y)
   
   if (browser_is_open ())
   {
-    if (!browser_handle_input (&s_browserDef, BROWSER_INPUT_TOUCH_BEGIN, touchX, touchY))
+    if (!browser_handle_input (&s_browserRect, BROWSER_INPUT_TOUCH_BEGIN, touchX, touchY))
     {
       bool closed = browser_close ();
       CX_REFERENCE_UNUSED_VARIABLE (closed);
@@ -459,18 +469,20 @@ void app_input_touch_began (float x, float y)
   {
     app_earth_hit_test (touchX, touchY, sw, sh);
     
-    if (g_selectedCity > -1)
+    if (s_selectedCity > -1)
     {
-      const char *url = render_news_feed_hit_test (&s_newsFeeds [g_selectedCity], touchX, touchY);
+      CX_ASSERT (s_selectedCity < s_earth->data->count);
       
-      if (url)
+      news_feed_item_t item;      
+      news_feed_t *feed = &s_newsFeeds [s_selectedCity];
+      
+      if (feeds_news_get_item (&item, feed, touchX, touchY))
       {
-        bool opened = browser_open (url);
+        bool opened = browser_open (item.link, item.title);
         CX_REFERENCE_UNUSED_VARIABLE (opened);
       }
     }
   }
-  
   
 #if !DEBUG_VIEW_ROTATION_OLD
   s_rotTouchBegin.x = x * sw * 0.25f;
@@ -521,7 +533,7 @@ void app_input_touch_ended (float x, float y)
   
   if (browser_is_open ())
   {
-    browser_handle_input (&s_browserDef, BROWSER_INPUT_TOUCH_END, touchX, touchY);
+    browser_handle_input (&s_browserRect, BROWSER_INPUT_TOUCH_END, touchX, touchY);
   }
   
 #if DEBUG_VIEW_ROTATION_OLD
@@ -673,7 +685,7 @@ static void app_render_earth_city_text (void)
   {
     const char *text = s_earth->data->names [i];
     const cx_vec4 *pos = &s_earth->data->location [i];
-    const cx_colour *colour = (i == g_selectedCity) ? cx_colour_green () : cx_colour_yellow ();
+    const cx_colour *colour = (i == s_selectedCity) ? cx_colour_green () : cx_colour_yellow ();
     
     cx_util_world_space_to_screen_space (screenWidth, screenHeight, &proj, &view, pos, &screen, &depth, &scale);
 
@@ -685,7 +697,9 @@ static void app_render_earth_city_text (void)
     
     screen.y -= 6.0f;
     
-    render_weather_feed (&s_weatherFeeds [i], &screen, z);
+    // render weather icon
+    weather_feed_t *feed = &s_weatherFeeds [i];
+    feeds_weather_render (feed, screen.x, screen.y, z);
   }
 }
 
@@ -696,7 +710,7 @@ static void app_render_earth_city_text (void)
 static void app_render_earth (void)
 {
   cx_mat4x4 mvpMatrix;
-  cx_gdi_get_transform (CX_GRAPHICS_TRANSFORM_MVP, &mvpMatrix);
+  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
   
   cx_mat3x3 normalMatrix;
   cx_mat3x3_identity (&normalMatrix);
@@ -714,7 +728,153 @@ static void app_render_earth (void)
   cx_mesh_render (mesh);
   
   // draw points
-  //cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
+  cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
+  
+  static cx_line *normalLines = NULL;
+  static cx_line *tangentLines = NULL;
+  
+#if 1
+  cx_vertex_data *vertexData = &s_earth->visual->mesh->vertexData;
+  
+  if (!normalLines)
+  {
+    normalLines = (cx_line *) cx_malloc (sizeof (cx_line) * vertexData->numVertices);
+    
+#if CX_VERTEX_DATA_AOS
+    for (int i = 0; i < vertexData->numVertices; ++i)
+    {
+      cx_vec4 pos, nor, add;
+      
+#if !CX_VERTEX_DATA_AOS_STRUCT
+      int j = i * (CX_VERTEX_POSITION_SIZE + CX_VERTEX_NORMAL_SIZE + CX_VERTEX_TEXCOORD_SIZE);
+      
+      pos.x = vertexData->vertices [j + 0];
+      pos.y = vertexData->vertices [j + 1];
+      pos.z = vertexData->vertices [j + 2];
+      pos.w = 1.0f;
+      
+      nor.x = vertexData->vertices [j + 3];
+      nor.y = vertexData->vertices [j + 4];
+      nor.z = vertexData->vertices [j + 5];
+      nor.w = 0.0f;
+#else
+      pos = vertexData->vertices [i].position;
+      nor = vertexData->vertices [i].normal;
+#endif 
+      cx_vec4_normalize (&nor);
+      
+      cx_vec4_mul (&nor, 0.1f, &nor);
+      cx_vec4_add (&add, &pos, &nor);
+
+      normalLines [i].start = pos;
+      normalLines [i].end = add;
+    }
+    
+#else
+    for (int i = 0; i < vertexData->numVertices; ++i)
+    {
+      int j = i * CX_VERTEX_POSITION_SIZE;
+      
+      cx_vec4 pos, nor, add;
+      
+      pos.x = vertexData->positions [j + 0];
+      pos.y = vertexData->positions [j + 1];
+      pos.z = vertexData->positions [j + 2];
+      pos.w = 1.0f;
+      
+      j = i * CX_VERTEX_NORMAL_SIZE;
+      
+      nor.x = vertexData->normals [j + 0];
+      nor.y = vertexData->normals [j + 1];
+      nor.z = vertexData->normals [j + 2];
+      nor.w = 0.0f;
+      
+      cx_vec4_mul (&nor, 0.1f, &nor);
+      cx_vec4_add (&add, &pos, &nor);
+      
+      normalLines [i].start = pos;
+      normalLines [i].end = add;
+    }
+#endif
+  }
+
+#if CX_VERTEX_DATA_AOS_STRUCT
+  
+  if (!tangentLines)
+  {
+    tangentLines = (cx_line *) cx_malloc (sizeof (cx_line) * vertexData->numVertices);
+    
+    for (int i = 0; i < vertexData->numVertices; ++i)
+    {
+      cx_vec4 pos, tan, add;
+    
+      pos = vertexData->vertices [i].position;
+      tan = vertexData->vertices [i].tangent;
+      
+      /*
+       
+      int j = i * (CX_VERTEX_POSITION_SIZE + CX_VERTEX_NORMAL_SIZE + CX_VERTEX_TEXCOORD_SIZE);
+       
+      pos.x = vertexData->vertices [j + 0];
+      pos.y = vertexData->vertices [j + 1];
+      pos.z = vertexData->vertices [j + 2];
+      pos.w = 1.0f;
+      
+      j = i * (CX_VERTEX_TANGENT_SIZE);
+      
+      tan.x = vertexData->tangents [j + 0];
+      tan.y = vertexData->tangents [j + 1];
+      tan.z = vertexData->tangents [j + 2];
+      tan.w = 0.0f;
+      */
+      
+      tan.w = 0.0f;
+      
+      //cx_vec4_normalize (&tan);
+      
+      cx_vec4_mul (&tan, 0.1f, &tan);
+      cx_vec4_add (&add, &pos, &tan);
+      
+      tangentLines [i].start = pos;
+      tangentLines [i].end = add;
+    }
+  }
+#endif
+  
+  if (normalLines)
+  {
+    cx_draw_lines (vertexData->numVertices, normalLines, cx_colour_orange (), 1.0f);
+  }
+  
+  if (tangentLines)
+  {
+    cx_draw_lines (vertexData->numVertices, tangentLines, cx_colour_blue (), 1.0f);
+  }
+  
+#else
+  
+  if (!normalLines)
+  {
+    normalLines = (cx_line *) cx_malloc (sizeof (cx_line) * s_earth->data->count);
+    
+    for (int i = 0; i < s_earth->data->count; ++i)
+    {
+      const cx_vec4 *pos = &s_earth->data->location [i];
+      
+      cx_vec4 nor = s_earth->data->normal [i];
+      cx_vec4_mul (&nor, 0.3f, &nor);
+      
+      normalLines [i].start = *pos;
+      cx_vec4_add (&normalLines [i].end, pos, &nor);
+    }
+  }
+  
+  if (normalLines)
+  {
+    cx_draw_lines (s_earth->data->count, normalLines, cx_colour_orange (), 1.0f);
+  }
+#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -728,8 +888,8 @@ void app_render_2d (void)
   //////////////
   
   cx_gdi_unbind_all_buffers ();
-  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND);
-  cx_gdi_set_blend_mode (CX_GRAPHICS_BLEND_MODE_SRC_ALPHA, CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
+  cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
   cx_gdi_enable_z_buffer (false);
   
   // set 2d mvp matrix
@@ -741,9 +901,9 @@ void app_render_2d (void)
   cx_mat4x4_ortho (&proj, 0.0f, screenWidth, 0.0f, screenHeight, CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR, CAMERA_PROJECTION_ORTHOGRAPHIC_FAR); 
   cx_mat4x4_identity (&view);
   
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_P, &proj);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MV, &view);
-  cx_gdi_set_transform (CX_GRAPHICS_TRANSFORM_MVP, &proj);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_P, &proj);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &view);
+  cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
   render_test ();
   render_fps ();
@@ -753,25 +913,32 @@ void app_render_2d (void)
   //////////////
   
 #if 1
-  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND | CX_GRAPHICS_RENDER_STATE_DEPTH_TEST);
-  cx_gdi_set_blend_mode (CX_GRAPHICS_BLEND_MODE_SRC_ALPHA, CX_GRAPHICS_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
+  cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
   cx_gdi_enable_z_buffer (true);
   app_render_earth_city_text ();
   cx_gdi_enable_z_buffer (false);
-  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_BLEND);
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
 #else
   app_render_earth_city_text ();
 #endif
   
-  if (g_selectedCity > -1)
+  // render feeds
+  
+  if (s_selectedCity > -1)
   {
-    render_twitter_feed (&s_twitterFeeds [g_selectedCity]);
-    render_news_feed (&s_newsFeeds [g_selectedCity]);
+    CX_ASSERT (s_selectedCity < s_earth->data->count);
+    
+    twitter_feed_t *twitterFeed = &s_twitterFeeds [s_selectedCity];
+    news_feed_t *newsFeed       = &s_newsFeeds [s_selectedCity];
+    
+    feeds_twitter_render (twitterFeed);
+    feeds_news_render (newsFeed);
   }
   
   // render browser
   
-  browser_render (&s_browserDef, 1.0f);
+  browser_render (&s_browserRect, 1.0f);
   
   //////////////
   // end
@@ -791,7 +958,7 @@ void app_render_3d (void)
   //////////////
   
   cx_gdi_unbind_all_buffers ();
-  cx_gdi_set_renderstate (CX_GRAPHICS_RENDER_STATE_CULL | CX_GRAPHICS_RENDER_STATE_DEPTH_TEST);
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_enable_z_buffer (true);
   
   //////////////

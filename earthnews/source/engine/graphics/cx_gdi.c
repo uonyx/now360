@@ -32,14 +32,14 @@ static bool s_initialised = false;
 static cxi32 s_screenWidth = 0;
 static cxi32 s_screenHeight = 0;
 
-static cx_gdi_renderstate s_activeRenderstate = CX_GRAPHICS_RENDER_STATE_NONE;
-static GLenum s_openglBlendModes [CX_NUM_GRAPHICS_BLEND_MODES] =
+static cx_gdi_renderstate s_activeRenderstate = CX_GDI_RENDER_STATE_NONE;
+static GLenum s_openglBlendModes [CX_NUM_GDI_BLEND_MODES] =
 {
   GL_SRC_ALPHA,
   GL_ONE_MINUS_SRC_ALPHA,
 };
 
-static cx_mat4x4 s_transforms [CX_NUM_GRAPHICS_TRANSFORMS];
+static cx_mat4x4 s_transforms [CX_NUM_GDI_TRANSFORMS];
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,9 +54,9 @@ bool _cx_gdi_init (void)
   s_screenWidth = CX_GDI_DEFAULT_SCREEN_WIDTH;
   s_screenHeight = CX_GDI_DEFAULT_SCREEN_HEIGHT;
   
-  cx_mat4x4_identity (&s_transforms [CX_GRAPHICS_TRANSFORM_P]);
-  cx_mat4x4_identity (&s_transforms [CX_GRAPHICS_TRANSFORM_MV]);
-  cx_mat4x4_identity (&s_transforms [CX_GRAPHICS_TRANSFORM_MVP]);
+  cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_P]);
+  cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MV]);
+  cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MVP]);
   
   s_initialised = true;
   
@@ -117,7 +117,7 @@ cxf32 cx_gdi_get_screen_height (void)
 void cx_gdi_set_transform (cx_gdi_transform transform, const cx_mat4x4 *matrix)
 {
   CX_ASSERT (s_initialised);
-  CX_ASSERT ((transform >= 0) && (transform < CX_NUM_GRAPHICS_TRANSFORMS));
+  CX_ASSERT ((transform >= 0) && (transform < CX_NUM_GDI_TRANSFORMS));
   CX_ASSERT (matrix);
   
   s_transforms [transform] = *matrix;
@@ -130,7 +130,7 @@ void cx_gdi_set_transform (cx_gdi_transform transform, const cx_mat4x4 *matrix)
 void cx_gdi_get_transform (cx_gdi_transform transform, cx_mat4x4 *matrix)
 {
   CX_ASSERT (s_initialised);
-  CX_ASSERT ((transform >= 0) && (transform < CX_NUM_GRAPHICS_TRANSFORMS));
+  CX_ASSERT ((transform >= 0) && (transform < CX_NUM_GDI_TRANSFORMS));
   CX_ASSERT (matrix);
   
   *matrix = s_transforms [transform];
@@ -142,7 +142,7 @@ void cx_gdi_get_transform (cx_gdi_transform transform, cx_mat4x4 *matrix)
 
 void cx_gdi_set_screen_dimensions (cxi32 width, cxi32 height)
 {
-  CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "cx_gdi_set_screen_dimensions: width [%d], height [%d]", width, height);
+  CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi_set_screen_dimensions: width [%d], height [%d]", width, height);
   
   s_screenWidth = width;
   s_screenHeight = height;
@@ -189,8 +189,8 @@ void cx_gdi_enable_z_buffer (bool enable)
 
 void cx_gdi_set_blend_mode (cx_gdi_blend_mode src, cx_gdi_blend_mode dest)
 {
-  CX_ASSERT ((src > CX_GRAPHICS_BLEND_MODE_INVALID) && (src < CX_NUM_GRAPHICS_BLEND_MODES));
-  CX_ASSERT ((dest > CX_GRAPHICS_BLEND_MODE_INVALID) && (dest < CX_NUM_GRAPHICS_BLEND_MODES));
+  CX_ASSERT ((src > CX_GDI_BLEND_MODE_INVALID) && (src < CX_NUM_GDI_BLEND_MODES));
+  CX_ASSERT ((dest > CX_GDI_BLEND_MODE_INVALID) && (dest < CX_NUM_GDI_BLEND_MODES));
   
   GLenum srcMode = s_openglBlendModes [src];
   GLenum destMode = s_openglBlendModes [dest];
@@ -203,13 +203,13 @@ void cx_gdi_set_blend_mode (cx_gdi_blend_mode src, cx_gdi_blend_mode dest)
 
 void cx_gdi_set_renderstate (cx_gdi_renderstate renderstate)
 {
-  //CX_ASSERT (renderstate != CX_GRAPHICS_RENDER_STATE_NONE);
+  //CX_ASSERT (renderstate != CX_GDI_RENDER_STATE_NONE);
   
   s_activeRenderstate = renderstate;
   
-  if (renderstate & CX_GRAPHICS_RENDER_STATE_CULL)
+  if (renderstate & CX_GDI_RENDER_STATE_CULL)
   {
-    glCullFace (GL_FRONT);
+    //glCullFace (GL_FRONT);
     glEnable (GL_CULL_FACE);
   }
   else 
@@ -217,7 +217,7 @@ void cx_gdi_set_renderstate (cx_gdi_renderstate renderstate)
     glDisable (GL_CULL_FACE);
   }
 
-  if (renderstate & CX_GRAPHICS_RENDER_STATE_DEPTH_TEST)
+  if (renderstate & CX_GDI_RENDER_STATE_DEPTH_TEST)
   {
     glEnable (GL_DEPTH_TEST);
   }
@@ -226,7 +226,7 @@ void cx_gdi_set_renderstate (cx_gdi_renderstate renderstate)
     glDisable (GL_DEPTH_TEST);
   }
   
-  if (renderstate & CX_GRAPHICS_RENDER_STATE_BLEND)
+  if (renderstate & CX_GDI_RENDER_STATE_BLEND)
   {
     glEnable (GL_BLEND);
   }
@@ -262,7 +262,7 @@ void cx_gdi_unbind_all_buffers (void)
 
 void _cx_gdi_assert_no_errors (void)
 {
-#if CX_GRAPHICS_DEBUG
+#if CX_GDI_DEBUG
   GLenum error = glGetError ();
   
   switch (error) 
@@ -285,7 +285,7 @@ void _cx_gdi_assert_no_errors (void)
 
 void cx_gdi_print_info (void)
 {
-#if CX_GRAPHICS_DEBUG_LOG_ENABLED
+#if CX_GDI_DEBUG_LOG_ENABLED
   struct graphics_info
   {
     GLenum type;
@@ -302,13 +302,13 @@ void cx_gdi_print_info (void)
     { GL_MAX_TEXTURE_IMAGE_UNITS, "GL_MAX_TEXTURE_IMAGE_UNITS" },
     { GL_MAX_TEXTURE_SIZE, "GL_MAX_TEXTURE_SIZE" },
     { GL_DEPTH_BITS, "GL_DEPTH_BITS" },
-    { GL_STENCIL_BITS, "GL_STENCIL_BITS"},
+    { GL_STENCIL_BITS, "GL_STENCIL_BITS" },
+    { GL_NUM_COMPRESSED_TEXTURE_FORMATS, "GL_NUM_COMPRESSED_TEXTURE_FORMATS" }
   };
   
   int numInfo = sizeof (info) / sizeof (struct graphics_info);
   
-  int i;
-  for (i = 0; i < numInfo; i++)
+  for (int i = 0; i < numInfo; i++)
   {
     const char *str = info [i].name;
     GLenum type = info [i].type;
@@ -316,11 +316,48 @@ void cx_gdi_print_info (void)
     GLint val;
     glGetIntegerv (type, &val);
    
-    CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "%s: %d", str, val);
+    CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s: %d", str, val);
   }
   
+  // compressed texture support
+  
+  GLint numCompressedTextures = 0;
+  glGetIntegerv (GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCompressedTextures);
+  
+  if (numCompressedTextures > 0)
+  {
+    GLint *compressedFormats = (GLint *) cx_malloc (sizeof (GLint) * numCompressedTextures);
+    glGetIntegerv (GL_COMPRESSED_TEXTURE_FORMATS, compressedFormats);
+    
+    CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "Supported compressed texture formats:");
+    
+    for (int j = 0; j < numCompressedTextures; ++j)
+    {
+      GLenum format = (GLenum) compressedFormats [j];
+    
+      const char *formatStr = NULL;
+      
+      switch (format)
+      {
+        case GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:  { formatStr = "GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG"; break; }
+        case GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:  { formatStr = "GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG"; break; }
+        case GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG: { formatStr = "GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG"; break; }
+        case GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG: { formatStr = "GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG"; break; }
+        default:                                  { formatStr = "GL_COMPRESSED_FORMAT_UNKNOWN!"; break; }
+      }
+                                                    
+      CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", formatStr);
+      CX_REFERENCE_UNUSED_VARIABLE (formatStr);
+    }
+    
+    cx_free (compressedFormats);
+  }
+  
+  // supported extensions
+  
   const char *supportedExtensions = (const char *) glGetString (GL_EXTENSIONS);
-  CX_DEBUGLOG_CONSOLE (CX_GRAPHICS_DEBUG_LOG_ENABLED, "%s", supportedExtensions);
+  CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", supportedExtensions);
+  CX_REFERENCE_UNUSED_VARIABLE (supportedExtensions);
 #endif
 }
 

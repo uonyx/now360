@@ -14,12 +14,12 @@
 
 static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float longitude, float radius, int slices, int parallels, cx_vec4 *n)
 {
-  // convert lat/long to texture coords;
+  // convert lat/long to texture paramter-space (uv coords)
   
   float tx = (longitude + 180.0f) / 360.0f;
   float ty = 1.0f - ((latitude + 90.0f) / 180.0f);
   
-  // convert texture coords to sphere slices/parallels coords;
+  // convert texture coords to sphere slices/parallels coords
   
   float i = ty * (float) parallels;
   float j = tx * (float) slices;
@@ -32,22 +32,22 @@ static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float lon
   cxf32 a1 = cx_cos (angleStep * i);
   cxf32 a2 = cx_sin (angleStep * i) * cx_cos (angleStep * j);
   
-  if (n)
-  {
-    n->x = a0;
-    n->y = 0.0f;
-    n->z = a2;
-    n->w = 0.0f;
-    
-    cx_vec4_normalize (n);
-  }
-  
   world->x = radius * a0;
   world->y = radius * a1;
   world->z = radius * a2;
   world->w = 1.0f;
   
-  CX_DEBUG_BREAK_ABLE;
+  // compute normal for ray picking
+  
+  if (n)
+  {
+    n->x = a0;
+    n->y = a1;
+    n->z = a2;
+    n->w = 0.0f;
+    
+    cx_vec4_normalize (n);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,6 +194,7 @@ earth_t *earth_create (const char *filename, float radius, int slices, int paral
 
 void earth_destroy (earth_t *earth)
 {
+  cx_free (earth);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

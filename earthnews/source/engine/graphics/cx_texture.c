@@ -189,7 +189,7 @@ void cx_texture_gpu_init (cx_texture *texture)
   }
   cx_gdi_assert_no_errors ();
   
-  bool npotExtensionSupported = false;
+  bool npotExtensionSupported = false; // may be supported via gl extensions
   
   if (!npotExtensionSupported && texture->npot)
   {
