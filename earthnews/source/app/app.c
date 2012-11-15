@@ -722,13 +722,13 @@ static void app_render_earth (void)
   cx_shader_use (mesh->shader);
   
   // set uniforms
-  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvpMatrix.f16);
-  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, CX_SHADER_DATATYPE_MATRIX3X3, normalMatrix.f9);
+  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
+  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, &normalMatrix);
   
   cx_mesh_render (mesh);
   
   // draw points
-  cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
+  //cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
   
   static cx_line *normalLines = NULL;
   static cx_line *tangentLines = NULL;

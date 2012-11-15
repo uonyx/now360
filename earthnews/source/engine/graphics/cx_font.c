@@ -12,6 +12,7 @@
 #include "../system/cx_vector2.h"
 #include "cx_font.h"
 #include "cx_gdi.h"
+#include "cx_shader.h"
 
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
@@ -124,13 +125,13 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   cx_shader_use (shader);
   
   // set texture
-  cx_material_render_texture (fontImpl->texture, CX_MATERIAL_TEXTURE_AMBIENT, shader);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, fontImpl->texture);
   
   // set mvp
   cx_mat4x4 mvp;
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   cx_shader_set_float (shader, "u_z", &z, 1);
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
@@ -223,13 +224,13 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   cx_shader_use (shader);
   
   // set texture
-  cx_material_render_texture (fontImpl->texture, CX_MATERIAL_TEXTURE_AMBIENT, shader);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, fontImpl->texture);
   
   // set mvp
   cx_mat4x4 mvp;
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   cx_shader_set_float (shader, "u_z", &z, 1);
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);

@@ -25,6 +25,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static bool s_initialised = false;
+
 static const char *s_attribEnumStrings [CX_NUM_SHADER_ATTRIBUTES] =
 {
   "CX_SHADER_ATTRIBUTE_POSITION",
@@ -34,19 +36,18 @@ static const char *s_attribEnumStrings [CX_NUM_SHADER_ATTRIBUTES] =
   "CX_SHADER_ATTRIBUTE_COLOUR",
 };
 
-static const char *s_uniformEnumStrings [CX_NUM_SHADER_UNIFORMS] =
-{
-  "CX_SHADER_UNIFORM_TRANSFORM_P",
-  "CX_SHADER_UNIFORM_TRANSFORM_MV",
-  "CX_SHADER_UNIFORM_TRANSFORM_MVP",
-  "CX_SHADER_UNIFORM_TRANSFORM_N",
-  "CX_SHADER_UNIFORM_EYE",
-  "CX_SHADER_UNIFORM_LIGHT_POSITION",
+static const char *s_uniformEnumStrings [] =
+{  
+  "CX_SHADER_UNIFORM_TRANSFORM_P",    
+  "CX_SHADER_UNIFORM_TRANSFORM_MV",   
+  "CX_SHADER_UNIFORM_TRANSFORM_MVP",  
+  "CX_SHADER_UNIFORM_TRANSFORM_N",    
+  "CX_SHADER_UNIFORM_CAMERA_POSITION",
+  "CX_SHADER_UNIFORM_LIGHT_POSITION", 
   "CX_SHADER_UNIFORM_LIGHT_DIRECTION",
-  "CX_SHADER_UNIFORM_SAMPLER2D_0",
-  "CX_SHADER_UNIFORM_SAMPLER2D_1",
-  "CX_SHADER_UNIFORM_SAMPLER2D_2",
-  "CX_SHADER_UNIFORM_SAMPLER2D_3",
+  "CX_SHADER_UNIFORM_DIFFUSE_MAP",
+  "CX_SHADER_UNIFORM_BUMP_MAP",
+  "CX_NUM_SHADER_UNIFORMS",
   "CX_SHADER_UNIFORM_USER_DEFINED",
 };
 
@@ -61,8 +62,6 @@ static GLenum s_glTextureUnits [] =
   GL_TEXTURE6,
   GL_TEXTURE7,
 };
-
-static bool s_initialised = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,14 +84,15 @@ static struct cx_shader_description s_shaderDescriptions [CX_NUM_BUILT_IN_SHADER
   { CX_SHADER_BUILT_IN_DRAW_LINES,        "lines",        "data/shaders" },
 };
 
-struct cx_shader *s_builtInShaders [CX_NUM_BUILT_IN_SHADERS];
+static struct cx_shader *s_builtInShaders [CX_NUM_BUILT_IN_SHADERS];
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_built_in_init (void);
-void cx_shader_built_in_deinit (void);
+static void cx_shader_built_in_init (void);
+static void cx_shader_built_in_deinit (void);
+static cxi32 cx_shader_get_uniform_sampler (cx_shader_uniform uniform);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,9 +152,7 @@ static cx_shader_attribute cx_get_shader_attribute_from_string (const char *str)
 
 static cx_shader_uniform cx_get_shader_uniform_from_string (const char *str)
 {
-  int i;
-  
-  for (i = 0; i < CX_NUM_SHADER_UNIFORMS; ++i)
+  for (int i = 0, c = sizeof (s_uniformEnumStrings); i < c; ++i)
   {
     if (strcmp (str, s_uniformEnumStrings [i]) == 0)
     {
@@ -349,9 +347,8 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     CX_ASSERT (value->type == json_string);
     
     const char *attribName = value->u.string.ptr;
-    
     int attribLocation = glGetAttribLocation (shader->program, attribName);
-    
+
     CX_ASSERT ((attribLocation >= 0) && "unused attribute");
     
     shader->attributes [attribIdx] = attribLocation;
@@ -388,7 +385,6 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     if (uniformIdx != CX_SHADER_UNIFORM_USER_DEFINED)
     {
       const char *uniformName = value->u.string.ptr;
-      
       shader->uniforms [uniformIdx] = glGetUniformLocation (shader->program, uniformName);
       
       cx_gdi_assert_no_errors ();
@@ -503,26 +499,70 @@ void cx_shader_use (const cx_shader *shader)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, cx_shader_datatype type, void *data)
+void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, const void *data)
 {
   CX_ASSERT (shader);
+  CX_ASSERT (data);
   CX_ASSERT ((uniform > CX_SHADER_UNIFORM_INVALID) && (uniform < CX_NUM_SHADER_UNIFORMS));
   
   GLint location = shader->uniforms [uniform];
   CX_ASSERT (location >= 0);
- 
-  switch (type) 
-  {
-    case CX_SHADER_DATATYPE_FLOAT:      { glUniform1f  (location, *(float *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR2:    { glUniform2fv (location, 1, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR3:    { glUniform3fv (location, 1, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_VECTOR4:    { glUniform4fv (location, 1, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX3X3:  { glUniformMatrix3fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
-    case CX_SHADER_DATATYPE_MATRIX4X4:  { glUniformMatrix4fv (location, 1, GL_FALSE, (GLfloat *) data); break; }
-    default: { break; }
-  }
   
-  cx_gdi_assert_no_errors ();
+  switch (uniform)
+  {
+    case CX_SHADER_UNIFORM_TRANSFORM_P:
+    case CX_SHADER_UNIFORM_TRANSFORM_MV:
+    case CX_SHADER_UNIFORM_TRANSFORM_MVP:
+    {
+      cx_mat4x4 *mat4 = (cx_mat4x4 *) data;
+      glUniformMatrix4fv (location, 1, GL_FALSE, mat4->f16);
+      cx_gdi_assert_no_errors ();
+      break;
+    }
+      
+    case CX_SHADER_UNIFORM_TRANSFORM_N:
+    {
+      cx_mat3x3 *mat3 = (cx_mat3x3 *) data;
+      glUniformMatrix3fv (location, 1, GL_FALSE, mat3->f9);
+      cx_gdi_assert_no_errors ();
+      break;
+    }
+      
+    case CX_SHADER_UNIFORM_CAMERA_POSITION:
+    case CX_SHADER_UNIFORM_LIGHT_POSITION:
+    case CX_SHADER_UNIFORM_LIGHT_DIRECTION:
+    {
+      cx_vec4 *vec4 = (cx_vec4 *) data;
+      glUniform4fv (location, 1, vec4->f4);
+      cx_gdi_assert_no_errors ();
+      break;
+    }
+      
+    case CX_SHADER_UNIFORM_DIFFUSE_MAP:
+    case CX_SHADER_UNIFORM_BUMP_MAP:
+    {
+      cx_texture *tex = (cx_texture *) data;
+      cxi32 sampler = cx_shader_get_uniform_sampler (uniform);
+      GLenum textureUnit = s_glTextureUnits [sampler];
+      
+      glActiveTexture (textureUnit);
+      cx_gdi_assert_no_errors ();
+      
+      glBindTexture (GL_TEXTURE_2D, tex->id);
+      cx_gdi_assert_no_errors ();
+      
+      glUniform1i (location, sampler);
+      cx_gdi_assert_no_errors ();
+      
+      break;
+    }
+      
+    default:
+    {
+      CX_FATAL_ERROR ("CX_SHADER_UNIFORM_INVALID");
+      break;
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -659,12 +699,12 @@ void cx_shader_set_matrix4x4 (const cx_shader *shader, const char *name, const c
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_texture *texture, cxu32 sampler)
+void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_texture *texture, cxi32 sampler)
 {
   CX_ASSERT (shader);
   CX_ASSERT (name);
   CX_ASSERT (texture);
-  CX_ASSERT ((sampler < (sizeof (s_glTextureUnits) / sizeof (GLenum))));
+  CX_ASSERT ((sampler >= 0) && (sampler < (cxi32) (sizeof (s_glTextureUnits) / sizeof (GLenum))));
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
@@ -673,10 +713,20 @@ void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_
   GLint usize;
   GLenum utype;
   glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-  
+
   CX_ASSERT (utype == GL_SAMPLER_2D);
+  
+  if (shader->uniforms [CX_SHADER_UNIFORM_DIFFUSE_MAP] >= 0)
+  {
+    CX_ASSERT (sampler != cx_shader_get_uniform_sampler (CX_SHADER_UNIFORM_DIFFUSE_MAP));
+  }
+  
+  if (shader->uniforms [CX_SHADER_UNIFORM_BUMP_MAP] >= 0)
+  {
+    CX_ASSERT (sampler != cx_shader_get_uniform_sampler (CX_SHADER_UNIFORM_BUMP_MAP));
+  }
 #endif
- 
+  
   GLenum textureUnit = s_glTextureUnits [sampler];
   
   glActiveTexture (textureUnit);
@@ -687,6 +737,18 @@ void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_
   
   glUniform1i (location, sampler);
   cx_gdi_assert_no_errors ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cx_shader *cx_shader_get_built_in (cx_shader_built_in type)
+{
+  CX_ASSERT (s_initialised);
+  CX_ASSERT ((type > CX_SHADER_BUILT_IN_INVALID) && (type < CX_NUM_BUILT_IN_SHADERS));
+  
+  return s_builtInShaders [type];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -727,12 +789,14 @@ void cx_shader_built_in_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_shader *cx_shader_get_built_in (cx_shader_built_in type)
+static cxi32 cx_shader_get_uniform_sampler (cx_shader_uniform uniform)
 {
-  CX_ASSERT (s_initialised);
-  CX_ASSERT ((type > CX_SHADER_BUILT_IN_INVALID) && (type < CX_NUM_BUILT_IN_SHADERS));
-  
-  return s_builtInShaders [type];
+  switch (uniform)
+  {
+    case CX_SHADER_UNIFORM_DIFFUSE_MAP: { return 0; }
+    case CX_SHADER_UNIFORM_BUMP_MAP:    { return 1; }
+    default:                            { CX_FATAL_ERROR ("invalid uniform"); return -1; }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

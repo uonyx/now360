@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Vertex attributes
+// vertex attributes
 typedef enum cx_shader_attribute
 {
   CX_SHADER_ATTRIBUTE_INVALID = -1,
@@ -45,26 +45,21 @@ cx_shader_attribute;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Uniform index.
+// uniform index
 typedef enum cx_shader_uniform
 {
   CX_SHADER_UNIFORM_INVALID = -1,
-  CX_SHADER_UNIFORM_TRANSFORM_P,
-  CX_SHADER_UNIFORM_TRANSFORM_MV,
-  CX_SHADER_UNIFORM_TRANSFORM_MVP,
-  CX_SHADER_UNIFORM_TRANSFORM_N,
-  
-  CX_SHADER_UNIFORM_EYE,
-  CX_SHADER_UNIFORM_LIGHT_POSITION,
-  CX_SHADER_UNIFORM_LIGHT_DIRECTION,
-  
-  CX_SHADER_UNIFORM_SAMPLER2D_0,
-  CX_SHADER_UNIFORM_SAMPLER2D_1,
-  CX_SHADER_UNIFORM_SAMPLER2D_2,
-  CX_SHADER_UNIFORM_SAMPLER2D_3,
-  
-  CX_SHADER_UNIFORM_USER_DEFINED,
+  CX_SHADER_UNIFORM_TRANSFORM_P,        // mat4x4
+  CX_SHADER_UNIFORM_TRANSFORM_MV,       // mat4x4
+  CX_SHADER_UNIFORM_TRANSFORM_MVP,      // mat4x4
+  CX_SHADER_UNIFORM_TRANSFORM_N,        // mat3x3
+  CX_SHADER_UNIFORM_CAMERA_POSITION,    // vec4
+  CX_SHADER_UNIFORM_LIGHT_POSITION,     // vec4
+  CX_SHADER_UNIFORM_LIGHT_DIRECTION,    // vec4
+  CX_SHADER_UNIFORM_DIFFUSE_MAP,        // texture (sampler 0)
+  CX_SHADER_UNIFORM_BUMP_MAP,           // texture
   CX_NUM_SHADER_UNIFORMS,
+  CX_SHADER_UNIFORM_USER_DEFINED,
 }
 cx_shader_uniform;
 
@@ -84,25 +79,6 @@ typedef enum cx_shader_built_in
   
   CX_NUM_BUILT_IN_SHADERS
 } cx_shader_built_in;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef enum cx_shader_datatype
-{
-  CX_SHADER_DATATYPE_INVALID = -1,
-  CX_SHADER_DATATYPE_FLOAT,
-  CX_SHADER_DATATYPE_VECTOR2,
-  CX_SHADER_DATATYPE_VECTOR3,
-  CX_SHADER_DATATYPE_VECTOR4,
-  CX_SHADER_DATATYPE_MATRIX3X3,
-  CX_SHADER_DATATYPE_MATRIX4X4,
-  CX_SHADER_DATATYPE_SAMPLER2D,
-  
-  CX_NUM_SHADER_DATATYPES,
-}
-cx_shader_datatype;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,14 +105,13 @@ void cx_shader_destroy (cx_shader *shader);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void cx_shader_use (const cx_shader *shader);
-
-void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, cx_shader_datatype type, void *data);
+void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, const void *data);
 void cx_shader_set_float (const cx_shader *shader, const char *name, cxf32 *f, cxi32 count);
 void cx_shader_set_vector2 (const cx_shader *shader, const char *name, const cx_vec2 *vec2, cxi32 count);
 void cx_shader_set_vector4 (const cx_shader *shader, const char *name, const cx_vec4 *vec4, cxi32 count);
 void cx_shader_set_matrix3x3 (const cx_shader *shader, const char *name, const cx_mat3x3 *mat3x3, cxi32 count);
 void cx_shader_set_matrix4x4 (const cx_shader *shader, const char *name, const cx_mat4x4 *mat4x4, cxi32 count);
-void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_texture *texture, cxu32 sampler);
+void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_texture *texture, cxi32 sampler);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

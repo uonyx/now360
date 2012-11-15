@@ -12,7 +12,6 @@
 #include "../system/cx_matrix4x4.h"
 #include "cx_draw.h"
 #include "cx_gdi.h"
-#include "cx_material.h"
 #include "cx_shader.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +43,7 @@ void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colou
   // set mvp
   cx_mat4x4 mvp;
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   
   // line width
   glLineWidth (lineWidth);
@@ -81,7 +80,7 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colou
   
   if (texture)
   {
-    cx_material_render_texture (texture, CX_MATERIAL_TEXTURE_AMBIENT, shader);
+    cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, texture);
   }
   
   // set mvp
@@ -90,9 +89,9 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colou
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MV, &mv);
   cx_gdi_get_transform (CX_GDI_TRANSFORM_P, &p);
   
-  //cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MV, CX_SHADER_DATATYPE_MATRIX4X4, mv.f16);
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_P, CX_SHADER_DATATYPE_MATRIX4X4, p.f16);
+  //cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MV, &mv);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_P, &p);
   
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_gdi_assert_no_errors ();
@@ -125,7 +124,7 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32
   cx_mat4x4 mvp;
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);  
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);  
   cx_shader_set_float (shader, "u_z", &z, 1);
   
   // position attribute
@@ -190,13 +189,13 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   cx_shader_use (shader);
   
   // render texture
-  cx_material_render_texture (texture, CX_MATERIAL_TEXTURE_AMBIENT, shader);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, texture);
   
   // set mvp
   cx_mat4x4 mvp;
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, CX_SHADER_DATATYPE_MATRIX4X4, mvp.f16);
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   cx_shader_set_float (shader, "u_z", &z, 1);
   
   cx_vec2 uv [4], pos [4];
