@@ -880,6 +880,7 @@ static CX_INLINE void cx_mat4x4_rotation_axis_z (cx_mat4x4 *m, cxf32 rad)
 static CX_INLINE void cx_mat4x4_perspective (cx_mat4x4 *m, cxf32 fov, cxf32 aspectRatio, cxf32 near, cxf32 far)
 {
   CX_ASSERT (m);
+  CX_ASSERT (!cx_is_zero (fov));
   
   cxf32 d = 1.0f / cx_tan (fov * 0.5f);
   cxf32 nsf = near - far;
@@ -1015,7 +1016,7 @@ static CX_INLINE cxf32 cx_mat4x4_inverse (cx_mat4x4 * CX_RESTRICT i, const cx_ma
   
   cxf32 det = (m0 * i->f16 [0]) + (m1 * i->f16 [4]) + (m2 * i->f16 [8]) + (m3 * i->f16 [12]);
   
-  if (det != 0.0f)
+  if (!cx_is_zero (det))
   {
     cxf32 invDet = 1.0f / det;
     

@@ -33,6 +33,7 @@ static const char *s_attribEnumStrings [CX_NUM_SHADER_ATTRIBUTES] =
   "CX_SHADER_ATTRIBUTE_NORMAL",
   "CX_SHADER_ATTRIBUTE_TEXCOORD",
   "CX_SHADER_ATTRIBUTE_TANGENT",
+  "CX_SHADER_ATTRIBUTE_BITANGENT",
   "CX_SHADER_ATTRIBUTE_COLOUR",
 };
 
@@ -77,10 +78,10 @@ struct cx_shader_description
 static struct cx_shader_description s_shaderDescriptions [CX_NUM_BUILT_IN_SHADERS] = 
 {
   { CX_SHADER_BUILT_IN_FONT,              "font",         "data/shaders" },
-  { CX_SHADER_BUILT_IN_DRAW_QUAD,         "quad2",        "data/shaders" },
+  { CX_SHADER_BUILT_IN_DRAW_QUAD,         "quad",         "data/shaders" },
   { CX_SHADER_BUILT_IN_DRAW_QUAD_TEX,     "quad_tex",     "data/shaders" },
   { CX_SHADER_BUILT_IN_DRAW_POINTS,       "points",       "data/shaders" },
-  { CX_SHADER_BUILT_IN_DRAW_POINTS_TEX,   "points",       "data/shaders" },
+  { CX_SHADER_BUILT_IN_DRAW_POINTS_TEX,   "points_tex",   "data/shaders" },
   { CX_SHADER_BUILT_IN_DRAW_LINES,        "lines",        "data/shaders" },
 };
 
@@ -514,6 +515,13 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     case CX_SHADER_UNIFORM_TRANSFORM_MV:
     case CX_SHADER_UNIFORM_TRANSFORM_MVP:
     {
+#if CX_SHADER_DEBUG && 0
+      GLint usize;
+      GLenum utype;
+      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+      
+      CX_ASSERT (utype == GL_FLOAT_MAT4);
+#endif
       cx_mat4x4 *mat4 = (cx_mat4x4 *) data;
       glUniformMatrix4fv (location, 1, GL_FALSE, mat4->f16);
       cx_gdi_assert_no_errors ();
@@ -522,6 +530,13 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
       
     case CX_SHADER_UNIFORM_TRANSFORM_N:
     {
+#if CX_SHADER_DEBUG && 0
+      GLint usize;
+      GLenum utype;
+      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+      
+      CX_ASSERT (utype == GL_FLOAT_MAT3);
+#endif
       cx_mat3x3 *mat3 = (cx_mat3x3 *) data;
       glUniformMatrix3fv (location, 1, GL_FALSE, mat3->f9);
       cx_gdi_assert_no_errors ();
@@ -532,6 +547,13 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     case CX_SHADER_UNIFORM_LIGHT_POSITION:
     case CX_SHADER_UNIFORM_LIGHT_DIRECTION:
     {
+#if CX_SHADER_DEBUG && 0
+      GLint usize;
+      GLenum utype;
+      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+      
+      CX_ASSERT (utype == GL_FLOAT_VEC4);
+#endif
       cx_vec4 *vec4 = (cx_vec4 *) data;
       glUniform4fv (location, 1, vec4->f4);
       cx_gdi_assert_no_errors ();
@@ -541,6 +563,13 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     case CX_SHADER_UNIFORM_DIFFUSE_MAP:
     case CX_SHADER_UNIFORM_BUMP_MAP:
     {
+#if CX_SHADER_DEBUG && 0
+      GLint usize;
+      GLenum utype;
+      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
+      
+      CX_ASSERT (utype == GL_SAMPLER_2D);
+#endif
       cx_texture *tex = (cx_texture *) data;
       cxi32 sampler = cx_shader_get_uniform_sampler (uniform);
       GLenum textureUnit = s_glTextureUnits [sampler];
@@ -709,21 +738,22 @@ void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
   
-#if CX_SHADER_DEBUG
+#if CX_SHADER_DEBUG && 0
   GLint usize;
   GLenum utype;
   glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-
   CX_ASSERT (utype == GL_SAMPLER_2D);
+#endif
   
-  if (shader->uniforms [CX_SHADER_UNIFORM_DIFFUSE_MAP] >= 0)
+#if CX_SHADER_DEBUG
+  for (int i = CX_SHADER_UNIFORM_DIFFUSE_MAP; i <= CX_SHADER_UNIFORM_BUMP_MAP; ++i)
   {
-    CX_ASSERT (sampler != cx_shader_get_uniform_sampler (CX_SHADER_UNIFORM_DIFFUSE_MAP));
-  }
-  
-  if (shader->uniforms [CX_SHADER_UNIFORM_BUMP_MAP] >= 0)
-  {
-    CX_ASSERT (sampler != cx_shader_get_uniform_sampler (CX_SHADER_UNIFORM_BUMP_MAP));
+    if (shader->uniforms [i] >= 0)
+    {
+      cx_shader_uniform uniform = (cx_shader_uniform) i;
+      CX_ASSERT (sampler != cx_shader_get_uniform_sampler (uniform));
+      CX_REFERENCE_UNUSED_VARIABLE (uniform);
+    }
   }
 #endif
   
@@ -755,7 +785,7 @@ cx_shader *cx_shader_get_built_in (cx_shader_built_in type)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_built_in_init (void)
+static void cx_shader_built_in_init (void)
 {
   // create built in shaders
   for (cxi16 i = 0; i < CX_NUM_BUILT_IN_SHADERS; ++i)
@@ -774,7 +804,7 @@ void cx_shader_built_in_init (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_built_in_deinit (void)
+static void cx_shader_built_in_deinit (void)
 {
   // destroy built in shaders
   for (cxi16 i = 0; i < CX_NUM_BUILT_IN_SHADERS; ++i)
@@ -793,9 +823,10 @@ static cxi32 cx_shader_get_uniform_sampler (cx_shader_uniform uniform)
 {
   switch (uniform)
   {
-    case CX_SHADER_UNIFORM_DIFFUSE_MAP: { return 0; }
-    case CX_SHADER_UNIFORM_BUMP_MAP:    { return 1; }
-    default:                            { CX_FATAL_ERROR ("invalid uniform"); return -1; }
+    case CX_SHADER_UNIFORM_DIFFUSE_MAP:   { return 0; }
+    case CX_SHADER_UNIFORM_SPECULAR_MAP:  { return 1; }
+    case CX_SHADER_UNIFORM_BUMP_MAP:      { return 2; }
+    default:                              { CX_FATAL_ERROR ("invalid uniform"); return -1; }
   }
 }
 

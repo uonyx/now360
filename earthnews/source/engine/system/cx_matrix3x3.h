@@ -168,7 +168,7 @@ static CX_INLINE cxf32 cx_mat3x3_inverse (cx_mat3x3 * CX_RESTRICT i, const cx_ma
   // inverse = 1/det * adjoint
   // adjoint = (transpose of matrix of cofactors
   
-  if (det != 0.0f)
+  if (!cx_is_zero (det))
   {
     cxf32 invDet = 1.0f / det;
     

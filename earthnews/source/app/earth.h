@@ -26,6 +26,7 @@ struct earth_visual_t
   int parallels;
   
   cx_mesh *mesh;
+  cx_texture *nightMap;
 };
 
 struct earth_data_t

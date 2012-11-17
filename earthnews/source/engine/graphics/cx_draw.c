@@ -183,6 +183,10 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   CX_ASSERT (colour);
   CX_ASSERT (texture);
   
+  // get mvp
+  cx_mat4x4 mvp;
+  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
+  
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW_QUAD_TEX);
   
   // enable shader
@@ -192,9 +196,6 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, texture);
   
   // set mvp
-  cx_mat4x4 mvp;
-  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
-  
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   cx_shader_set_float (shader, "u_z", &z, 1);
   

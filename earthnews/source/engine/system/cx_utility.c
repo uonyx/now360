@@ -152,7 +152,7 @@ void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_ve
   
   CX_ASSERT (eye->w == 1.0f);
   CX_ASSERT (target->w == 1.0f);
-  CX_ASSERT (updir->w == 0.0f);
+  CX_ASSERT (cx_is_zero (updir->w));
   
   //////////////////////////////////
   // build rotation matrix

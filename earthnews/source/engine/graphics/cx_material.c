@@ -17,7 +17,8 @@
 
 static cx_shader_uniform s_uniformMappings [CX_NUM_MATERIAL_TEXTURES] = 
 {
-  CX_SHADER_UNIFORM_DIFFUSE_MAP, 
+  CX_SHADER_UNIFORM_DIFFUSE_MAP,
+  CX_SHADER_UNIFORM_SPECULAR_MAP,
   CX_SHADER_UNIFORM_BUMP_MAP,
 };
 
@@ -30,15 +31,14 @@ cx_material *cx_material_create (const char *name)
   cx_material *material = (cx_material *) cx_malloc (sizeof (cx_material));
   
 #if CX_MATERIAL_DEBUG
-  material->name        = cx_strdup (name, strlen (name));
+  material->name      = cx_strdup (name, strlen (name));
 #endif
   
-  material->ambient   = *cx_colour_white ();
-  material->diffuse   = *cx_colour_white ();
-  material->specular  = *cx_colour_white ();
-  material->emmissive = *cx_colour_white ();
-  material->shininess = 1.0f;
-  material->twoSided  = false;
+  material->ambient   = *cx_colour_black ();
+  material->diffuse   = *cx_colour_black ();
+  material->specular  = *cx_colour_black ();
+  material->emmissive = *cx_colour_black ();
+  material->shininess = 0.0f;
   material->alpha     = false;
   memset (material->textures, 0, sizeof (material->textures));
   
@@ -72,7 +72,7 @@ void cx_material_render (const cx_material *material, const cx_shader *shader)
   cx_shader_uniform uniform;
   const cx_texture *texture = NULL;
   
-  for (int i = 0; i < CX_NUM_MATERIAL_TEXTURES; i++)
+  for (int i = 0; i < CX_NUM_MATERIAL_TEXTURES; ++i)
   {
     texture = material->textures [i];
     

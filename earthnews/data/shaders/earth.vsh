@@ -6,16 +6,15 @@
 //  Copyright (c) 2011 uonyechi.com. All rights reserved.
 //
 
-precision highp float;
-
 // attributes
 attribute vec4 a_position;
 attribute vec3 a_normal;
+attribute vec3 a_tangent;
+attribute vec3 a_bitangent;
 attribute vec2 a_texcoord;
 
 // uniforms
 uniform mat4 u_mvpMatrix;
-uniform mat3 u_normalMatrix;
 
 uniform mediump vec4 u_lightPosition;
 uniform mediump vec4 u_lightColour;

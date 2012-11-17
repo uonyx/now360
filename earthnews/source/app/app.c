@@ -566,12 +566,12 @@ void app_input_touch_update (float deltaTime)
   s_rotationSpeedX = cx_clamp (s_rotationSpeedX, -maxRotationSpeed, maxRotationSpeed);
   s_rotationSpeedY = cx_clamp (s_rotationSpeedY, -maxRotationSpeed, maxRotationSpeed);
   
-  if (s_rotationAccelX == 0.0f)
+  if (cx_is_zero (s_rotationAccelX))
   {
     s_rotationSpeedX *= decelerationFactor;
   }
   
-  if (s_rotationAccelY == 0.0f)
+  if (cx_is_zero (s_rotationAccelY))
   {
     s_rotationSpeedY *= decelerationFactor;
   }
@@ -721,46 +721,36 @@ static void app_render_earth (void)
   // use shader
   cx_shader_use (mesh->shader);
   
-  // set uniforms
+  // set matrices
   cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
   cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, &normalMatrix);
+  
+  // night map
+  cx_texture *nightMap = s_earth->visual->nightMap;
+  cx_shader_set_texture (mesh->shader, "u_nightMap", nightMap, 3);
   
   cx_mesh_render (mesh);
   
   // draw points
   //cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
-  
+
+#if 1
   static cx_line *normalLines = NULL;
   static cx_line *tangentLines = NULL;
+  static cx_line *bitangentLines = NULL;
   
-#if 1
   cx_vertex_data *vertexData = &s_earth->visual->mesh->vertexData;
   
   if (!normalLines)
   {
     normalLines = (cx_line *) cx_malloc (sizeof (cx_line) * vertexData->numVertices);
     
-#if CX_VERTEX_DATA_AOS
     for (int i = 0; i < vertexData->numVertices; ++i)
     {
       cx_vec4 pos, nor, add;
       
-#if !CX_VERTEX_DATA_AOS_STRUCT
-      int j = i * (CX_VERTEX_POSITION_SIZE + CX_VERTEX_NORMAL_SIZE + CX_VERTEX_TEXCOORD_SIZE);
-      
-      pos.x = vertexData->vertices [j + 0];
-      pos.y = vertexData->vertices [j + 1];
-      pos.z = vertexData->vertices [j + 2];
-      pos.w = 1.0f;
-      
-      nor.x = vertexData->vertices [j + 3];
-      nor.y = vertexData->vertices [j + 4];
-      nor.z = vertexData->vertices [j + 5];
-      nor.w = 0.0f;
-#else
       pos = vertexData->vertices [i].position;
       nor = vertexData->vertices [i].normal;
-#endif 
       cx_vec4_normalize (&nor);
       
       cx_vec4_mul (&nor, 0.1f, &nor);
@@ -769,36 +759,7 @@ static void app_render_earth (void)
       normalLines [i].start = pos;
       normalLines [i].end = add;
     }
-    
-#else
-    for (int i = 0; i < vertexData->numVertices; ++i)
-    {
-      int j = i * CX_VERTEX_POSITION_SIZE;
-      
-      cx_vec4 pos, nor, add;
-      
-      pos.x = vertexData->positions [j + 0];
-      pos.y = vertexData->positions [j + 1];
-      pos.z = vertexData->positions [j + 2];
-      pos.w = 1.0f;
-      
-      j = i * CX_VERTEX_NORMAL_SIZE;
-      
-      nor.x = vertexData->normals [j + 0];
-      nor.y = vertexData->normals [j + 1];
-      nor.z = vertexData->normals [j + 2];
-      nor.w = 0.0f;
-      
-      cx_vec4_mul (&nor, 0.1f, &nor);
-      cx_vec4_add (&add, &pos, &nor);
-      
-      normalLines [i].start = pos;
-      normalLines [i].end = add;
-    }
-#endif
   }
-
-#if CX_VERTEX_DATA_AOS_STRUCT
   
   if (!tangentLines)
   {
@@ -811,27 +772,6 @@ static void app_render_earth (void)
       pos = vertexData->vertices [i].position;
       tan = vertexData->vertices [i].tangent;
       
-      /*
-       
-      int j = i * (CX_VERTEX_POSITION_SIZE + CX_VERTEX_NORMAL_SIZE + CX_VERTEX_TEXCOORD_SIZE);
-       
-      pos.x = vertexData->vertices [j + 0];
-      pos.y = vertexData->vertices [j + 1];
-      pos.z = vertexData->vertices [j + 2];
-      pos.w = 1.0f;
-      
-      j = i * (CX_VERTEX_TANGENT_SIZE);
-      
-      tan.x = vertexData->tangents [j + 0];
-      tan.y = vertexData->tangents [j + 1];
-      tan.z = vertexData->tangents [j + 2];
-      tan.w = 0.0f;
-      */
-      
-      tan.w = 0.0f;
-      
-      //cx_vec4_normalize (&tan);
-      
       cx_vec4_mul (&tan, 0.1f, &tan);
       cx_vec4_add (&add, &pos, &tan);
       
@@ -839,7 +779,25 @@ static void app_render_earth (void)
       tangentLines [i].end = add;
     }
   }
-#endif
+
+  if (!bitangentLines)
+  {
+    bitangentLines = (cx_line *) cx_malloc (sizeof (cx_line) * vertexData->numVertices);
+    
+    for (int i = 0; i < vertexData->numVertices; ++i)
+    {
+      cx_vec4 pos, tan, add;
+      
+      pos = vertexData->vertices [i].position;
+      tan = vertexData->vertices [i].bitangent;
+      
+      cx_vec4_mul (&tan, 0.1f, &tan);
+      cx_vec4_add (&add, &pos, &tan);
+      
+      bitangentLines [i].start = pos;
+      bitangentLines [i].end = add;
+    }
+  }
   
   if (normalLines)
   {
@@ -851,27 +809,9 @@ static void app_render_earth (void)
     cx_draw_lines (vertexData->numVertices, tangentLines, cx_colour_blue (), 1.0f);
   }
   
-#else
-  
-  if (!normalLines)
+  if (bitangentLines)
   {
-    normalLines = (cx_line *) cx_malloc (sizeof (cx_line) * s_earth->data->count);
-    
-    for (int i = 0; i < s_earth->data->count; ++i)
-    {
-      const cx_vec4 *pos = &s_earth->data->location [i];
-      
-      cx_vec4 nor = s_earth->data->normal [i];
-      cx_vec4_mul (&nor, 0.3f, &nor);
-      
-      normalLines [i].start = *pos;
-      cx_vec4_add (&normalLines [i].end, pos, &nor);
-    }
-  }
-  
-  if (normalLines)
-  {
-    cx_draw_lines (s_earth->data->count, normalLines, cx_colour_orange (), 1.0f);
+    cx_draw_lines (vertexData->numVertices, bitangentLines, cx_colour_red (), 1.0f);
   }
 #endif
 
