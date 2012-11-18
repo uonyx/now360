@@ -151,7 +151,7 @@ void news_http_callback (cx_http_request_id tId, const cx_http_response *respons
       CX_REFERENCE_UNUSED_VARIABLE (parsed);
       
       feed->dataReady = true;
-      feed->lastUpdate = cx_time_get_utc_time ();
+      feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
     }
     else
     {
@@ -494,7 +494,7 @@ void twitter_http_callback (cx_http_request_id tId, const cx_http_response *resp
           CX_REFERENCE_UNUSED_VARIABLE (parsed);
           
           feed->dataReady = true;
-          feed->lastUpdate = cx_time_get_utc_time ();
+          feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
         }
         else
         {
@@ -835,7 +835,7 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
       
       feed->dataReady = true;
       feed->dataPending = false;
-      feed->lastUpdate = cx_time_get_utc_time ();
+      feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
 #if 0
       struct temp t;
       t.data = xmldata;

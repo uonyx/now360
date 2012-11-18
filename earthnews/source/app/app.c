@@ -173,8 +173,6 @@ void app_init (void *rootViewController, float width, float height)
   memset (&s_rotTouchEnd, 0, sizeof (s_rotTouchEnd));
   memset (&s_rotationSpeed, 0, sizeof (s_rotationSpeed));
   memset (&s_rotationAngle, 0, sizeof (s_rotationAngle));
-  
-  s_rotationAngle.x = 180.0f;
 #endif
   
   const char *w = s_earth->data->weatherId [0];
@@ -270,15 +268,14 @@ void app_view_update (float deltaTime)
   app_input_touch_update (deltaTime);
   
 #if 1
-  cx_vec4_set (&s_camera->position, 0.0f, 0.0f, 2.0f, 1.0f);
+  cx_vec4_set (&s_camera->position, 0.0f, 0.0f, -2.0f, 1.0f);
   cx_vec4_set (&s_camera->target, 0.0f, 0.0f, 0.0f, 1.0f);
   
   // update camera (view and projetion matrix)
 
   // set rotation
   cx_vec4 center = {{0.0f, 0.0f, 0.0f, 1.0f}};
-  
-  cx_vec4 axis_x = {{-1.0f, 0.0f, 0.0f, 0.0f}};
+  cx_vec4 axis_x = {{1.0f, 0.0f, 0.0f, 0.0f}};
   cx_vec4 axis_y = {{0.0f, -1.0f, 0.0f, 0.0f}};
   
 #if DEBUG_VIEW_ROTATION_OLD
@@ -302,7 +299,6 @@ void app_view_update (float deltaTime)
   cx_mat4x4_mul (&mvpMatrix, &projmatrix, &viewmatrix);
   
   //camera_update (s_camera, deltaTime);
-  
   cx_gdi_set_transform (CX_GDI_TRANSFORM_P, &projmatrix);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &viewmatrix);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
@@ -709,32 +705,15 @@ static void app_render_earth_city_text (void)
 
 static void app_render_earth (void)
 {
-  cx_mat4x4 mvpMatrix;
-  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
+  cx_date date;
+  cx_time_set_date (&date, CX_TIME_ZONE_UTC);
   
-  cx_mat3x3 normalMatrix;
-  cx_mat3x3_identity (&normalMatrix);
-  
-  // get mesh
-  cx_mesh *mesh = s_earth->visual->mesh;
-  
-  // use shader
-  cx_shader_use (mesh->shader);
-  
-  // set matrices
-  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
-  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, &normalMatrix);
-  
-  // night map
-  cx_texture *nightMap = s_earth->visual->nightMap;
-  cx_shader_set_texture (mesh->shader, "u_nightMap", nightMap, 3);
-  
-  cx_mesh_render (mesh);
+  earth_render (s_earth, &date);
   
   // draw points
   //cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
 
-#if 1
+#if 0
   static cx_line *normalLines = NULL;
   static cx_line *tangentLines = NULL;
   static cx_line *bitangentLines = NULL;
@@ -940,7 +919,7 @@ void app_test_code (void)
   float mat16 [16];
   
   cx_timer timer;
-  cx_timer_start (&timer);
+  cx_time_start_timer (&timer);
   
   for (int i = 0; i < size; ++i)
   {
@@ -961,7 +940,7 @@ void app_test_code (void)
     cx_mat4x4_mul (&matrices [i], &matrix, &matrices [i]);
   }
   
-  cx_timer_stop (&timer);
+  cx_time_stop_timer (&timer);
   
   printf ("app_test_code: %.3f\n", timer.elapsedTime);
   //CX_DEBUGLOG_CONSOLE (1, "app_test_code: %.3f", timer.elapsedTime);

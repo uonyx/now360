@@ -42,7 +42,7 @@ static void cx_system_memory_deinit (void)
 bool _cx_system_init (void)
 {
   cx_system_memory_init ();
-  cx_system_time_start ();
+  cx_system_time_init ();
   
   s_initialised = true;
   

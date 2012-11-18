@@ -117,7 +117,7 @@ void render_fps (void)
 
 void render_test (void)
 {
-#if 1
+#if 0
   float x1 = 60.0f;
   float y1 = 100.0f;
   float x2 = x1 + (float) s_quadTexture->width;

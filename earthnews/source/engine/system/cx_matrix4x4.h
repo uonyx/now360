@@ -885,6 +885,8 @@ static CX_INLINE void cx_mat4x4_perspective (cx_mat4x4 *m, cxf32 fov, cxf32 aspe
   cxf32 d = 1.0f / cx_tan (fov * 0.5f);
   cxf32 nsf = near - far;
   
+  CX_ASSERT (!cx_is_zero (nsf));
+  
   m->f16 [0] = d / aspectRatio;
   m->f16 [1] = 0.0f;
   m->f16 [2] = 0.0f;
@@ -921,6 +923,10 @@ static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cx
   cxf32 tab = top + bottom;
   cxf32 fan = far + near;
   
+  CX_ASSERT (!cx_is_zero (rsl));
+  CX_ASSERT (!cx_is_zero (tsb));
+  CX_ASSERT (!cx_is_zero (fsn));
+  
   m->f16 [0] = 2.0f / rsl;
   m->f16 [1] = 0.0f;
   m->f16 [2] = 0.0f;
@@ -948,6 +954,9 @@ static CX_INLINE void cx_mat4x4_ortho (cx_mat4x4 *m, cxf32 left, cxf32 right, cx
 
 static CX_INLINE cxf32 cx_mat4x4_inverse (cx_mat4x4 * CX_RESTRICT i, const cx_mat4x4 * CX_RESTRICT m)
 {
+  CX_ASSERT (i);
+  CX_ASSERT (m);
+  
   cxf32 m0 = m->f16 [0];
   cxf32 m1 = m->f16 [1];
   cxf32 m2 = m->f16 [2];
@@ -1032,14 +1041,17 @@ static CX_INLINE cxf32 cx_mat4x4_inverse (cx_mat4x4 * CX_RESTRICT i, const cx_ma
 
 static CX_INLINE bool cx_mat4x4_validate (const cx_mat4x4 *m)
 {
-  bool valid = true;
+  CX_ASSERT (m);
   
   for (cxu8 i = 0; i < 16; ++i)
   {
-    valid &= cx_validatef (m->f16 [i]);
+    if (!cx_validatef (m->f16 [i]))
+    {
+      return false;
+    }
   }
   
-  return valid;
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -45,7 +45,7 @@ typedef struct cx_material
   cx_colour ambient;
   cx_colour diffuse;    // texture (diffuse map). same as ambient?
   cx_colour specular;   // grayscale (gloss map). single channel?
-  cx_colour emmissive;  // texture (glow map). night time
+  cx_colour emmissive;  // texture (glow map). night time?
   
   cxf32 shininess;
   cxu32 properties;

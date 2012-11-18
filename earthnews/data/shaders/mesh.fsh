@@ -1,6 +1,5 @@
 //
 //  Shader.fsh
-//  testGraphics
 //
 //  Created by Ubaka Onyechi on 26/12/2011.
 //  Copyright (c) 2011 uonyechi.com. All rights reserved.
@@ -11,6 +10,7 @@ uniform sampler2D u_nightMap;
 
 varying lowp vec4 v_colour;
 varying mediump vec2 v_texcoord;
+
 
 void main (void)
 {

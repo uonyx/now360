@@ -69,6 +69,9 @@ void cx_material_render (const cx_material *material, const cx_shader *shader)
   CX_ASSERT (material);
   CX_ASSERT (shader);
   
+  // colours
+  
+  // textures
   cx_shader_uniform uniform;
   const cx_texture *texture = NULL;
   

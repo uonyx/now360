@@ -43,10 +43,10 @@ static const char *s_uniformEnumStrings [] =
   "CX_SHADER_UNIFORM_TRANSFORM_MV",   
   "CX_SHADER_UNIFORM_TRANSFORM_MVP",  
   "CX_SHADER_UNIFORM_TRANSFORM_N",    
-  "CX_SHADER_UNIFORM_CAMERA_POSITION",
+  "CX_SHADER_UNIFORM_EYE_POSITION",
   "CX_SHADER_UNIFORM_LIGHT_POSITION", 
-  "CX_SHADER_UNIFORM_LIGHT_DIRECTION",
   "CX_SHADER_UNIFORM_DIFFUSE_MAP",
+  "CX_SHADER_UNIFORM_SPECULAR_MAP",
   "CX_SHADER_UNIFORM_BUMP_MAP",
   "CX_NUM_SHADER_UNIFORMS",
   "CX_SHADER_UNIFORM_USER_DEFINED",
@@ -543,9 +543,8 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
       break;
     }
       
-    case CX_SHADER_UNIFORM_CAMERA_POSITION:
+    case CX_SHADER_UNIFORM_EYE_POSITION:
     case CX_SHADER_UNIFORM_LIGHT_POSITION:
-    case CX_SHADER_UNIFORM_LIGHT_DIRECTION:
     {
 #if CX_SHADER_DEBUG && 0
       GLint usize;
@@ -561,6 +560,7 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     }
       
     case CX_SHADER_UNIFORM_DIFFUSE_MAP:
+    case CX_SHADER_UNIFORM_SPECULAR_MAP:
     case CX_SHADER_UNIFORM_BUMP_MAP:
     {
 #if CX_SHADER_DEBUG && 0
@@ -603,6 +603,7 @@ void cx_shader_set_float (const cx_shader *shader, const char *name, cxf32 *f, c
   CX_ASSERT (shader);
   CX_ASSERT (name);
   CX_ASSERT (f);
+  CX_ASSERT (count > 0);
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
@@ -629,6 +630,7 @@ void cx_shader_set_vector2 (const cx_shader *shader, const char *name, const cx_
   CX_ASSERT (shader);
   CX_ASSERT (name);
   CX_ASSERT (vec2);
+  CX_ASSERT (count > 0);
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
@@ -655,6 +657,7 @@ void cx_shader_set_vector4 (const cx_shader *shader, const char *name, const cx_
   CX_ASSERT (shader);
   CX_ASSERT (name);
   CX_ASSERT (vec4);
+  CX_ASSERT (count > 0);
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
@@ -681,6 +684,7 @@ void cx_shader_set_matrix3x3 (const cx_shader *shader, const char *name, const c
   CX_ASSERT (shader);
   CX_ASSERT (name);
   CX_ASSERT (mat3x3);
+  CX_ASSERT (count > 0);
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
@@ -707,6 +711,7 @@ void cx_shader_set_matrix4x4 (const cx_shader *shader, const char *name, const c
   CX_ASSERT (shader);
   CX_ASSERT (name);
   CX_ASSERT (mat4x4);
+  CX_ASSERT (count > 0);
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);

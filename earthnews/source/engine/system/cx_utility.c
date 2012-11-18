@@ -154,9 +154,7 @@ void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_ve
   CX_ASSERT (target->w == 1.0f);
   CX_ASSERT (cx_is_zero (updir->w));
   
-  //////////////////////////////////
-  // build rotation matrix
-  //////////////////////////////////
+  // build rotation matrix (camera's transformation matrix)
   
   cx_vec4 side, up, forward;
   cx_vec4 i = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
@@ -170,16 +168,17 @@ void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_ve
   cx_vec4_negate (&forward); // opengl negate z;
   
   // build view to world matrix by transforming rotation and translation
-  // inverting (transpose) rotation matrix
+  
+  // invert (transpose) rotation matrix
   cx_mat4x4_set_row (m, 0, &side);
   cx_mat4x4_set_row (m, 1, &up);
   cx_mat4x4_set_row (m, 2, &forward);
   cx_mat4x4_set_row (m, 3, &i);
   
   // transform translation 
-  float ex = cx_vec4_dot (&side, eye);
-  float ey = cx_vec4_dot (&up, eye);
-  float ez = cx_vec4_dot (&forward, eye);
+  cxf32 ex = cx_vec4_dot (&side, eye);
+  cxf32 ey = cx_vec4_dot (&up, eye);
+  cxf32 ez = cx_vec4_dot (&forward, eye);
   cx_vec4 e = {{ -ex, -ey, -ez, 1.0f }};
   cx_mat4x4_set_column (m, 3, &e);
 }

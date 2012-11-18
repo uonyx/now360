@@ -54,9 +54,8 @@ typedef enum cx_shader_uniform
   CX_SHADER_UNIFORM_TRANSFORM_MV,       // mat4x4
   CX_SHADER_UNIFORM_TRANSFORM_MVP,      // mat4x4
   CX_SHADER_UNIFORM_TRANSFORM_N,        // mat3x3
-  CX_SHADER_UNIFORM_CAMERA_POSITION,    // vec4
-  CX_SHADER_UNIFORM_LIGHT_POSITION,     // vec4
-  CX_SHADER_UNIFORM_LIGHT_DIRECTION,    // vec4
+  CX_SHADER_UNIFORM_EYE_POSITION,       // vec4 (x, y, z, 1.0f)
+  CX_SHADER_UNIFORM_LIGHT_POSITION,     // vec4 (x, y, z, 1.0f)
   CX_SHADER_UNIFORM_DIFFUSE_MAP,        // texture (sampler 0)
   CX_SHADER_UNIFORM_SPECULAR_MAP,       // texture (sampler 1)
   CX_SHADER_UNIFORM_BUMP_MAP,           // texture (sampler 2)

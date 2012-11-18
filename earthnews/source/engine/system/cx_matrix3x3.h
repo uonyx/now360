@@ -43,6 +43,8 @@ static CX_INLINE bool cx_mat3x3_validate (const cx_mat3x3 *m);
 
 static CX_INLINE void cx_mat3x3_identity (cx_mat3x3 *m)
 {
+  CX_ASSERT (m);
+  
   // column 1
   m->f9 [0] = 1.0f;
   m->f9 [1] = 0.0f;
@@ -63,6 +65,8 @@ static CX_INLINE void cx_mat3x3_identity (cx_mat3x3 *m)
 
 static CX_INLINE void cx_mat3x3_zero (cx_mat3x3 *m)
 {
+  CX_ASSERT (m);
+  
   m->f9 [0] = 0.0f;
   m->f9 [1] = 0.0f;
   m->f9 [2] = 0.0f;
@@ -80,6 +84,8 @@ static CX_INLINE void cx_mat3x3_zero (cx_mat3x3 *m)
 
 static CX_INLINE void cx_mat3x3_set (cx_mat3x3 * CX_RESTRICT m, cxf32 f9 [9])
 {
+  CX_ASSERT (m);
+  
   m->f9 [0] = f9 [0];
   m->f9 [1] = f9 [1];
   m->f9 [2] = f9 [2];
@@ -97,15 +103,18 @@ static CX_INLINE void cx_mat3x3_set (cx_mat3x3 * CX_RESTRICT m, cxf32 f9 [9])
 
 static CX_INLINE void cx_mat3x3_transpose (cx_mat3x3 * CX_RESTRICT t, const cx_mat3x3 * CX_RESTRICT m)
 {
-  float t0 = m->f9 [0];
-  float t1 = m->f9 [3];
-  float t2 = m->f9 [6];
-  float t3 = m->f9 [1];
-  float t4 = m->f9 [4];
-  float t5 = m->f9 [7];
-  float t6 = m->f9 [2];
-  float t7 = m->f9 [5];
-  float t8 = m->f9 [8];
+  CX_ASSERT (m);
+  CX_ASSERT (t);
+  
+  cxf32 t0 = m->f9 [0];
+  cxf32 t1 = m->f9 [3];
+  cxf32 t2 = m->f9 [6];
+  cxf32 t3 = m->f9 [1];
+  cxf32 t4 = m->f9 [4];
+  cxf32 t5 = m->f9 [7];
+  cxf32 t6 = m->f9 [2];
+  cxf32 t7 = m->f9 [5];
+  cxf32 t8 = m->f9 [8];
   
   t->f9 [0] = t0;
   t->f9 [1] = t1;
@@ -124,6 +133,8 @@ static CX_INLINE void cx_mat3x3_transpose (cx_mat3x3 * CX_RESTRICT t, const cx_m
 
 static CX_INLINE cxf32 cx_mat3x3_determinant (const cx_mat3x3 *m)
 {
+  CX_ASSERT (m);
+  
   cxf32 m0 = m->f9 [0];
   cxf32 m1 = m->f9 [1];
   cxf32 m2 = m->f9 [2];
@@ -149,6 +160,9 @@ static CX_INLINE cxf32 cx_mat3x3_determinant (const cx_mat3x3 *m)
 
 static CX_INLINE cxf32 cx_mat3x3_inverse (cx_mat3x3 * CX_RESTRICT i, const cx_mat3x3 * CX_RESTRICT m)
 {
+  CX_ASSERT (i);
+  CX_ASSERT (m);
+  
   cxf32 m0 = m->f9 [0];
   cxf32 m1 = m->f9 [1];
   cxf32 m2 = m->f9 [2];
@@ -192,14 +206,17 @@ static CX_INLINE cxf32 cx_mat3x3_inverse (cx_mat3x3 * CX_RESTRICT i, const cx_ma
 
 static CX_INLINE bool cx_mat3x3_validate (const cx_mat3x3 *m)
 {
-  bool valid = true;
+  CX_ASSERT (m);
   
   for (cxu8 i = 0; i < 9; ++i)
   {
-    valid &= cx_validatef (m->f9 [i]);
+    if (!cx_validatef (m->f9 [i]))
+    {
+      return false;
+    }
   }
   
-  return valid;
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
