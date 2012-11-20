@@ -708,7 +708,7 @@ static void app_render_earth (void)
   cx_date date;
   cx_time_set_date (&date, CX_TIME_ZONE_UTC);
   
-  earth_render (s_earth, &date);
+  earth_render (s_earth, &date, &s_camera->position);
   
   // draw points
   //cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);

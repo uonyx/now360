@@ -44,12 +44,12 @@ void main (void)
   mediump float dotp = dot (nVec, lVec);
   
   // ambient
-  mediump vec4 ambient = u_ambientLight * diffuseMat;
+  mediump vec4 ambient = (u_ambientLight * diffuseMat);// + (nightMat * u_ambientLight);
   
   // diffuse
   mediump float d = max (dotp, c_zero);
   //mediump vec4 diffuse = d * u_diffuseLight * diffuseMat;
-  mediump vec4 diffuse = (d * u_diffuseLight * diffuseMat) + (nightMat * (u_diffuseLight - d));
+  mediump vec4 diffuse = (d * u_diffuseLight * diffuseMat) + (nightMat * (u_diffuseLight - (d * u_diffuseLight)));
   
   // specular
   mediump vec4 specular = vec4 (c_zero);

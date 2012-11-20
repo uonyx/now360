@@ -53,7 +53,7 @@ typedef struct earth_t earth_t;
 
 earth_t *earth_create (const char *filename, float radius, int slices, int parallels);
 void earth_destroy (earth_t *earth);
-void earth_render (const earth_t *earth, const cx_date *date);
+void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

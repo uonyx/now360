@@ -166,9 +166,10 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   
   //cx_texture *texture   = cx_texture_create_from_file ("data/textures/earthmap1k.png");
   //cx_texture *texture     = cx_texture_create_from_file ("data/maps/4096-clean.png");
+  //cx_texture *texture     = cx_texture_create_from_file ("data/maps/4096-diff.png");
   cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
-  //cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal.png");
-  cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal-30.png");
+  cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal.png");
+  //cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal-30.png");
   cx_texture *specTexture = cx_texture_create_from_file ("data/maps/2048-spec.png");
   
   cx_material_attach_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
@@ -192,8 +193,11 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   visual->nightMap = cx_texture_create_from_file ("data/maps/2048-night.png");
 #endif
   
-  visual->mesh = cx_mesh_create_sphere (radius, (short) slices, (short) parallels, shader, material);
+  cx_vertex_data *sphere = cx_vertex_data_create_sphere (radius, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PTNTB);
+  // destroy SPHERE
   
+  visual->mesh = cx_mesh_create (sphere, shader, material);
+
   return visual;
 }
 
@@ -222,6 +226,9 @@ earth_t *earth_create (const char *filename, float radius, int slices, int paral
 
 void earth_destroy (earth_t *earth)
 {
+  CX_ASSERT (earth);
+  
+  cx_mesh_destroy (earth->visual->mesh);
   cx_free (earth);
 }
 
@@ -229,10 +236,11 @@ void earth_destroy (earth_t *earth)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void earth_render (const earth_t *earth, const cx_date *date)
+void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye)
 {
   CX_ASSERT (earth);
   CX_ASSERT (date);
+  CX_ASSERT (eye);
   
 #if NEW_EARTH_SHADER
   cx_mat4x4 mvpMatrix;
@@ -256,8 +264,8 @@ void earth_render (const earth_t *earth, const cx_date *date)
   cx_vec4_set (&lightPos, 0.0f, 0.0f, -4.0f, 1.0f);
   
 #if 1
-  static float angle = 180.0f;
-  angle += (1.0f / 10.0f);
+  static float angle = 0.0f;
+  angle += (1.0f / 6.0f);
   angle = fmodf (angle, 360.0f);
 #else
   int hr = date->calendar.tm_hour;
@@ -287,19 +295,21 @@ void earth_render (const earth_t *earth, const cx_date *date)
   cx_vec4 newForward;
   cx_mat4x4_mul_vec4 (&newForward, &rotation, &forward);
   
-  // update eye position
+  // update light position
   cx_vec4_add (&lightPos, &origin, &newForward);
   
-
+  eyePos = *eye;
+  
   cx_shader_set_vector4 (mesh->shader, "u_eyePosition", &eyePos, 1);
   cx_shader_set_vector4 (mesh->shader, "u_lightPosition", &lightPos, 1);
   
-  float shininess = 0.25f;
+  float shininess = 0.8f;
   const cx_colour *white = cx_colour_white ();
   
   cx_colour dark;
   //cx_colour_set (&dark, 0.15f, 0.15f, 0.15f, 1.0f);
   cx_colour_set (&dark, 0.05f, 0.05f, 0.05f, 1.0f);
+  
   
   cx_shader_set_vector4 (mesh->shader, "u_ambientLight", &dark, 1);
   cx_shader_set_vector4 (mesh->shader, "u_diffuseLight", white, 1);

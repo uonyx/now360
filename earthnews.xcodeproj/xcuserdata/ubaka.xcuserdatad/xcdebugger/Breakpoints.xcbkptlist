@@ -8,11 +8,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/earth.c"
-         timestampString = "374941275.939493"
+         timestampString = "375065594.145617"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "291"
-         endingLineNumber = "291"
+         startingLineNumber = "301"
+         endingLineNumber = "301"
          landmarkName = "earth_render()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -21,11 +21,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/earth.c"
-         timestampString = "374941275.939493"
+         timestampString = "375065594.145617"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "269"
-         endingLineNumber = "269"
+         startingLineNumber = "279"
+         endingLineNumber = "279"
          landmarkName = "earth_render()"
          landmarkType = "7">
       </FileBreakpoint>
