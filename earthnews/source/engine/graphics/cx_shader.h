@@ -91,6 +91,7 @@ typedef struct cx_shader
   cxi32 attributes [CX_NUM_SHADER_ATTRIBUTES];
   cxi32 uniforms [CX_NUM_SHADER_UNIFORMS];
   char *name;
+  bool enabled;
   
 } cx_shader;
 
@@ -105,7 +106,8 @@ void cx_shader_destroy (cx_shader *shader);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_use (const cx_shader *shader);
+void cx_shader_begin (cx_shader *shader);
+void cx_shader_end (cx_shader *shader);
 void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, const void *data);
 void cx_shader_set_float (const cx_shader *shader, const char *name, cxf32 *f, cxi32 count);
 void cx_shader_set_vector2 (const cx_shader *shader, const char *name, const cx_vec2 *vec2, cxi32 count);

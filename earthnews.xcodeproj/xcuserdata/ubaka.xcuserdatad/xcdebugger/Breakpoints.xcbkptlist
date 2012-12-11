@@ -4,16 +4,29 @@
    version = "1.0">
    <FileBreakpoints>
       <FileBreakpoint
-         shouldBeEnabled = "No"
+         shouldBeEnabled = "Yes"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/earth.c"
-         timestampString = "375065594.145617"
+         filePath = "earthnews/source/engine/graphics/cx_texture.c"
+         timestampString = "375582202.665501"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "301"
-         endingLineNumber = "301"
-         landmarkName = "earth_render()"
+         startingLineNumber = "174"
+         endingLineNumber = "174"
+         landmarkName = "cx_texture_gpu_init()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "Yes"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/engine/system/cx_debug.c"
+         timestampString = "376004712.252714"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "93"
+         endingLineNumber = "93"
+         landmarkName = "_cx_assert()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -21,11 +34,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/earth.c"
-         timestampString = "375065594.145617"
+         timestampString = "376675824.178237"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "279"
-         endingLineNumber = "279"
+         startingLineNumber = "376"
+         endingLineNumber = "376"
          landmarkName = "earth_render()"
          landmarkType = "7">
       </FileBreakpoint>

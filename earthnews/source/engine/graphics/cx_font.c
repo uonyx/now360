@@ -122,7 +122,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
   
   // use shader
-  cx_shader_use (shader);
+  cx_shader_begin (shader);
   
   // set texture
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, fontImpl->texture);
@@ -203,6 +203,8 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+  
+  cx_shader_end (shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,7 +223,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
   
   // use shader
-  cx_shader_use (shader);
+  cx_shader_begin (shader);
   
   // set texture
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, fontImpl->texture);
@@ -345,6 +347,8 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+  
+  cx_shader_end (shader);
   
   return newlines;
 }

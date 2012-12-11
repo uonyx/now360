@@ -25,7 +25,7 @@ struct earth_visual_t
   int slices;
   int parallels;
   
-  cx_mesh *mesh;
+  cx_mesh *mesh [3];
   cx_texture *nightMap;
 };
 

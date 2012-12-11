@@ -38,7 +38,7 @@ void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colou
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW_LINES);
   CX_ASSERT (shader);
   
-  cx_shader_use (shader);
+  cx_shader_begin (shader);
   
   // set mvp
   cx_mat4x4 mvp;
@@ -59,6 +59,8 @@ void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colou
   cx_gdi_assert_no_errors ();
   
   glDrawArrays (GL_LINES, 0, numSegments);
+  
+  cx_shader_end (shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +78,7 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colou
   cx_shader *shader = cx_shader_get_built_in (shaderType);
   CX_ASSERT (shader);
   
-  cx_shader_use (shader);
+  cx_shader_begin (shader);
   
   if (texture)
   {
@@ -103,6 +105,8 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colou
   cx_gdi_assert_no_errors ();
   
   glDrawArrays (GL_POINTS, 0, numPoints);
+  
+  cx_shader_end (shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +122,7 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW_QUAD);
   
   // enable shader
-  cx_shader_use (shader);
+  cx_shader_begin (shader);
   
   // set mvp
   cx_mat4x4 mvp;
@@ -171,6 +175,8 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32
   cx_gdi_assert_no_errors ();
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+  
+  cx_shader_end (shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +196,7 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW_QUAD_TEX);
   
   // enable shader
-  cx_shader_use (shader);
+  cx_shader_begin (shader);
   
   // render texture
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, texture);
@@ -276,6 +282,8 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+  
+  cx_shader_end (shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

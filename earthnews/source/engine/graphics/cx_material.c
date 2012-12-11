@@ -83,7 +83,7 @@ void cx_material_render (const cx_material *material, const cx_shader *shader)
     {
       uniform = s_uniformMappings [i];
       cx_shader_set_uniform (shader, uniform, texture);
-    } 
+    }
   }
 }
 
@@ -91,7 +91,7 @@ void cx_material_render (const cx_material *material, const cx_shader *shader)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_material_attach_texture (cx_material *material, const cx_texture *texture, cx_material_texture type)
+void cx_material_set_texture (cx_material *material, const cx_texture *texture, cx_material_texture type)
 {
   CX_ASSERT (material);
   CX_ASSERT (texture);

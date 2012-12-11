@@ -114,6 +114,8 @@ cx_texture *cx_texture_create_from_file (const char *filename)
     if (cx_texture_load_png (texture, filename))
     {
       cx_texture_gpu_init (texture);
+      
+      cx_free(texture->data);
     }
     else
     {
@@ -168,6 +170,11 @@ void cx_texture_gpu_init (cx_texture *texture)
     switch (texture->format) 
     {
       case CX_TEXTURE_FORMAT_RGB:
+      {
+        glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, texture->width, texture->height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture->data);
+        break;
+      }
+        
       case CX_TEXTURE_FORMAT_RGBA:
       {
         glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->data);

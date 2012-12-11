@@ -386,7 +386,11 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     if (uniformIdx != CX_SHADER_UNIFORM_USER_DEFINED)
     {
       const char *uniformName = value->u.string.ptr;
-      shader->uniforms [uniformIdx] = glGetUniformLocation (shader->program, uniformName);
+      int uniformLocation = glGetUniformLocation (shader->program, uniformName);
+      
+      CX_ASSERT ((uniformLocation >= 0) && "unused uniform");
+      
+      shader->uniforms [uniformIdx] = uniformLocation;
       
       cx_gdi_assert_no_errors ();
       CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
@@ -457,6 +461,7 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
   
   cx_shader *shader = (cx_shader *) cx_malloc (sizeof(cx_shader));
   shader->program   = shaderProgram;
+  shader->enabled   = false;
   shader->name      = cx_strdup (name, strlen (name));
   
   memset (shader->attributes, -1, sizeof (shader->attributes));
@@ -490,10 +495,27 @@ void cx_shader_destroy (cx_shader *shader)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_shader_use (const cx_shader *shader)
+void cx_shader_begin (cx_shader *shader)
 {
+  CX_ASSERT (shader);
+  CX_ASSERT (!shader->enabled);
+  
   glUseProgram (shader->program);
   cx_gdi_assert_no_errors ();
+  
+  shader->enabled = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_shader_end (cx_shader *shader)
+{
+  CX_ASSERT (shader);
+  CX_ASSERT (shader->enabled);
+  
+  shader->enabled = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -502,7 +524,7 @@ void cx_shader_use (const cx_shader *shader)
 
 void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform uniform, const void *data)
 {
-  CX_ASSERT (shader);
+  CX_ASSERT (shader && shader->enabled);
   CX_ASSERT (data);
   CX_ASSERT ((uniform > CX_SHADER_UNIFORM_INVALID) && (uniform < CX_NUM_SHADER_UNIFORMS));
   
@@ -600,7 +622,7 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
 
 void cx_shader_set_float (const cx_shader *shader, const char *name, cxf32 *f, cxi32 count)
 {
-  CX_ASSERT (shader);
+  CX_ASSERT (shader && shader->enabled);
   CX_ASSERT (name);
   CX_ASSERT (f);
   CX_ASSERT (count > 0);
@@ -627,7 +649,7 @@ void cx_shader_set_float (const cx_shader *shader, const char *name, cxf32 *f, c
 
 void cx_shader_set_vector2 (const cx_shader *shader, const char *name, const cx_vec2 *vec2, cxi32 count)
 {
-  CX_ASSERT (shader);
+  CX_ASSERT (shader && shader->enabled);
   CX_ASSERT (name);
   CX_ASSERT (vec2);
   CX_ASSERT (count > 0);
@@ -654,7 +676,7 @@ void cx_shader_set_vector2 (const cx_shader *shader, const char *name, const cx_
 
 void cx_shader_set_vector4 (const cx_shader *shader, const char *name, const cx_vec4 *vec4, cxi32 count)
 {
-  CX_ASSERT (shader);
+  CX_ASSERT (shader && shader->enabled);
   CX_ASSERT (name);
   CX_ASSERT (vec4);
   CX_ASSERT (count > 0);
@@ -681,7 +703,7 @@ void cx_shader_set_vector4 (const cx_shader *shader, const char *name, const cx_
 
 void cx_shader_set_matrix3x3 (const cx_shader *shader, const char *name, const cx_mat3x3 *mat3x3, cxi32 count)
 {
-  CX_ASSERT (shader);
+  CX_ASSERT (shader && shader->enabled);
   CX_ASSERT (name);
   CX_ASSERT (mat3x3);
   CX_ASSERT (count > 0);
@@ -708,7 +730,7 @@ void cx_shader_set_matrix3x3 (const cx_shader *shader, const char *name, const c
 
 void cx_shader_set_matrix4x4 (const cx_shader *shader, const char *name, const cx_mat4x4 *mat4x4, cxi32 count)
 {
-  CX_ASSERT (shader);
+  CX_ASSERT (shader && shader->enabled);
   CX_ASSERT (name);
   CX_ASSERT (mat4x4);
   CX_ASSERT (count > 0);
@@ -735,7 +757,7 @@ void cx_shader_set_matrix4x4 (const cx_shader *shader, const char *name, const c
 
 void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_texture *texture, cxi32 sampler)
 {
-  CX_ASSERT (shader);
+  CX_ASSERT (shader && shader->enabled);
   CX_ASSERT (name);
   CX_ASSERT (texture);
   CX_ASSERT ((sampler >= 0) && (sampler < (cxi32) (sizeof (s_glTextureUnits) / sizeof (GLenum))));

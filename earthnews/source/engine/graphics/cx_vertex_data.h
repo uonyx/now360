@@ -25,10 +25,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if !CX_VERTEX_DATA_AOS
 #define CX_VERTEX_POSITION_SIZE   3
 #define CX_VERTEX_NORMAL_SIZE     3
-#define CX_VERTEX_TEXCOORD_SIZE   2
 #define CX_VERTEX_TANGENT_SIZE    3
+#define CX_VERTEX_TEXCOORD_SIZE   2
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,6 +40,7 @@ typedef enum cx_vertex_format
 {
   CX_VERTEX_FORMAT_INVALID,
   CX_VERTEX_FORMAT_P,       // position
+  CX_VERTEX_FORMAT_PN,      // position, normal
   CX_VERTEX_FORMAT_PT,      // position, texcoord
   CX_VERTEX_FORMAT_PTN,     // position, texcoord, normal
   CX_VERTEX_FORMAT_PTNTB,   // position, texcoord, normal, tangent, bitangent
@@ -70,6 +73,8 @@ struct cx_vertex_data_soa
   cxf32 *positions;
   cxf32 *texCoords;
   cxf32 *normals;
+  cxf32 *tangents;
+  cxf32 *bitangents;
   cxu16 *indices;
   cxi32 numVertices;
   cxi32 numIndices;

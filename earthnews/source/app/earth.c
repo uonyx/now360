@@ -148,6 +148,11 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define NEW_EARTH_SHADER 1
+#define ENABLE_TOPOGRAPHY 1
+#define ENABLE_CLOUDS 1
+#define ENABLE_ATMOSPHERE 1
+#define BUMP_MAPPED_CLOUDS 1
+#define FAST_LIGHT_ORBIT 1
 
 static struct earth_visual_t *earth_visual_create (float radius, int slices, int parallels)
 {
@@ -172,31 +177,65 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   //cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal-30.png");
   cx_texture *specTexture = cx_texture_create_from_file ("data/maps/2048-spec.png");
   
-  cx_material_attach_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
-  cx_material_attach_texture (material, specTexture, CX_MATERIAL_TEXTURE_SPECULAR);
-  cx_material_attach_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
+  cx_material_set_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
+  cx_material_set_texture (material, specTexture, CX_MATERIAL_TEXTURE_SPECULAR);
+  cx_material_set_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
   
   //visual->nightMap = cx_texture_create_from_file ("data/maps/2048-night.png");
   visual->nightMap = cx_texture_create_from_file ("data/maps/4096-night.png");
   
 #else
   cx_shader *shader     = cx_shader_create ("mesh", "data/shaders");
-  
   cx_material *material = cx_material_create ("earth");
-  
+
   cx_texture *texture   = cx_texture_create_from_file ("data/textures/earthmap1k.png");
   //cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
   
-  cx_material_attach_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
-  //cx_material_attach_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
+  cx_material_set_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
+  //cx_material_set_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
   
   visual->nightMap = cx_texture_create_from_file ("data/maps/2048-night.png");
 #endif
   
   cx_vertex_data *sphere = cx_vertex_data_create_sphere (radius, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PTNTB);
-  // destroy SPHERE
   
-  visual->mesh = cx_mesh_create (sphere, shader, material);
+  visual->mesh [0] = cx_mesh_create (sphere, shader, material);
+  
+  //cx_vertex_data_destroy (sphere);
+  //////////////////////////////////////////////////////////////////////////////////////////
+  
+  cx_shader *shader1     = cx_shader_create ("clouds", "data/shaders");
+  cx_material *material1 = cx_material_create ("clouds");
+  
+  cx_texture *cloudImage = cx_texture_create_from_file ("data/maps/2048-clouds.png");
+  cx_material_set_texture (material1, cloudImage, CX_MATERIAL_TEXTURE_DIFFUSE);
+  
+#if BUMP_MAPPED_CLOUDS
+  cx_texture *cloudBump = cx_texture_create_from_file ("data/maps/2048-normal-clouds.png");
+  cx_material_set_texture (material1, cloudBump, CX_MATERIAL_TEXTURE_BUMP);
+#endif
+  
+  float radius1 = radius + 0.01f;
+#if BUMP_MAPPED_CLOUDS
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PTNTB);
+#else
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PTN);
+#endif
+  
+  visual->mesh [1] = cx_mesh_create (sphere1, shader1, material1);
+  
+  
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  float radius2 = radius + 0.02f;
+  cx_vertex_data *sphere2 = cx_vertex_data_create_sphere (radius2, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PN);
+  
+  cx_shader *shader2 = cx_shader_create ("atmos", "data/shaders");
+  cx_material *material2 = cx_material_create ("atmos");
+  
+  material2->diffuse = *cx_colour_blue ();
+  
+  visual->mesh [2] = cx_mesh_create (sphere2, shader2, material2);
 
   return visual;
 }
@@ -228,7 +267,10 @@ void earth_destroy (earth_t *earth)
 {
   CX_ASSERT (earth);
   
-  cx_mesh_destroy (earth->visual->mesh);
+  
+  // destroy SPHERES
+  
+  cx_mesh_destroy (earth->visual->mesh [0]);
   cx_free (earth);
 }
 
@@ -243,27 +285,31 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   CX_ASSERT (eye);
   
 #if NEW_EARTH_SHADER
+  
   cx_mat4x4 mvpMatrix;
+  cx_vec4 eyePos, lightPos;
+  
+  cx_colour ambient, diffuse, specular;
+  float shininess;
+  
+  /////////////////////////////
+  // mvp matrix
+  /////////////////////////////
+  
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
   
-  // get mesh
-  cx_mesh *mesh = earth->visual->mesh;
+  /////////////////////////////
+  // eye position
+  /////////////////////////////
   
-  // use shader
-  cx_shader_use (mesh->shader);
-  
-  // set u_mvpMatrix
-  cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
-  
-  // night map
-  cx_texture *nightMap = earth->visual->nightMap;
-  cx_shader_set_texture (mesh->shader, "u_nightMap", nightMap, 3);
-  
-  cx_vec4 eyePos, lightPos;
   cx_vec4_set (&eyePos, 0.0f, 0.0f, -3.0f, 1.0f);
-  cx_vec4_set (&lightPos, 0.0f, 0.0f, -4.0f, 1.0f);
+  eyePos = *eye;
   
-#if 1
+  /////////////////////////////
+  // light position
+  /////////////////////////////
+  
+#if FAST_LIGHT_ORBIT
   static float angle = 0.0f;
   angle += (1.0f / 6.0f);
   angle = fmodf (angle, 360.0f);
@@ -280,6 +326,8 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   angle += 180.0f;
   angle = fmodf (angle, 360.0f);
 #endif
+  
+  cx_vec4_set (&lightPos, 0.0f, 0.0f, -4.0f, 1.0f);
   
   // get rotation matrix
   cx_mat4x4 rotation;
@@ -298,26 +346,125 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   // update light position
   cx_vec4_add (&lightPos, &origin, &newForward);
   
-  eyePos = *eye;
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if ENABLE_TOPOGRAPHY
   
-  cx_shader_set_vector4 (mesh->shader, "u_eyePosition", &eyePos, 1);
-  cx_shader_set_vector4 (mesh->shader, "u_lightPosition", &lightPos, 1);
+  {
+    cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_DEPTH_TEST);
+    cx_gdi_enable_z_buffer (true);
+    
+    // get mesh
+    cx_mesh *mesh = earth->visual->mesh [0];
+    
+    // use shader
+    cx_shader_begin (mesh->shader);
+    
+    // set u_mvpMatrix
+    cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
+    
+    // night map
+    
+    cx_texture *nightMap = earth->visual->nightMap;
+    cx_shader_set_texture (mesh->shader, "u_nightMap", nightMap, 3);
+    
+    cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_EYE_POSITION, &eyePos);
+    cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_LIGHT_POSITION, &lightPos);
+    
+    shininess = 0.5f;
+    
+    cx_colour_set (&ambient, 0.15f, 0.15f, 0.15f, 1.0f);
+    cx_colour_set (&diffuse, 1.0f, 1.0f, 1.0f, 1.0f);
+    cx_colour_set (&specular, 0.9f, 0.9f, 0.9f, 1.0f);
+    cx_colour_set (&specular, 1.0f, 250.0f/255.0f, 205.0f/255.0f, 1.0f);
+    
+    cx_shader_set_vector4 (mesh->shader, "u_ambientLight", &ambient, 1);
+    cx_shader_set_vector4 (mesh->shader, "u_diffuseLight", &diffuse, 1);
+    cx_shader_set_vector4 (mesh->shader, "u_specularLight", &specular, 1);
+    cx_shader_set_float (mesh->shader, "u_shininess", &shininess, 1);
+    
+    cx_mesh_render (mesh);   // set u_diffuseMap, u_normalMap
+    
+    cx_shader_end (mesh->shader);
+  }
   
-  float shininess = 0.8f;
-  const cx_colour *white = cx_colour_white ();
+#endif
   
-  cx_colour dark;
-  //cx_colour_set (&dark, 0.15f, 0.15f, 0.15f, 1.0f);
-  cx_colour_set (&dark, 0.05f, 0.05f, 0.05f, 1.0f);
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
   
+#if ENABLE_CLOUDS
+
+  {
+    cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
+    cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+    cx_gdi_enable_z_buffer (false);
+    
+    cx_mesh *mesh1 = earth->visual->mesh [1];
+    
+    cx_shader_begin (mesh1->shader);
+    
+  #if !BUMP_MAPPED_CLOUDS
+    cx_mat3x3 normalMatrix;
+    cx_mat3x3_identity (&normalMatrix);
+    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_N, &normalMatrix);
+  #endif
+    
+    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
+    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_LIGHT_POSITION, &lightPos);
+    
+  #if BUMP_MAPPED_CLOUDS
+    cx_colour_set (&ambient, 0.0f, 0.0f, 0.0f, 0.0f);
+    cx_colour_set (&diffuse, 0.8f, 0.8f, 0.8f, 1.0f);
+    cx_colour_set (&specular, 0.0f, 0.0f, 0.0f, 0.0f);
+    
+    shininess = 1.5f;
+    
+    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_EYE_POSITION, &eyePos);
+    cx_shader_set_vector4 (mesh1->shader, "u_ambientLight", &ambient, 1);
+    cx_shader_set_vector4 (mesh1->shader, "u_diffuseLight", &diffuse, 1);
+    cx_shader_set_vector4 (mesh1->shader, "u_specularLight", &specular, 1);
+    cx_shader_set_float (mesh1->shader, "u_shininess", &shininess, 1);
+  #endif
+    
+    cx_mesh_render (mesh1);
+    
+    cx_shader_end (mesh1->shader);
+    
+    cx_gdi_enable_z_buffer (true);
+  }
   
-  cx_shader_set_vector4 (mesh->shader, "u_ambientLight", &dark, 1);
-  cx_shader_set_vector4 (mesh->shader, "u_diffuseLight", white, 1);
-  cx_shader_set_vector4 (mesh->shader, "u_specularLight", white, 1);
-  cx_shader_set_float (mesh->shader, "u_shininess", &shininess, 1);
+#endif
   
-  // set u_diffuseMap, u_normalMap
-  cx_mesh_render (mesh);
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
+#if ENABLE_ATMOSPHERE
+  
+  {
+    cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
+    cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+    cx_gdi_enable_z_buffer (false);
+    
+    cx_mesh *mesh2 = earth->visual->mesh [2];
+    
+    cx_shader_begin (mesh2->shader);
+    
+    cx_shader_set_uniform (mesh2->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
+    cx_shader_set_uniform (mesh2->shader, CX_SHADER_UNIFORM_LIGHT_POSITION, &lightPos);
+    cx_shader_set_uniform (mesh2->shader, CX_SHADER_UNIFORM_EYE_POSITION, &eyePos);
+    
+    cx_shader_end (mesh2->shader);
+    
+    cx_mesh_render (mesh2);
+    cx_gdi_enable_z_buffer (true);
+  }
+  
+#endif
   
 #else
   cx_mat4x4 mvpMatrix;
@@ -327,10 +474,10 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   cx_mat3x3_identity (&normalMatrix);
   
   // get mesh
-  cx_mesh *mesh = earth->visual->mesh;
+  cx_mesh *mesh = earth->visual->mesh [0];
   
   // use shader
-  cx_shader_use (mesh->shader);
+  cx_shader_begin (mesh->shader);
   
   // set matrices
   cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
@@ -341,7 +488,10 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   cx_shader_set_texture (mesh->shader, "u_nightMap", nightMap, 3);
 
   cx_mesh_render (mesh);
+  
+  cx_shader_end (mesh->shader);
 #endif
+  
 }
 
 

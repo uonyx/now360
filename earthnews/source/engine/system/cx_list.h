@@ -33,15 +33,19 @@ typedef int (*cx_list_sort_cmp_func) (const void *, const void *);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_list *cx_list_insert_front (cx_list *list, cx_list_node *node, int *count);
-cx_list *cx_list_insert_back (cx_list *list, cx_list_node *node, int *count);
-cx_list *cx_list_remove (cx_list *list, cx_list_node *node, int *count);
-cx_list *cx_list_pop_front (cx_list *list, cx_list_node **front, int *count);
-cx_list *cx_list_pop_back (cx_list *list, cx_list_node **back, int *count);
+cx_list *cx_list_insert_front (cx_list *list, cx_list_node *node);
+cx_list *cx_list_insert_back (cx_list *list, cx_list_node *node);
+cx_list *cx_list_remove (cx_list *list, cx_list_node *node);
+cx_list *cx_list_pop_front (cx_list *list, cx_list_node **front);
+cx_list *cx_list_pop_back (cx_list *list, cx_list_node **back);
 cx_list *cx_list_sort (cx_list *list, cx_list_sort_cmp_func cmpfunc);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+cx_list *cx_list_insert_front2 (cx_list *list, void *data);
 
 #endif

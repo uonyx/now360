@@ -366,8 +366,10 @@ void app_earth_hit_test (float screenX, float screenY, float screenWidth, float 
   
   int i, c;
   for (i = 0, c = s_earth->data->count; i < c; ++i)
-  {
+  {    
+#if CX_DEBUG
     const char *city = s_earth->data->names [i];
+#endif
     
     normal = s_earth->data->normal [i];
     position = s_earth->data->location [i];
@@ -649,9 +651,9 @@ void app_input_touch_update (float deltaTime)
 
 void app_input_zoom (float factor)
 {
-  float f = 1.0f - factor;
+  float f = s_camera->fov + (1.0f - factor);
   
-  s_camera->fov = cx_clamp (s_camera->fov + f, 30.0f, 90.0f);
+  s_camera->fov = cx_clamp (f, 50.0f, 90.0f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -718,7 +720,7 @@ static void app_render_earth (void)
   static cx_line *tangentLines = NULL;
   static cx_line *bitangentLines = NULL;
   
-  cx_vertex_data *vertexData = &s_earth->visual->mesh->vertexData;
+  cx_vertex_data *vertexData = s_earth->visual->mesh [0]->vertexData;
   
   if (!normalLines)
   {
@@ -834,9 +836,9 @@ void app_render_2d (void)
 #if 1
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
-  cx_gdi_enable_z_buffer (true);
+  //cx_gdi_enable_z_buffer (true);
   app_render_earth_city_text ();
-  cx_gdi_enable_z_buffer (false);
+  //cx_gdi_enable_z_buffer (false);
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
 #else
   app_render_earth_city_text ();
@@ -877,8 +879,11 @@ void app_render_3d (void)
   //////////////
   
   cx_gdi_unbind_all_buffers ();
-  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_DEPTH_TEST);
-  cx_gdi_enable_z_buffer (true);
+  //cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_DEPTH_TEST);
+  
+  //cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
+  //cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  //cx_gdi_enable_z_buffer (true);
   
   //////////////
   // render

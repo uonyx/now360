@@ -1,11 +1,29 @@
 //
-//  earth.fsh
+//  Shader.fsh
 //
 //  Created by Ubaka Onyechi on 26/12/2011.
 //  Copyright (c) 2011 uonyechi.com. All rights reserved.
 //
 
-// source light colours
+#if 0
+uniform sampler2D u_diffuseMap;
+
+varying lowp vec4 v_colour;
+varying mediump vec2 v_texcoord;
+
+void main (void)
+{
+  mediump vec4 fix = vec4 (0.8, 0.8, 0.8, 0.55);
+  
+  mediump vec4 colour = texture2D (u_diffuseMap, v_texcoord) * v_colour;
+
+  colour *= fix;
+  
+  gl_FragColor = colour;
+}
+
+#else
+
 uniform mediump vec4 u_ambientLight;
 uniform mediump vec4 u_diffuseLight;
 uniform mediump vec4 u_specularLight;
@@ -13,8 +31,6 @@ uniform mediump float u_shininess;
 
 uniform sampler2D u_normalMap;
 uniform sampler2D u_diffuseMap;
-uniform sampler2D u_glossMap;
-uniform sampler2D u_nightMap;
 
 varying mediump vec2 v_texcoord;
 varying mediump vec3 v_viewDir;
@@ -24,9 +40,7 @@ const mediump float c_zero = 0.0;
 
 void main (void)
 {
-  mediump vec4 nightMat = texture2D (u_nightMap, v_texcoord) * 0.5;
   mediump vec4 diffuseMat = texture2D (u_diffuseMap, v_texcoord);
-  mediump vec4 specularMat = texture2D (u_glossMap, v_texcoord);
   
   // get tangent space normal from normal maps
   mediump vec3 nVec = texture2D (u_normalMap, v_texcoord).xyz;
@@ -44,32 +58,30 @@ void main (void)
   mediump float dotp = dot (nVec, lVec);
   
   // ambient
-  mediump vec4 ambient = (u_ambientLight * diffuseMat);// + (nightMat * vec4 ((0.7 * u_ambientLight).xyz, 1.0));
+  mediump vec4 ambient = (u_ambientLight * diffuseMat);
   
   // diffuse
   mediump float d = max (dotp, c_zero);
-  //mediump vec4 diffuse = d * u_diffuseLight * diffuseMat;
-  mediump vec4 diffuse = (d * u_diffuseLight * diffuseMat) + ((1.0 - d) * u_diffuseLight * nightMat);
+  mediump vec4 diffuse = d * u_diffuseLight * diffuseMat;
   
   // specular
 #if 1
-  // phong model
   mediump vec3 r = (2.0 * dotp * nVec) - lVec;
   mediump float s = pow (max (dot (vVec, r), c_zero), u_shininess);
-  mediump vec4 specular = s * u_specularLight * specularMat * diffuseMat;
-  
+  mediump vec4 specular = s * u_specularLight * diffuseMat;
 #else
   // blinn model
   mediump vec3 h = normalize (vVec + lVec);
   mediump float s = pow (max (dot (nVec, h), c_zero), u_shininess);
-  mediump vec4 specular = s * u_specularLight * specularMat;
+  mediump vec4 specular = s * u_specularLight * diffuseMat;
 #endif
+
+  mediump vec4 colour = ambient + (diffuse + specular);
   
-  /*
-  lowp vec4 diffuseColour = texture2D (u_diffuseMap, v_texcoord) * v_colour;
-  lowp vec4 nightColour = texture2D (u_nightMap, v_texcoord) * (white - v_colour);  
-  gl_FragColor = diffuseColour + nightColour;
-  */
-    
-  gl_FragColor = ambient + (diffuse + specular);
+  colour = diffuse;
+  colour.a *= 0.5;
+  
+  gl_FragColor = colour;
 }
+
+#endif

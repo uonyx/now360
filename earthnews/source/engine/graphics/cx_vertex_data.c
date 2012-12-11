@@ -11,7 +11,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_VERTEX_TOTAL_SIZE (CX_VERTEX_POSITION_SIZE + CX_VERTEX_NORMAL_SIZE + CX_VERTEX_TEXCOORD_SIZE)
+//#define CX_VERTEX_TOTAL_SIZE (CX_VERTEX_POSITION_SIZE + CX_VERTEX_NORMAL_SIZE + CX_VERTEX_TEXCOORD_SIZE)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,15 +58,15 @@ void cx_vertex_data_create_sphere_aos (cxf32 radius, cxu16 numSlices, cxu16 numP
       vertex = (i * (numSlices + 1) + j);
       
       // position
-      cx_vec4 * CX_RESTRICT position = &vertexData->vertices[vertex].position;
+      cx_vec4 * CX_RESTRICT position = &vertexData->vertices [vertex].position;
       cx_vec4_set (position, a0 * radius, a1 * radius, a2 * radius, 1.0f);
       
       // normal
-      cx_vec4 * CX_RESTRICT normal = &vertexData->vertices[vertex].normal;
+      cx_vec4 * CX_RESTRICT normal = &vertexData->vertices [vertex].normal;
       cx_vec4_set (normal, a0, a1, a2, 0.0f);
       
       // tex coord
-      cx_vec2 * CX_RESTRICT texCoord = &vertexData->vertices[vertex].texCoord;
+      cx_vec2 * CX_RESTRICT texCoord = &vertexData->vertices [vertex].texCoord;
       texCoord->x = (cxf32) j / (cxf32) numSlices;
       texCoord->y = (cxf32) i / (cxf32) numParallels;    
     }
@@ -232,11 +232,13 @@ void cx_vertex_data_destroy_aos (struct cx_vertex_data_aos *vertexData)
 {
   CX_ASSERT (vertexData);
   
-  vertexData->numIndices = 0;
-  vertexData->numVertices = 0;
-  
   cx_free (vertexData->indices);
   cx_free (vertexData->vertices);
+  
+  vertexData->numIndices = 0;
+  vertexData->numVertices = 0;
+  vertexData->indices = NULL;
+  vertexData->vertices = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,6 +350,7 @@ cx_vertex_data *cx_vertex_data_create_sphere (cxf32 radius, cxu16 numSlices, cxu
 #else
   cx_vertex_data_create_sphere_soa (radius, numSlices, numParallels, vertexData);
 #endif
+  
   return vertexData;
 }
 
@@ -362,6 +365,8 @@ void cx_vertex_data_destroy (cx_vertex_data *vertexData)
 #else
   cx_vertex_data_destroy_soa (vertexData);
 #endif
+  
+  cx_free (vertexData);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

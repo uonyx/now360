@@ -11,18 +11,30 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_list *cx_list_insert_front (cx_list *list, cx_list_node *node, int *count)
+cx_list *cx_list_insert_front (cx_list *list, cx_list_node *node)
 {
+  CX_ASSERT (node);
+  
   cx_list_node *head = list;
   
   node->next = head;
   
   head = node;
   
-  if (count)
-  {
-    ++(*count);
-  }
+  return head;
+}
+
+cx_list *cx_list_insert_front2 (cx_list *list, void *data)
+{
+  cx_list_node *node = (cx_list_node *) cx_malloc (sizeof (cx_list_node));
+  
+  cx_list_node *head = list;
+  
+  node->data = data;
+  
+  node->next = head;
+  
+  head = node;
   
   return head;
 }
@@ -31,7 +43,7 @@ cx_list *cx_list_insert_front (cx_list *list, cx_list_node *node, int *count)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_list *cx_list_remove (cx_list *list, cx_list_node *node, int *count)
+cx_list *cx_list_remove (cx_list *list, cx_list_node *node)
 {
   cx_list_node *head = list;  
   cx_list_node *prev = NULL;
@@ -48,11 +60,6 @@ cx_list *cx_list_remove (cx_list *list, cx_list_node *node, int *count)
       else 
       {
         prev->next = curr->next;
-      }
-      
-      if (count)
-      {
-        --(*count);
       }
     }
     

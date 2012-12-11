@@ -16,12 +16,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_VERTEX_TOTAL_SIZE (CX_VERTEX_POSITION_SIZE + CX_VERTEX_NORMAL_SIZE + CX_VERTEX_TEXCOORD_SIZE)
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader);
 void cx_mesh_gpu_deinit (cx_mesh *mesh);
 void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize);
@@ -69,7 +63,7 @@ void cx_mesh_destroy (cx_mesh *mesh)
 void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize)
 {
   CX_ASSERT (attr);
-  CX_ASSERT (attrSize = CX_NUM_SHADER_ATTRIBUTES);
+  CX_ASSERT (attrSize == CX_NUM_SHADER_ATTRIBUTES);
   
   memset (attr, false, sizeof (bool) * attrSize);
   
@@ -81,6 +75,13 @@ void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize
       break;
     }
 
+    case CX_VERTEX_FORMAT_PN:
+    {
+      attr [CX_SHADER_ATTRIBUTE_POSITION] = true;
+      attr [CX_SHADER_ATTRIBUTE_NORMAL] = true;
+      break;
+    }
+      
     case CX_VERTEX_FORMAT_PT:
     {
       attr [CX_SHADER_ATTRIBUTE_POSITION] = true;
@@ -121,6 +122,7 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
   
   CX_ASSERT (shader);
   CX_ASSERT (mesh);
+  CX_ASSERT (mesh->vertexData);
   CX_ASSERT (mesh->vertexData->numIndices > 0);
   CX_ASSERT (mesh->vertexData->numVertices > 0);
   
@@ -132,6 +134,10 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
   glGenVertexArraysOES (1, &mesh->vao);
   glBindVertexArrayOES (mesh->vao);
   cx_gdi_assert_no_errors ();
+  
+  bool enabled [CX_NUM_SHADER_ATTRIBUTES];
+  
+  cx_mesh_get_attributes (mesh->vertexData->format, enabled, CX_NUM_SHADER_ATTRIBUTES);
   
   {
     glGenBuffers (CX_VERTEX_BUFFER_COUNT, mesh->vbos);
@@ -150,41 +156,68 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
     
     cx_gdi_assert_no_errors ();
     
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
-    offset += sizeof (cx_vec4);
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_NORMAL], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
-    offset += sizeof (cx_vec4);
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TANGENT], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
-    offset += sizeof (cx_vec4);
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_BITANGENT], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
-    offset += sizeof (cx_vec4);
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+    if (enabled [CX_SHADER_ATTRIBUTE_POSITION])
+    {
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+    }
 
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_NORMAL]);
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TANGENT]);
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_BITANGENT]);
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);    
+    offset += sizeof (cx_vec4);
     
+    if (enabled [CX_SHADER_ATTRIBUTE_NORMAL])
+    {
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_NORMAL], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_NORMAL]);
+    }
+    
+    offset += sizeof (cx_vec4);
+    
+    if (enabled [CX_SHADER_ATTRIBUTE_TANGENT])
+    {
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TANGENT], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TANGENT]);
+    }
+    
+    offset += sizeof (cx_vec4);
+    
+    if (enabled [CX_SHADER_ATTRIBUTE_BITANGENT])
+    {
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_BITANGENT], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_BITANGENT]);
+    }
+    
+    offset += sizeof (cx_vec4);
+    
+    if (enabled [CX_SHADER_ATTRIBUTE_TEXCOORD])
+    {
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]); 
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
 #else // if CX_VERTEX_DATA_SOA
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [0]);
-    glBufferData (GL_ARRAY_BUFFER, numVertices * CX_VERTEX_POSITION_SIZE * sizeof (cxf32), vertexData->positions, GL_STATIC_DRAW);  
+    glBufferData (GL_ARRAY_BUFFER, numVertices * CX_VERTEX_POSITION_SIZE * sizeof (cxf32), vertexData->positions, GL_STATIC_DRAW);
+    
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [1]);
     glBufferData (GL_ARRAY_BUFFER, numVertices * CX_VERTEX_NORMAL_SIZE * sizeof (cxf32), vertexData->normals, GL_STATIC_DRAW);
+    
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [2]);
     glBufferData (GL_ARRAY_BUFFER, numVertices * CX_VERTEX_TEXCOORD_SIZE * sizeof (cxf32), vertexData->texCoords, GL_STATIC_DRAW);
+    
     glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, mesh->vbos [3]);
     glBufferData (GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof (cxu16), vertexData->indices, GL_STATIC_DRAW);
     
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [0]);
     glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_POSITION], CX_VERTEX_POSITION_SIZE, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
     glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_POSITION]);
+    
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [1]);
     glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_NORMAL], CX_VERTEX_NORMAL_SIZE, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
     glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_NORMAL]);
+    
     glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [2]);
     glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_TEXCOORD], CX_VERTEX_TEXCOORD_SIZE, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
     glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_TEXCOORD]);

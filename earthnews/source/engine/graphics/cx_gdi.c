@@ -69,10 +69,9 @@ bool _cx_gdi_init (void)
 
 bool _cx_gdi_deinit (void)
 {
-  if (s_initialised)
-  {
-    s_initialised = false;
-  }
+  CX_ASSERT (s_initialised);
+  
+  s_initialised = false;
   
   return !s_initialised;
 }
@@ -194,6 +193,7 @@ void cx_gdi_set_blend_mode (cx_gdi_blend_mode src, cx_gdi_blend_mode dest)
   
   GLenum srcMode = s_openglBlendModes [src];
   GLenum destMode = s_openglBlendModes [dest];
+  
   glBlendFunc (srcMode, destMode);
 }
 
