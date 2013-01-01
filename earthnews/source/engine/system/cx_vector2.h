@@ -31,6 +31,7 @@ typedef union cx_vec2 cx_vec2;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static CX_INLINE void cx_vec2_set (cx_vec2 * CX_RESTRICT v, cxf32 x, cxf32 y);
 static CX_INLINE void cx_vec2_normalise (cx_vec2 *v);
 static CX_INLINE cxf32 cx_vec2_length (cx_vec2 *v);
 static CX_INLINE void cx_vec2_mul (cx_vec2 * CX_RESTRICT v_out, cxf32 s, const cx_vec2 * CX_RESTRICT v);
@@ -39,8 +40,21 @@ static CX_INLINE void cx_vec2_mul (cx_vec2 * CX_RESTRICT v_out, cxf32 s, const c
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static CX_INLINE void cx_vec2_set (cx_vec2 * CX_RESTRICT v, cxf32 x, cxf32 y)
+{
+  CX_ASSERT (v);
+  
+  v->x = x;
+  v->y = y;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static CX_INLINE void cx_vec2_mul (cx_vec2 * CX_RESTRICT v_out, cxf32 s, const cx_vec2 * CX_RESTRICT v)
 {
+  CX_ASSERT (v);
   CX_ASSERT (cx_validatef (v->x));
   CX_ASSERT (cx_validatef (v->y));
   CX_ASSERT (cx_validatef (s));
@@ -55,6 +69,7 @@ static CX_INLINE void cx_vec2_mul (cx_vec2 * CX_RESTRICT v_out, cxf32 s, const c
 
 static CX_INLINE void cx_vec2_normalise (cx_vec2 *v)
 {
+  CX_ASSERT (v);
   CX_ASSERT (cx_validatef (v->x));
   CX_ASSERT (cx_validatef (v->y));
   
@@ -72,6 +87,7 @@ static CX_INLINE void cx_vec2_normalise (cx_vec2 *v)
 
 static CX_INLINE cxf32 cx_vec2_length (cx_vec2 *v)
 {
+  CX_ASSERT (v);
   CX_ASSERT (cx_validatef (v->x));
   CX_ASSERT (cx_validatef (v->y));
   

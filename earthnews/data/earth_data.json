@@ -45,6 +45,15 @@
   }
   },
   {
+  "name": "Bangkok",
+  "news": "http://news.lagos.com/feed.xml",
+  "weather": "1225448",
+  "location": {
+  "latitude": 13.7505633,
+  "longitude": 100.5030358
+  }
+  },
+  {
   "name": "Beijing",
   "news": "http://news.lagos.com/feed.xml",
   "weather": "2151330",
@@ -108,6 +117,15 @@
   }
   },
   {
+  "name": "Chicago",
+  "news": "http://news.lagos.com/feed.xml",
+  "weather": "2379574",
+  "location": {
+  "latitude": 41.859218,
+  "longitude": -87.638099
+  }
+  },
+  {
   "name": "Copenhagen",
   "news": "http://news.lagos.com/feed.xml",
   "weather": "554890",
@@ -135,6 +153,15 @@
   }
   },
   {
+  "name": "Dubai",
+  "news": "http://news.lagos.com/feed.xml",
+  "weather": "1940345",
+  "location": {
+  "latitude": 25.2722929,
+  "longitude": 55.316197
+  }
+  },
+  {
   "name": "Dublin",
   "news": "http://news.lagos.com/feed.xml",
   "weather": "560743",
@@ -144,12 +171,21 @@
   }
   },
   {
-  "name": "Edinburgh",
+  "name": "Helsinki",
   "news": "http://news.lagos.com/feed.xml",
-  "weather": "19344",
+  "weather": "565346",
   "location": {
-  "latitude": 55.9501755,
-  "longitude": -3.1875359
+  "latitude": 60.1690059,
+  "longitude": 24.9606128
+  }
+  },
+  {
+  "name": "Houston",
+  "news": "http://news.lagos.com/feed.xml",
+  "weather": "2424766",
+  "location": {
+  "latitude": 29.762307,
+  "longitude": -95.361339
   }
   },
   {
@@ -195,6 +231,15 @@
   "location": {
   "latitude": -4.320836,
   "longitude": 15.29866
+  }
+  },
+  {
+  "name": "Kuala Lumpur",
+  "news": "http://news.lagos.com/feed.xml",
+  "weather": "1154781",
+  "location": {
+  "latitude": 3.1268661,
+  "longitude": 101.6879791
   }
   },
   {
@@ -351,6 +396,15 @@
   }
   },
   {
+  "name": "Sydney",
+  "news": "http://news.lagos.com/feed.xml",
+  "weather": "1105779",
+  "location": {
+  "latitude": -33.8775536,
+  "longitude": 151.2159773
+  }
+  },
+  {
   "name": "Tehran",
   "news": "http://news.lagos.com/feed.xml",
   "weather": "2251945",
@@ -366,6 +420,15 @@
   "location": {
   "latitude": 35.6894875,
   "longitude": 139.6917064
+  }
+  },
+  {
+  "name": "Wellington",
+  "news": "http://news.lagos.com/feed.xml",
+  "weather": "2351310",
+  "location": {
+  "latitude": -41.2609884,
+  "longitude": 174.7580977
   }
   }
   ]

@@ -238,133 +238,6 @@ void feeds_news_search (news_feed_t *feed, const char *query)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_news_render (news_feed_t *feed)
-{
-  CX_ASSERT (feed);
-  
-  if (feed->dataReady)
-  {
-    const cx_font *font = render_get_ui_font (UI_FONT_SIZE_12);
-    const int maxNumDisplayItems = 8;
-    /* const float width = 400.0f; */
-    const float height = 180.0f;
-    const float posX = 0.0f;
-    const float posY = 588.0f;
-    const float marginX = 12.0f;
-    const float marginY = 6.0f;
-    /* const float textHeight = cx_font_get_height (font); */
-    const float itemSpacingY = height / (float) maxNumDisplayItems;
-    
-    int count = maxNumDisplayItems - 2;
-    news_feed_item_t *news = feed->items;
-    
-    float tx = posX + marginX;
-    float ty = posY + marginY;
-    
-    cx_colour colours [3];
-    
-    cx_colour_set (&colours [0], 1.0f, 0.0f, 0.0f, 0.45f);
-    cx_colour_set (&colours [1], 0.0f, 1.0f, 0.0f, 0.45f);
-    cx_colour_set (&colours [2], 0.0f, 0.0f, 1.0f, 0.45f);
-    
-    float h = cx_font_get_height (font);
-    
-    while (news && count--)
-    {
-      float w = cx_font_get_text_width (font, news->title);
-      
-      cx_draw_quad (tx, ty, tx + w, ty + h, 0.0f, 0.0f, &colours [count % 3], NULL);
-      
-      cx_font_render (font, news->title, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
-      
-      ty += itemSpacingY;
-      
-      news = news->next;
-    }
-    
-    cx_font_render (font, "More news...", tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool feeds_news_get_item (news_feed_item_t *feedItem, news_feed_t *feed, float touchX, float touchY)
-{
-  CX_ASSERT (feed);
-  CX_ASSERT (feedItem);
-  
-  bool found = false;
-  
-  if (feed->dataReady)
-  {
-    memset (feedItem, 0, sizeof (news_feed_item_t));
-    
-    const int maxNumDisplayItems = 8;
-    /* const float width = 400.0f; */
-    const float height = 180.0f;
-    const float posX = 0.0f;
-    const float posY = 588.0f;
-    const float marginX = 12.0f;
-    const float marginY = 6.0f;
-    const float itemSpacingY = height / (float) maxNumDisplayItems;
-    
-    int count = maxNumDisplayItems - 2;
-    news_feed_item_t *news = feed->items;
-    
-    float tx = posX + marginX;
-    float ty = posY + marginY;
-    
-    const cx_font *font = render_get_ui_font (UI_FONT_SIZE_12);
-    
-    while (news && count--)
-    {
-      float w = cx_font_get_text_width (font, news->title);
-      
-      if ((touchX >= tx) && (touchX <= (tx + w)))
-      {
-        if ((touchY >= ty) && (touchY <= (ty + itemSpacingY)))
-        {
-          found = true;
-          
-          *feedItem = *news;
-          
-          break;
-        }
-      }
-      
-      ty += itemSpacingY;
-      
-      news = news->next;
-    }
-    
-    if (!found)
-    {
-      const char *moreNews = "More news...";
-      
-      float w = cx_font_get_text_width (font, moreNews);
-      
-      if ((touchX >= tx) && (touchX <= (tx + w)))
-      {
-        if ((touchY >= ty) && (touchY <= (ty + itemSpacingY)))
-        {
-          feedItem->link = feed->link;
-          feedItem->title = moreNews;
-          
-          found = true;
-        }
-      }
-    }
-  }
-  
-  return found;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
@@ -432,8 +305,8 @@ bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
         cx_free ((void *) linkContent);
         
         rssItem->next = feed->items;
-        feed->items = rssItem;
         
+        feed->items = rssItem;
       }
       else if (strcmp (name, "link") == 0)
       {
@@ -608,7 +481,7 @@ void feeds_twitter_render (twitter_feed_t *feed)
     float x2 = x1 + width;
     float y2 = y1 + height;
     
-    cx_colour colour = *cx_colour_blue ();
+    cx_colour colour;
     
     colour.r = 0.2f;
     colour.g = 0.2f;
@@ -634,8 +507,12 @@ void feeds_twitter_render (twitter_feed_t *feed)
     char name [128];
     twitter_tweet_t *tweet = feed->items;
     
+    int twcount = 0;
+    
     while (tweet)
     {
+      twcount++;
+      
       cx_sprintf (name, 128, "%s @%s", tweet->username, tweet->userhandle);
       cx_font_render (font0, name, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
       
@@ -652,6 +529,9 @@ void feeds_twitter_render (twitter_feed_t *feed)
       
       tweet = tweet->next;
     }
+    
+    
+    twcount += 0;
   }
 }
 
@@ -710,7 +590,7 @@ bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize)
           
           int done = 0;
           unsigned int k, n;
-          for (k = 0, n = avalue->u.object.length; k < n; ++k)
+          for (k = 0, n = avalue->u.object.length; (k < n) && (done < 4); ++k)
           {
             const char *pname = avalue->u.object.values [k].name; // created at
             json_value *pvalue = avalue->u.object.values [k].value; // "date";
@@ -742,11 +622,6 @@ bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize)
               tweetItem->text = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
               CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->text);
               done++;
-            }
-            
-            if (done == 4)
-            {
-              break;
             }
           }
           
@@ -856,7 +731,7 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_render (weather_feed_t *feed, float x, float y, float z)
+void feeds_weather_render (const weather_feed_t *feed, float x, float y, float z, float opacity)
 {
   CX_ASSERT (feed);
   
@@ -864,6 +739,8 @@ void feeds_weather_render (weather_feed_t *feed, float x, float y, float z)
       (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
       (feed->conditionCode < NUM_WEATHER_CONDITION_CODES))
   {
+    //int temperature = feed->celsius;
+  
     cx_texture *image = s_weatherIcons [feed->conditionCode];
     CX_ASSERT (image);
     
@@ -875,7 +752,10 @@ void feeds_weather_render (weather_feed_t *feed, float x, float y, float z)
     float x2 = x1 + w;
     float y2 = y1 + h;
     
-    cx_draw_quad (x1, y1, x2, y2, z, 0.0f, cx_colour_white (), image);
+    cx_colour colour = *cx_colour_white ();
+    colour.a = opacity;
+    
+    cx_draw_quad (x1, y1, x2, y2, z, 0.0f, &colour, image);
   }
 }
 

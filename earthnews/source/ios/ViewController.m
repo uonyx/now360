@@ -155,7 +155,7 @@
   int w = (int) self.view.bounds.size.width;
   int h = (int) self.view.bounds.size.height;
   
-  app_reset (w, h);
+  app_view_resize (w, h);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,6 +196,7 @@ int touchCount = 0;
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
+  CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
   
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
 
@@ -204,8 +205,12 @@ int touchCount = 0;
   
   float normalised_x = currTouchPoint.x / screen_width;
   float normalised_y = currTouchPoint.y / screen_height;
+  float normalised_prev_x = prevTouchPoint.x / screen_width;
+  float normalised_prev_y = prevTouchPoint.y / screen_height;
   
-  app_input_touch_began (normalised_x, normalised_y);
+  //app_input_touch_began (normalised_x, normalised_y);
+  
+  _input_cache_touch_event (INPUT_TOUCH_TYPE_BEGIN, normalised_x, normalised_y, normalised_prev_x, normalised_prev_y);
   
   touchCount++;
 }
@@ -225,6 +230,7 @@ int touchCount = 0;
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
+  CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
   
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
@@ -233,8 +239,10 @@ int touchCount = 0;
   
   float normalised_x = currTouchPoint.x / screen_width;
   float normalised_y = currTouchPoint.y / screen_height;
+  float normalised_prev_x = prevTouchPoint.x / screen_width;
+  float normalised_prev_y = prevTouchPoint.y / screen_height;
   
-  app_input_touch_ended (normalised_x, normalised_y);
+  _input_cache_touch_event (INPUT_TOUCH_TYPE_END, normalised_x, normalised_y, normalised_prev_x, normalised_prev_y);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -265,7 +273,7 @@ int touchCount = 0;
   float normalised_prev_x = prevTouchPoint.x / screen_width;
   float normalised_prev_y = prevTouchPoint.y / screen_height;
   
-  app_input_touch_moved (normalised_x, normalised_y, normalised_prev_x, normalised_prev_y);
+  _input_cache_touch_event (INPUT_TOUCH_TYPE_MOVE, normalised_x, normalised_y, normalised_prev_x, normalised_prev_y);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -278,7 +286,8 @@ int touchCount = 0;
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
-  
+  CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
+
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.bounds.size.width;
@@ -286,8 +295,10 @@ int touchCount = 0;
   
   float normalised_x = currTouchPoint.x / screen_width;
   float normalised_y = currTouchPoint.y / screen_height;
+  float normalised_prev_x = prevTouchPoint.x / screen_width;
+  float normalised_prev_y = prevTouchPoint.y / screen_height;
   
-  app_input_touch_ended (normalised_x, normalised_y);
+  _input_cache_touch_event (INPUT_TOUCH_TYPE_END, normalised_x, normalised_y, normalised_prev_x, normalised_prev_y);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -299,11 +310,13 @@ int touchCount = 0;
   CGFloat factor = [(UIPinchGestureRecognizer *)sender scale];
   
   CX_DEBUGLOG_CONSOLE (1, "Pinch Gesture: factor [%.2f]", factor);
-  
-  factor = cx_clamp (factor, 0.5f, 1.5f);
   //self.view.transform = CGAffineTransformMakeScale (factor, factor);
   
-  app_input_zoom (factor);
+  _input_cache_gesture_event (INPUT_GESTURE_TYPE_PINCH, (void *) &factor);
 }
 
 @end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////

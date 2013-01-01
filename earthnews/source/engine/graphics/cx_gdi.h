@@ -82,7 +82,7 @@ void cx_gdi_set_screen_dimensions (cxi32 width, cxi32 height);
 
 void cx_gdi_clear (const cx_colour *colour);
 void cx_gdi_set_viewport (cxi32 width, cxi32 height);
-void cx_gdi_enable_z_buffer (bool enable);
+void cx_gdi_enable_z_write (bool enable);
 void cx_gdi_set_blend_mode (cx_gdi_blend_mode src, cx_gdi_blend_mode dest);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

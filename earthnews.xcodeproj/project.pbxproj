@@ -49,6 +49,9 @@
 		3182B9B514B0B6CC0097A87E /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B9B414B0B6CC0097A87E /* GLKit.framework */; };
 		3190B1D2158E5A70008B54FD /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3190B1D1158E5A70008B54FD /* libxml2.dylib */; };
 		3190B1D715929495008B54FD /* Twitter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3190B1D615929495008B54FD /* Twitter.framework */; };
+		3199A9AA167E35AF00A390CE /* input.c in Sources */ = {isa = PBXBuildFile; fileRef = 3199A9A9167E35AF00A390CE /* input.c */; };
+		31B4E7DB1686956C00B5A371 /* ui.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7DA1686956C00B5A371 /* ui.c */; };
+		31B4E7E6168CFA9100B5A371 /* ui_ctrlr.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */; };
 		31BCBFA9151E8B9A001A01D5 /* basepic.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBE49151E8B9A001A01D5 /* basepic.c */; };
 		31BCBFAA151E8B9A001A01D5 /* ftadvanc.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBE4B151E8B9A001A01D5 /* ftadvanc.c */; };
 		31BCBFAB151E8B9A001A01D5 /* ftapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BCBE4C151E8B9A001A01D5 /* ftapi.c */; };
@@ -204,6 +207,12 @@
 		3182B9B414B0B6CC0097A87E /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		3190B1D1158E5A70008B54FD /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
 		3190B1D615929495008B54FD /* Twitter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Twitter.framework; path = System/Library/Frameworks/Twitter.framework; sourceTree = SDKROOT; };
+		3199A9A7167E354F00A390CE /* input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = input.h; sourceTree = "<group>"; };
+		3199A9A9167E35AF00A390CE /* input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = input.c; sourceTree = "<group>"; };
+		31B4E7D81686953C00B5A371 /* ui.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ui.h; sourceTree = "<group>"; };
+		31B4E7DA1686956C00B5A371 /* ui.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui.c; sourceTree = "<group>"; };
+		31B4E7E4168CF97E00B5A371 /* ui_ctrlr.h */ = {isa = PBXFileReference; path = ui_ctrlr.h; sourceTree = "<group>"; };
+		31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui_ctrlr.c; sourceTree = "<group>"; };
 		31BCBDD5151E8B9A001A01D5 /* ftconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftconfig.h; sourceTree = "<group>"; };
 		31BCBDD6151E8B9A001A01D5 /* ftheader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftheader.h; sourceTree = "<group>"; };
 		31BCBDD7151E8B9A001A01D5 /* ftmodule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftmodule.h; sourceTree = "<group>"; };
@@ -448,6 +457,12 @@
 				3127E2B615D38FDC00793C60 /* social.m */,
 				3127E30715E00F5800793C60 /* worker.h */,
 				3127E30915E00F6D00793C60 /* worker.c */,
+				3199A9A7167E354F00A390CE /* input.h */,
+				3199A9A9167E35AF00A390CE /* input.c */,
+				31B4E7D81686953C00B5A371 /* ui.h */,
+				31B4E7DA1686956C00B5A371 /* ui.c */,
+				31B4E7E4168CF97E00B5A371 /* ui_ctrlr.h */,
+				31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -1136,6 +1151,9 @@
 				3127E31115F3F18500793C60 /* browser.m in Sources */,
 				316846BE165B041500B80A66 /* cx_vertex_data.c in Sources */,
 				316846C61660F97D00B80A66 /* cx_varmod.c in Sources */,
+				3199A9AA167E35AF00A390CE /* input.c in Sources */,
+				31B4E7DB1686956C00B5A371 /* ui.c in Sources */,
+				31B4E7E6168CFA9100B5A371 /* ui_ctrlr.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

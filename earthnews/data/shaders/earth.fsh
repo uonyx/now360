@@ -48,8 +48,10 @@ void main (void)
   
   // diffuse
   mediump float d = max (dotp, c_zero);
-  //mediump vec4 diffuse = d * u_diffuseLight * diffuseMat;
-  mediump vec4 diffuse = (d * u_diffuseLight * diffuseMat) + ((1.0 - d) * u_diffuseLight * nightMat);
+  mediump float n = 1.0 - d;
+  n = smoothstep (0.7, 0.9, n);
+  mediump vec4 diffuse = (d * u_diffuseLight * diffuseMat) + (n * u_diffuseLight * nightMat);
+  
   
   // specular
 #if 1

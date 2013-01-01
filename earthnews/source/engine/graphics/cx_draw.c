@@ -98,7 +98,7 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colou
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_gdi_assert_no_errors ();
   
-  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, (void*) pos);
+  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, pos);
   cx_gdi_assert_no_errors ();
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);

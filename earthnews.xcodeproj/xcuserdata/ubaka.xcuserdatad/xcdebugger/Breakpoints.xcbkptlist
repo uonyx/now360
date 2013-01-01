@@ -7,39 +7,37 @@
          shouldBeEnabled = "Yes"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/graphics/cx_texture.c"
-         timestampString = "375582202.665501"
+         filePath = "earthnews/source/app/feeds.h"
+         timestampString = "378670141.622287"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "174"
-         endingLineNumber = "174"
-         landmarkName = "cx_texture_gpu_init()"
-         landmarkType = "7">
+         startingLineNumber = "114"
+         endingLineNumber = "114">
       </FileBreakpoint>
       <FileBreakpoint
-         shouldBeEnabled = "Yes"
+         shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/system/cx_debug.c"
-         timestampString = "376004712.252714"
+         filePath = "earthnews/source/app/feeds.c"
+         timestampString = "378748885.751366"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "93"
-         endingLineNumber = "93"
-         landmarkName = "_cx_assert()"
+         startingLineNumber = "534"
+         endingLineNumber = "534"
+         landmarkName = "feeds_twitter_render()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/earth.c"
-         timestampString = "376675824.178237"
+         filePath = "earthnews/source/app/feeds.c"
+         timestampString = "378749515.930831"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "376"
-         endingLineNumber = "376"
-         landmarkName = "earth_render()"
+         startingLineNumber = "207"
+         endingLineNumber = "207"
+         landmarkName = "feeds_news_search()"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

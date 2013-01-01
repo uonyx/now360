@@ -52,12 +52,14 @@ void cx_util_world_space_to_screen_space (cxf32 width, cxf32 height, const cx_ma
   
   *depth = (clip.z + 1.0f) * 0.5f;
   CX_REFERENCE_UNUSED_VARIABLE (depth);
+  
 #if 0
   CX_DEBUGLOG_CONSOLE (1, "-----");
   CX_DEBUGLOG_CONSOLE (1, "clip.z = %.3f", clip.z);
   CX_DEBUGLOG_CONSOLE (1, "depth  = %.3f", *depth);
 #endif
-  if (zScale)
+  
+  if (zScale) // 2D
   {
 #if 1
     cxf32 w = 1.0f;

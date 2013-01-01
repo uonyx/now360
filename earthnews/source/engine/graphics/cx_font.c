@@ -162,8 +162,14 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
     py = py - (th * 0.5f);
   }
   
+  char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
+  cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  
+#if 0
+  const char *t = textBuffer;
   char c = 0;
-  while ((c = *text++))
+  
+  while ((c = *t++))
   {
     if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
     {
@@ -171,7 +177,8 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
       cx_vec2 uv [4];
       
       stbtt_aligned_quad quad;
-      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
+      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
+                          (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
       
       pos [0].x = quad.x0;
       pos [0].y = quad.y0;
@@ -203,6 +210,71 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+  
+#else
+
+  cx_vec2 pos [CX_FONT_MAX_TEXT_LENGTH * 4];
+  cx_vec2 uv [CX_FONT_MAX_TEXT_LENGTH * 4];
+  
+  const char *t = textBuffer;
+  char c = 0;
+  
+  int len = 0;
+  
+  sx = 1.0f;
+  sy = 1.0f;
+  
+  while ((c = *t++))
+  {
+    if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
+    {
+      
+      stbtt_aligned_quad quad;
+      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
+                          (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
+      
+      int i = len * 4;
+      
+      pos [i + 0].x = quad.x0;
+      pos [i + 0].y = quad.y0;
+      pos [i + 1].x = quad.x0;
+      pos [i + 1].y = quad.y1;
+      pos [i + 2].x = quad.x1;
+      pos [i + 2].y = quad.y0;
+      pos [i + 3].x = quad.x1;
+      pos [i + 3].y = quad.y1;
+      
+      uv [i + 0].x = quad.s0;
+      uv [i + 0].y = quad.t0;
+      uv [i + 1].x = quad.s0;
+      uv [i + 1].y = quad.t1;
+      uv [i + 2].x = quad.s1;
+      uv [i + 2].y = quad.t0;
+      uv [i + 3].x = quad.s1;
+      uv [i + 3].y = quad.t1;
+      
+      ++len;
+    }
+  }
+  
+  if (len > 0)
+  {
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos);
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv);
+    
+    cx_gdi_assert_no_errors ();
+    
+    glDrawArrays (GL_TRIANGLE_STRIP, 0, 4 * len);
+    cx_gdi_assert_no_errors ();
+  
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+  }
+  
+  
+#endif
+
+  
   
   cx_shader_end (shader);
 }
@@ -315,7 +387,8 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
       cx_vec2 uv [4];
       
       stbtt_aligned_quad quad;
-      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
+      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
+                          (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
       
       pos [0].x = quad.x0;
       pos [0].y = quad.y0;

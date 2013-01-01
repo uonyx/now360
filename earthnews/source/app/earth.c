@@ -267,7 +267,6 @@ void earth_destroy (earth_t *earth)
 {
   CX_ASSERT (earth);
   
-  
   // destroy SPHERES
   
   cx_mesh_destroy (earth->visual->mesh [0]);
@@ -354,7 +353,7 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   
   {
     cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_DEPTH_TEST);
-    cx_gdi_enable_z_buffer (true);
+    cx_gdi_enable_z_write (true);
     
     // get mesh
     cx_mesh *mesh = earth->visual->mesh [0];
@@ -401,7 +400,7 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   {
     cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
     cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
-    cx_gdi_enable_z_buffer (false);
+    cx_gdi_enable_z_write (false);
     
     cx_mesh *mesh1 = earth->visual->mesh [1];
     
@@ -434,7 +433,7 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
     
     cx_shader_end (mesh1->shader);
     
-    cx_gdi_enable_z_buffer (true);
+    cx_gdi_enable_z_write (true);
   }
   
 #endif
@@ -448,7 +447,7 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   {
     cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
     cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
-    cx_gdi_enable_z_buffer (false);
+    cx_gdi_enable_z_write (false);
     
     cx_mesh *mesh2 = earth->visual->mesh [2];
     
@@ -461,7 +460,7 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
     cx_shader_end (mesh2->shader);
     
     cx_mesh_render (mesh2);
-    cx_gdi_enable_z_buffer (true);
+    cx_gdi_enable_z_write (true);
   }
   
 #endif
@@ -472,6 +471,10 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   
   cx_mat3x3 normalMatrix;
   cx_mat3x3_identity (&normalMatrix);
+  
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
+  cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_enable_z_write (true);
   
   // get mesh
   cx_mesh *mesh = earth->visual->mesh [0];
@@ -490,6 +493,8 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   cx_mesh_render (mesh);
   
   cx_shader_end (mesh->shader);
+  
+  cx_gdi_enable_z_write (false);
 #endif
   
 }

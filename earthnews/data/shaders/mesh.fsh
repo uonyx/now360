@@ -18,9 +18,10 @@ void main (void)
   
   lowp vec4 diffuseColour = texture2D (u_diffuseMap, v_texcoord) * v_colour;
   lowp vec4 nightColour = texture2D (u_nightMap, v_texcoord) * (white - v_colour);
-  #if 0
+  
+#if 0
   gl_FragColor = diffuseColour + nightColour;
-  #else
+#else
   gl_FragColor = texture2D (u_diffuseMap, v_texcoord) * v_colour;
-  #endif
+#endif
 }
