@@ -51,6 +51,8 @@ typedef struct cx_engine_init_params
 
 static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init_params *params)
 {
+  CX_ASSERT (params);
+  
   _cx_system_init ();
   
   if ((flags & CX_ENGINE_INIT_GRAPHICS) == CX_ENGINE_INIT_GRAPHICS)
@@ -58,9 +60,7 @@ static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init
     CX_ASSERT (params);
     
     _cx_shader_init ();
-    _cx_gdi_init ();
-    
-    cx_gdi_set_screen_dimensions (params->screenWidth, params->screenHeight);
+    _cx_gdi_init (params->screenWidth, params->screenHeight);
   }
   
   if ((flags & CX_ENGINE_INIT_NETWORK) == CX_ENGINE_INIT_NETWORK)

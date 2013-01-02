@@ -18,17 +18,13 @@
 
 static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr);
 static void ui_ctx_render (ui_context_t *ctx);
-static void ui_ctx_press (ui_context_t *ctx, ui_intrinsic_t *intr);
+static void ui_ctx_press (ui_context_t *ctx);
 static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point);
 static ui_widget_state_t ui_ctx_widget_state (ui_context_t *ctx, const ui_intrinsic_t *intr);
 
 static void ui_ctx_render_custom (ui_context_t *ctx, ui_custom_t *custom);
 static void ui_ctx_render_button (ui_context_t *ctx, ui_button_t *button);
 static void ui_ctx_render_checkbox (ui_context_t *ctx, ui_checkbox_t *checkbox);
-
-static ui_button_t *ui_button (const ui_intrinsic_t *intr);
-static ui_custom_t *ui_custom (const ui_intrinsic_t *intr);
-static ui_checkbox_t *ui_checkbox (const ui_intrinsic_t *intr);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,7 +113,7 @@ bool ui_input (ui_context_t *ctx, const input_touch_event *tevent)
         if (hit != ctx->focus)
         {
           ctx->focus = hit;
-          ui_ctx_press (ctx, hit);          
+          ui_ctx_press (ctx);          
         }
         
         handled = true;
@@ -167,6 +163,10 @@ ui_button_t *ui_button_create (ui_context_t *ctx, int uid)
   return button;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ui_custom_t *ui_custom_create (ui_context_t *ctx, int uid)
 {
   CX_FATAL_ASSERT (ctx);
@@ -181,6 +181,10 @@ ui_custom_t *ui_custom_create (ui_context_t *ctx, int uid)
   
   return custom;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ui_button_set_callbacks (ui_button_t *button, const ui_button_callbacks_t *callbacks)
 {
@@ -201,6 +205,10 @@ void ui_button_set_callbacks (ui_button_t *button, const ui_button_callbacks_t *
   *cb = *callbacks;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void ui_custom_set_callbacks (ui_custom_t *custom, const ui_custom_callbacks_t *callbacks)
 {
   CX_ASSERT (custom);
@@ -218,34 +226,6 @@ void ui_custom_set_callbacks (ui_custom_t *custom, const ui_custom_callbacks_t *
   }
   
   *cb = *callbacks;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static ui_button_t *ui_button (const ui_intrinsic_t *intr)
-{
-  CX_ASSERT (intr->wtype == UI_WIDGET_BUTTON);
-  CX_ASSERT (intr->_widget);
-  
-  return (ui_button_t *) intr->_widget;
-}
-
-static ui_custom_t *ui_custom (const ui_intrinsic_t *intr)
-{
-  CX_ASSERT (intr->wtype == UI_WIDGET_CUSTOM);
-  CX_ASSERT (intr->_widget);
-  
-  return (ui_custom_t *) intr->_widget;
-}
-
-static ui_checkbox_t *ui_checkbox (const ui_intrinsic_t *intr)
-{
-  CX_ASSERT (intr->wtype == UI_WIDGET_CHECKBOX);
-  CX_ASSERT (intr->_widget);
-  
-  return (ui_checkbox_t *) intr->_widget;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,17 +271,16 @@ static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctx_press (ui_context_t *ctx, ui_intrinsic_t *intr)
+static void ui_ctx_press (ui_context_t *ctx)
 {
   CX_FATAL_ASSERT (ctx);
-  CX_ASSERT (intr);
   CX_ASSERT (ctx->focus);
   
   switch (ctx->focus->wtype) 
   {
     case UI_WIDGET_CUSTOM:
     {
-      ui_custom_t *custom = ui_custom (intr);
+      ui_custom_t *custom = (ui_custom_t *) ctx->focus->_widget;
       ui_custom_callbacks_t *callbacks = (ui_custom_callbacks_t *) custom->_callbacks;
       
       if (callbacks && callbacks->pressFn)
@@ -314,7 +293,7 @@ static void ui_ctx_press (ui_context_t *ctx, ui_intrinsic_t *intr)
       
     case UI_WIDGET_BUTTON:
     {
-      ui_button_t *button = ui_button (intr);
+      ui_button_t *button = (ui_button_t *) ctx->focus->_widget;
       ui_button_callbacks_t *callbacks = (ui_button_callbacks_t *) button->_callbacks;
       
       if (callbacks && callbacks->pressFn)
@@ -347,9 +326,9 @@ static void ui_ctx_render (ui_context_t *ctx)
     
     switch (intr->wtype)
     {
-      case UI_WIDGET_CUSTOM:    { ui_ctx_render_custom (ctx, ui_custom (intr)); break; }
-      case UI_WIDGET_BUTTON:    { ui_ctx_render_button (ctx, ui_button (intr)); break; }
-      case UI_WIDGET_CHECKBOX:  { ui_ctx_render_checkbox (ctx, ui_checkbox (intr)); break; }
+      case UI_WIDGET_CUSTOM:    { ui_ctx_render_custom (ctx, intr->_widget); break; }
+      case UI_WIDGET_BUTTON:    { ui_ctx_render_button (ctx, intr->_widget); break; }
+      case UI_WIDGET_CHECKBOX:  { ui_ctx_render_checkbox (ctx, intr->_widget); break; }
       default:                  { break; }
     }
     
@@ -579,6 +558,17 @@ void _ui_intrinsic_position_set (ui_intrinsic_t *intr, float x, float y)
   CX_ASSERT (intr);
   
   cx_vec2_set (&intr->position, x, y);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void _ui_intrinsic_dimension_set (ui_intrinsic_t *intr, float w, float h)
+{
+  CX_ASSERT (intr);
+  
+  cx_vec2_set (&intr->dimension, w, h);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

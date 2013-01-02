@@ -157,12 +157,14 @@ ui_widget_state_t _ui_intrinsic_widget_state (ui_context_t *ctx, const ui_intrin
 void _ui_intrinsic_colour_set (ui_intrinsic_t *intr, ui_widget_state_t wstate, const cx_colour *colour);
 void _ui_intrinsic_texture_set (ui_intrinsic_t *intr, ui_widget_state_t wstate, cx_texture *texture);
 void _ui_intrinsic_position_set (ui_intrinsic_t *intr, float x, float y);
+void _ui_intrinsic_dimension_set (ui_intrinsic_t *intr, float w, float h);
 
 //const cx_vec2 *_ui_intrinsic_position_get (ui_intrinsic_t *intr);
 
 #define ui_widget_get_state(context, widget) _ui_intrinsic_widget_state(context, &widget->intr)
 #define ui_widget_set_colour(widget, widget_state, colour) _ui_intrinsic_colour_set(&widget->intr, widget_state, colour)
 #define ui_widget_set_position(widget, pos_x, pos_y) _ui_intrinsic_position_set(&widget->intr, pos_x, pos_y)
+#define ui_widget_set_dimension(widget, width, height) _ui_intrinsic_dimension_set(&widget->intr, width, height)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

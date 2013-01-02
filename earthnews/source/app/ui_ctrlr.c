@@ -25,7 +25,6 @@ enum e_uid
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static ui_context_t *s_uicontext = NULL;
-//static ui_button_t  *s_uibutton = NULL;
 
 #define NEWS_MAX_ENTRIES 7
 
@@ -45,7 +44,6 @@ typedef struct ui_twitter_t
   cx_font *font1, *font2;
   ui_custom_t *view;
   cx_texture *avatars [TWITTER_MAX_ENTRIES];
-  ui_button_t *shuffle;
   float opacity;
 } ui_twitter_t;
 
@@ -64,7 +62,6 @@ static void ui_ctrlr_news_button_render (const ui_custom_t *custom);
 static void ui_ctrlr_news_populate (news_feed_t *feed);
 
 static void ui_ctrlr_twitter_create (void);
-static void ui_ctrlr_twitter_button_pressed (const ui_button_t *button);
 static void ui_ctrlr_twitter_render (const ui_custom_t *custom);
 static void ui_ctrlr_twitter_populate (twitter_feed_t *feed);
 
@@ -343,6 +340,16 @@ static void ui_ctrlr_news_button_pressed (const ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void ui_ctrlr_set_twitter_feed (twitter_feed_t *feed)
+{
+  CX_ASSERT (feed);
+  ui_ctrlr_twitter_populate (feed);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void ui_ctrlr_twitter_create (void)
 {
 #if 0
@@ -378,38 +385,18 @@ static void ui_ctrlr_twitter_create (void)
   s_uitwitter.opacity = 1.0f;
   //s_uitwitter.font0 = cx_font_create ("data/fonts/verdana.ttf", 14);
   
-  
   ui_custom_callbacks_t twitterCallbacks;  
   memset (&twitterCallbacks, 0, sizeof (ui_custom_callbacks_t));
   twitterCallbacks.renderFn = ui_ctrlr_twitter_render;
-  
-  ui_button_callbacks_t twbuttonCallbacks;
-  memset (&twbuttonCallbacks, 0, sizeof (ui_button_callbacks_t));
-  twbuttonCallbacks.pressFn = ui_ctrlr_twitter_button_pressed;
-
 #if 0
   s_uitwitter.view = ui_custom_create (s_uicontext, UI_ID_TWITTER_VIEW);
-  s_uitwitter.shuffle = ui_button_create (s_uicontext, UI_ID_TWITTER_SHUFFLE_BUTTON);
   
   ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_NORMAL, cx_colour_red ());
-  ui_widget_set_position (s_uitwitter.view, 0.0f, 0.0f);
+  ui_widget_set_position (s_uitwitter.view, 0.0f, 36.0f);
+  ui_widget_set_dimension (s_uitwitter.view, s_uicontext->canvasWidth, s_uicontext->canvasHeight);
   
   ui_custom_set_callbacks (s_uitwitter.view, &twitterCallbacks);
 #endif
-}
-
-void ui_ctrlr_set_twitter_feed (twitter_feed_t *feed)
-{
-  CX_ASSERT (feed);
-  ui_ctrlr_twitter_populate (feed);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void ui_ctrlr_twitter_button_pressed (const ui_button_t *button)
-{
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -427,6 +414,10 @@ static void ui_ctrlr_twitter_render (const ui_custom_t *custom)
 static void ui_ctrlr_twitter_populate (twitter_feed_t *feed)
 {
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

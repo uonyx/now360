@@ -45,19 +45,17 @@ static cx_mat4x4 s_transforms [CX_NUM_GDI_TRANSFORMS];
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool _cx_gdi_init (void)
+bool _cx_gdi_init (cxi32 w, cxi32 h)
 {
   CX_ASSERT (!s_initialised);
-  
-  cx_gdi_print_info ();
-  
-  s_screenWidth = CX_GDI_DEFAULT_SCREEN_WIDTH;
-  s_screenHeight = CX_GDI_DEFAULT_SCREEN_HEIGHT;
-  
+
   cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_P]);
   cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MV]);
   cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MVP]);
   
+  cx_gdi_print_info ();
+  cx_gdi_set_screen_dimensions (w, h);
+
   s_initialised = true;
   
   return s_initialised;
@@ -146,7 +144,7 @@ void cx_gdi_set_screen_dimensions (cxi32 width, cxi32 height)
   s_screenWidth = width;
   s_screenHeight = height;
   
-  cx_gdi_set_viewport (width, height);
+  glViewport (0, 0, width, height);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
