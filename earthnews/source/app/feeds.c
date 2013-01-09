@@ -71,13 +71,13 @@ static cx_texture *s_weatherIcons [NUM_WEATHER_CONDITION_CODES];
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize);
-bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize);
-bool feeds_weather_parse (weather_feed_t *feed, const char *data, int dataSize);
+bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize);
+bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize);
+bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize);
 
-void feeds_news_clear (news_feed_t *feed);
-void feeds_twitter_clear (twitter_feed_t *feed);
-void feeds_weather_clear (weather_feed_t *feed);
+void feeds_news_clear (feed_news_t *feed);
+void feeds_twitter_clear (feed_twitter_t *feed);
+void feeds_weather_clear (feed_weather_t *feed);
 
 void news_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
 void twitter_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
@@ -128,7 +128,7 @@ void news_http_callback (cx_http_request_id tId, const cx_http_response *respons
   CX_ASSERT (response);
   CX_ASSERT (userdata);
   
-  news_feed_t *feed = (news_feed_t *) userdata;
+  feed_news_t *feed = (feed_news_t *) userdata;
   
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
@@ -165,12 +165,12 @@ void news_http_callback (cx_http_request_id tId, const cx_http_response *respons
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_news_clear (news_feed_t *feed)
+void feeds_news_clear (feed_news_t *feed)
 {
   CX_ASSERT (feed);
   
-  news_feed_item_t *item = feed->items;
-  news_feed_item_t *next = NULL;
+  feed_news_item_t *item = feed->items;
+  feed_news_item_t *next = NULL;
   
   while (item)
   {
@@ -197,7 +197,7 @@ void feeds_news_clear (news_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_news_search (news_feed_t *feed, const char *query)
+void feeds_news_search (feed_news_t *feed, const char *query)
 {
   CX_ASSERT (feed);
   CX_ASSERT (query);
@@ -238,7 +238,7 @@ void feeds_news_search (news_feed_t *feed, const char *query)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
+bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
   CX_ASSERT (data);
@@ -265,7 +265,7 @@ bool feeds_news_parse (news_feed_t *feed, const char *data, int dataSize)
         cx_xml_node link = cx_xml_node_get_child (child, "link", NULL);
         cx_xml_node pubDate = cx_xml_node_get_child (child, "pubDate", NULL);
         
-        news_feed_item_t *rssItem = cx_malloc (sizeof (news_feed_item_t));
+        feed_news_item_t *rssItem = cx_malloc (sizeof (feed_news_item_t));
         
         rssItem->title = cx_xml_node_get_content (title);
         rssItem->date = cx_xml_node_get_content (pubDate);
@@ -337,7 +337,7 @@ void twitter_http_callback (cx_http_request_id tId, const cx_http_response *resp
   CX_ASSERT (response);
   CX_ASSERT (userdata);
   
-  twitter_feed_t *feed = (twitter_feed_t *) userdata;
+  feed_twitter_t *feed = (feed_twitter_t *) userdata;
   
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
@@ -401,7 +401,7 @@ void twitter_http_callback (cx_http_request_id tId, const cx_http_response *resp
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_twitter_search (twitter_feed_t *feed, const char *query)
+void feeds_twitter_search (feed_twitter_t *feed, const char *query)
 {
   CX_ASSERT (feed);
   CX_ASSERT (query);
@@ -440,12 +440,12 @@ void feeds_twitter_search (twitter_feed_t *feed, const char *query)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_twitter_clear (twitter_feed_t *feed)
+void feeds_twitter_clear (feed_twitter_t *feed)
 {
   CX_ASSERT (feed);
   
-  twitter_tweet_t *tweet = feed->items;
-  twitter_tweet_t *next = NULL;
+  feed_twitter_tweet_t *tweet = feed->items;
+  feed_twitter_tweet_t *next = NULL;
   
   while (tweet)
   {
@@ -467,7 +467,7 @@ void feeds_twitter_clear (twitter_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_twitter_render (twitter_feed_t *feed)
+void feeds_twitter_render (feed_twitter_t *feed)
 {
   CX_ASSERT (feed);
   
@@ -505,7 +505,7 @@ void feeds_twitter_render (twitter_feed_t *feed)
     //cx_font_set_scale (s_fontui, 1.0f, 1.0f);
     
     char name [128];
-    twitter_tweet_t *tweet = feed->items;
+    feed_twitter_tweet_t *tweet = feed->items;
     
     int twcount = 0;
     
@@ -539,7 +539,7 @@ void feeds_twitter_render (twitter_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize)
+bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
   CX_ASSERT (data);
@@ -585,7 +585,7 @@ bool feeds_twitter_parse (twitter_feed_t *feed, const char *data, int dataSize)
           // for memory optimisation, do a pre-pass for one-time malloc of stringdatabuffer for all strings for tweet_item/all tweets
           //
           
-          twitter_tweet_t *tweetItem = (twitter_tweet_t *) cx_malloc (sizeof (twitter_tweet_t));
+          feed_twitter_tweet_t *tweetItem = (feed_twitter_tweet_t *) cx_malloc (sizeof (feed_twitter_tweet_t));
           CX_DEBUGLOG_CONSOLE (DEBUG_LOG, "=====entry=====");
           
           int done = 0;
@@ -658,13 +658,13 @@ struct temp
 {
   char *data;
   int dataSize;
-  weather_feed_t *feed;
+  feed_weather_t *feed;
 };
 
 static void async_task (void *data)
 {
   struct temp *t = (struct temp *) data;
-  weather_feed_t *feed = t->feed;
+  feed_weather_t *feed = t->feed;
   char *xmldata = t->data;
   int xmldataSize = t->dataSize;
   
@@ -686,7 +686,7 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
   CX_ASSERT (response);
   CX_ASSERT (userdata);
   
-  weather_feed_t *feed = (weather_feed_t *) userdata;
+  feed_weather_t *feed = (feed_weather_t *) userdata;
   
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
@@ -731,7 +731,7 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_render (const weather_feed_t *feed, float x, float y, float z, float opacity)
+void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z, float opacity)
 {
   CX_ASSERT (feed);
   
@@ -763,7 +763,7 @@ void feeds_weather_render (const weather_feed_t *feed, float x, float y, float z
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_search (weather_feed_t *feed, const char *query)
+void feeds_weather_search (feed_weather_t *feed, const char *query)
 {
   CX_ASSERT (feed);
   CX_ASSERT (query);
@@ -802,7 +802,7 @@ void feeds_weather_search (weather_feed_t *feed, const char *query)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_clear (weather_feed_t *feed)
+void feeds_weather_clear (feed_weather_t *feed)
 {
   CX_ASSERT (feed);
   
@@ -817,7 +817,7 @@ void feeds_weather_clear (weather_feed_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_weather_parse (weather_feed_t *feed, const char *data, int dataSize)
+bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
   CX_ASSERT (data);

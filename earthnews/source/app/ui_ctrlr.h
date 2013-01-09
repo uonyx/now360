@@ -27,11 +27,11 @@ void ui_ctrlr_render (void);
 void ui_ctrlr_screen_resize (float width, float height);
 bool ui_ctrlr_handle_input (const input_touch_event *event);
 
-void ui_ctrlr_set_news_feed (news_feed_t *feed);
+void ui_ctrlr_set_news_feed (feed_news_t *feed);
 void ui_ctrlr_set_news_feed_opacity (float opacity);
 void ui_ctrlr_set_news_feed_visible (bool visible);
 
-void ui_ctrlr_set_twitter_feed (twitter_feed_t *feed);
+void ui_ctrlr_set_twitter_feed (feed_twitter_t *feed);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

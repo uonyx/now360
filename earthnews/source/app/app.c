@@ -54,9 +54,9 @@ static cx_vec2 s_rotTouchEnd;
 static cx_vec2 s_rotationSpeed;
 static cx_vec2 s_rotationAngle;
 
-static twitter_feed_t *s_twitterFeeds = NULL;
-static news_feed_t *s_newsFeeds = NULL;
-static weather_feed_t *s_weatherFeeds = NULL;
+static feed_twitter_t *s_twitterFeeds = NULL;
+static feed_news_t *s_newsFeeds = NULL;
+static feed_weather_t *s_weatherFeeds = NULL;
 
 static int s_selectedCity = -1;
 static int s_currentWeatherCity = -1;
@@ -175,14 +175,14 @@ void app_init (void *rootvc, float width, float height)
   
   int cityCount = s_earth->data->count;
   
-  s_twitterFeeds = cx_malloc (sizeof (twitter_feed_t) * cityCount);
-  memset (s_twitterFeeds, 0, sizeof (twitter_feed_t) * cityCount);
+  s_twitterFeeds = cx_malloc (sizeof (feed_twitter_t) * cityCount);
+  memset (s_twitterFeeds, 0, sizeof (feed_twitter_t) * cityCount);
   
-  s_newsFeeds = cx_malloc (sizeof (news_feed_t) * cityCount);
-  memset (s_newsFeeds, 0, sizeof (news_feed_t) * cityCount);
+  s_newsFeeds = cx_malloc (sizeof (feed_news_t) * cityCount);
+  memset (s_newsFeeds, 0, sizeof (feed_news_t) * cityCount);
   
-  s_weatherFeeds = cx_malloc (sizeof (weather_feed_t) * cityCount);
-  memset (s_weatherFeeds, 0, sizeof (weather_feed_t) * cityCount);
+  s_weatherFeeds = cx_malloc (sizeof (feed_weather_t) * cityCount);
+  memset (s_weatherFeeds, 0, sizeof (feed_weather_t) * cityCount);
   
   //
   // 2d render info
@@ -221,19 +221,19 @@ void app_init (void *rootvc, float width, float height)
   cx_file_load (&file1, "data/twitter.txt");
   cx_file_load (&file2, "data/weather2.txt");
   
-  news_feed_t rssFeed;
-  memset (&rssFeed, 0, sizeof (news_feed_t));
+  feed_news_t rssFeed;
+  memset (&rssFeed, 0, sizeof (feed_news_t));
   feeds_news_parse (&rssFeed, file0.data, file0.size);
   
-  twitter_feed_t tweets;
-  memset (&tweets, 0, sizeof (twitter_feed_t));
+  feed_twitter_t tweets;
+  memset (&tweets, 0, sizeof (feed_twitter_t));
   feeds_twitter_parse (&tweets, file1.data, file1.size);
   
-  weather_feed_t weather;
-  memset(&weather, 0, sizeof (weather_feed_t));
+  feed_weather_t weather;
+  memset(&weather, 0, sizeof (feed_weather_t));
   feeds_weather_parse (&weather, file2.data, file2.size);
   
-  news_feed_item_t *rssItem = rssFeed.items;
+  feed_news_item_t *rssItem = rssFeed.items;
   while (rssItem)
   {
     CX_DEBUGLOG_CONSOLE(1, "====rss=====");
@@ -243,7 +243,7 @@ void app_init (void *rootvc, float width, float height)
     rssItem = rssItem->next;
   }
   
-  twitter_tweet_t *twItem = tweets.items;
+  feed_twitter_tweet_t *twItem = tweets.items;
   while (twItem)
   {
     CX_DEBUGLOG_CONSOLE(1, "===twitter===");
@@ -723,22 +723,28 @@ static void app_render_2d (void)
 
 static void app_render_2d_feeds (void)
 {
+#if 0
   if (s_selectedCity > -1)
   {
     CX_ASSERT (s_selectedCity < s_earth->data->count);
     
-    twitter_feed_t *twitterFeed = &s_twitterFeeds [s_selectedCity];
+    feed_twitter_t *twitterFeed = &s_twitterFeeds [s_selectedCity];
     
     feeds_twitter_render (twitterFeed);
   }
+#endif
   
   if (s_selectedCity > -1)
   {
     CX_ASSERT (s_selectedCity < s_earth->data->count);
     
-    news_feed_t *newsFeed = &s_newsFeeds [s_selectedCity];
+    feed_news_t *newsFeed = &s_newsFeeds [s_selectedCity];
     
     ui_ctrlr_set_news_feed (newsFeed);
+    
+    feed_twitter_t *twitterFeed = &s_twitterFeeds [s_selectedCity];
+    
+    ui_ctrlr_set_twitter_feed (twitterFeed);
   }
   
   ui_ctrlr_render ();
@@ -758,7 +764,7 @@ static void app_render_2d_earth (void)
   for (int i = 0, c = s_earth->data->count; i < c; ++i)
   {
     const char *text = s_earth->data->names [i];
-    const weather_feed_t *feed = &s_weatherFeeds [i];
+    const feed_weather_t *feed = &s_weatherFeeds [i];
     const cx_vec4 *pos = &s_render2dInfo.renderPos [i];
     float opacity = s_render2dInfo.opacity [i];
     
@@ -825,7 +831,7 @@ static void app_render_2d_earth (void)
     screen.y -= 6.0f;
     
     // render weather icon
-    weather_feed_t *feed = &s_weatherFeeds [i];
+    feed_weather_t *feed = &s_weatherFeeds [i];
     feeds_weather_render (feed, screen.x, screen.y, z, (opacity * alpha));
   }
 #endif

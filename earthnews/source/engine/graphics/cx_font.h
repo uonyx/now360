@@ -18,10 +18,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_FONT_ALIGNMENT_LEFT_X          0x1
-#define CX_FONT_ALIGNMENT_CENTRE_X        0x2
-#define CX_FONT_ALIGNMENT_RIGHT_X         0x4
-#define CX_FONT_ALIGNMENT_CENTRE_Y        0x8
+#define CX_FONT_ALIGNMENT_LEFT_X          0x0
+#define CX_FONT_ALIGNMENT_CENTRE_X        0x1
+#define CX_FONT_ALIGNMENT_RIGHT_X         0x2
+#define CX_FONT_ALIGNMENT_CENTRE_Y        0x4
 #define CX_FONT_ALIGNMENT_DEFAULT         CX_FONT_ALIGNMENT_LEFT_X
 
 typedef unsigned int cx_font_alignment;

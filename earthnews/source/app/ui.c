@@ -148,6 +148,18 @@ void ui_render (ui_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void ui_clear_focus (ui_context_t *ctx)
+{
+  CX_FATAL_ASSERT (ctx);
+  
+  ctx->hover = NULL;
+  ctx->focus = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ui_button_t *ui_button_create (ui_context_t *ctx, int uid)
 {
   CX_FATAL_ASSERT (ctx);
@@ -157,6 +169,7 @@ ui_button_t *ui_button_create (ui_context_t *ctx, int uid)
   button->intr.uid = uid;
   button->intr.wtype = UI_WIDGET_BUTTON;
   button->intr._widget = button;
+  button->intr.opacity = 1.0f;
   
   ui_ctx_add_intrinsic (ctx, &button->intr);
   
@@ -176,6 +189,7 @@ ui_custom_t *ui_custom_create (ui_context_t *ctx, int uid)
   custom->intr.uid = uid;
   custom->intr.wtype = UI_WIDGET_CUSTOM;
   custom->intr._widget = custom;
+  custom->intr.opacity = 1.0f;
   
   ui_ctx_add_intrinsic (ctx, &custom->intr);
   
@@ -340,74 +354,6 @@ static void ui_ctx_render (ui_context_t *ctx)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point)
-{
-  CX_FATAL_ASSERT (ctx);
-  CX_ASSERT (point);
-  
-  ui_intrinsic_t *hit = NULL;
-  
-  cx_list_node *intrNode = ctx->intrList;
-  
-  float tx = ctx->canvasWidth * point->x;
-  float ty = ctx->canvasHeight * point->y;
-  
-  while (intrNode)
-  {
-    ui_intrinsic_t *intr = (ui_intrinsic_t *) intrNode->data;
-    CX_ASSERT (intr);
-    
-    float w = intr->dimension.x;
-    float h = intr->dimension.y;
-    float x = intr->position.x;
-    float y = intr->position.y;
-    
-    if ((tx >= x) && (tx <= (x + w)))
-    {
-      if ((ty >= y) && (ty <= (y + h)))
-      {
-        hit = intr;
-        break;
-      }
-    }
-    
-    intrNode = intrNode->next;
-  }
-  
-#if 0
-  if (hit && (hit->wtype == UI_WIDGET_LIST))
-  {
-    ui_list_t *list = ui_list (hit);
-    
-    for (unsigned int i = 0; i < list->itemCount; ++i)
-    {
-      ui_list_item_t *listItem = &list->items [i];
-      
-      float w = listItem->intr.dimension.x;
-      float h = listItem->intr.dimension.y;
-      float x = listItem->intr.position.x;
-      float y = listItem->intr.position.y;
-      
-      if ((tx >= x) && (tx <= (x + w)))
-      {
-        if ((ty >= y) && (ty <= (y + h)))
-        {
-          hit = &listItem->intr;
-          list->selectedItem = (int) i;          
-          break;
-        }
-      }
-    }
-  }
-#endif
-  
-  return hit;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static void ui_ctx_render_custom (ui_context_t *ctx, ui_custom_t *custom)
 {
   CX_FATAL_ASSERT (ctx);
@@ -421,7 +367,6 @@ static void ui_ctx_render_custom (ui_context_t *ctx, ui_custom_t *custom)
   }
   else
   {
-    
     // do default render
     
     ui_widget_state_t wstate = ui_ctx_widget_state (ctx, &custom->intr);
@@ -515,12 +460,116 @@ static void ui_ctx_render_checkbox (ui_context_t *ctx, ui_checkbox_t *checkbox)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ui_widget_state_t _ui_intrinsic_widget_state (ui_context_t *ctx, const ui_intrinsic_t *intr)
+static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point)
+{
+  CX_FATAL_ASSERT (ctx);
+  CX_ASSERT (point);
+  
+  ui_intrinsic_t *hit = NULL;
+  
+  // reverse list: touch test based on render order 
+  ctx->intrList = cx_list_reverse (ctx->intrList);
+  
+  cx_list_node *intrNode = ctx->intrList;
+  
+  float tx = ctx->canvasWidth * point->x;
+  float ty = ctx->canvasHeight * point->y;
+  
+  while (intrNode)
+  {
+    ui_intrinsic_t *intr = (ui_intrinsic_t *) intrNode->data;
+    CX_ASSERT (intr);
+    
+    float w = intr->dimension.x;
+    float h = intr->dimension.y;
+    float x = intr->position.x;
+    float y = intr->position.y;
+    
+    if ((tx >= x) && (tx <= (x + w)))
+    {
+      if ((ty >= y) && (ty <= (y + h)))
+      {
+        hit = intr;
+        break;
+      }
+    }
+    
+    intrNode = intrNode->next;
+  }
+  
+  // re-reverse list
+  ctx->intrList = cx_list_reverse (ctx->intrList);
+  
+  return hit;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void _ui_intrinsic_widget_focus_set (ui_context_t *ctx, const ui_intrinsic_t *intr)
+{
+  CX_FATAL_ASSERT (ctx);
+  
+  ctx->hover = NULL;
+  ctx->focus = intr;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ui_widget_state_t _ui_intrinsic_widget_state_get (ui_context_t *ctx, const ui_intrinsic_t *intr)
 {
   CX_FATAL_ASSERT (ctx);
   CX_ASSERT (intr);
   
   return ui_ctx_widget_state (ctx, intr);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+float _ui_intrinsic_opacity_get (const ui_intrinsic_t *intr)
+{
+  CX_ASSERT (intr);
+  
+  return intr->opacity;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const cx_vec2 *_ui_intrinsic_position_get (const ui_intrinsic_t *intr)
+{
+  CX_ASSERT (intr);
+  
+  return &intr->position;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const cx_vec2 *_ui_intrinsic_dimension_get (const ui_intrinsic_t *intr)
+{
+  CX_ASSERT (intr);
+  
+  return &intr->dimension;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const cx_colour *_ui_intrinsic_colour_get (const ui_intrinsic_t *intr, ui_widget_state_t wstate)
+{
+  CX_ASSERT (intr);
+  CX_ASSERT ((wstate >= UI_WIDGET_STATE_NORMAL) && (wstate < NUM_UI_WIDGET_STATES));
+  
+  return &intr->colour [wstate];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -575,6 +624,17 @@ void _ui_intrinsic_dimension_set (ui_intrinsic_t *intr, float w, float h)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void _ui_intrinsic_opacity_set (ui_intrinsic_t *intr, float opacity)
+{
+  CX_ASSERT (intr);
+  
+  intr->opacity = opacity;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #if 0
 bool ui_touch_hit (ui_context_t *context, const ui_intrinsic_t *elem);
 bool ui_touch_hit (ui_context_t *context, const ui_intrinsic_t *elem)
@@ -595,28 +655,6 @@ bool ui_touch_hit (ui_context_t *context, const ui_intrinsic_t *elem)
   if ((tx >= x) && (tx <= (x + w)))
   {
     if ((ty >= y) && (ty <= (y + h)))
-    {
-      ret = true;
-    }
-  }
-  
-  return ret;
-}
-
-bool ui_input_element (const ui_intrinsic_t *elem, float inputx, float inputy)
-{
-  CX_ASSERT (elem);
-  
-  bool ret = false;
-  
-  float w = elem->dimension.x;
-  float h = elem->dimension.y;
-  float x = elem->position.x;
-  float y = elem->position.y;
-  
-  if ((inputx >= x) && (inputx <= (x + w)))
-  {
-    if ((inputy >= y) && (inputy <= (y + h)))
     {
       ret = true;
     }
