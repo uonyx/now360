@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr);
+static void ui_ctx_remove_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr);
 static void ui_ctx_render (ui_context_t *ctx);
 static void ui_ctx_press (ui_context_t *ctx);
 static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point);
@@ -170,6 +171,8 @@ ui_button_t *ui_button_create (ui_context_t *ctx, int uid)
   button->intr.wtype = UI_WIDGET_BUTTON;
   button->intr._widget = button;
   button->intr.opacity = 1.0f;
+  button->intr.show = 1;
+  button->intr.enable = 1;
   
   ui_ctx_add_intrinsic (ctx, &button->intr);
   
@@ -190,10 +193,24 @@ ui_custom_t *ui_custom_create (ui_context_t *ctx, int uid)
   custom->intr.wtype = UI_WIDGET_CUSTOM;
   custom->intr._widget = custom;
   custom->intr.opacity = 1.0f;
+  custom->intr.show = 1;
+  custom->intr.enable = 1;
   
   ui_ctx_add_intrinsic (ctx, &custom->intr);
   
   return custom;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ui_custom_destroy (ui_context_t *ctx, ui_custom_t *custom)
+{
+  CX_FATAL_ASSERT (ctx);
+  CX_ASSERT (custom);
+  
+  ui_ctx_remove_intrinsic (ctx, &custom->intr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -285,6 +302,18 @@ static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void ui_ctx_remove_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr)
+{
+  CX_FATAL_ASSERT (ctx);
+  CX_ASSERT (intr);
+  
+  ctx->intrList = cx_list_remove (ctx->intrList, intr);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void ui_ctx_press (ui_context_t *ctx)
 {
   CX_FATAL_ASSERT (ctx);
@@ -363,23 +392,29 @@ static void ui_ctx_render_custom (ui_context_t *ctx, ui_custom_t *custom)
   
   if (callbacks && callbacks->renderFn)
   {
-    callbacks->renderFn (custom);
+    if (custom->intr.show)
+    {  
+      callbacks->renderFn (custom);
+    }
   }
   else
   {
     // do default render
     
-    ui_widget_state_t wstate = ui_ctx_widget_state (ctx, &custom->intr);
-    
-    float x1 = custom->intr.position.x;
-    float y1 = custom->intr.position.y;
-    float x2 = x1 + custom->intr.dimension.x;
-    float y2 = y1 + custom->intr.dimension.y;
-    
-    cx_texture *texture = custom->intr.texture [wstate];
-    cx_colour colour = custom->intr.colour [wstate];
-    
-    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colour, texture);
+    if (custom->intr.show)
+    {    
+      ui_widget_state_t wstate = ui_ctx_widget_state (ctx, &custom->intr);
+      
+      float x1 = custom->intr.position.x;
+      float y1 = custom->intr.position.y;
+      float x2 = x1 + custom->intr.dimension.x;
+      float y2 = y1 + custom->intr.dimension.y;
+      
+      cx_texture *texture = custom->intr.texture [wstate];
+      cx_colour colour = custom->intr.colour [wstate];
+      
+      cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colour, texture);
+    }
   }
 }
 
@@ -401,18 +436,20 @@ static void ui_ctx_render_button (ui_context_t *ctx, ui_button_t *button)
   else
   {
     // do default render
-    
-    ui_widget_state_t wstate = ui_ctx_widget_state (ctx, &button->intr);
-    
-    float x1 = button->intr.position.x;
-    float y1 = button->intr.position.y;
-    float x2 = x1 + button->intr.dimension.x;
-    float y2 = y1 + button->intr.dimension.y;
-    
-    cx_texture *texture = button->intr.texture [wstate];
-    cx_colour colour = button->intr.colour [wstate];
-    
-    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colour, texture);
+    if (button->intr.show)
+    {   
+      ui_widget_state_t wstate = ui_ctx_widget_state (ctx, &button->intr);
+      
+      float x1 = button->intr.position.x;
+      float y1 = button->intr.position.y;
+      float x2 = x1 + button->intr.dimension.x;
+      float y2 = y1 + button->intr.dimension.y;
+      
+      cx_texture *texture = button->intr.texture [wstate];
+      cx_colour colour = button->intr.colour [wstate];
+      
+      cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colour, texture);
+    }
   }
 }
 
@@ -576,6 +613,17 @@ const cx_colour *_ui_intrinsic_colour_get (const ui_intrinsic_t *intr, ui_widget
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool _ui_intrinsic_show_get (const ui_intrinsic_t *intr)
+{
+  CX_ASSERT (intr);
+  
+  return intr->show;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void _ui_intrinsic_colour_set (ui_intrinsic_t *intr, ui_widget_state_t wstate, const cx_colour *colour)
 {
   CX_ASSERT (intr);
@@ -629,6 +677,17 @@ void _ui_intrinsic_opacity_set (ui_intrinsic_t *intr, float opacity)
   CX_ASSERT (intr);
   
   intr->opacity = opacity;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void _ui_intrinsic_show_set (ui_intrinsic_t *intr, bool show)
+{
+  CX_ASSERT (intr);
+  
+  intr->show = show;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

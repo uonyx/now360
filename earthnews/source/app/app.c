@@ -14,6 +14,7 @@
 #include "browser.h"
 #include "worker.h"
 #include "ui_ctrlr.h"
+#include "audio.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,6 +257,10 @@ void app_init (void *rootvc, float width, float height)
   
   CX_DEBUG_BREAKABLE_EXPR;
 #endif
+  
+  audio_init (rootvc);
+  
+  audio_music_play ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -845,7 +850,7 @@ static void app_input_handle_touch_event (const input_touch_event *event)
 {
   if (ui_ctrlr_handle_input (event))
   {
-    CX_DEBUGLOG_CONSOLE (1, "UI input handled");
+    CX_DEBUGLOG_CONSOLE (0, "UI input handled");
   }
   else
   {

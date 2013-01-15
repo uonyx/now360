@@ -140,3 +140,95 @@ void cx_list_free (cx_list *list)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0
+
+void cx_list2_insert_front (cx_list2 *list, const void *data)
+{
+  cx_list_node2 *node = (cx_list_node2 *) cx_malloc (sizeof (cx_list_node2));
+  
+  node->data = data;
+  
+  if (!list->head)
+  {
+    list->tail = node;
+    list->head = node;
+  }
+  else
+  {
+    node->next = list->head;
+    list->head->prev = node;
+    list->head = node;
+  }
+}
+
+void cx_list2_insert_back (cx_list2 *list, const void *data)
+{
+  cx_list_node2 *node = (cx_list_node2 *) cx_malloc (sizeof (cx_list_node2));
+  
+  node->data = data;
+  
+  if (!list->tail)
+  {
+    list->head = node;
+    list->tail = node;
+  }
+  else
+  {
+    node->prev = list->tail;
+    list->tail->next = node;
+    list->tail = node;
+  }
+}
+
+bool cx_list2_remove (cx_list2 *list, const void *data)
+{
+  bool found = false;
+  
+  if (list->head)
+  {
+    if (list->head->data == data)
+    {
+      cx_list_node2 *next = list->head->next;
+      cx_free (list->head);
+      
+      next->prev = NULL;
+      list->head = next;
+      
+      found = true;
+    }
+    else if (list->tail->data == data)
+    {
+      cx_list_node2 *prev = list->tail->prev;
+      cx_free (list->tail);
+      
+      prev->next = NULL;
+      list->tail = prev;
+      
+      found = true;
+    }
+    else
+    {
+      cx_list_node2 *curr = list->head->next;
+      
+      while (curr)
+      {
+        if (curr->data == data)
+        {
+          curr->prev->next = curr->next;
+          curr->next->prev = curr->prev;
+          
+          cx_free (curr);
+          found = true;
+          
+          break;
+        }
+        
+        curr = curr->next;
+      }
+    }
+  }
+  
+  return found;
+}
+
+#endif

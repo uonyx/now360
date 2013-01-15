@@ -141,11 +141,11 @@ void ui_clear_focus (ui_context_t *ctx);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ui_button_t *ui_button_create (ui_context_t *ctx, int uid);
-void ui_button_destroy (ui_button_t *button);
+void ui_button_destroy (ui_context_t *ctx, ui_button_t *button);
 void ui_button_set_callbacks (ui_button_t *button, const ui_button_callbacks_t *callbacks);
 
 ui_custom_t *ui_custom_create (ui_context_t *ctx, int uid);
-void ui_custom_destroy (ui_custom_t *custom);
+void ui_custom_destroy (ui_context_t *ctx, ui_custom_t *custom);
 void ui_custom_set_callbacks (ui_custom_t *custom, const ui_custom_callbacks_t *callbacks);
 
 ui_checkbox_t *ui_checkbox_create (ui_context_t *ctx, int uid);
@@ -156,14 +156,16 @@ void ui_checkbox_set_callbacks (ui_checkbox_t *checkbox, const ui_checkbox_callb
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define ui_widget_set_focus(context, widget) _ui_intrinsic_widget_focus_set(context, widget ? &widget->intr : NULL)
-#define ui_widget_get_state(context, widget) _ui_intrinsic_widget_state_get(context, widget ? &widget->intr : NULL)
+#define ui_widget_set_focus(context, widget) _ui_intrinsic_widget_focus_set(context, &widget->intr)
+#define ui_widget_get_state(context, widget) _ui_intrinsic_widget_state_get(context, &widget->intr)
 
+#define ui_widget_get_visible(widget) _ui_intrinsic_show_get(&widget->intr)
 #define ui_widget_get_opacity(widget) _ui_intrinsic_opacity_get(&widget->intr)
 #define ui_widget_get_colour(widget, widget_state) _ui_intrinsic_colour_get(&widget->intr, widget_state)
 #define ui_widget_get_position(widget) _ui_intrinsic_position_get(&widget->intr)
 #define ui_widget_get_dimension(widget) _ui_intrinsic_dimension_get(&widget->intr)
 
+#define ui_widget_set_visible(widget, visible) _ui_intrinsic_show_set(&widget->intr, visible)
 #define ui_widget_set_opacity(widget, opacity) _ui_intrinsic_opacity_set(&widget->intr, opacity)
 #define ui_widget_set_colour(widget, widget_state, colour) _ui_intrinsic_colour_set(&widget->intr, widget_state, colour)
 #define ui_widget_set_position(widget, pos_x, pos_y) _ui_intrinsic_position_set(&widget->intr, pos_x, pos_y)
@@ -178,11 +180,13 @@ void _ui_intrinsic_texture_set (ui_intrinsic_t *intr, ui_widget_state_t wstate, 
 void _ui_intrinsic_position_set (ui_intrinsic_t *intr, float x, float y);
 void _ui_intrinsic_dimension_set (ui_intrinsic_t *intr, float w, float h);
 void _ui_intrinsic_opacity_set (ui_intrinsic_t *intr, float opacity);
+void _ui_intrinsic_show_set (ui_intrinsic_t *intr, bool show);
 
 const cx_colour *_ui_intrinsic_colour_get (const ui_intrinsic_t *intr, ui_widget_state_t wstate);
 const cx_vec2 *_ui_intrinsic_position_get (const ui_intrinsic_t *intr);
 const cx_vec2 *_ui_intrinsic_dimension_get (const ui_intrinsic_t *intr);
 float _ui_intrinsic_opacity_get (const ui_intrinsic_t *intr);
+bool _ui_intrinsic_show_get (const ui_intrinsic_t *intr);
 
 ui_widget_state_t _ui_intrinsic_widget_state_get (ui_context_t *ctx, const ui_intrinsic_t *intr);
 void _ui_intrinsic_widget_focus_set (ui_context_t *ctx, const ui_intrinsic_t *intr);

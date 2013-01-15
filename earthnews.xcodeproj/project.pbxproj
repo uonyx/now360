@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		311B943216A17EFA0057786F /* audio.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B943116A17EFA0057786F /* audio.m */; };
+		311B943416A1802B0057786F /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311B943316A1802B0057786F /* MediaPlayer.framework */; };
 		3127E2B915D38FDC00793C60 /* app.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2A915D38FDC00793C60 /* app.c */; };
 		3127E2BA15D38FDC00793C60 /* camera.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2AB15D38FDC00793C60 /* camera.c */; };
 		3127E2BB15D38FDC00793C60 /* earth.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2AD15D38FDC00793C60 /* earth.c */; };
@@ -124,6 +126,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		311B943016A17EBB0057786F /* audio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = audio.h; sourceTree = "<group>"; };
+		311B943116A17EFA0057786F /* audio.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = audio.m; sourceTree = "<group>"; };
+		311B943316A1802B0057786F /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
 		3127E2A915D38FDC00793C60 /* app.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = app.c; sourceTree = "<group>"; };
 		3127E2AA15D38FDC00793C60 /* app.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = app.h; sourceTree = "<group>"; };
 		3127E2AB15D38FDC00793C60 /* camera.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = camera.c; sourceTree = "<group>"; };
@@ -211,7 +216,7 @@
 		3199A9A9167E35AF00A390CE /* input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = input.c; sourceTree = "<group>"; };
 		31B4E7D81686953C00B5A371 /* ui.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ui.h; sourceTree = "<group>"; };
 		31B4E7DA1686956C00B5A371 /* ui.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui.c; sourceTree = "<group>"; };
-		31B4E7E4168CF97E00B5A371 /* ui_ctrlr.h */ = {isa = PBXFileReference; path = ui_ctrlr.h; sourceTree = "<group>"; };
+		31B4E7E4168CF97E00B5A371 /* ui_ctrlr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ui_ctrlr.h; sourceTree = "<group>"; };
 		31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui_ctrlr.c; sourceTree = "<group>"; };
 		31BCBDD5151E8B9A001A01D5 /* ftconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftconfig.h; sourceTree = "<group>"; };
 		31BCBDD6151E8B9A001A01D5 /* ftheader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftheader.h; sourceTree = "<group>"; };
@@ -425,6 +430,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				311B943416A1802B0057786F /* MediaPlayer.framework in Frameworks */,
 				3190B1D715929495008B54FD /* Twitter.framework in Frameworks */,
 				3190B1D2158E5A70008B54FD /* libxml2.dylib in Frameworks */,
 				3182B9B514B0B6CC0097A87E /* GLKit.framework in Frameworks */,
@@ -441,8 +447,6 @@
 		3127E2A815D38FDC00793C60 /* app */ = {
 			isa = PBXGroup;
 			children = (
-				3127E30F15F3F17F00793C60 /* browser.h */,
-				3127E31015F3F18100793C60 /* browser.m */,
 				3127E2A915D38FDC00793C60 /* app.c */,
 				3127E2AA15D38FDC00793C60 /* app.h */,
 				3127E2AB15D38FDC00793C60 /* camera.c */,
@@ -463,6 +467,10 @@
 				31B4E7DA1686956C00B5A371 /* ui.c */,
 				31B4E7E4168CF97E00B5A371 /* ui_ctrlr.h */,
 				31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */,
+				3127E30F15F3F17F00793C60 /* browser.h */,
+				3127E31015F3F18100793C60 /* browser.m */,
+				311B943016A17EBB0057786F /* audio.h */,
+				311B943116A17EFA0057786F /* audio.m */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -617,6 +625,7 @@
 		3182B98C14B0B6680097A87E = {
 			isa = PBXGroup;
 			children = (
+				311B943316A1802B0057786F /* MediaPlayer.framework */,
 				3182B9A114B0B6680097A87E /* earthnews */,
 				3182B99A14B0B6680097A87E /* Frameworks */,
 				3182B99814B0B6680097A87E /* Products */,
@@ -1154,6 +1163,7 @@
 				3199A9AA167E35AF00A390CE /* input.c in Sources */,
 				31B4E7DB1686956C00B5A371 /* ui.c in Sources */,
 				31B4E7E6168CFA9100B5A371 /* ui_ctrlr.c in Sources */,
+				311B943216A17EFA0057786F /* audio.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
