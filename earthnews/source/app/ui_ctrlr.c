@@ -39,7 +39,7 @@ enum e_uid
 
 static ui_context_t *s_uicontext = NULL;
 
-#define NEWS_MAX_ENTRIES 7
+#define NEWS_MAX_ENTRIES 5
 
 typedef struct ui_news_t
 {
@@ -126,6 +126,7 @@ static ui_music_t s_uimusic;
 
 static void ui_ctrlr_init_create_widgets (void);
 static void ui_ctrlr_deinit_destroy_widgets (void);
+static void ui_ctrlr_screen_resize_widgets (void);
 
 static void ui_ctrlr_news_create (void);
 static void ui_ctrlr_news_destroy (void);
@@ -135,16 +136,19 @@ static void ui_ctrlr_news_populate (feed_news_t *feed);
 
 static void ui_ctrlr_twitter_create (void);
 static void ui_ctrlr_twitter_destroy (void);
+static void ui_ctrlr_twitter_resize (void);
 static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom);
 static void ui_ctrlr_twitter_button_render (ui_custom_t *custom);
 static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom);
 static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom);
 static void ui_ctrlr_twitter_populate (feed_twitter_t *feed);
-static void ui_ctrlr_twitter_ticker_fade (int type, float duration);
-static void ui_ctrlr_twitter_ticker_fade_update (float *opacity);
+static void ui_ctrlr_twitter_ticker_fade_begin (int type, float duration);
+static void ui_ctrlr_twitter_ticker_fade_end (void);
+static void ui_ctrlr_twitter_ticker_anim_update (void);
 
 static void ui_ctrlr_music_create (void);
 static void ui_ctrlr_music_destroy (void);
+static void ui_ctrlr_music_resize (void);
 static void ui_ctrlr_music_view_render (ui_custom_t *custom);
 static void ui_ctrlr_music_view_pressed (ui_custom_t *custom);
 static void ui_ctrlr_music_toggle_render (ui_custom_t *custom);
@@ -157,6 +161,11 @@ static void ui_ctrlr_music_prev_render (ui_custom_t *custom);
 static void ui_ctrlr_music_prev_pressed (ui_custom_t *custom);
 static void ui_ctrlr_music_next_render (ui_custom_t *custom);
 static void ui_ctrlr_music_next_pressed (ui_custom_t *custom);
+static void ui_ctrlr_music_bar_fade_begin (int type, float duration);
+static void ui_ctrlr_music_bar_fade_end (void);
+static void ui_ctrlr_music_bar_anim_update (void);
+static void ui_ctrlr_music_picked_callback (void);
+static void ui_ctrlr_music_notification_callback (audio_music_notification n);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,6 +195,10 @@ void ui_ctrlr_deinit (void)
 
 void ui_ctrlr_render (void)
 {
+  ui_ctrlr_twitter_ticker_anim_update ();
+  
+  ui_ctrlr_music_bar_anim_update ();
+  
   ui_render (s_uicontext);
 }
 
@@ -196,6 +209,8 @@ void ui_ctrlr_render (void)
 void ui_ctrlr_screen_resize (float width, float height)
 {
   ui_canvas_resize (s_uicontext, width, height);
+  
+  ui_ctrlr_screen_resize_widgets ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,6 +270,16 @@ static void ui_ctrlr_deinit_destroy_widgets (void)
   ui_ctrlr_news_destroy ();
   ui_ctrlr_twitter_destroy ();
   ui_ctrlr_music_destroy ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_screen_resize_widgets (void)
+{
+  ui_ctrlr_twitter_resize ();
+  ui_ctrlr_music_resize ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -500,7 +525,7 @@ static void ui_ctrlr_twitter_create (void)
   ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_FOCUS, &viewCol);
 #endif
   ui_widget_set_position (s_uitwitter.view, 0.0f, 72.0f);
-  ui_widget_set_dimension (s_uitwitter.view, 1024.0f, 24.0f);
+  ui_widget_set_dimension (s_uitwitter.view, s_uicontext->canvasWidth, 24.0f);
   ui_widget_set_visible (s_uitwitter.view, false);
 }
 
@@ -512,6 +537,21 @@ static void ui_ctrlr_twitter_destroy (void)
 {
   ui_custom_destroy (s_uicontext, s_uitwitter.view);
   ui_custom_destroy (s_uicontext, s_uitwitter.toggle);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_twitter_resize (void)
+{
+  ui_widget_set_position (s_uitwitter.toggle, 0.0f, 72.0f);
+  ui_widget_set_dimension (s_uitwitter.toggle, 36.0f, 24.0f);
+  ui_widget_set_visible (s_uitwitter.toggle, false);
+  
+  ui_widget_set_position (s_uitwitter.view, 0.0f, 72.0f);
+  ui_widget_set_dimension (s_uitwitter.view, s_uicontext->canvasWidth, 24.0f);
+  ui_widget_set_visible (s_uitwitter.view, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -592,13 +632,11 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
   
   if (ticker)
   {
-    float opacity = ui_widget_get_opacity (custom);
-    ui_ctrlr_twitter_ticker_fade_update (&opacity);
-    
     ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
     const cx_colour *colour = ui_widget_get_colour (custom, wstate);
     const cx_vec2 *pos = ui_widget_get_position (custom);
     const cx_vec2 *dim = ui_widget_get_dimension (custom);
+    float opacity = ui_widget_get_opacity (custom);
     
     cx_colour colbg = *colour;
     cx_colour colname = *cx_colour_green ();
@@ -659,8 +697,6 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
 
 static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom)
 {
-  audio_music_pick ();
-  
   ui_clear_focus (s_uicontext);
 }
 
@@ -720,15 +756,15 @@ static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom)
   {
     if (custom->userdata)
     {
-      // show twitter
+      // show 
       custom->userdata = NULL;
-      ui_ctrlr_twitter_ticker_fade (ANIM_FADE_IN, 0.3f);
+      ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_IN, 0.3f);
     }
     else
     {
-      // queue twitter
+      // hide
       custom->userdata = (void *) 0xffff;
-      ui_ctrlr_twitter_ticker_fade (ANIM_FADE_OUT, 0.3f);
+      ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_OUT, 0.3f);
     }
   }
   
@@ -739,23 +775,38 @@ static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_twitter_ticker_fade (int type, float duration)
+static void ui_ctrlr_twitter_ticker_fade_begin (int type, float duration)
 {
   s_uitwitter.fade.type = type;
   s_uitwitter.fade.duration = duration;
   s_uitwitter.fade.t = 0.0f;
   s_uitwitter.fade.now = 0.0f;
   s_uitwitter.fade.on = true;
+
+  ui_widget_set_enabled (s_uitwitter.view, false);
+  ui_widget_set_visible (s_uitwitter.view, true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_twitter_ticker_fade_update (float *opacity)
+static void ui_ctrlr_twitter_ticker_fade_end (void)
 {
-  CX_ASSERT (opacity);
+  s_uitwitter.fade.on = false;
   
+  bool b = (s_uitwitter.fade.type == ANIM_FADE_IN);
+  
+  ui_widget_set_enabled (s_uitwitter.view, b);
+  ui_widget_set_visible (s_uitwitter.view, b);
+ }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_twitter_ticker_anim_update (void)
+{
   if (s_uitwitter.fade.on)
   {
     float deltaTime = (float) cx_system_time_get_delta_time ();
@@ -764,17 +815,15 @@ static void ui_ctrlr_twitter_ticker_fade_update (float *opacity)
     s_uitwitter.fade.t = s_uitwitter.fade.now / s_uitwitter.fade.duration;
     s_uitwitter.fade.t = cx_clamp (s_uitwitter.fade.t, 0.0f, 1.0f);
     
+    float opacity = (s_uitwitter.fade.type == ANIM_FADE_IN) ? s_uitwitter.fade.t : (1.0f - s_uitwitter.fade.t);
+    
+    ui_widget_set_opacity (s_uitwitter.view, opacity);
+    
     if (s_uitwitter.fade.now > s_uitwitter.fade.duration)
     {
-      s_uitwitter.fade.on = false;
+      ui_ctrlr_twitter_ticker_fade_end ();
     }
   }
-  
-  float a = *opacity;
-  
-  a *= (s_uitwitter.fade.type == ANIM_FADE_IN) ? s_uitwitter.fade.t : (1.0f - s_uitwitter.fade.t);
-  
-  *opacity = a;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -786,6 +835,8 @@ static void ui_ctrlr_music_create (void)
   memset (&s_uimusic, 0, sizeof (s_uimusic));
   
   s_uimusic.font = cx_font_create ("data/fonts/verdana.ttf", 14);
+  
+  audio_music_notification_register (ui_ctrlr_music_notification_callback);
   
   ui_custom_callbacks_t cbtoggle, cbplay, cbview, cbqueue, cbprev, cbnext;
   
@@ -827,43 +878,47 @@ static void ui_ctrlr_music_create (void)
   ui_widget_set_colour (s_uimusic.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
   ui_widget_set_position (s_uimusic.toggle, 0.0f, 36.0f);
   ui_widget_set_dimension (s_uimusic.toggle, 36.0f, 24.0f);
-  //ui_widget_set_visible (s_uimusic.toggle, false);
+  ui_widget_set_visible (s_uimusic.toggle, true);
   
   ui_custom_set_callbacks (s_uimusic.view, &cbview);
   ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_NORMAL, cx_colour_blue ());
   ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
   ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
   ui_widget_set_position (s_uimusic.view, 36.0f, 36.0f);
-  ui_widget_set_dimension (s_uimusic.view, 1024.0f - 36.0f, 24.0f);
-  //ui_widget_set_visible (s_uimusic.view, false);
+  ui_widget_set_dimension (s_uimusic.view, s_uicontext->canvasWidth - 36.0f, 24.0f);
+  ui_widget_set_visible (s_uimusic.view, false);
   
   ui_custom_set_callbacks (s_uimusic.queue, &cbqueue);
   ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_NORMAL, cx_colour_green ());
   ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
   ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.queue, 1024.0f - 36.0f, 36.0f);
+  ui_widget_set_position (s_uimusic.queue, s_uicontext->canvasWidth - 36.0f, 36.0f);
   ui_widget_set_dimension (s_uimusic.queue, 36.0f, 24.0f);
+  ui_widget_set_visible (s_uimusic.queue, false);
   
   ui_custom_set_callbacks (s_uimusic.next, &cbnext);
   ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_NORMAL, cx_colour_orange ());
   ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
   ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.next, 1024.0f - (36.0f * 2.0f), 36.0f);
+  ui_widget_set_position (s_uimusic.next, s_uicontext->canvasWidth - (36.0f * 2.0f), 36.0f);
   ui_widget_set_dimension (s_uimusic.next, 36.0f, 24.0f);
+  ui_widget_set_visible (s_uimusic.next, false);
   
   ui_custom_set_callbacks (s_uimusic.prev, &cbprev);
   ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_NORMAL, cx_colour_yellow ());
   ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
   ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.prev, 1024.0f - (36.0f * 3.0f), 36.0f);
+  ui_widget_set_position (s_uimusic.prev, s_uicontext->canvasWidth - (36.0f * 3.0f), 36.0f);
   ui_widget_set_dimension (s_uimusic.prev, 36.0f, 24.0f);
+  ui_widget_set_visible (s_uimusic.prev, false);
   
   ui_custom_set_callbacks (s_uimusic.play, &cbplay);
   ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_NORMAL, cx_colour_indigo ());
   ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
   ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.play, 1024.0f - (36.0f * 4.0f), 36.0f);
+  ui_widget_set_position (s_uimusic.play, s_uicontext->canvasWidth - (36.0f * 4.0f), 36.0f);
   ui_widget_set_dimension (s_uimusic.play, 36.0f, 24.0f);
+  ui_widget_set_visible (s_uimusic.play, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -878,12 +933,41 @@ static void ui_ctrlr_music_destroy (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void ui_ctrlr_music_resize (void)
+{
+  ui_widget_set_position (s_uimusic.toggle, 0.0f, 36.0f);
+  ui_widget_set_dimension (s_uimusic.toggle, 36.0f, 24.0f);
+
+  ui_widget_set_position (s_uimusic.view, 36.0f, 36.0f);
+  ui_widget_set_dimension (s_uimusic.view, s_uicontext->canvasWidth - 36.0f, 24.0f);
+  
+  ui_widget_set_position (s_uimusic.queue, s_uicontext->canvasWidth - 36.0f, 36.0f);
+  ui_widget_set_dimension (s_uimusic.queue, 36.0f, 24.0f);
+
+  ui_widget_set_position (s_uimusic.next, s_uicontext->canvasWidth - (36.0f * 2.0f), 36.0f);
+  ui_widget_set_dimension (s_uimusic.next, 36.0f, 24.0f);
+
+  ui_widget_set_position (s_uimusic.prev, s_uicontext->canvasWidth - (36.0f * 3.0f), 36.0f);
+  ui_widget_set_dimension (s_uimusic.prev, 36.0f, 24.0f);
+
+  ui_widget_set_position (s_uimusic.play, s_uicontext->canvasWidth - (36.0f * 4.0f), 36.0f);
+  ui_widget_set_dimension (s_uimusic.play, 36.0f, 24.0f);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void ui_ctrlr_music_toggle_render (ui_custom_t *custom)
 {
   ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
   const cx_colour *colour = ui_widget_get_colour (custom, wstate);
   const cx_vec2 *pos = ui_widget_get_position (custom);
   const cx_vec2 *dim = ui_widget_get_dimension (custom);
+  float opacity = ui_widget_get_opacity (custom);
+  
+  cx_colour col = *colour;
+  col.a *= opacity;
   
   // bg
   
@@ -895,7 +979,7 @@ static void ui_ctrlr_music_toggle_render (ui_custom_t *custom)
   float x2 = x1 + w;
   float y2 = y1 + h;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -904,25 +988,44 @@ static void ui_ctrlr_music_toggle_render (ui_custom_t *custom)
 
 static void ui_ctrlr_music_toggle_pressed (ui_custom_t *custom)
 {
-  bool hidden = false;
-  
-  if (hidden)
+  if (!audio_music_queued ())
   {
-    if (audio_music_is_playing ())
-    {
-      // show 
-    }
-    else
-    {
-      audio_music_pick ();
-    }
+    audio_music_pick (ui_ctrlr_music_picked_callback);
   }
   else
   {
-    audio_music_pick ();
+    if (!s_uimusic.fade.on)
+    {
+      if (custom->userdata)
+      {
+        // show 
+        custom->userdata = NULL;
+        ui_ctrlr_music_bar_fade_begin (ANIM_FADE_IN, 0.3f);
+      }
+      else
+      {
+        // hide
+        custom->userdata = (void *) 0xffff;
+        ui_ctrlr_music_bar_fade_begin (ANIM_FADE_OUT, 0.3f);
+      }
+    }
   }
   
   ui_clear_focus (s_uicontext);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_music_picked_callback (void)
+{
+  CX_ASSERT (!s_uimusic.fade.on);
+
+  if (audio_music_queued ())
+  {
+    ui_ctrlr_music_bar_fade_begin (ANIM_FADE_IN, 0.3f);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -935,6 +1038,10 @@ static void ui_ctrlr_music_play_render (ui_custom_t *custom)
   const cx_colour *colour = ui_widget_get_colour (custom, wstate);
   const cx_vec2 *pos = ui_widget_get_position (custom);
   const cx_vec2 *dim = ui_widget_get_dimension (custom);
+  float opacity = ui_widget_get_opacity (custom);
+  
+  cx_colour col = *colour;
+  col.a *= opacity;
   
   // bg
   
@@ -946,7 +1053,7 @@ static void ui_ctrlr_music_play_render (ui_custom_t *custom)
   float x2 = x1 + w;
   float y2 = y1 + h;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -955,7 +1062,7 @@ static void ui_ctrlr_music_play_render (ui_custom_t *custom)
 
 static void ui_ctrlr_music_play_pressed (ui_custom_t *custom)
 {
-  if (audio_music_is_playing ())
+  if (audio_music_playing ())
   {
     audio_music_pause ();
   }
@@ -963,6 +1070,8 @@ static void ui_ctrlr_music_play_pressed (ui_custom_t *custom)
   {
     audio_music_play ();
   }
+  
+  ui_clear_focus (s_uicontext);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -975,6 +1084,10 @@ static void ui_ctrlr_music_queue_render (ui_custom_t *custom)
   const cx_colour *colour = ui_widget_get_colour (custom, wstate);
   const cx_vec2 *pos = ui_widget_get_position (custom);
   const cx_vec2 *dim = ui_widget_get_dimension (custom);
+  float opacity = ui_widget_get_opacity (custom);
+  
+  cx_colour col = *colour;
+  col.a *= opacity;
   
   // bg
   
@@ -986,7 +1099,7 @@ static void ui_ctrlr_music_queue_render (ui_custom_t *custom)
   float x2 = x1 + w;
   float y2 = y1 + h;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -995,7 +1108,9 @@ static void ui_ctrlr_music_queue_render (ui_custom_t *custom)
 
 static void ui_ctrlr_music_queue_pressed (ui_custom_t *custom)
 {
-  // trigger fade out animation
+  audio_music_pick (NULL);
+  
+  ui_clear_focus (s_uicontext);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1010,6 +1125,10 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
   const cx_colour *colour = ui_widget_get_colour (custom, wstate);
   const cx_vec2 *pos = ui_widget_get_position (custom);
   const cx_vec2 *dim = ui_widget_get_dimension (custom);
+  float opacity = ui_widget_get_opacity (custom);
+  
+  cx_colour col = *colour;
+  col.a *= opacity;
   
   // bg
   
@@ -1021,7 +1140,7 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
   float x2 = x1 + w;
   float y2 = y1 + h;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
   
   char trackId [128];
   
@@ -1033,7 +1152,10 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
     float tx = x1 + xoffset;
     float ty = y1;
     
-    cx_font_render (s_uimusic.font, trackId, tx, ty, 0.0f, 0, cx_colour_white ());
+    col = *cx_colour_white ();
+    col.a *= opacity;
+    
+    cx_font_render (s_uimusic.font, trackId, tx, ty, 0.0f, 0, &col);
   }
 }
 
@@ -1044,6 +1166,8 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
 static void ui_ctrlr_music_view_pressed (ui_custom_t *custom)
 {
   // get music info
+  
+  ui_clear_focus (s_uicontext);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1056,6 +1180,10 @@ static void ui_ctrlr_music_prev_render (ui_custom_t *custom)
   const cx_colour *colour = ui_widget_get_colour (custom, wstate);
   const cx_vec2 *pos = ui_widget_get_position (custom);
   const cx_vec2 *dim = ui_widget_get_dimension (custom);
+  float opacity = ui_widget_get_opacity (custom);
+  
+  cx_colour col = *colour;
+  col.a *= opacity;
   
   // bg
   
@@ -1067,7 +1195,7 @@ static void ui_ctrlr_music_prev_render (ui_custom_t *custom)
   float x2 = x1 + w;
   float y2 = y1 + h;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1076,6 +1204,9 @@ static void ui_ctrlr_music_prev_render (ui_custom_t *custom)
 
 static void ui_ctrlr_music_prev_pressed (ui_custom_t *custom)
 {
+  audio_music_prev ();
+  
+  ui_clear_focus (s_uicontext);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1088,6 +1219,10 @@ static void ui_ctrlr_music_next_render (ui_custom_t *custom)
   const cx_colour *colour = ui_widget_get_colour (custom, wstate);
   const cx_vec2 *pos = ui_widget_get_position (custom);
   const cx_vec2 *dim = ui_widget_get_dimension (custom);
+  float opacity = ui_widget_get_opacity (custom);
+  
+  cx_colour col = *colour;
+  col.a *= opacity;
   
   // bg
   
@@ -1099,7 +1234,7 @@ static void ui_ctrlr_music_next_render (ui_custom_t *custom)
   float x2 = x1 + w;
   float y2 = y1 + h;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1108,6 +1243,101 @@ static void ui_ctrlr_music_next_render (ui_custom_t *custom)
 
 static void ui_ctrlr_music_next_pressed (ui_custom_t *custom)
 {
+  audio_music_next ();
+  
+  ui_clear_focus (s_uicontext);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_music_bar_fade_begin (int type, float duration)
+{
+  s_uimusic.fade.type = type;
+  s_uimusic.fade.duration = duration;
+  s_uimusic.fade.t = 0.0f;
+  s_uimusic.fade.now = 0.0f;
+  s_uimusic.fade.on = true;
+  
+  ui_widget_set_visible (s_uimusic.view, true);
+  ui_widget_set_visible (s_uimusic.play, true);
+  ui_widget_set_visible (s_uimusic.prev, true);
+  ui_widget_set_visible (s_uimusic.next, true);
+  ui_widget_set_visible (s_uimusic.queue, true);
+  
+  ui_widget_set_enabled (s_uimusic.view, false);
+  ui_widget_set_enabled (s_uimusic.play, false);
+  ui_widget_set_enabled (s_uimusic.prev, false);
+  ui_widget_set_enabled (s_uimusic.next, false);
+  ui_widget_set_enabled (s_uimusic.queue, false);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_music_bar_fade_end (void)
+{
+  s_uimusic.fade.on = false;
+  
+  bool b = (s_uimusic.fade.type == ANIM_FADE_IN);
+  
+  ui_widget_set_enabled (s_uimusic.view, b);
+  ui_widget_set_enabled (s_uimusic.play, b);
+  ui_widget_set_enabled (s_uimusic.prev, b);
+  ui_widget_set_enabled (s_uimusic.next, b);
+  ui_widget_set_enabled (s_uimusic.queue, b);
+  
+  ui_widget_set_visible (s_uimusic.view, b);
+  ui_widget_set_visible (s_uimusic.play, b);
+  ui_widget_set_visible (s_uimusic.prev, b);
+  ui_widget_set_visible (s_uimusic.next, b);
+  ui_widget_set_visible (s_uimusic.queue, b);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_music_bar_anim_update (void)
+{
+  if (s_uimusic.fade.on)
+  {
+    float deltaTime = (float) cx_system_time_get_delta_time ();
+    
+    s_uimusic.fade.now += deltaTime;
+    s_uimusic.fade.t = s_uimusic.fade.now / s_uimusic.fade.duration;
+    s_uimusic.fade.t = cx_clamp (s_uimusic.fade.t, 0.0f, 1.0f);
+    
+    float opacity = (s_uimusic.fade.type == ANIM_FADE_IN) ? s_uimusic.fade.t : (1.0f - s_uimusic.fade.t);
+    
+    ui_widget_set_opacity (s_uimusic.view, opacity);
+    ui_widget_set_opacity (s_uimusic.play, opacity);
+    ui_widget_set_opacity (s_uimusic.prev, opacity);
+    ui_widget_set_opacity (s_uimusic.next, opacity);
+    ui_widget_set_opacity (s_uimusic.queue, opacity);
+    
+    if (s_uimusic.fade.now > s_uimusic.fade.duration)
+    {
+      ui_ctrlr_music_bar_fade_end ();
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_music_notification_callback (audio_music_notification n)
+{
+  if ((n == AUDIO_MUSIC_NOTIFICATION_INTERRUPTED) ||
+      (n == AUDIO_MUSIC_NOTIFICATION_STOPPED))
+  {
+    // set pause icon to play
+    
+    // also do this if app is backgrounded
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

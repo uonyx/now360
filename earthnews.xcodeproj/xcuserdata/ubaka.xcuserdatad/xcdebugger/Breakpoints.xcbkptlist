@@ -7,13 +7,26 @@
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "379901530.696007"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380417763.102097"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "621"
-         endingLineNumber = "621"
-         landmarkName = "ui_ctrlr_twitter_ticker_render()"
+         startingLineNumber = "524"
+         endingLineNumber = "524"
+         landmarkName = "audio_music_now_playing_state_changed()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380417763.102097"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "508"
+         endingLineNumber = "508"
+         landmarkName = "audio_music_playback_state_changed()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -21,12 +34,64 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "379901530.696007"
+         timestampString = "380331346.364781"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "593"
-         endingLineNumber = "593"
-         landmarkName = "ui_ctrlr_twitter_ticker_render()"
+         startingLineNumber = "1334"
+         endingLineNumber = "1334"
+         landmarkName = "ui_ctrlr_music_notification_callback()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380417763.102097"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "496"
+         endingLineNumber = "496"
+         landmarkName = "audio_music_playback_state_changed()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380417210.144919"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "156"
+         endingLineNumber = "156"
+         landmarkName = "audio_music_notification_register()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380417210.144919"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "123"
+         endingLineNumber = "123"
+         landmarkName = "audio_init()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380417763.102097"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "425"
+         endingLineNumber = "425"
+         landmarkName = "audio_music_picker()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -34,38 +99,38 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "379901530.696007"
+         timestampString = "380418111.614228"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "591"
-         endingLineNumber = "591"
-         landmarkName = "ui_ctrlr_twitter_ticker_render()"
+         startingLineNumber = "1065"
+         endingLineNumber = "1065"
+         landmarkName = "ui_ctrlr_music_play_pressed()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "379901611.090505"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380418138.860606"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1030"
-         endingLineNumber = "1030"
-         landmarkName = "ui_ctrlr_music_view_render()"
+         startingLineNumber = "187"
+         endingLineNumber = "187"
+         landmarkName = "audio_music_pause()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "379901611.090505"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "380418155.872479"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "989"
-         endingLineNumber = "989"
-         landmarkName = "ui_ctrlr_music_queue_render()"
+         startingLineNumber = "226"
+         endingLineNumber = "226"
+         landmarkName = "audio_music_playing()"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

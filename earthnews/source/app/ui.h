@@ -115,6 +115,8 @@ typedef struct ui_checkbox_callbacks_t
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define SINGLY_LINKED_LIST 0
+
 typedef struct ui_context_t
 {
   float canvasWidth;
@@ -122,7 +124,11 @@ typedef struct ui_context_t
   const ui_intrinsic_t *hover;
   const ui_intrinsic_t *focus;
   cx_font *font;
+#if SINGLY_LINKED_LIST
   cx_list *intrList;
+#else
+  cx_list2 intrList;
+#endif
 } ui_context_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +171,7 @@ void ui_checkbox_set_callbacks (ui_checkbox_t *checkbox, const ui_checkbox_callb
 #define ui_widget_get_position(widget) _ui_intrinsic_position_get(&widget->intr)
 #define ui_widget_get_dimension(widget) _ui_intrinsic_dimension_get(&widget->intr)
 
+#define ui_widget_set_enabled(widget, enable) _ui_intrinsic_enable_set(&widget->intr, enable)
 #define ui_widget_set_visible(widget, visible) _ui_intrinsic_show_set(&widget->intr, visible)
 #define ui_widget_set_opacity(widget, opacity) _ui_intrinsic_opacity_set(&widget->intr, opacity)
 #define ui_widget_set_colour(widget, widget_state, colour) _ui_intrinsic_colour_set(&widget->intr, widget_state, colour)
@@ -181,6 +188,7 @@ void _ui_intrinsic_position_set (ui_intrinsic_t *intr, float x, float y);
 void _ui_intrinsic_dimension_set (ui_intrinsic_t *intr, float w, float h);
 void _ui_intrinsic_opacity_set (ui_intrinsic_t *intr, float opacity);
 void _ui_intrinsic_show_set (ui_intrinsic_t *intr, bool show);
+void _ui_intrinsic_enable_set (ui_intrinsic_t *intr, bool enable);
 
 const cx_colour *_ui_intrinsic_colour_get (const ui_intrinsic_t *intr, ui_widget_state_t wstate);
 const cx_vec2 *_ui_intrinsic_position_get (const ui_intrinsic_t *intr);

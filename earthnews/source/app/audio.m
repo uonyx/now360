@@ -13,10 +13,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define DEBUG_LOG_ENABLE 1
+#define USE_MUSIC_PICKER_POP_UP 1
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void audio_music_init (void);
 static void audio_music_deinit (void);
-static void audio_music_update_queue (MPMediaItemCollection *collection);
-static void audio_music_picker (bool show);
+static bool audio_music_update_queue (MPMediaItemCollection *collection);
+static void audio_music_picker (bool show, audio_music_picked_callback fn);
+static void audio_music_playback_state_changed (void);
+static void audio_music_now_playing_state_changed (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +45,7 @@ static void audio_music_picker (bool show);
 }
 - (void) handleNowPlayingItemChanged:(NSNotification *)notification;
 - (void) handlePlaybackStateChanged:(NSNotification *)notification;
+- (void) handleVolumeChanged:(NSNotification *)notification;
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -47,12 +57,13 @@ static void audio_music_picker (bool show);
 - (void) mediaPicker:(MPMediaPickerController *)mediaPicker didPickMediaItems:(MPMediaItemCollection *)mediaItemCollection
 {
   audio_music_update_queue (mediaItemCollection);
-  audio_music_picker (false);
+      
+  audio_music_picker (false, NULL);  
 }
 
 - (void) mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker
 {
-  audio_music_picker (false);
+  audio_music_picker (false, NULL);
 }
 
 @end
@@ -65,10 +76,17 @@ static void audio_music_picker (bool show);
 
 - (void) handleNowPlayingItemChanged:(NSNotification *)notification
 {
+  audio_music_now_playing_state_changed ();
 }
 
 - (void) handlePlaybackStateChanged:(NSNotification *)notification
 {
+  audio_music_playback_state_changed ();
+}
+
+- (void) handleVolumeChanged:(NSNotification *)notification
+{
+  CX_DEBUG_BREAKABLE_EXPR;
 }
 
 @end
@@ -78,12 +96,18 @@ static void audio_music_picker (bool show);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static bool s_initialised = false;
+static bool s_pickerActive = false;
 static UIViewController *s_rootViewController = nil;
 static MPMusicPlayerController *s_musicPlayer = nil;
 static MPMediaPickerController *s_musicPicker = nil;
 static MusicPickerDelegate *s_musicPickerDelegate = nil;
 static MusicNotifcation *s_musicNotification = nil;
 static MPMediaItemCollection *s_currentCollection = nil;
+static audio_music_picked_callback s_pickerCallback = NULL;
+static cx_list2 s_musicNotificationCallbacks;
+#if USE_MUSIC_PICKER_POP_UP
+static UIPopoverController *s_musicPopOver = nil;
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +119,8 @@ bool audio_init (void *rootvc)
   CX_ASSERT (rootvc);
   
   s_rootViewController = (UIViewController *) rootvc;
+  
+  memset (&s_musicNotificationCallbacks, 0, sizeof (s_musicNotificationCallbacks));
   
   audio_music_init ();
   
@@ -113,6 +139,8 @@ void audio_deinit (void)
   
   audio_music_deinit ();
   
+  cx_list2_free (&s_musicNotificationCallbacks);
+  
   s_initialised = false;
 }
 
@@ -120,9 +148,21 @@ void audio_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void audio_music_pick ()
+void audio_music_notification_register (audio_music_notification_callback fn)
 {
-  audio_music_picker (true);
+  CX_ASSERT (fn);
+  CX_ASSERT (!cx_list2_exists (&s_musicNotificationCallbacks, fn));
+  
+  cx_list2_insert_back (&s_musicNotificationCallbacks, fn);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void audio_music_pick (audio_music_picked_callback fn)
+{
+  audio_music_picker (true, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -173,7 +213,7 @@ void audio_music_prev (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool audio_music_is_playing (void)
+bool audio_music_playing (void)
 {
   CX_ASSERT (s_musicPlayer);
   
@@ -189,6 +229,24 @@ bool audio_music_is_playing (void)
   }
   
   return ret;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool audio_music_picker_active (void)
+{
+  return s_pickerActive;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool audio_music_queued (void)
+{
+  return s_currentCollection ? true : false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,11 +291,13 @@ static void audio_music_init (void)
   
   s_musicPicker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
   
+#if USE_MUSIC_PICKER_POP_UP
+  s_musicPopOver = [[UIPopoverController alloc] initWithContentViewController:s_musicPicker];
+#endif
+  
   [s_musicPicker setDelegate:s_musicPickerDelegate];
-  
   [s_musicPicker setAllowsPickingMultipleItems:YES];
-  
-  [s_musicPicker setPrompt:@"Queue songs for playback"];
+  //[s_musicPicker setPrompt:@"Queue songs for playback"];
   
   NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
   
@@ -249,6 +309,11 @@ static void audio_music_init (void)
   [notificationCenter addObserver:s_musicNotification 
                          selector:@selector (handlePlaybackStateChanged:) 
                              name:MPMusicPlayerControllerPlaybackStateDidChangeNotification 
+                           object:s_musicPlayer];
+
+  [notificationCenter addObserver:s_musicNotification 
+                         selector:@selector (handleVolumeChanged:) 
+                             name:MPMusicPlayerControllerVolumeDidChangeNotification 
                            object:s_musicPlayer];
   
   [s_musicPlayer beginGeneratingPlaybackNotifications];
@@ -272,7 +337,15 @@ static void audio_music_deinit (void)
                              name:MPMusicPlayerControllerPlaybackStateDidChangeNotification 
                            object:s_musicPlayer];
   
+  [notificationCenter removeObserver:s_musicNotification 
+                                name:MPMusicPlayerControllerVolumeDidChangeNotification 
+                              object:s_musicPlayer];
+  
   [s_musicPlayer endGeneratingPlaybackNotifications];
+  
+#if USE_MUSIC_PICKER_POP_UP
+  [s_musicPopOver release];
+#endif
   
   [s_musicPicker release];
   
@@ -285,11 +358,11 @@ static void audio_music_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void audio_music_update_queue (MPMediaItemCollection *collection)
-{
+static bool audio_music_update_queue (MPMediaItemCollection *collection)
+{  
   if (!collection)
   {
-    return;
+    return false;
   }
   
   if (s_currentCollection)
@@ -320,24 +393,148 @@ static void audio_music_update_queue (MPMediaItemCollection *collection)
     [s_musicPlayer setQueueWithItemCollection:s_currentCollection];
     [s_musicPlayer play];
   }
+  
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void audio_music_picker (bool show)
+static void audio_music_picker (bool show, audio_music_picked_callback fn)
 {
   if (show)
   {
-    [s_rootViewController presentModalViewController:s_musicPicker animated:YES];
+    if (!s_pickerActive)
+    {
+#if USE_MUSIC_PICKER_POP_UP
+      UIView *parentView = s_rootViewController.view;
+      
+      float viewPosX = parentView.bounds.origin.x;
+      float viewPosY = parentView.bounds.origin.y;
+      float viewWidth  = parentView.bounds.size.width;
+      float viewHeight = parentView.bounds.size.height;
+      
+      float width = 800.0f;
+      float height = 600.0f;
+      float posX = viewPosX + ((viewWidth - width) * 0.5f);
+      float posY = viewPosY + ((viewHeight - height) * 0.5f);
+      
+      [s_musicPopOver setPassthroughViews:[NSArray arrayWithObject:parentView]];
+      [s_musicPopOver presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
+#else
+      [s_musicPicker setModalTransitionStyle:UIModalTransitionStyleFlipHorizontal];
+      [s_musicPicker setModalPresentationStyle:UIModalPresentationFormSheet];
+      [s_rootViewController presentViewController:s_musicPicker animated:YES completion:nil];
+#endif
+      
+      s_pickerActive = true;
+      s_pickerCallback = fn;
+    }
   }
   else
   {
-    [s_rootViewController dismissModalViewControllerAnimated:YES];
+    if (s_pickerActive)
+    {
+#if USE_MUSIC_PICKER_POP_UP
+      [s_musicPopOver dismissPopoverAnimated:YES];
+#else
+      [s_rootViewController dismissViewControllerAnimated:YES completion:nil];
+#endif
+      
+      s_pickerActive = false;
+      
+      if (s_pickerCallback)
+      {
+        s_pickerCallback ();
+        s_pickerCallback = NULL;
+      }
+    }
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void audio_music_playback_state_changed (void)
+{
+  audio_music_notification notification = AUDIO_MUSIC_NOTIFICATION_UNKNOWN;
+  
+  MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
+  
+  switch (playbackState) 
+  {
+    case MPMusicPlaybackStatePaused: 
+    { 
+      CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStatePaused"); 
+      notification = AUDIO_MUSIC_NOTIFICATION_PAUSED;
+      break; 
+    }
+      
+    case MPMusicPlaybackStateStopped: 
+    { 
+      CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateStopped"); 
+      notification = AUDIO_MUSIC_NOTIFICATION_STOPPED;
+      break; 
+    }
+      
+    case MPMusicPlaybackStateInterrupted: 
+    { 
+      CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateInterrupted"); 
+      notification = AUDIO_MUSIC_NOTIFICATION_INTERRUPTED;
+      break; 
+    }
+      
+    case MPMusicPlaybackStatePlaying: { CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStatePlaying"); break; }
+    case MPMusicPlaybackStateSeekingForward: { CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateSeekingForward"); break; }
+    case MPMusicPlaybackStateSeekingBackward: { CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateSeekingBackward"); break; }
+
+    default: { break; }
+  }
+  
+  cx_list2_node *node = s_musicNotificationCallbacks.head;
+  
+  while (node)
+  {
+    audio_music_notification_callback fn = node->data;
+    
+    CX_ASSERT (fn);
+   
+    fn (notification);
+    
+    node = node->next;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void audio_music_now_playing_state_changed (void)
+{
+  MPMediaItem *nowPlayingItem = [s_musicPlayer nowPlayingItem];
+ 
+  CX_ASSERT (nowPlayingItem);
+  CX_REFERENCE_UNUSED_VARIABLE (nowPlayingItem);
+  
+#if 0
+  MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
+  
+  switch (playbackState) 
+  {
+    case MPMusicPlaybackStatePaused: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStatePaused"); break; }
+    case MPMusicPlaybackStateStopped: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateStopped"); break; }
+    case MPMusicPlaybackStateInterrupted: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateInterrupted"); break; }
+    case MPMusicPlaybackStatePlaying: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStatePlaying"); break; }
+    case MPMusicPlaybackStateSeekingForward: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateSeekingForward"); break; }
+    case MPMusicPlaybackStateSeekingBackward: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateSeekingBackward"); break; }
+    default: { break; }
+  }
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+

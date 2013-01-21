@@ -127,6 +127,12 @@ void app_init (void *rootvc, float width, float height)
   render_init (width, height);
   
   //
+  // audio
+  //
+  
+  audio_init (rootvc);
+  
+  //
   // input
   //
   
@@ -257,10 +263,6 @@ void app_init (void *rootvc, float width, float height)
   
   CX_DEBUG_BREAKABLE_EXPR;
 #endif
-  
-  audio_init (rootvc);
-  
-  audio_music_play ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -848,7 +850,10 @@ static void app_render_2d_earth (void)
 
 static void app_input_handle_touch_event (const input_touch_event *event)
 {
-  if (ui_ctrlr_handle_input (event))
+  if (audio_music_picker_active ())
+  {
+  }
+  else if (ui_ctrlr_handle_input (event))
   {
     CX_DEBUGLOG_CONSOLE (0, "UI input handled");
   }
@@ -870,10 +875,16 @@ static void app_input_handle_touch_event (const input_touch_event *event)
 
 static void app_input_handle_gesture_event (const input_gesture_event *event)
 {
-  switch (event->type) 
+  if (audio_music_picker_active ())
   {
-    case INPUT_GESTURE_TYPE_PINCH: { app_input_zoom (event->data.pinch.factor); break; }
-    default:                       { break; }
+  }
+  else
+  {
+    switch (event->type)
+    {
+      case INPUT_GESTURE_TYPE_PINCH: { app_input_zoom (event->data.pinch.factor); break; }
+      default:                       { break; }
+    }
   }
 }
 

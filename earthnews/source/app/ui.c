@@ -37,6 +37,8 @@ ui_context_t *ui_init (float width, float height)
   
   ctx->canvasWidth = width;
   ctx->canvasHeight = height;
+  
+  //ctx->intrList = NULL;
 
   return ctx;
 }
@@ -295,7 +297,11 @@ static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr)
   CX_FATAL_ASSERT (ctx);
   CX_ASSERT (intr);
   
+#if SINGLY_LINKED_LIST
   ctx->intrList = cx_list_insert (ctx->intrList, intr);
+#else
+  cx_list2_insert_front (&ctx->intrList, intr);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -307,7 +313,11 @@ static void ui_ctx_remove_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *in
   CX_FATAL_ASSERT (ctx);
   CX_ASSERT (intr);
   
+#if SINGLY_LINKED_LIST
   ctx->intrList = cx_list_remove (ctx->intrList, intr);
+#else
+  cx_list2_remove (&ctx->intrList, intr);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -360,7 +370,11 @@ static void ui_ctx_press (ui_context_t *ctx)
 
 static void ui_ctx_render (ui_context_t *ctx)
 {
+#if SINGLY_LINKED_LIST
   cx_list_node *intrNode = ctx->intrList;
+#else
+  cx_list2_node *intrNode = ctx->intrList.head;
+#endif
   
   while (intrNode)
   {
@@ -377,6 +391,7 @@ static void ui_ctx_render (ui_context_t *ctx)
     
     intrNode = intrNode->next;
   }
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -504,6 +519,7 @@ static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point
   
   ui_intrinsic_t *hit = NULL;
   
+#if SINGLY_LINKED_LIST
   // reverse list: touch test based on render order 
   ctx->intrList = cx_list_reverse (ctx->intrList);
   
@@ -517,17 +533,20 @@ static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point
     ui_intrinsic_t *intr = (ui_intrinsic_t *) intrNode->data;
     CX_ASSERT (intr);
     
-    float w = intr->dimension.x;
-    float h = intr->dimension.y;
-    float x = intr->position.x;
-    float y = intr->position.y;
-    
-    if ((tx >= x) && (tx <= (x + w)))
-    {
-      if ((ty >= y) && (ty <= (y + h)))
+    if (intr->enable)
+    {    
+      float w = intr->dimension.x;
+      float h = intr->dimension.y;
+      float x = intr->position.x;
+      float y = intr->position.y;
+      
+      if ((tx >= x) && (tx <= (x + w)))
       {
-        hit = intr;
-        break;
+        if ((ty >= y) && (ty <= (y + h)))
+        {
+          hit = intr;
+          break;
+        }
       }
     }
     
@@ -536,6 +555,38 @@ static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point
   
   // re-reverse list
   ctx->intrList = cx_list_reverse (ctx->intrList);
+#else
+  
+  cx_list2_node *intrNode = ctx->intrList.tail;
+  
+  float tx = ctx->canvasWidth * point->x;
+  float ty = ctx->canvasHeight * point->y;
+  
+  while (intrNode)
+  {
+    ui_intrinsic_t *intr = (ui_intrinsic_t *) intrNode->data;
+    CX_ASSERT (intr);
+    
+    if (intr->enable)
+    {    
+      float w = intr->dimension.x;
+      float h = intr->dimension.y;
+      float x = intr->position.x;
+      float y = intr->position.y;
+      
+      if ((tx >= x) && (tx <= (x + w)))
+      {
+        if ((ty >= y) && (ty <= (y + h)))
+        {
+          hit = intr;
+          break;
+        }
+      }
+    }
+    
+    intrNode = intrNode->prev;
+  }
+#endif
   
   return hit;
 }
@@ -688,6 +739,17 @@ void _ui_intrinsic_show_set (ui_intrinsic_t *intr, bool show)
   CX_ASSERT (intr);
   
   intr->show = show;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void _ui_intrinsic_enable_set (ui_intrinsic_t *intr, bool enable)
+{
+  CX_ASSERT (intr);
+  
+  intr->enable = enable;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

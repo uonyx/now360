@@ -46,26 +46,30 @@ void cx_list_free (cx_list *list);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0
+#if 1
 // doubly linked list
-typedef struct cx_list_node2
+typedef struct cx_list2_node
 {
   const void *data;
-  struct cx_list_node2 *next;
-  struct cx_list_node2 *prev;
-} cx_list_node2;
+  struct cx_list2_node *next;
+  struct cx_list2_node *prev;
+} cx_list2_node;
 
 typedef struct cx_list2
 {
-  struct cx_list_node2 *head;
-  struct cx_list_node2 *tail;
+  struct cx_list2_node *head;
+  struct cx_list2_node *tail;
 } cx_list2;
 
 
-cx_list2 *cx_list2_create ();
+cx_list2 *cx_list2_create (void);
+void cx_list2_free (cx_list2 *list);
 void cx_list2_insert_front (cx_list2 *list, const void *data);
 void cx_list2_insert_back (cx_list2 *list, const void *data);
 bool cx_list2_remove (cx_list2 *list, const void *data);
+bool cx_list2_exists (cx_list2 *list, const void *data);
+void cx_list2_sort (cx_list2 *list, cx_list_sort_cmp_func cmpfunc);
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

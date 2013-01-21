@@ -86,6 +86,7 @@ cx_list *cx_list_reverse (cx_list *list)
   return prev;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,11 +141,11 @@ void cx_list_free (cx_list *list)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0
+#if 1
 
 void cx_list2_insert_front (cx_list2 *list, const void *data)
 {
-  cx_list_node2 *node = (cx_list_node2 *) cx_malloc (sizeof (cx_list_node2));
+  cx_list2_node *node = (cx_list2_node *) cx_malloc (sizeof (cx_list2_node));
   
   node->data = data;
   
@@ -163,7 +164,7 @@ void cx_list2_insert_front (cx_list2 *list, const void *data)
 
 void cx_list2_insert_back (cx_list2 *list, const void *data)
 {
-  cx_list_node2 *node = (cx_list_node2 *) cx_malloc (sizeof (cx_list_node2));
+  cx_list2_node *node = (cx_list2_node *) cx_malloc (sizeof (cx_list2_node));
   
   node->data = data;
   
@@ -188,7 +189,7 @@ bool cx_list2_remove (cx_list2 *list, const void *data)
   {
     if (list->head->data == data)
     {
-      cx_list_node2 *next = list->head->next;
+      cx_list2_node *next = list->head->next;
       cx_free (list->head);
       
       next->prev = NULL;
@@ -198,7 +199,7 @@ bool cx_list2_remove (cx_list2 *list, const void *data)
     }
     else if (list->tail->data == data)
     {
-      cx_list_node2 *prev = list->tail->prev;
+      cx_list2_node *prev = list->tail->prev;
       cx_free (list->tail);
       
       prev->next = NULL;
@@ -208,27 +209,60 @@ bool cx_list2_remove (cx_list2 *list, const void *data)
     }
     else
     {
-      cx_list_node2 *curr = list->head->next;
+      cx_list2_node *node = list->head->next;
       
-      while (curr)
+      while (node)
       {
-        if (curr->data == data)
+        if (node->data == data)
         {
-          curr->prev->next = curr->next;
-          curr->next->prev = curr->prev;
+          node->prev->next = node->next;
+          node->next->prev = node->prev;
           
-          cx_free (curr);
+          cx_free (node);
           found = true;
           
           break;
         }
         
-        curr = curr->next;
+        node = node->next;
       }
     }
   }
   
   return found;
+}
+
+bool cx_list2_exists (cx_list2 *list, const void *data)
+{
+  CX_ASSERT (list);
+  
+  cx_list2_node *node = list->head;
+  
+  while (node)
+  {
+    if (node->data == data)
+    {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+void cx_list2_free (cx_list2 *list)
+{
+  CX_ASSERT (list);
+  
+  cx_list2_node *node = list->head;
+  
+  while (node)
+  {
+    cx_list2_node *next = node->next;
+    
+    cx_free (node);
+    
+    node = next;
+  }
 }
 
 #endif
