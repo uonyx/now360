@@ -15,6 +15,7 @@
 
 #define DEBUG_LOG_ENABLE 1
 #define USE_MUSIC_PICKER_POP_UP 1
+#define PLAYBACK_STATE_HACK_FIX 1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +109,9 @@ static cx_list2 s_musicNotificationCallbacks;
 #if USE_MUSIC_PICKER_POP_UP
 static UIPopoverController *s_musicPopOver = nil;
 #endif
-
+#if PLAYBACK_STATE_HACK_FIX
+static bool s_musicPlaying = false;
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -174,6 +177,10 @@ void audio_music_play (void)
   CX_ASSERT (s_musicPlayer);
   
   [s_musicPlayer play];
+  
+#if PLAYBACK_STATE_HACK_FIX
+  s_musicPlaying = true;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +192,10 @@ void audio_music_pause (void)
   CX_ASSERT (s_musicPlayer);
   
   [s_musicPlayer pause];
+  
+#if PLAYBACK_STATE_HACK_FIX
+  s_musicPlaying = false;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,15 +229,17 @@ bool audio_music_playing (void)
   CX_ASSERT (s_musicPlayer);
   
   bool ret = false;
-  
+
   MPMediaItem *nowPlayingItem = [s_musicPlayer nowPlayingItem];
   
+#if PLAYBACK_STATE_HACK_FIX
+  ret = nowPlayingItem && s_musicPlaying;
+#else
+
   MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
 
-  if (nowPlayingItem && (playbackState == MPMusicPlaybackStatePlaying))
-  {
-    ret = true;
-  }
+  ret = (nowPlayingItem && (playbackState == MPMusicPlaybackStatePlaying))
+#endif
   
   return ret;
 }
@@ -383,7 +396,7 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
     
     if (playbackState == MPMusicPlaybackStatePlaying)
     {
-      [s_musicPlayer play];
+      audio_music_play ();
     }
   }
   else
@@ -391,7 +404,8 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
     s_currentCollection = collection;
     
     [s_musicPlayer setQueueWithItemCollection:s_currentCollection];
-    [s_musicPlayer play];
+    
+    audio_music_play ();
   }
   
   return true;
@@ -476,6 +490,10 @@ static void audio_music_playback_state_changed (void)
     { 
       CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateStopped"); 
       notification = AUDIO_MUSIC_NOTIFICATION_STOPPED;
+      
+#if PLAYBACK_STATE_HACK_FIX
+      s_musicPlaying = false;
+#endif
       break; 
     }
       
@@ -483,6 +501,11 @@ static void audio_music_playback_state_changed (void)
     { 
       CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateInterrupted"); 
       notification = AUDIO_MUSIC_NOTIFICATION_INTERRUPTED;
+      
+#if PLAYBACK_STATE_HACK_FIX
+      s_musicPlaying = false;
+#endif
+      
       break; 
     }
       
@@ -513,25 +536,6 @@ static void audio_music_playback_state_changed (void)
 
 static void audio_music_now_playing_state_changed (void)
 {
-  MPMediaItem *nowPlayingItem = [s_musicPlayer nowPlayingItem];
- 
-  CX_ASSERT (nowPlayingItem);
-  CX_REFERENCE_UNUSED_VARIABLE (nowPlayingItem);
-  
-#if 0
-  MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
-  
-  switch (playbackState) 
-  {
-    case MPMusicPlaybackStatePaused: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStatePaused"); break; }
-    case MPMusicPlaybackStateStopped: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateStopped"); break; }
-    case MPMusicPlaybackStateInterrupted: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateInterrupted"); break; }
-    case MPMusicPlaybackStatePlaying: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStatePlaying"); break; }
-    case MPMusicPlaybackStateSeekingForward: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateSeekingForward"); break; }
-    case MPMusicPlaybackStateSeekingBackward: { CX_DEBUGLOG_CONSOLE (1, "MPMusicPlaybackStateSeekingBackward"); break; }
-    default: { break; }
-  }
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

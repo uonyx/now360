@@ -182,7 +182,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   cx_material_set_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
   
   //visual->nightMap = cx_texture_create_from_file ("data/maps/2048-night.png");
-  visual->nightMap = cx_texture_create_from_file ("data/maps/4096-night.png");
+  visual->nightMap = cx_texture_create_from_file ("data/maps/4096-night2.png");
   
 #else
   cx_shader *shader     = cx_shader_create ("mesh", "data/shaders");

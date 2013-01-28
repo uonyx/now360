@@ -39,7 +39,13 @@ enum e_uid
 
 static ui_context_t *s_uicontext = NULL;
 
-#define NEWS_MAX_ENTRIES 5
+#define NEWS_MAX_ENTRIES  5
+#define NEWS_LIST_HEIGHT  120.0f
+#define NEWS_LIST_XOFFSET 12.0f
+
+const float height = 180.0f;
+const float posX = 12.0f;
+const float posY = 582.0f;
 
 typedef struct ui_news_t
 {
@@ -86,7 +92,7 @@ typedef struct ui_twitter_t
   cx_font *font;
   ui_custom_t *view;
   ui_custom_t *toggle;
-  cx_texture *bird;
+  cx_texture *birdicon;
   ticker_t ticker;
   animdata_t fade;
   
@@ -108,7 +114,11 @@ typedef struct ui_music_t
   ui_custom_t *prev;
   ui_custom_t *next;
   
-  cx_texture *music;
+  cx_texture *iconNote;
+  cx_texture *iconPlay;
+  cx_texture *iconPause;
+  cx_texture *iconPrev;
+  cx_texture *iconQueue;
   
   // queue
   // toggle
@@ -130,13 +140,14 @@ static void ui_ctrlr_screen_resize_widgets (void);
 
 static void ui_ctrlr_news_create (void);
 static void ui_ctrlr_news_destroy (void);
+static void ui_ctrlr_news_position_setup (void);
 static void ui_ctrlr_news_button_pressed (ui_custom_t *custom);
 static void ui_ctrlr_news_button_render (ui_custom_t *custom);
 static void ui_ctrlr_news_populate (feed_news_t *feed);
 
 static void ui_ctrlr_twitter_create (void);
 static void ui_ctrlr_twitter_destroy (void);
-static void ui_ctrlr_twitter_resize (void);
+static void ui_ctrlr_twitter_position_setup (void);
 static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom);
 static void ui_ctrlr_twitter_button_render (ui_custom_t *custom);
 static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom);
@@ -148,7 +159,7 @@ static void ui_ctrlr_twitter_ticker_anim_update (void);
 
 static void ui_ctrlr_music_create (void);
 static void ui_ctrlr_music_destroy (void);
-static void ui_ctrlr_music_resize (void);
+static void ui_ctrlr_music_position_setup (void);
 static void ui_ctrlr_music_view_render (ui_custom_t *custom);
 static void ui_ctrlr_music_view_pressed (ui_custom_t *custom);
 static void ui_ctrlr_music_toggle_render (ui_custom_t *custom);
@@ -278,8 +289,78 @@ static void ui_ctrlr_deinit_destroy_widgets (void)
 
 static void ui_ctrlr_screen_resize_widgets (void)
 {
-  ui_ctrlr_twitter_resize ();
-  ui_ctrlr_music_resize ();
+  ui_ctrlr_news_position_setup ();
+  ui_ctrlr_twitter_position_setup ();
+  ui_ctrlr_music_position_setup ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_button_render_with_image (ui_custom_t *custom, cx_colour* col1, cx_colour *col2, 
+                                                cx_texture *image, bool hflip, bool toggle)
+{
+  CX_ASSERT (custom);
+  CX_ASSERT (col1);
+  CX_ASSERT (col2);
+  CX_ASSERT (image);
+  
+  ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
+  const cx_colour *colour = ui_widget_get_colour (custom, wstate);
+  const cx_vec2 *pos = ui_widget_get_position (custom);
+  const cx_vec2 *dim = ui_widget_get_dimension (custom);
+  float opacity = ui_widget_get_opacity (custom);
+  
+  // bg
+  
+  float w = dim->x;
+  float h = dim->y;
+  
+  float x1 = pos->x;
+  float y1 = pos->y;
+  float x2 = x1 + w;
+  float y2 = y1 + h;
+  
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  
+  // image
+  
+  float bw = (float) image->width;
+  float bh = (float) image->height;
+  
+  float bx1 = x1 + ((w - bw) * 0.5f);
+  float by1 = y1 + ((h - bh) * 0.5f);
+  float bx2 = bx1 + bw;
+  float by2 = by1 + bh;
+  
+  cx_colour *col = NULL;
+  
+  if (toggle)
+  {  
+    col = custom->userdata ? col2 : col1;
+  }
+  else
+  {
+    ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
+    col = (wstate == UI_WIDGET_STATE_HOVER) ? col2 : col1;
+  }
+  
+  col->a *= opacity;
+  
+  if (hflip)
+  {
+    float u1 = 1.0f;
+    float v1 = 0.0f;
+    float u2 = 0.0f;
+    float v2 = 1.0f;
+    
+    cx_draw_quad_uv (bx1, by1, bx2, by2, 0.0f, 0.0f, u1, v1, u2, v2, col, image);
+  }
+  else
+  {
+    cx_draw_quad (bx1, by1, bx2, by2, 0.0f, 0.0f, col, image);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,36 +371,27 @@ static void ui_ctrlr_news_create (void)
 {
   memset (&s_uinews, 0, sizeof (s_uinews));
   
-  const float height = 180.0f;
-  const float posX = 12.0f;
-  const float posY = 582.0f;
-  const float itemSpacingY = height / (float) NEWS_MAX_ENTRIES;
+  s_uinews.opacity = 1.0f;
+  s_uinews.font = cx_font_create ("data/fonts/verdana.ttf", 14);
   
   ui_custom_callbacks_t newsCallbacks;
   memset (&newsCallbacks, 0, sizeof (ui_custom_callbacks_t));
   newsCallbacks.pressFn = ui_ctrlr_news_button_pressed;
   newsCallbacks.renderFn = ui_ctrlr_news_button_render;
   
-  float x = posX;
-  float y = posY;
-  
   for (int i = 0; i < NEWS_MAX_ENTRIES; ++i)
   {
     ui_custom_t *custom = ui_custom_create (s_uicontext, UI_ID_NEWS_BUTTON + i);
-    ui_custom_set_callbacks (custom, &newsCallbacks);
     
-    ui_widget_set_position (custom, x, y);
+    ui_custom_set_callbacks (custom, &newsCallbacks);
     ui_widget_set_colour (custom, UI_WIDGET_STATE_NORMAL, cx_colour_white ());
     ui_widget_set_colour (custom, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-    ui_widget_set_colour (custom, UI_WIDGET_STATE_FOCUS, cx_colour_blue ());
+    ui_widget_set_colour (custom, UI_WIDGET_STATE_FOCUS, cx_colour_white ());
     
     s_uinews.buttons [i] = custom;
-    
-    y += itemSpacingY;
   }
   
-  s_uinews.opacity = 1.0f;
-  s_uinews.font = cx_font_create ("data/fonts/verdana.ttf", 14);
+  ui_ctrlr_news_position_setup ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,6 +403,31 @@ static void ui_ctrlr_news_destroy (void)
   for (int i = 0; i < NEWS_MAX_ENTRIES; ++i)
   {
     ui_custom_destroy (s_uicontext, s_uinews.buttons [i]);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_news_position_setup (void)
+{
+  const float botMargin = 12.0f;
+  const float height = NEWS_LIST_HEIGHT;
+  const float posX = NEWS_LIST_XOFFSET;
+  const float posY = s_uicontext->canvasHeight - height - botMargin;
+  const float itemSpacingY = height / (float) NEWS_MAX_ENTRIES;
+  
+  float x = posX;
+  float y = posY;
+  
+  for (int i = 0; i < NEWS_MAX_ENTRIES; ++i)
+  {
+    ui_custom_t *custom = s_uinews.buttons [i];
+    
+    ui_widget_set_position (custom, x, y);
+    
+    y += itemSpacingY;
   }
 }
 
@@ -352,7 +449,7 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
     
     cx_font *font = s_uinews.font;
     
-    float fh = cx_font_get_height (font);
+    float fh = 18.0f; //cx_font_get_height (font);
     
     int i = 0;
     
@@ -363,8 +460,7 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
       ui_custom_t *custom = buttons [i++];
       
       custom->userdata = entry;
-      custom->intr.dimension.x = fw;
-      custom->intr.dimension.y = fh;
+      ui_widget_set_dimension (custom, fw, fh);
       
       entry = entry->next;
     }
@@ -372,9 +468,8 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
     const char *morenews = "More news...";
     ui_custom_t *custom = buttons [i];
     
-    custom->userdata = feed->link;
-    custom->intr.dimension.x = cx_font_get_text_width (font, morenews);
-    custom->intr.dimension.y = fh;
+    custom->userdata = feed->link;    
+    ui_widget_set_dimension (custom, cx_font_get_text_width (font, morenews), fh);
   }
 }
 
@@ -407,7 +502,7 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   float y1 = custom->intr.position.y;
 
   ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
-  cx_colour colour = custom->intr.colour [wstate];
+  cx_colour colour = *cx_colour_white (); //custom->intr.colour [wstate];
   colour.a *= opacity;
   
 #if UI_DEBUG
@@ -422,6 +517,19 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   int uid = custom->intr.uid;
   cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colours [uid % 3], NULL);
 #endif
+  
+  
+  if (wstate == UI_WIDGET_STATE_HOVER)
+  {
+    float x2 = x1 + custom->intr.dimension.x;
+    float y2 = y1 + custom->intr.dimension.y;
+    
+    cx_colour colHlght;
+    cx_colour_set (&colHlght, 0.2f, 0.2f, 0.2f, 0.85f);
+    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colHlght, NULL);
+  }
+  
+  
   
   if (title)
   {
@@ -481,7 +589,7 @@ static void ui_ctrlr_twitter_create (void)
   memset (&s_uitwitter, 0, sizeof (s_uitwitter));
   
   s_uitwitter.font = cx_font_create ("data/fonts/verdana.ttf", 14);
-  s_uitwitter.bird = cx_texture_create_from_file ("data/icons/twitter-bird-16.png");
+  s_uitwitter.birdicon = cx_texture_create_from_file ("data/icons/twbird-16z.png");
   
   ui_custom_callbacks_t twViewCallbacks, twToggleCallbacks;
   
@@ -496,37 +604,24 @@ static void ui_ctrlr_twitter_create (void)
   s_uitwitter.toggle = ui_custom_create (s_uicontext, UI_ID_TWITTER_TOGGLE);
   ui_custom_set_callbacks (s_uitwitter.toggle, &twToggleCallbacks);
   
-#if UI_DEBUG
+  cx_colour darkgrey;
+  cx_colour_set (&darkgrey, 0.2f, 0.2f, 0.2f, 1.0f);
+  
   ui_widget_set_colour (s_uitwitter.toggle, UI_WIDGET_STATE_NORMAL, cx_colour_black ());
-  ui_widget_set_colour (s_uitwitter.toggle, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-  ui_widget_set_colour (s_uitwitter.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-#else
-  ui_widget_set_colour (s_uitwitter.toggle, UI_WIDGET_STATE_NORMAL, cx_colour_black ());
-  ui_widget_set_colour (s_uitwitter.toggle, UI_WIDGET_STATE_HOVER, cx_colour_black ());
+  ui_widget_set_colour (s_uitwitter.toggle, UI_WIDGET_STATE_HOVER, &darkgrey);
   ui_widget_set_colour (s_uitwitter.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
-#endif
-  ui_widget_set_position (s_uitwitter.toggle, 0.0f, 72.0f);
-  //ui_widget_set_dimension (s_uitwitter.toggle, (float) s_uitwitter.bird->width, (float) s_uitwitter.bird->height);
-  ui_widget_set_dimension (s_uitwitter.toggle, 36.0f, 24.0f);
-  ui_widget_set_visible (s_uitwitter.toggle, false);
   
   cx_colour viewCol;
   cx_colour_set (&viewCol, 0.3f, 0.3f, 0.3f, 0.4f);
   
   s_uitwitter.view = ui_custom_create (s_uicontext, UI_ID_TWITTER_VIEW);
   ui_custom_set_callbacks (s_uitwitter.view, &twViewCallbacks);
-#if UI_DEBUG
-  ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_NORMAL, cx_colour_indigo ());
-  ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_HOVER, cx_colour_yellow ());
-  ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_FOCUS, cx_colour_orange ());
-#else
+
   ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_NORMAL, &viewCol);
   ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_HOVER, &viewCol);
   ui_widget_set_colour (s_uitwitter.view, UI_WIDGET_STATE_FOCUS, &viewCol);
-#endif
-  ui_widget_set_position (s_uitwitter.view, 0.0f, 72.0f);
-  ui_widget_set_dimension (s_uitwitter.view, s_uicontext->canvasWidth, 24.0f);
-  ui_widget_set_visible (s_uitwitter.view, false);
+  
+  ui_ctrlr_twitter_position_setup ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -543,13 +638,15 @@ static void ui_ctrlr_twitter_destroy (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_twitter_resize (void)
+static void ui_ctrlr_twitter_position_setup (void)
 {
-  ui_widget_set_position (s_uitwitter.toggle, 0.0f, 72.0f);
+  float posY = 72.0f - 30.0f;
+  
+  ui_widget_set_position (s_uitwitter.toggle, 0.0f, posY);
   ui_widget_set_dimension (s_uitwitter.toggle, 36.0f, 24.0f);
   ui_widget_set_visible (s_uitwitter.toggle, false);
   
-  ui_widget_set_position (s_uitwitter.view, 0.0f, 72.0f);
+  ui_widget_set_position (s_uitwitter.view, 0.0f, posY);
   ui_widget_set_dimension (s_uitwitter.view, s_uicontext->canvasWidth, 24.0f);
   ui_widget_set_visible (s_uitwitter.view, false);
 }
@@ -616,6 +713,11 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
       
       ui_widget_set_visible (s_uitwitter.view, true);
       ui_widget_set_visible (s_uitwitter.toggle, true);
+      
+      if (!s_uitwitter.toggle->userdata)
+      {
+        ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_IN, 0.3f);
+      }
     }
   }
 }
@@ -663,6 +765,8 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
       
       feed_twitter_tweet_t *tweet = ticker->items [i].data;
       
+      CX_ASSERT (tweet);
+      
       if (tweet->userhandle && tweet->text)
       {
         char namehandle [256];
@@ -676,7 +780,7 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
         cx_font_render (font, tweet->text, x2, y, 0.0f, 0, &coltweet);
       }
 
-      if (wstate != UI_WIDGET_STATE_HOVER)
+      if ((wstate != UI_WIDGET_STATE_HOVER) && !browser_is_open ())
       {
         if ((x + ticker->items [i].width) < 0.0f)
         {
@@ -706,42 +810,11 @@ static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom)
 
 static void ui_ctrlr_twitter_button_render (ui_custom_t *custom)
 {
-  CX_ASSERT (custom);
+  cx_colour col1 = *cx_colour_white ();
+  cx_colour col2 = *cx_colour_grey ();
+  cx_texture *image = s_uitwitter.birdicon;
   
-  ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
-  const cx_colour *colour = ui_widget_get_colour (custom, wstate);
-  const cx_vec2 *pos = ui_widget_get_position (custom);
-  const cx_vec2 *dim = ui_widget_get_dimension (custom);
-  float opacity = ui_widget_get_opacity (custom);
-  const cx_texture *image = s_uitwitter.bird;
-  CX_ASSERT (image);
-  
-  // bg
-  
-  float w = dim->x;
-  float h = dim->y;
-  
-  float x1 = pos->x;
-  float y1 = pos->y;
-  float x2 = x1 + w;
-  float y2 = y1 + h;
-  
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
-  
-  // bird
-  
-  float bw = (float) s_uitwitter.bird->width;
-  float bh = (float) s_uitwitter.bird->height;
-  
-  float bx1 = x1 + ((w - bw) * 0.5f);
-  float by1 = y1 + ((h - bh) * 0.5f);
-  float bx2 = bx1 + bw;
-  float by2 = by1 + bh;
-  
-  cx_colour col = custom->userdata ? *cx_colour_grey () : *cx_colour_white ();
-  col.a *= opacity;
-  
-  cx_draw_quad (bx1, by1, bx2, by2, 0.0f, 0.0f, &col, image);
+  ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -836,6 +909,12 @@ static void ui_ctrlr_music_create (void)
   
   s_uimusic.font = cx_font_create ("data/fonts/verdana.ttf", 14);
   
+  s_uimusic.iconNote = cx_texture_create_from_file ("data/icons/mnote-16z.png");
+  s_uimusic.iconPlay = cx_texture_create_from_file ("data/icons/play-12z.png");
+  s_uimusic.iconPause = cx_texture_create_from_file ("data/icons/pause-12z.png");
+  s_uimusic.iconPrev = cx_texture_create_from_file ("data/icons/prev-12z.png");
+  s_uimusic.iconQueue = cx_texture_create_from_file ("data/icons/eject-12z.png");
+  
   audio_music_notification_register (ui_ctrlr_music_notification_callback);
   
   ui_custom_callbacks_t cbtoggle, cbplay, cbview, cbqueue, cbprev, cbnext;
@@ -872,53 +951,53 @@ static void ui_ctrlr_music_create (void)
   s_uimusic.next = ui_custom_create (s_uicontext, UI_ID_MUSIC_NEXT);
   s_uimusic.view = ui_custom_create (s_uicontext, UI_ID_MUSIC_VIEW);
   
+  cx_colour darkgrey;
+  cx_colour_set (&darkgrey, 0.2f, 0.2f, 0.2f, 1.0f);
+  
   ui_custom_set_callbacks (s_uimusic.toggle, &cbtoggle);
-  ui_widget_set_colour (s_uimusic.toggle, UI_WIDGET_STATE_NORMAL, cx_colour_red ());
-  ui_widget_set_colour (s_uimusic.toggle, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-  ui_widget_set_colour (s_uimusic.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.toggle, 0.0f, 36.0f);
-  ui_widget_set_dimension (s_uimusic.toggle, 36.0f, 24.0f);
+  ui_widget_set_colour (s_uimusic.toggle, UI_WIDGET_STATE_NORMAL, cx_colour_black ());
+  ui_widget_set_colour (s_uimusic.toggle, UI_WIDGET_STATE_HOVER, &darkgrey);
+  ui_widget_set_colour (s_uimusic.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
   ui_widget_set_visible (s_uimusic.toggle, true);
+  s_uimusic.toggle->userdata = (void *) 0xffff; // using userdata as toggle switch -_-
+  
+  cx_colour viewCol;
+  cx_colour_set (&viewCol, 0.3f, 0.3f, 0.3f, 0.4f);
   
   ui_custom_set_callbacks (s_uimusic.view, &cbview);
-  ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_NORMAL, cx_colour_blue ());
-  ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-  ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.view, 36.0f, 36.0f);
-  ui_widget_set_dimension (s_uimusic.view, s_uicontext->canvasWidth - 36.0f, 24.0f);
+  ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_NORMAL, &viewCol);
+  ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_HOVER, &viewCol);
+  ui_widget_set_colour (s_uimusic.view, UI_WIDGET_STATE_FOCUS, &viewCol);
   ui_widget_set_visible (s_uimusic.view, false);
   
+  cx_colour nullCol;
+  cx_colour_set (&nullCol, 0.0f, 0.0f, 0.0f, 0.0f);
+  
   ui_custom_set_callbacks (s_uimusic.queue, &cbqueue);
-  ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_NORMAL, cx_colour_green ());
-  ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-  ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.queue, s_uicontext->canvasWidth - 36.0f, 36.0f);
-  ui_widget_set_dimension (s_uimusic.queue, 36.0f, 24.0f);
+  ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_NORMAL, &nullCol);
+  ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_HOVER, &viewCol);
+  ui_widget_set_colour (s_uimusic.queue, UI_WIDGET_STATE_FOCUS, &nullCol);
   ui_widget_set_visible (s_uimusic.queue, false);
   
   ui_custom_set_callbacks (s_uimusic.next, &cbnext);
-  ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_NORMAL, cx_colour_orange ());
-  ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-  ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.next, s_uicontext->canvasWidth - (36.0f * 2.0f), 36.0f);
-  ui_widget_set_dimension (s_uimusic.next, 36.0f, 24.0f);
+  ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_NORMAL, &nullCol);
+  ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_HOVER, &viewCol);
+  ui_widget_set_colour (s_uimusic.next, UI_WIDGET_STATE_FOCUS, &nullCol);
   ui_widget_set_visible (s_uimusic.next, false);
   
   ui_custom_set_callbacks (s_uimusic.prev, &cbprev);
-  ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_NORMAL, cx_colour_yellow ());
-  ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-  ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.prev, s_uicontext->canvasWidth - (36.0f * 3.0f), 36.0f);
-  ui_widget_set_dimension (s_uimusic.prev, 36.0f, 24.0f);
+  ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_NORMAL, &nullCol);
+  ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_HOVER, &viewCol);
+  ui_widget_set_colour (s_uimusic.prev, UI_WIDGET_STATE_FOCUS, &nullCol);
   ui_widget_set_visible (s_uimusic.prev, false);
   
   ui_custom_set_callbacks (s_uimusic.play, &cbplay);
-  ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_NORMAL, cx_colour_indigo ());
-  ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
-  ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_FOCUS, cx_colour_cyan ());
-  ui_widget_set_position (s_uimusic.play, s_uicontext->canvasWidth - (36.0f * 4.0f), 36.0f);
-  ui_widget_set_dimension (s_uimusic.play, 36.0f, 24.0f);
+  ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_NORMAL, &nullCol);
+  ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_HOVER, &viewCol);
+  ui_widget_set_colour (s_uimusic.play, UI_WIDGET_STATE_FOCUS, &nullCol);
   ui_widget_set_visible (s_uimusic.play, false);
+  
+  ui_ctrlr_music_position_setup ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -927,30 +1006,44 @@ static void ui_ctrlr_music_create (void)
 
 static void ui_ctrlr_music_destroy (void)
 {
+  ui_custom_destroy (s_uicontext, s_uimusic.toggle);
+  ui_custom_destroy (s_uicontext, s_uimusic.queue);
+  ui_custom_destroy (s_uicontext, s_uimusic.play);
+  ui_custom_destroy (s_uicontext, s_uimusic.prev);
+  ui_custom_destroy (s_uicontext, s_uimusic.next);
+  ui_custom_destroy (s_uicontext, s_uimusic.view);
+  
+  cx_texture_destroy (s_uimusic.iconNote);
+  cx_texture_destroy (s_uimusic.iconPlay); 
+  cx_texture_destroy (s_uimusic.iconPause);
+  cx_texture_destroy (s_uimusic.iconPrev);
+  cx_texture_destroy (s_uimusic.iconQueue);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_resize (void)
+static void ui_ctrlr_music_position_setup (void)
 {
-  ui_widget_set_position (s_uimusic.toggle, 0.0f, 36.0f);
+  float posY = 36.0f - 24.0f;
+  
+  ui_widget_set_position (s_uimusic.toggle, 0.0f, posY);
   ui_widget_set_dimension (s_uimusic.toggle, 36.0f, 24.0f);
 
-  ui_widget_set_position (s_uimusic.view, 36.0f, 36.0f);
+  ui_widget_set_position (s_uimusic.view, 36.0f, posY);
   ui_widget_set_dimension (s_uimusic.view, s_uicontext->canvasWidth - 36.0f, 24.0f);
   
-  ui_widget_set_position (s_uimusic.queue, s_uicontext->canvasWidth - 36.0f, 36.0f);
+  ui_widget_set_position (s_uimusic.queue, s_uicontext->canvasWidth - 36.0f, posY);
   ui_widget_set_dimension (s_uimusic.queue, 36.0f, 24.0f);
 
-  ui_widget_set_position (s_uimusic.next, s_uicontext->canvasWidth - (36.0f * 2.0f), 36.0f);
+  ui_widget_set_position (s_uimusic.next, s_uicontext->canvasWidth - (36.0f * 2.0f), posY);
   ui_widget_set_dimension (s_uimusic.next, 36.0f, 24.0f);
 
-  ui_widget_set_position (s_uimusic.prev, s_uicontext->canvasWidth - (36.0f * 3.0f), 36.0f);
+  ui_widget_set_position (s_uimusic.prev, s_uicontext->canvasWidth - (36.0f * 3.0f), posY);
   ui_widget_set_dimension (s_uimusic.prev, 36.0f, 24.0f);
 
-  ui_widget_set_position (s_uimusic.play, s_uicontext->canvasWidth - (36.0f * 4.0f), 36.0f);
+  ui_widget_set_position (s_uimusic.play, s_uicontext->canvasWidth - (36.0f * 4.0f), posY);
   ui_widget_set_dimension (s_uimusic.play, 36.0f, 24.0f);
 }
 
@@ -960,26 +1053,11 @@ static void ui_ctrlr_music_resize (void)
 
 static void ui_ctrlr_music_toggle_render (ui_custom_t *custom)
 {
-  ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
-  const cx_colour *colour = ui_widget_get_colour (custom, wstate);
-  const cx_vec2 *pos = ui_widget_get_position (custom);
-  const cx_vec2 *dim = ui_widget_get_dimension (custom);
-  float opacity = ui_widget_get_opacity (custom);
+  cx_colour col1 = *cx_colour_white ();
+  cx_colour col2 = *cx_colour_grey ();
+  cx_texture *image = s_uimusic.iconNote;
   
-  cx_colour col = *colour;
-  col.a *= opacity;
-  
-  // bg
-  
-  float w = dim->x;
-  float h = dim->y;
-  
-  float x1 = pos->x;
-  float y1 = pos->y;
-  float x2 = x1 + w;
-  float y2 = y1 + h;
-  
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
+  ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1024,6 +1102,7 @@ static void ui_ctrlr_music_picked_callback (void)
 
   if (audio_music_queued ())
   {
+    s_uimusic.toggle->userdata = NULL;
     ui_ctrlr_music_bar_fade_begin (ANIM_FADE_IN, 0.3f);
   }
 }
@@ -1033,27 +1112,12 @@ static void ui_ctrlr_music_picked_callback (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void ui_ctrlr_music_play_render (ui_custom_t *custom)
-{
-  ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
-  const cx_colour *colour = ui_widget_get_colour (custom, wstate);
-  const cx_vec2 *pos = ui_widget_get_position (custom);
-  const cx_vec2 *dim = ui_widget_get_dimension (custom);
-  float opacity = ui_widget_get_opacity (custom);
+{  
+  cx_colour col1 = *cx_colour_white ();
+  cx_colour col2 = *cx_colour_grey ();
+  cx_texture *image = audio_music_playing () ? s_uimusic.iconPause : s_uimusic.iconPlay;
   
-  cx_colour col = *colour;
-  col.a *= opacity;
-  
-  // bg
-  
-  float w = dim->x;
-  float h = dim->y;
-  
-  float x1 = pos->x;
-  float y1 = pos->y;
-  float x2 = x1 + w;
-  float y2 = y1 + h;
-  
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
+  ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1080,26 +1144,11 @@ static void ui_ctrlr_music_play_pressed (ui_custom_t *custom)
 
 static void ui_ctrlr_music_queue_render (ui_custom_t *custom)
 {
-  ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
-  const cx_colour *colour = ui_widget_get_colour (custom, wstate);
-  const cx_vec2 *pos = ui_widget_get_position (custom);
-  const cx_vec2 *dim = ui_widget_get_dimension (custom);
-  float opacity = ui_widget_get_opacity (custom);
+  cx_colour col1 = *cx_colour_white ();
+  cx_colour col2 = *cx_colour_grey ();
+  cx_texture *image = s_uimusic.iconQueue;
   
-  cx_colour col = *colour;
-  col.a *= opacity;
-  
-  // bg
-  
-  float w = dim->x;
-  float h = dim->y;
-  
-  float x1 = pos->x;
-  float y1 = pos->y;
-  float x2 = x1 + w;
-  float y2 = y1 + h;
-  
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
+  ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1176,26 +1225,11 @@ static void ui_ctrlr_music_view_pressed (ui_custom_t *custom)
 
 static void ui_ctrlr_music_prev_render (ui_custom_t *custom)
 {
-  ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
-  const cx_colour *colour = ui_widget_get_colour (custom, wstate);
-  const cx_vec2 *pos = ui_widget_get_position (custom);
-  const cx_vec2 *dim = ui_widget_get_dimension (custom);
-  float opacity = ui_widget_get_opacity (custom);
+  cx_colour col1 = *cx_colour_white ();
+  cx_colour col2 = *cx_colour_grey ();
+  cx_texture *image = s_uimusic.iconPrev;
   
-  cx_colour col = *colour;
-  col.a *= opacity;
-  
-  // bg
-  
-  float w = dim->x;
-  float h = dim->y;
-  
-  float x1 = pos->x;
-  float y1 = pos->y;
-  float x2 = x1 + w;
-  float y2 = y1 + h;
-  
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
+  ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1215,26 +1249,11 @@ static void ui_ctrlr_music_prev_pressed (ui_custom_t *custom)
 
 static void ui_ctrlr_music_next_render (ui_custom_t *custom)
 {
-  ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
-  const cx_colour *colour = ui_widget_get_colour (custom, wstate);
-  const cx_vec2 *pos = ui_widget_get_position (custom);
-  const cx_vec2 *dim = ui_widget_get_dimension (custom);
-  float opacity = ui_widget_get_opacity (custom);
+  cx_colour col1 = *cx_colour_white ();
+  cx_colour col2 = *cx_colour_grey ();
+  cx_texture *image = s_uimusic.iconPrev;
   
-  cx_colour col = *colour;
-  col.a *= opacity;
-  
-  // bg
-  
-  float w = dim->x;
-  float h = dim->y;
-  
-  float x1 = pos->x;
-  float y1 = pos->y;
-  float x2 = x1 + w;
-  float y2 = y1 + h;
-  
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &col, NULL);
+  ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, true, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

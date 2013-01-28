@@ -15,7 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define BROWSER_DEBUG_LOG_ENABLED   0
+#define BROWSER_DEBUG_LOG_ENABLED   1
 #define BROWSER_CACHE_ENABLED       1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +97,8 @@ NSMutableString *g_browserTitle = nil;
 //
 - (void) webViewDidStartLoad:(UIWebView *)webView
 {
-  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED, "Webview: Starting load");
+  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "Webview: Starting load");
+  [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
 }
 //
 - (void) webViewDidFinishLoad:(UIWebView *)webView
@@ -109,7 +110,7 @@ NSMutableString *g_browserTitle = nil;
     [g_browserTitle setString:docTitle];
   }
   
-  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED, "Webview: Finishing load");
+  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "Webview: Finishing load");
 }
 //
 - (void) webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
@@ -244,8 +245,8 @@ bool browser_init (void *container)
   const unsigned int cacheMemory = [[NSURLCache sharedURLCache] memoryCapacity];
   const unsigned int cacheStorage = [[NSURLCache sharedURLCache] diskCapacity];
   
-  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED, "cacheMemory: %d", cacheMemory);
-  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED, "cacheStorage: %d", cacheStorage);
+  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "cacheMemory: %d", cacheMemory);
+  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "cacheStorage: %d", cacheStorage);
   
   CX_REFERENCE_UNUSED_VARIABLE (cacheMemory);
   CX_REFERENCE_UNUSED_VARIABLE (cacheStorage);
@@ -414,6 +415,9 @@ void browser_set_hidden (bool hidden)
                                       if (finished && hidden) 
                                       { 
                                         [s_webview setHidden:YES];
+                                        [s_webview removeFromSuperview];
+                                        [s_webview release];
+                                        s_webview = nil;
                                       } 
                           
                                       s_animating = false; 
@@ -485,7 +489,7 @@ void browser_render (const browser_rect_t *browserRect, float opacity)
     float bdy2 = bdy1 + cx_gdi_get_screen_height ();
     
     cx_colour bdcolour;
-    cx_colour_set (&bdcolour, 0.0f, 0.0f, 0.0f, alpha * 0.6f);
+    cx_colour_set (&bdcolour, 0.0f, 0.0f, 0.0f, alpha * 0.8f);
     
     cx_draw_quad (bdx1, bdy1, bdx2, bdy2, 0.0f, 0.0f, &bdcolour, NULL);
     
@@ -626,7 +630,7 @@ void browser_render (const browser_rect_t *browserRect, float opacity)
           s_rampTime = 0.0f;
           s_rotValue = s_rotSpeed;
           
-          CX_DEBUGLOG_CONSOLE (1, "FAST SON!!!*********");
+          CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "FAST SON!!!*********");
         }
         else if (prevloading && !s_wloading)
         {
@@ -634,7 +638,7 @@ void browser_render (const browser_rect_t *browserRect, float opacity)
           s_rampTime = 0.0f;
           s_rotValue = s_rotSpeed;
           
-          CX_DEBUGLOG_CONSOLE (1, "SLOW SON!!!*********");
+          CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "SLOW SON!!!*********");
         }
       
         const float rampTotalTime = 0.5f;
@@ -649,7 +653,7 @@ void browser_render (const browser_rect_t *browserRect, float opacity)
         
         s_rotSpeed = s_rotValue + ((s_rotTarget - s_rotValue) * t);
         
-        s_rotation += s_rotSpeed * dt;
+        s_rotation += s_rotSpeed * dt * 2.0f;
         
         s_rotation = fmodf (s_rotation, 360.0f);
         
@@ -658,6 +662,7 @@ void browser_render (const browser_rect_t *browserRect, float opacity)
         if (s_rotSpeed > CX_EPSILON)
         {
           buttonColour = &s_buttons [i].altColour;
+          buttonColour->a = alpha;
         }
       }
       

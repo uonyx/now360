@@ -108,7 +108,10 @@ void render_fps (void)
   
   cx_font *font = s_font [UI_FONT_SIZE_12];
   
-  cx_font_render (font, fpsStr, 2.0f, 12.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_red ());
+  float sw = 1024.0f;
+  float sh = 768.0f;
+  
+  cx_font_render (font, fpsStr, (sw - 24.0f) - 2.0f, sh - 12.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_red ());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

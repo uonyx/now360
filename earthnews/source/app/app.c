@@ -779,12 +779,16 @@ static void app_render_2d_earth (void)
     colour.a = opacity;
     
     //cx_font_set_scale (s_font, pos->w, pos->w);
-    
     cx_font_render (s_render2dInfo.font, text, pos->x, pos->y, pos->z, CX_FONT_ALIGNMENT_CENTRE_X, &colour);
     
     // render weather icon
-    
     feeds_weather_render (feed, pos->x, pos->y - 6.0f, pos->z, opacity);
+    
+#if 0
+    char temp [32];
+    cx_sprintf (temp, 32, "%d C", feed->celsius);
+    cx_font_render (s_render2dInfo.font, temp, pos->x + 10.0f, pos->y, pos->z, 0, &colour);
+#endif
   }
   
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);

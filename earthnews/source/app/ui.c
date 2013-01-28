@@ -213,6 +213,8 @@ void ui_custom_destroy (ui_context_t *ctx, ui_custom_t *custom)
   CX_ASSERT (custom);
   
   ui_ctx_remove_intrinsic (ctx, &custom->intr);
+  
+  cx_free (custom);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
