@@ -11,7 +11,7 @@ attribute mediump vec4 a_position;
 attribute lowp vec4 a_colour;
 varying lowp vec4 v_colour;
 
-const float spriteWidth = 0.025;
+const float spriteWidth = 0.01; //0.025;
 const float screenWidth = 768.0;
 
 void main (void)

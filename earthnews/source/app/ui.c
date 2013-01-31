@@ -20,7 +20,7 @@ static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr)
 static void ui_ctx_remove_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr);
 static void ui_ctx_render (ui_context_t *ctx);
 static void ui_ctx_press (ui_context_t *ctx);
-static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point);
+static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point, bool ext);
 static ui_widget_state_t ui_ctx_widget_state (ui_context_t *ctx, const ui_intrinsic_t *intr);
 
 static void ui_ctx_render_custom (ui_context_t *ctx, ui_custom_t *custom);
@@ -78,7 +78,7 @@ bool ui_input (ui_context_t *ctx, const input_touch_event *tevent)
   {
     case INPUT_TOUCH_TYPE_BEGIN:
     {
-      ui_intrinsic_t *hit = ui_ctx_input_hit (ctx, &tevent->point);
+      ui_intrinsic_t *hit = ui_ctx_input_hit (ctx, &tevent->point, false);
       
       if (hit) 
       {
@@ -109,7 +109,7 @@ bool ui_input (ui_context_t *ctx, const input_touch_event *tevent)
       
     case INPUT_TOUCH_TYPE_END:
     {
-      ui_intrinsic_t *hit = ui_ctx_input_hit (ctx, &tevent->point);
+      ui_intrinsic_t *hit = ui_ctx_input_hit (ctx, &tevent->point, true);
       
       if (ctx->hover && (ctx->hover == hit))
       {
@@ -514,7 +514,7 @@ static void ui_ctx_render_checkbox (ui_context_t *ctx, ui_checkbox_t *checkbox)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point)
+static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point, bool ext)
 {
   CX_FATAL_ASSERT (ctx);
   CX_ASSERT (point);
@@ -575,6 +575,17 @@ static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point
       float h = intr->dimension.y;
       float x = intr->position.x;
       float y = intr->position.y;
+      
+      if (ext && (ctx->hover == intr))
+      {
+        const float ex = 4.0f;
+        const float ey = 6.0f;
+        
+        w += ex;
+        h += ey;
+        x -= (ex * 0.5f);
+        y -= (ey * 0.5f);
+      }
       
       if ((tx >= x) && (tx <= (x + w)))
       {

@@ -518,18 +518,15 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colours [uid % 3], NULL);
 #endif
   
-  
   if (wstate == UI_WIDGET_STATE_HOVER)
   {
     float x2 = x1 + custom->intr.dimension.x;
     float y2 = y1 + custom->intr.dimension.y;
     
     cx_colour colHlght;
-    cx_colour_set (&colHlght, 0.2f, 0.2f, 0.2f, 0.85f);
+    cx_colour_set (&colHlght, 0.2f, 0.2f, 0.2f, 0.7f);
     cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colHlght, NULL);
   }
-  
-  
   
   if (title)
   {

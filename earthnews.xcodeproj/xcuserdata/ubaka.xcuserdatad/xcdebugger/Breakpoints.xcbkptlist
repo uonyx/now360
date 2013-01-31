@@ -8,11 +8,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "381023642.505129"
+         timestampString = "381108515.755574"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1353"
-         endingLineNumber = "1353"
+         startingLineNumber = "1350"
+         endingLineNumber = "1350"
          landmarkName = "ui_ctrlr_music_notification_callback()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -21,11 +21,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "381023642.505129"
+         timestampString = "381108515.755574"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1129"
-         endingLineNumber = "1129"
+         startingLineNumber = "1126"
+         endingLineNumber = "1126"
          landmarkName = "ui_ctrlr_music_play_pressed()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -47,11 +47,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "381023642.505129"
+         timestampString = "381108515.755574"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1105"
-         endingLineNumber = "1105"
+         startingLineNumber = "1102"
+         endingLineNumber = "1102"
          landmarkName = "ui_ctrlr_music_picked_callback()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -60,11 +60,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "381023642.505129"
+         timestampString = "381108515.755574"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1060"
-         endingLineNumber = "1060"
+         startingLineNumber = "1057"
+         endingLineNumber = "1057"
          landmarkName = "ui_ctrlr_music_toggle_render()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -112,11 +112,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "381023642.505129"
+         timestampString = "381108515.755574"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "528"
-         endingLineNumber = "528"
+         startingLineNumber = "527"
+         endingLineNumber = "527"
          landmarkName = "ui_ctrlr_news_button_render()"
          landmarkType = "7">
       </FileBreakpoint>

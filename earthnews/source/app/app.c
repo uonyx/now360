@@ -7,8 +7,8 @@
 //
 
 #include "app.h"
+#include "globals.h"
 #include "camera.h"
-#include "render.h"
 #include "feeds.h"
 #include "earth.h"
 #include "browser.h"
@@ -26,7 +26,9 @@
 #define CAMERA_PROJECTION_ORTHOGRAPHIC_FAR   (1.0f)
 
 #define CAMERA_MIN_FOV (50.0f)
-#define CAMERA_MAX_FOV (80.0f)
+#define CAMERA_MAX_FOV (90.0f)
+
+#define DEBUG_SHOW_TEMPERATURE 1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +64,16 @@ static feed_weather_t *s_weatherFeeds = NULL;
 static int s_selectedCity = -1;
 static int s_currentWeatherCity = -1;
 
+cx_texture *glowtex = NULL;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static float app_get_zoom_opacity (void);
+//static int  app_get_selected_city (void);
+//static void app_set_selected_city (int index);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +84,6 @@ static void app_input_touch_began (float x, float y);
 static void app_input_touch_moved (float x, float y, float px, float py);
 static void app_input_touch_ended (float x, float y);
 static void app_input_zoom (float factor);
-
 static bool app_input_touch_earth (float screenX, float screenY, float screenWidth, float screenHeight);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +135,11 @@ void app_init (void *rootvc, float width, float height)
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
-  render_init (width, height);
+  //
+  // globals
+  //
+  
+  globals_init ();
   
   //
   // audio
@@ -173,6 +188,8 @@ void app_init (void *rootvc, float width, float height)
   //
   
   s_earth = earth_create ("data/earth_data.json", 1.0f, 128, 64);
+  
+  glowtex = cx_texture_create_from_file ("data/textures/glowcircle.gb32-16.png");
 
   //
   // feeds
@@ -273,9 +290,9 @@ void app_deinit (void)
 {
   feeds_deinit ();
   
-  render_deinit ();
-  
   input_deinit ();
+  
+  globals_deinit ();
   
   cx_engine_deinit ();
 }
@@ -291,8 +308,6 @@ void app_view_resize (float width, float height)
   cx_gdi_set_screen_dimensions ((int) width, (int) height);
   
   ui_ctrlr_screen_resize (width, height);
-  
-  render_screen_reset (width, height);
   
   s_browserRect.width  = 778.0f;
   s_browserRect.height = 620.0f;
@@ -332,6 +347,18 @@ void app_render (void)
   app_render_3d ();
   
   app_render_2d ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static float app_get_zoom_opacity (void)
+{
+  float fov = s_camera->fov;
+  float opacity = 1.0f - cx_smoothstep (55.0f, 56.0f, fov);
+  
+  return opacity;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -471,8 +498,7 @@ static void app_update_earth (void)
 {
   // update 2d render info: font opacity
   
-  float fov = s_camera->fov;
-  float opacity = 1.0f - cx_smoothstep (55.0f, 56.0f, fov);
+  float opacity = app_get_zoom_opacity ();
   
   float screenWidth = cx_gdi_get_screen_width ();
   float screenHeight = cx_gdi_get_screen_height ();
@@ -511,7 +537,7 @@ static void app_update_earth (void)
     s_render2dInfo.renderPos [i].w = scale * 0.7f;
     
     float dotp = cx_max (0.0f, cx_vec4_dot (nor, &look));
-    float alpha = cx_smoothstep (0.95f, 1.0f, dotp);
+    float alpha = cx_smoothstep (0.98f, 1.0f, dotp);
     
     s_render2dInfo.opacity [i] = opacity * alpha;
   }
@@ -585,9 +611,37 @@ static void app_render_3d_earth (void)
   cx_time_set_date (&date, CX_TIME_ZONE_UTC);
   
   earth_render (s_earth, &date, &s_camera->position);
+
+#if DEBUG_SHOW_TEMPERATURE
+  
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
+  cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_enable_z_write (false);
   
   // draw points
-  //cx_draw_points (s_earth->data->count, s_earth->data->location, cx_colour_red (), NULL);
+  float opacity = app_get_zoom_opacity ();
+  
+  cx_colour col = *cx_colour_white ();
+  col.a = opacity;
+  
+  cx_draw_points (s_earth->data->count, s_earth->data->location, &col, glowtex);
+  
+  if (s_selectedCity > -1)
+  {
+    cx_colour col = *cx_colour_yellow ();
+    col.a = opacity;
+    
+    // pulse colour
+    
+    float time = (float) cx_system_time_get_total_time () * 50.0f;
+    float t = (cx_sin (time) + 1.0f) * 0.5f;
+    
+    cx_vec4_mul (&col, t, &col);
+    cx_draw_points (1, &s_earth->data->location [s_selectedCity], &col, glowtex);
+  }
+  
+  cx_gdi_enable_z_write (true);
+#endif
   
 #if 0
   static cx_line *normalLines = NULL;
@@ -700,8 +754,7 @@ static void app_render_2d (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &view);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
-  render_test ();
-  render_fps ();
+  globals_render_fps ();
   
   //////////////
   // render
@@ -777,17 +830,35 @@ static void app_render_2d_earth (void)
     
     cx_colour colour = (i == s_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
     colour.a = opacity;
+  
+#if DEBUG_SHOW_TEMPERATURE
+    if (feed->dataReady && 
+        (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
+        (feed->conditionCode < NUM_WEATHER_CONDITION_CODES))
+    {
+      // (icon width / 2) + margin offset 
+      cx_font_render (s_render2dInfo.font, text, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
+      
+      char temp [32];
+      cx_sprintf (temp, 32, "%d C", feed->celsius);
+      cx_font_render (s_render2dInfo.font, temp, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
+      
+      // render weather icon
+      feeds_weather_render (feed, pos->x + 24.0f, pos->y, pos->z, opacity);
+    }
+    else
+    {
+      // (icon width / 2) + margin offset 
+      cx_font_render (s_render2dInfo.font, text, pos->x + 12.0f, pos->y - 10.0f, pos->z, 0, &colour);
+    }
     
+#else
+  
     //cx_font_set_scale (s_font, pos->w, pos->w);
     cx_font_render (s_render2dInfo.font, text, pos->x, pos->y, pos->z, CX_FONT_ALIGNMENT_CENTRE_X, &colour);
     
     // render weather icon
     feeds_weather_render (feed, pos->x, pos->y - 6.0f, pos->z, opacity);
-    
-#if 0
-    char temp [32];
-    cx_sprintf (temp, 32, "%d C", feed->celsius);
-    cx_font_render (s_render2dInfo.font, temp, pos->x + 10.0f, pos->y, pos->z, 0, &colour);
 #endif
   }
   

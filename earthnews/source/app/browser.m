@@ -7,7 +7,7 @@
 //
 
 #import "browser.h"
-#import "render.h"
+#import "globals.h"
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
@@ -512,7 +512,7 @@ void browser_render (const browser_rect_t *browserRect, float opacity)
     // loading icon && title
     //////////////////////////
     
-    const cx_font *font = render_get_ui_font (UI_FONT_SIZE_12);
+    const cx_font *font = globals_get_font (APP_FONT_SIZE_12);
     
     if (g_browserTitle)
     {

@@ -21,8 +21,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static bool s_initialised = false;
-static cx_list *s_touchEventCallbacks [NUM_INPUT_TOUCH_TYPES];
-static cx_list *s_gestureEventCallbacks [NUM_INPUT_GESTURE_TYPES];
+static cx_list2 *s_touchEventCallbacks [NUM_INPUT_TOUCH_TYPES];
+static cx_list2 *s_gestureEventCallbacks [NUM_INPUT_GESTURE_TYPES];
 
 static input_touch_event s_touchEventsCache [INPUT_MAX_TOUCH_EVENTS_CACHE_SIZE];
 static unsigned int s_touchEventsCount = 0;
@@ -45,12 +45,18 @@ bool input_init (void)
 {
   CX_ASSERT (!s_initialised);
   
-  memset (s_touchEventCallbacks, 0, sizeof (s_touchEventCallbacks));
-  memset (s_gestureEventCallbacks, 0, sizeof (s_gestureEventCallbacks));
+  for (int i = 0; i < NUM_INPUT_TOUCH_TYPES; ++i)
+  {
+    s_touchEventCallbacks [i] = cx_list2_create ();
+  }
+  
+  for (int i = 0; i < NUM_INPUT_TOUCH_TYPES; ++i)
+  {
+    s_gestureEventCallbacks [i] = cx_list2_create ();
+  }
   
   s_touchEventsCount = 0;
   s_gestureEventsCount = 0;
-  
   s_initialised = true;
   
   return true;
@@ -66,12 +72,12 @@ bool input_deinit (void)
   
   for (int i = 0; i < NUM_INPUT_TOUCH_TYPES; ++i)
   {
-    cx_list_free (s_touchEventCallbacks [i]);
+    cx_list2_destroy (s_touchEventCallbacks [i]);
   }
 
   for (int i = 0; i < NUM_INPUT_TOUCH_TYPES; ++i)
   {
-    cx_list_free (s_gestureEventCallbacks [i]);
+    cx_list2_destroy (s_gestureEventCallbacks [i]);
   }
   
   s_initialised = false;
@@ -99,9 +105,9 @@ void input_register_touch_event_callback (input_touch_type type, input_touch_eve
 {
   CX_ASSERT (s_initialised);
   CX_ASSERT ((type > INPUT_TOUCH_TYPE_INVALID) && (type < NUM_INPUT_TOUCH_TYPES));
-  CX_ASSERT (!cx_list_exists (s_touchEventCallbacks [type], fn));
+  CX_ASSERT (!cx_list2_exists (s_touchEventCallbacks [type], fn));
   
-  s_touchEventCallbacks [type] = cx_list_insert (s_touchEventCallbacks [type], fn);
+  cx_list2_insert_back (s_touchEventCallbacks [type], fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,9 +118,9 @@ void input_register_gesture_event_callback (input_gesture_type type, input_gestu
 {
   CX_ASSERT (s_initialised);
   CX_ASSERT ((type > INPUT_GESTURE_TYPE_INVALID) && (type < NUM_INPUT_GESTURE_TYPES));
-  CX_ASSERT (!cx_list_exists (s_gestureEventCallbacks [type], fn));
+  CX_ASSERT (!cx_list2_exists (s_gestureEventCallbacks [type], fn));
   
-  s_gestureEventCallbacks [type] = cx_list_insert (s_gestureEventCallbacks [type], fn);
+  cx_list2_insert_back (s_gestureEventCallbacks [type], fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +182,7 @@ static void input_process_cached_events (void)
   {
     const input_gesture_event *gestureEvent = &s_gestureEventsCache [i];
     
-    cx_list_node *cb = s_gestureEventCallbacks [gestureEvent->type];
+    cx_list2_node *cb = s_gestureEventCallbacks [gestureEvent->type]->head;
     
     while (cb)
     {
@@ -196,7 +202,7 @@ static void input_process_cached_events (void)
   {
     const input_touch_event *touchEvent = &s_touchEventsCache [i];
     
-    cx_list_node *cb = s_touchEventCallbacks [touchEvent->type];
+    cx_list2_node *cb = s_touchEventCallbacks [touchEvent->type]->head;
     
     while (cb)
     {

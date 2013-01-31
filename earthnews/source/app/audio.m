@@ -142,7 +142,7 @@ void audio_deinit (void)
   
   audio_music_deinit ();
   
-  cx_list2_free (&s_musicNotificationCallbacks);
+  cx_list2_free_nodes (&s_musicNotificationCallbacks);
   
   s_initialised = false;
 }
