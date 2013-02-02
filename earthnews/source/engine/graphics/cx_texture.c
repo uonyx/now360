@@ -10,9 +10,12 @@
 
 #include "../system/cx_utility.h"
 #include "../system/cx_string.h"
+#include "../system/cx_native_ios.h"
 
 #include "cx_texture.h"
 #include "cx_gdi.h"
+
+#include "../3rdparty/stb/stb_image.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,9 +23,11 @@
 
 static cxu8 s_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] = 
 {
-  4,  /* CX_TEXTURE_FORMAT_RGB */
-  4,  /* CX_TEXTURE_FORMAT_RGBA */
-  1   /* CX_TEXTURE_FORMAT_ALPHA */
+  1, /* CX_TEXTURE_FORMAT_ALPHA */
+  1, /* CX_TEXTURE_FORMAT_LUMINANCE */
+  2, /* CX_TEXTURE_FORMAT_LUMINANCE_ALPHA */
+  3, /* CX_TEXTURE_FORMAT_RGB */
+  4, /* CX_TEXTURE_FORMAT_RGBA */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,21 +41,38 @@ typedef struct cx_texture_node
   struct cx_texture_node *next;
 } cx_texture_node;
 
-static bool cx_texture_load_png (cx_texture *texture, const char *filename);
-extern bool cx_native_load_png (const char *filename, cx_texture *texture);
+
+static bool cx_texture_load_img (cx_texture *texture, const char *filename);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool cx_texture_load_png (cx_texture *texture, const char *filename)
+static bool cx_texture_load_img (cx_texture *texture, const char *filename)
 {
   bool success = false;
   
-  if (cx_native_load_png (filename, texture))
+  char fullfilePath [512];
+  cx_native_get_filepath_from_resource (filename, fullfilePath, 512);
+  
+  int w, h, ch;
+  texture->data = stbi_load (fullfilePath, &w, &h, &ch, STBI_default);
+  
+  if (texture->data)
   {
-    texture->npot = (!cx_util_is_power_of_2 (texture->width)) || 
-                    (!cx_util_is_power_of_2 (texture->height));
+    texture->width = (cxu32) w;
+    texture->height = (cxu32) h;
+    
+    switch (ch) 
+    {
+      case STBI_grey:       { texture->format = CX_TEXTURE_FORMAT_LUMINANCE; break; }
+      case STBI_grey_alpha: { texture->format = CX_TEXTURE_FORMAT_LUMINANCE_ALPHA; break; }
+      case STBI_rgb:        { texture->format = CX_TEXTURE_FORMAT_RGB; break; }
+      case STBI_rgb_alpha:  { texture->format = CX_TEXTURE_FORMAT_RGBA; break; }
+      default:              { CX_FATAL_ERROR ("Invalid texture format"); break; }
+    }
+    
+    texture->npot = (!cx_util_is_power_of_2 (texture->width)) || (!cx_util_is_power_of_2 (texture->height));
     
     success = true;
   }
@@ -111,11 +133,13 @@ cx_texture *cx_texture_create_from_file (const char *filename)
     texture->data       = NULL;
     texture->compressed = false;
     
-    if (cx_texture_load_png (texture, filename))
+    if (cx_texture_load_img (texture, filename))
     {
       cx_texture_gpu_init (texture);
       
-      cx_free(texture->data);
+      stbi_image_free (texture->data);
+      
+      texture->data = NULL;
     }
     else
     {
@@ -132,11 +156,29 @@ cx_texture *cx_texture_create_from_file (const char *filename)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void cx_texture_data_destroy (cx_texture *texture)
+{
+  CX_ASSERT (texture);
+  CX_ASSERT (texture->data);
+  
+  cx_free (texture->data);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void cx_texture_destroy (cx_texture *texture)
 {
   if (texture)
   {
     cx_texture_gpu_deinit (texture);
+    
+    if (texture->data)
+    {
+      cx_free (texture->data);
+    }
+    
     cx_free (texture);
   }
 }
@@ -149,6 +191,9 @@ void cx_texture_destroy (cx_texture *texture)
 void cx_texture_gpu_init (cx_texture *texture)
 {
   CX_ASSERT (texture);
+  CX_ASSERT (texture->data);
+  CX_ASSERT (texture->width > 0);
+  CX_ASSERT (texture->height > 0);
    
   CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->width  [%d]", texture->width);
   CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->height [%d]", texture->height);
@@ -184,6 +229,18 @@ void cx_texture_gpu_init (cx_texture *texture)
       case CX_TEXTURE_FORMAT_ALPHA:
       {
         glTexImage2D (GL_TEXTURE_2D, 0, GL_ALPHA, texture->width, texture->height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, texture->data);
+        break;
+      }
+        
+      case CX_TEXTURE_FORMAT_LUMINANCE:
+      {
+        glTexImage2D (GL_TEXTURE_2D, 0, GL_LUMINANCE, texture->width, texture->height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, texture->data);
+        break;
+      }
+        
+      case CX_TEXTURE_FORMAT_LUMINANCE_ALPHA:
+      {
+        glTexImage2D (GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, texture->width, texture->height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, texture->data);
         break;
       }
         

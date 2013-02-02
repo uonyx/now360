@@ -7,7 +7,7 @@
 
 #include "../system/cx_file.h"
 #include "../system/cx_matrix4x4.h"
-#include "../3rdparty/stb_truetype/stb_truetype.h"
+#include "../3rdparty/stb/stb_truetype.h"
 
 #include "../system/cx_vector2.h"
 #include "cx_font.h"
@@ -62,10 +62,18 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
   fontImpl->texture        = cx_texture_create (CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
                                                  CX_TEXTURE_FORMAT_ALPHA);
   
-  stbtt_BakeFontBitmap (file.data, 0, fontSize, fontImpl->texture->data, 
-                        CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, CX_FONT_FIRST_CHAR, CX_FONT_MAX_NUM_FONT_CHARS, fontImpl->ttfCharData);
+  stbtt_BakeFontBitmap (file.data, 
+                        0, 
+                        fontSize, 
+                        fontImpl->texture->data, 
+                        CX_FONT_TEXTURE_WIDTH, 
+                        CX_FONT_TEXTURE_HEIGHT, 
+                        CX_FONT_FIRST_CHAR, 
+                        CX_FONT_MAX_NUM_FONT_CHARS, 
+                        fontImpl->ttfCharData);
   
   cx_texture_gpu_init (fontImpl->texture);
+  cx_texture_data_destroy (fontImpl->texture);
 
   cx_font *font   = (cx_font *) cx_malloc (sizeof (cx_font));
   font->fontdata  = fontImpl;

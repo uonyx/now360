@@ -1,21 +1,14 @@
 //
-//  cx_texture.m
+//  cx_native_ios.m
 //
 //  Created by Ubaka Onyechi on 19/02/2012.
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-#import "cx_system.h"
+#import "cx_native_ios.h"
 #import "cx_string.h"
 #import "../graphics/cx_texture.h"
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void cx_native_get_filepath_from_resource (const char *filename, char *destFilepath, int destFilePathSize);
-bool cx_native_load_png (const char *filename, cx_texture *texture);
+#import <Foundation/Foundation.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +18,8 @@ void cx_native_get_filepath_from_resource (const char *filename, char *destFilep
 {
   NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
   
-  NSString *filePath = [resourcePath stringByAppendingPathComponent:[NSString stringWithCString:filename encoding:NSASCIIStringEncoding]];
+  NSString *filePath = [resourcePath stringByAppendingPathComponent:[NSString stringWithCString:filename 
+                                                                                       encoding:NSASCIIStringEncoding]];
   
   const char *cFilePath = [filePath cStringUsingEncoding:NSASCIIStringEncoding];
   
@@ -36,7 +30,8 @@ void cx_native_get_filepath_from_resource (const char *filename, char *destFilep
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool cx_native_load_png (const char *filename, cx_texture *texture)
+#if 0
+static bool cx_native_load_png (const char *filename, cx_texture *texture)
 {
 #if 1
   char fullfilePath [512];
@@ -123,6 +118,7 @@ bool cx_native_load_png (const char *filename, cx_texture *texture)
   return true;
 }
 
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

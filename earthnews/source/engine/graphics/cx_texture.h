@@ -42,9 +42,11 @@ typedef enum cx_texture_wrap_mode
 typedef enum cx_texture_format
 {
   CX_TEXTURE_FORMAT_INVALID = -1,
+  CX_TEXTURE_FORMAT_ALPHA,
+  CX_TEXTURE_FORMAT_LUMINANCE,
+  CX_TEXTURE_FORMAT_LUMINANCE_ALPHA,
   CX_TEXTURE_FORMAT_RGB,
   CX_TEXTURE_FORMAT_RGBA,
-  CX_TEXTURE_FORMAT_ALPHA,
   CX_TEXTURE_NUM_FORMATS
 } cx_texture_format;
 
@@ -77,6 +79,7 @@ cx_texture *cx_texture_create (cxu32 width, cxu32 height, cx_texture_format form
 cx_texture *cx_texture_create_from_file (const char *filename);
 
 void cx_texture_destroy (cx_texture *texture);
+void cx_texture_data_destroy (cx_texture *texture);
 void cx_texture_set_wrap_mode (cx_texture *texture, cx_texture_wrap_mode mode);
 
 void cx_texture_gpu_init (cx_texture *texture);
