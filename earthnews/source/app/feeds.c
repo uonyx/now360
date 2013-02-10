@@ -40,6 +40,66 @@ const char *WEATHER_SEARCH_API_URL      = "http://rss.weather.com/weather/local"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+enum weather_condition_code
+{
+  WEATHER_CONDITION_CODE_INVALID = -1,
+  
+  WEATHER_CONDITION_CODE_TORNADO,
+  WEATHER_CONDITION_CODE_TROPICAL_STORM,
+  WEATHER_CONDITION_CODE_HURRICANE,
+  WEATHER_CONDITION_CODE_SEVERE_THUNDERSTORMS,
+  WEATHER_CONDITION_CODE_THUNDERSTORMS,
+  WEATHER_CONDITION_CODE_MIXED_RAIN_AND_SNOW,
+  WEATHER_CONDITION_CODE_MIXED_RAIN_AND_SLEET,
+  WEATHER_CONDITION_CODE_MIXED_SNOW_AND_SLEET,
+  WEATHER_CONDITION_CODE_FREEZING_DRIZZLE,
+  WEATHER_CONDITION_CODE_DRIZZLE,
+  WEATHER_CONDITION_CODE_FREEZING_RAIN,
+  WEATHER_CONDITION_CODE_SHOWERS,
+  WEATHER_CONDITION_CODE_SHOWERS_1,
+  WEATHER_CONDITION_CODE_SNOW_FLURRIES,
+  WEATHER_CONDITION_CODE_LIGHT_SNOW_SHOWERS,
+  WEATHER_CONDITION_CODE_BLOWING_SNOW,
+  WEATHER_CONDITION_CODE_SNOW,
+  WEATHER_CONDITION_CODE_HAIL,
+  WEATHER_CONDITION_CODE_SLEET,
+  WEATHER_CONDITION_CODE_DUST,
+  WEATHER_CONDITION_CODE_FOGGY,
+  WEATHER_CONDITION_CODE_HAZE,
+  WEATHER_CONDITION_CODE_SMOKY,
+  WEATHER_CONDITION_CODE_BLUSTERY,
+  WEATHER_CONDITION_CODE_WINDY,
+  WEATHER_CONDITION_CODE_COLD,
+  WEATHER_CONDITION_CODE_CLOUDY,
+  WEATHER_CONDITION_CODE_MOSTLY_CLOUDY_NIGHT,
+  WEATHER_CONDITION_CODE_MOSTLY_CLOUDY_DAY,
+  WEATHER_CONDITION_CODE_PARTLY_CLOUDY_NIGHT,
+  WEATHER_CONDITION_CODE_PARTLY_CLOUDY_DAY,
+  WEATHER_CONDITION_CODE_CLEAR_NIGHT,
+  WEATHER_CONDITION_CODE_SUNNY,
+  WEATHER_CONDITION_CODE_FAIR_NIGHT,
+  WEATHER_CONDITION_CODE_FAIR_DAY,
+  WEATHER_CONDITION_CODE_MIXED_RAIN_AND_HAIL,
+  WEATHER_CONDITION_CODE_HOT,
+  WEATHER_CONDITION_CODE_ISOLATED_THUNDERSTORMS,
+  WEATHER_CONDITION_CODE_SCATTERED_THUNDERSTORMS,
+  WEATHER_CONDITION_CODE_SCATTERED_THUNDERSTORMS_1,
+  WEATHER_CONDITION_CODE_SCATTERED_SHOWERS,
+  WEATHER_CONDITION_CODE_HEAVY_SNOW,
+  WEATHER_CONDITION_CODE_SCATTERED_SNOW_SHOWERS,
+  WEATHER_CONDITION_CODE_HEAVY_SNOW_1,
+  WEATHER_CONDITION_CODE_PARTLY_CLOUDY,
+  WEATHER_CONDITION_CODE_THUNDERSHOWERS,
+  WEATHER_CONDITION_CODE_SNOW_SHOWERS,
+  WEATHER_CONDITION_CODE_ISOLATED_THUNDERSHOWERS,
+  
+  NUM_WEATHER_CONDITION_CODES
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum weather_image_code
 {
   // tick
@@ -58,7 +118,7 @@ enum weather_image_code
   WEATHER_IMAGE_THUNDERSTORM_NIGHT,
   WEATHER_IMAGE_FOG_DAY,
   WEATHER_IMAGE_FOG_NIGHT,
-  NUM_WEATHER_IMAGES
+  NUM_WEATHER_IMAGE_CODES,
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,11 +132,12 @@ static cx_texture *s_weatherIcons [NUM_WEATHER_CONDITION_CODES];
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize);
-bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize);
-bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize);
-
 void feeds_news_clear (feed_news_t *feed);
+
+bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize);
 void feeds_twitter_clear (feed_twitter_t *feed);
+
+bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize);
 void feeds_weather_clear (feed_weather_t *feed);
 
 void news_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
@@ -654,6 +715,51 @@ bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z, float opacity)
+{
+  CX_ASSERT (feed);
+  
+  if (feed->dataReady && 
+      (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
+      (feed->conditionCode < NUM_WEATHER_CONDITION_CODES))
+  {
+    //int temperature = feed->celsius;
+    
+    cx_texture *image = s_weatherIcons [feed->conditionCode];
+    CX_ASSERT (image);
+    
+    float w = (float) image->width;
+    float h = (float) image->height;
+    
+    float x1 = x - (w * 0.5f);
+    float y1 = y - (h * 0.5f);
+    float x2 = x1 + w;
+    float y2 = y1 + h;
+    
+    cx_colour colour = *cx_colour_white ();
+    colour.a = opacity;
+    
+    cx_draw_quad (x1, y1, x2, y2, z, 0.0f, &colour, image);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool feeds_weather_data_valid (const feed_weather_t *feed)
+{
+  CX_ASSERT (feed);
+  
+  return (feed->dataReady && 
+          (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
+          (feed->conditionCode < NUM_WEATHER_CONDITION_CODES));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #if 0
 struct temp
 {
@@ -692,6 +798,7 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
     // no internet connection ?
+    feed->reqStatus = FEED_REQ_STATUS_FAILURE;
   }
   else
   {
@@ -712,6 +819,7 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
       feed->dataReady = true;
       feed->dataPending = false;
       feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+      feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
 #if 0
       struct temp t;
       t.data = xmldata;
@@ -722,6 +830,7 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
     }
     else
     {
+      feed->reqStatus = FEED_REQ_STATUS_FAILURE;
     }
   }
   
@@ -732,46 +841,14 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z, float opacity)
-{
-  CX_ASSERT (feed);
-  
-  if (feed->dataReady && 
-      (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
-      (feed->conditionCode < NUM_WEATHER_CONDITION_CODES))
-  {
-    //int temperature = feed->celsius;
-  
-    cx_texture *image = s_weatherIcons [feed->conditionCode];
-    CX_ASSERT (image);
-    
-    float w = (float) image->width;
-    float h = (float) image->height;
-    
-    float x1 = x - (w * 0.5f);
-    float y1 = y - (h * 0.5f);
-    float x2 = x1 + w;
-    float y2 = y1 + h;
-    
-    cx_colour colour = *cx_colour_white ();
-    colour.a = opacity;
-    
-    cx_draw_quad (x1, y1, x2, y2, z, 0.0f, &colour, image);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void feeds_weather_search (feed_weather_t *feed, const char *query)
+bool feeds_weather_search (feed_weather_t *feed, const char *query)
 {
   CX_ASSERT (feed);
   CX_ASSERT (query);
   
   if (feed->dataPending)
   {
-    return;
+    return false;
   }
   
   // weather.com: "http://rss.weather.com/weather/local/IVXX0001?cm_cat=rss"
@@ -779,6 +856,7 @@ void feeds_weather_search (feed_weather_t *feed, const char *query)
   feed->dataReady = false;
   feed->dataPending = true;
   feed->q = query;
+  feed->reqStatus = FEED_REQ_STATUS_IN_PROGRESS;
   
   // url
   
@@ -797,6 +875,8 @@ void feeds_weather_search (feed_weather_t *feed, const char *query)
   CX_DEBUGLOG_CONSOLE (1, "%s", request);
   
   cx_http_get (request, NULL, 0, WEATHER_HTTP_REQUEST_TIMEOUT, weather_http_callback, feed);
+  
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

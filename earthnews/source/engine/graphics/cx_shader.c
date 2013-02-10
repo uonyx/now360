@@ -355,7 +355,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
     shader->attributes [attribIdx] = attribLocation;
     
     cx_gdi_assert_no_errors ();
-    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, shader->attributes [i]);
+    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, attribLocation);
      
     attribCount++;
   }
@@ -393,7 +393,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
       shader->uniforms [uniformIdx] = uniformLocation;
       
       cx_gdi_assert_no_errors ();
-      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, shader->uniforms [i]);
+      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, uniformLocation);
     }
     
     uniformCount++;

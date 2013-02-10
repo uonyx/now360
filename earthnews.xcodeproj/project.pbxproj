@@ -38,6 +38,7 @@
 		3127E31115F3F18500793C60 /* browser.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E31015F3F18100793C60 /* browser.m */; };
 		316846BE165B041500B80A66 /* cx_vertex_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846BD165B041400B80A66 /* cx_vertex_data.c */; };
 		316846C61660F97D00B80A66 /* cx_varmod.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846C41660F97D00B80A66 /* cx_varmod.c */; };
+		3169B0F616BF1AB2000D7AC9 /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3169B0F516BF1AB2000D7AC9 /* libpthread.dylib */; };
 		316FAA691517C01900CC39F2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA651517C01900CC39F2 /* InfoPlist.strings */; };
 		316FAA6A1517C01900CC39F2 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */; };
 		316FAA711517C06400CC39F2 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA6D1517C06400CC39F2 /* AppDelegate.m */; };
@@ -193,6 +194,7 @@
 		316846BD165B041400B80A66 /* cx_vertex_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_vertex_data.c; sourceTree = "<group>"; };
 		316846C41660F97D00B80A66 /* cx_varmod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_varmod.c; sourceTree = "<group>"; };
 		316846C51660F97D00B80A66 /* cx_varmod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_varmod.h; sourceTree = "<group>"; };
+		3169B0F516BF1AB2000D7AC9 /* libpthread.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpthread.dylib; path = usr/lib/libpthread.dylib; sourceTree = SDKROOT; };
 		316FAA631517C01900CC39F2 /* earthnews-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "earthnews-Info.plist"; sourceTree = "<group>"; };
 		316FAA641517C01900CC39F2 /* earthnews-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "earthnews-Prefix.pch"; sourceTree = "<group>"; };
 		316FAA661517C01900CC39F2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -434,6 +436,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3169B0F616BF1AB2000D7AC9 /* libpthread.dylib in Frameworks */,
 				311B943416A1802B0057786F /* MediaPlayer.framework in Frameworks */,
 				3190B1D715929495008B54FD /* Twitter.framework in Frameworks */,
 				3190B1D2158E5A70008B54FD /* libxml2.dylib in Frameworks */,
@@ -622,9 +625,9 @@
 		317FFA0B16BB29EB00154541 /* stb */ = {
 			isa = PBXGroup;
 			children = (
+				317FFA0D16BB29EB00154541 /* stb_truetype.h */,
 				317FFA0F16BB2ECC00154541 /* stb_image.h */,
 				317FFA0C16BB29EB00154541 /* stb_image.c */,
-				317FFA0D16BB29EB00154541 /* stb_truetype.h */,
 			);
 			path = stb;
 			sourceTree = "<group>";
@@ -632,6 +635,7 @@
 		3182B98C14B0B6680097A87E = {
 			isa = PBXGroup;
 			children = (
+				3169B0F516BF1AB2000D7AC9 /* libpthread.dylib */,
 				311B943316A1802B0057786F /* MediaPlayer.framework */,
 				3182B9A114B0B6680097A87E /* earthnews */,
 				3182B99A14B0B6680097A87E /* Frameworks */,
@@ -1213,7 +1217,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
-				PROVISIONING_PROFILE = "ED840DF4-2C73-46DD-A535-02EF7F5BA4C8";
+				PROVISIONING_PROFILE = "4EEE55FC-9BEF-4E50-9E64-49B53AB598DE";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1237,7 +1241,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
-				PROVISIONING_PROFILE = "ED840DF4-2C73-46DD-A535-02EF7F5BA4C8";
+				PROVISIONING_PROFILE = "4EEE55FC-9BEF-4E50-9E64-49B53AB598DE";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;

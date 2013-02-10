@@ -7,6 +7,7 @@
 
 #include "cx_thread.h"
 #include "cx_string.h"
+#include <unistd.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,6 +139,15 @@ void cx_thread_detach (cx_thread *thread)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void cx_thread_sleep (cxu32 millisecs)
+{
+  usleep (millisecs * 1000);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool cx_thread_mutex_init (cx_thread_mutex *mutex)
 {
   CX_ASSERT (mutex);
@@ -241,7 +251,7 @@ void cx_thread_monitor_signal (cx_thread_monitor *monitor)
   
   int rc = pthread_mutex_lock (&monitor->mutex);
   
-  monitor->sigcount++;
+  monitor->sigcount++; // sigcount: protects against logical error of calling 'signal' before 'wait' & useful for debug
   
   rc = pthread_cond_signal (&monitor->cond);
   
@@ -262,10 +272,8 @@ void cx_thread_monitor_wait (cx_thread_monitor *monitor)
   {
     rc = pthread_cond_wait (&monitor->cond, &monitor->mutex);
   }
-  else
-  {
-    monitor->sigcount--;
-  }
+  
+  monitor->sigcount--;
   
   rc = pthread_mutex_unlock (&monitor->mutex);
 }
@@ -278,8 +286,6 @@ bool cx_thread_monitor_wait_timed (cx_thread_monitor *monitor, cxu32 timeout)
 {
   CX_ASSERT (monitor);
   
-  bool ret = false;
-  
   struct timeval tv;
   struct timespec ts;
   
@@ -288,15 +294,16 @@ bool cx_thread_monitor_wait_timed (cx_thread_monitor *monitor, cxu32 timeout)
   ts.tv_sec = tv.tv_sec + 0;
   ts.tv_nsec = (tv.tv_usec + (timeout * 1000)) * 1000;
   
+  int retc = 0;
+  
   int rc = pthread_mutex_lock (&monitor->mutex);
   
   if (monitor->sigcount == 0)
   {
-    rc = pthread_cond_timedwait (&monitor->cond, &monitor->mutex, &ts);
+    retc = pthread_cond_timedwait (&monitor->cond, &monitor->mutex, &ts);
     
-    if (rc == 0)
+    if (retc == 0)
     {
-      ret = true;
       monitor->sigcount--;
     }
   }
@@ -307,7 +314,7 @@ bool cx_thread_monitor_wait_timed (cx_thread_monitor *monitor, cxu32 timeout)
   
   rc = pthread_mutex_unlock (&monitor->mutex);
   
-  return ret;
+  return (retc == 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -10,7 +10,7 @@
 
 #include "../system/cx_utility.h"
 #include "../system/cx_string.h"
-#include "../system/cx_native_ios.h"
+#include "../system/cx_file.h"
 
 #include "cx_texture.h"
 #include "cx_gdi.h"
@@ -53,7 +53,7 @@ static bool cx_texture_load_img (cx_texture *texture, const char *filename)
   bool success = false;
   
   char fullfilePath [512];
-  cx_native_get_filepath_from_resource (filename, fullfilePath, 512);
+  cx_file_get_absolute_path (filename, fullfilePath, 512);
   
   int w, h, ch;
   texture->data = stbi_load (fullfilePath, &w, &h, &ch, STBI_default);

@@ -43,6 +43,7 @@ typedef struct cx_engine_init_params
 {
   cxi32 screenWidth;
   cxi32 screenHeight;
+  void *graphicsContext;
 } cx_engine_init_params;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +61,7 @@ static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init
     CX_ASSERT (params);
     
     _cx_shader_init ();
-    _cx_gdi_init (params->screenWidth, params->screenHeight);
+    _cx_gdi_init (params->graphicsContext, params->screenWidth, params->screenHeight);
   }
   
   if ((flags & CX_ENGINE_INIT_NETWORK) == CX_ENGINE_INIT_NETWORK)

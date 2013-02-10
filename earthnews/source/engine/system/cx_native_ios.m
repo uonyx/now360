@@ -14,21 +14,63 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_native_get_filepath_from_resource (const char *filename, char *destFilepath, int destFilePathSize)
+void cx_native_file_get_path_from_resource (const char *filename, char *destFilepath, int destFilePathSize)
 {
-  NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+  CX_ASSERT (filename);
+  CX_ASSERT (destFilepath);
+  CX_ASSERT (destFilePathSize > 0);
   
-  NSString *filePath = [resourcePath stringByAppendingPathComponent:[NSString stringWithCString:filename 
-                                                                                       encoding:NSASCIIStringEncoding]];
+  //NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  const char *cFilePath = [filePath cStringUsingEncoding:NSASCIIStringEncoding];
+  @autoreleasepool 
+  {
+    NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+    
+    NSString *filePath = [resourcePath stringByAppendingPathComponent:[NSString stringWithCString:filename 
+                                                                                         encoding:NSASCIIStringEncoding]];
+    
+    const char *cFilePath = [filePath cStringUsingEncoding:NSASCIIStringEncoding];
+    
+    cx_strcpy (destFilepath, destFilePathSize, cFilePath);
+  }
   
-  cx_strcpy (destFilepath, destFilePathSize, cFilePath);
+  //[pool release];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static EAGLContext *s_eaglContext = nil;
+
+void cx_native_eagl_context_init (void *eaglContext)
+{
+  CX_ASSERT (eaglContext);
+  
+  s_eaglContext = eaglContext;
+}
+
+void cx_native_eagl_context_add (void)
+{
+  CX_ASSERT (s_eaglContext);
+  
+  EAGLContext *newContext = [[EAGLContext alloc] initWithAPI:[s_eaglContext API] sharegroup:[s_eaglContext sharegroup]];
+  
+  EAGLContext *curContext = [EAGLContext currentContext];
+  
+  (void) curContext;
+  
+  [EAGLContext setCurrentContext:newContext];
+}
+
+void cx_native_eagl_context_remove (void)
+{
+  EAGLContext *curContext = [EAGLContext currentContext];
+ 
+  [EAGLContext setCurrentContext:nil];
+  
+  [curContext release];
+}
 
 #if 0
 static bool cx_native_load_png (const char *filename, cx_texture *texture)

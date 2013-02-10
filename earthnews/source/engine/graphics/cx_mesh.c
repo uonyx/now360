@@ -16,6 +16,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define ENABLE_VAO 1
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader);
 void cx_mesh_gpu_deinit (cx_mesh *mesh);
 void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize);
@@ -35,10 +41,13 @@ cx_mesh *cx_mesh_create (cx_vertex_data *vertexData, cx_shader *shader, cx_mater
   mesh->material = material;
   mesh->vertexData = vertexData;
   mesh->vao = 0;
+  mesh->gpu = 0;
   
   memset (mesh->vbos, 0, sizeof (mesh->vbos));
   
+#if !ENABLE_VAO
   cx_mesh_gpu_init (mesh, shader);
+#endif
   
   return mesh;
 }
@@ -108,7 +117,9 @@ void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize
     }
       
     default:
+    {
       break;
+    }
   }
 }
 
@@ -131,9 +142,11 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
   cxi32 numIndices = vertexData->numIndices;
   cxi32 numVertices = vertexData->numVertices;
   
+#if ENABLE_VAO
   glGenVertexArraysOES (1, &mesh->vao);
   glBindVertexArrayOES (mesh->vao);
   cx_gdi_assert_no_errors ();
+#endif
   
   bool enabled [CX_NUM_SHADER_ATTRIBUTES];
   
@@ -226,6 +239,8 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
   }
   
   cx_gdi_assert_no_errors ();
+  
+  mesh->gpu = 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -237,9 +252,13 @@ void cx_mesh_gpu_deinit (cx_mesh *mesh)
   CX_ASSERT (mesh);
   
   glDeleteBuffers (CX_VERTEX_BUFFER_COUNT, mesh->vbos);
+  
+#if ENABLE_VAO
   glDeleteVertexArraysOES (1, &mesh->vao);
+#endif
   
   mesh->vao = 0;
+  mesh->gpu = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,16 +270,86 @@ void cx_mesh_render (cx_mesh *mesh)
   CX_ASSERT (mesh);
   CX_ASSERT (mesh->shader);
 
+#if ENABLE_VAO
+  if (!mesh->gpu) // support vao/vbo rendering?
+  {
+    // opengl vaos can't be shared across contexts
+    cx_mesh_gpu_init (mesh, mesh->shader);
+  }
+#endif
+  
   if (mesh->material)
   {
     cx_material_render (mesh->material, mesh->shader);
   }
   
+#if ENABLE_VAO
   glBindVertexArrayOES (mesh->vao);
-
+  
   glDrawElements (GL_TRIANGLES, mesh->vertexData->numIndices, GL_UNSIGNED_SHORT, 0);
   
   glBindVertexArrayOES (0);
+#endif
+  
+#if !ENABLE_VAO
+  
+  bool enabled [CX_NUM_SHADER_ATTRIBUTES];
+  
+  cx_mesh_get_attributes (mesh->vertexData->format, enabled, CX_NUM_SHADER_ATTRIBUTES);
+    
+  cxu32 offset = 0;
+  cxu32 vstride = sizeof (cx_vertex);
+  
+  glBindBuffer (GL_ARRAY_BUFFER, mesh->vbos [0]);
+  
+  cx_gdi_assert_no_errors ();
+  
+  cx_shader *shader = mesh->shader;
+  
+  if (enabled [CX_SHADER_ATTRIBUTE_POSITION])
+  {
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+  }
+  
+  offset += sizeof (cx_vec4);
+  
+  if (enabled [CX_SHADER_ATTRIBUTE_NORMAL])
+  {
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_NORMAL], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_NORMAL]);
+  }
+  
+  offset += sizeof (cx_vec4);
+  
+  if (enabled [CX_SHADER_ATTRIBUTE_TANGENT])
+  {
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TANGENT], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TANGENT]);
+  }
+  
+  offset += sizeof (cx_vec4);
+  
+  if (enabled [CX_SHADER_ATTRIBUTE_BITANGENT])
+  {
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_BITANGENT], 4, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_BITANGENT]);
+  }
+  
+  offset += sizeof (cx_vec4);
+  
+  if (enabled [CX_SHADER_ATTRIBUTE_TEXCOORD])
+  {
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, vstride, (const void *) offset);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]); 
+  }
+  
+  glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, mesh->vbos [1]);
+  
+  glDrawElements (GL_TRIANGLES, mesh->vertexData->numIndices, GL_UNSIGNED_SHORT, 0);
+  
+#endif
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

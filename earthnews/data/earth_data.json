@@ -208,7 +208,7 @@
   },
   {
   "name": "Johannesburg",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "south africa",
   "weather": "1582504",
   "location": {
   "latitude": -26.201452,
@@ -244,7 +244,7 @@
   },
   {
   "name": "Lagos",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "nigeria",
   "weather": "1398823",
   "location": {
   "latitude": 6.441158,
@@ -271,7 +271,7 @@
   },
   {
   "name": "Los Angeles",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "los angeles",
   "weather": "2442047",
   "location": {
   "latitude": 34.0522342,
@@ -316,7 +316,7 @@
   },
   {
   "name": "Moscow",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "moscow",
   "weather": "2122265",
   "location": {
   "latitude": 55.755786,
@@ -325,7 +325,7 @@
   },
   {
   "name": "Nairobi",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "kenya",
   "weather": "1528488",
   "location": {
   "latitude": -1.274359,
@@ -343,7 +343,7 @@
   },
   {
   "name": "New York",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "new york",
   "weather": "2459115",
   "location": {
   "latitude": 40.7142691,
@@ -352,7 +352,7 @@
   },
   {
   "name": "Paris",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "france",
   "weather": "615702",
   "location": {
   "latitude": 48.8566667,
@@ -361,7 +361,7 @@
   },
   {
   "name": "Rio de Janeiro",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "brazil",
   "weather": "455825",
   "location": {
   "latitude": -22.9035393,
@@ -370,7 +370,7 @@
   },
   {
   "name": "Rome",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "italy",
   "weather": "721943",
   "location": {
   "latitude": 41.8954656,
@@ -388,11 +388,20 @@
   },
   {
   "name": "Seoul",
-  "news": "http://news.lagos.com/feed.xml",
+  "news": "south korea",
   "weather": "1132599",
   "location": {
   "latitude": 37.566535,
   "longitude": 126.9779692
+  }
+  },
+  {
+  "name": "Suva",
+  "news": "fiji",
+  "weather": "1064103",
+  "location": {
+  "latitude": -18.141674,
+  "longitude": 178.441839
   }
   },
   {

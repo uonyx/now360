@@ -18,59 +18,11 @@
 
 typedef enum
 {
-  WEATHER_CONDITION_CODE_INVALID = -1,
-  
-  WEATHER_CONDITION_CODE_TORNADO,
-  WEATHER_CONDITION_CODE_TROPICAL_STORM,
-  WEATHER_CONDITION_CODE_HURRICANE,
-  WEATHER_CONDITION_CODE_SEVERE_THUNDERSTORMS,
-  WEATHER_CONDITION_CODE_THUNDERSTORMS,
-  WEATHER_CONDITION_CODE_MIXED_RAIN_AND_SNOW,
-  WEATHER_CONDITION_CODE_MIXED_RAIN_AND_SLEET,
-  WEATHER_CONDITION_CODE_MIXED_SNOW_AND_SLEET,
-  WEATHER_CONDITION_CODE_FREEZING_DRIZZLE,
-  WEATHER_CONDITION_CODE_DRIZZLE,
-  WEATHER_CONDITION_CODE_FREEZING_RAIN,
-  WEATHER_CONDITION_CODE_SHOWERS,
-  WEATHER_CONDITION_CODE_SHOWERS_1,
-  WEATHER_CONDITION_CODE_SNOW_FLURRIES,
-  WEATHER_CONDITION_CODE_LIGHT_SNOW_SHOWERS,
-  WEATHER_CONDITION_CODE_BLOWING_SNOW,
-  WEATHER_CONDITION_CODE_SNOW,
-  WEATHER_CONDITION_CODE_HAIL,
-  WEATHER_CONDITION_CODE_SLEET,
-  WEATHER_CONDITION_CODE_DUST,
-  WEATHER_CONDITION_CODE_FOGGY,
-  WEATHER_CONDITION_CODE_HAZE,
-  WEATHER_CONDITION_CODE_SMOKY,
-  WEATHER_CONDITION_CODE_BLUSTERY,
-  WEATHER_CONDITION_CODE_WINDY,
-  WEATHER_CONDITION_CODE_COLD,
-  WEATHER_CONDITION_CODE_CLOUDY,
-  WEATHER_CONDITION_CODE_MOSTLY_CLOUDY_NIGHT,
-  WEATHER_CONDITION_CODE_MOSTLY_CLOUDY_DAY,
-  WEATHER_CONDITION_CODE_PARTLY_CLOUDY_NIGHT,
-  WEATHER_CONDITION_CODE_PARTLY_CLOUDY_DAY,
-  WEATHER_CONDITION_CODE_CLEAR_NIGHT,
-  WEATHER_CONDITION_CODE_SUNNY,
-  WEATHER_CONDITION_CODE_FAIR_NIGHT,
-  WEATHER_CONDITION_CODE_FAIR_DAY,
-  WEATHER_CONDITION_CODE_MIXED_RAIN_AND_HAIL,
-  WEATHER_CONDITION_CODE_HOT,
-  WEATHER_CONDITION_CODE_ISOLATED_THUNDERSTORMS,
-  WEATHER_CONDITION_CODE_SCATTERED_THUNDERSTORMS,
-  WEATHER_CONDITION_CODE_SCATTERED_THUNDERSTORMS_1,
-  WEATHER_CONDITION_CODE_SCATTERED_SHOWERS,
-  WEATHER_CONDITION_CODE_HEAVY_SNOW,
-  WEATHER_CONDITION_CODE_SCATTERED_SNOW_SHOWERS,
-  WEATHER_CONDITION_CODE_HEAVY_SNOW_1,
-  WEATHER_CONDITION_CODE_PARTLY_CLOUDY,
-  WEATHER_CONDITION_CODE_THUNDERSHOWERS,
-  WEATHER_CONDITION_CODE_SNOW_SHOWERS,
-  WEATHER_CONDITION_CODE_ISOLATED_THUNDERSHOWERS,
-  
-  NUM_WEATHER_CONDITION_CODES
-} weather_condition_code;
+  FEED_REQ_STATUS_INVALID,
+  FEED_REQ_STATUS_IN_PROGRESS,
+  FEED_REQ_STATUS_SUCCESS,
+  FEED_REQ_STATUS_FAILURE,
+} feed_req_status_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,12 +75,13 @@ typedef struct feed_weather_t
 {
   const char *q;
   int celsius;
-  weather_condition_code conditionCode;
+  int conditionCode;
   const char *date;
   char time [8];
   time_t lastUpdate;
   bool dataPending;
   bool dataReady;
+  feed_req_status_t reqStatus;
 } feed_weather_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +107,8 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_search (feed_weather_t *feed, const char *query);
+bool feeds_weather_search (feed_weather_t *feed, const char *query);
+bool feeds_weather_data_valid (const feed_weather_t *feed);
 void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z, float opacity);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

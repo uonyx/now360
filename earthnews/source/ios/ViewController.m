@@ -74,9 +74,9 @@
   [self.view addGestureRecognizer:pinchGesture];
   [pinchGesture release];
 
-  [EAGLContext setCurrentContext:self.context];
-
   [self setPreferredFramesPerSecond:60];
+  
+  [EAGLContext setCurrentContext:self.context];
   
   /*
   NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -92,8 +92,8 @@
   (void) rvc;
 #endif
   
-  app_init (self, (int) view.bounds.size.width, (int) view.bounds.size.height);
-  app_update ();
+  app_init (self, self.context, (int) view.bounds.size.width, (int) view.bounds.size.height);
+  //app_update ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

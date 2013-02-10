@@ -512,7 +512,7 @@ void browser_render (const browser_rect_t *browserRect, float opacity)
     // loading icon && title
     //////////////////////////
     
-    const cx_font *font = globals_get_font (APP_FONT_SIZE_12);
+    const cx_font *font = app_font_get_size (APP_FONT_SIZE_12);
     
     if (g_browserTitle)
     {

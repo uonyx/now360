@@ -203,7 +203,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   
   //cx_vertex_data_destroy (sphere);
   //////////////////////////////////////////////////////////////////////////////////////////
-  
+#if ENABLE_CLOUDS
   cx_shader *shader1     = cx_shader_create ("clouds", "data/shaders");
   cx_material *material1 = cx_material_create ("clouds");
   
@@ -223,10 +223,10 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
 #endif
   
   visual->mesh [1] = cx_mesh_create (sphere1, shader1, material1);
-  
+#endif
   
   //////////////////////////////////////////////////////////////////////////////////////////
-
+#if ENABLE_ATMOSPHERE
   float radius2 = radius + 0.02f;
   cx_vertex_data *sphere2 = cx_vertex_data_create_sphere (radius2, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PN);
   
@@ -236,7 +236,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   material2->diffuse = *cx_colour_blue ();
   
   visual->mesh [2] = cx_mesh_create (sphere2, shader2, material2);
-
+#endif
   return visual;
 }
 

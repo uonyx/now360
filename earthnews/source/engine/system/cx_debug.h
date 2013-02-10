@@ -33,7 +33,7 @@
 #define CX_FATAL_ASSERT(X)          CX_ASSERT(X)
 #define CX_FATAL_ERROR(X)           _cx_fatal_error (__FILE__, __LINE__, #X) 
 #define CX_DEBUG_BREAK              _cx_debug_break ()
-#define CX_DEBUG_BREAKABLE_EXPR         int brk = 0; brk += 0;
+#define CX_DEBUG_BREAKABLE_EXPR     int brk = 0; brk += 0;
 #else
 #define CX_ASSERT(X)                do { (void)sizeof(X); } while (0)
 //#define CX_ASSERT(X)                do { (void)(true ? 0 : ((X), void(), 0)); } while (0)
