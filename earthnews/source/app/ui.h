@@ -124,11 +124,7 @@ typedef struct ui_context_t
   const ui_intrinsic_t *hover;
   const ui_intrinsic_t *focus;
   cx_font *font;
-#if SINGLY_LINKED_LIST
-  cx_list *intrList;
-#else
   cx_list2 intrList;
-#endif
 } ui_context_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

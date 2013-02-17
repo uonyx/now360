@@ -57,15 +57,14 @@ static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float lon
 static struct earth_data_t *earth_data_create (const char *filename, float radius, int slices, int parallels)
 {
   struct earth_data_t *data = NULL;
-  
-  cx_file file;
-  cx_file_load (&file, filename);
+
+  cx_data *filedata = cx_data_create_from_file (filename);
   
   char errorBuffer [128];
   json_settings settings;
   memset (&settings, 0, sizeof (settings));
   
-  json_value *root = json_parse_ex (&settings, file.data, file.size, errorBuffer, 128);
+  json_value *root = json_parse_ex (&settings, (const char *) filedata->bytes, filedata->size, errorBuffer, 128);
   
   if (root)
   {
@@ -137,8 +136,8 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
     CX_DEBUGLOG_CONSOLE (1, errorBuffer);
     data = NULL;
   }
-  
-  cx_file_unload (&file);
+
+  cx_data_destroy (filedata);
   
   return data;
 }

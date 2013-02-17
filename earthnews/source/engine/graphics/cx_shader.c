@@ -11,6 +11,7 @@
 #include "cx_shader.h"
 #include "cx_gdi.h"
 #include "../system/cx_file.h"
+#include "../system/cx_data.h"
 #include "../system/cx_string.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -438,22 +439,21 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
     cx_sprintf (shaderConfigFilename, CX_FILENAME_MAX, "%s.%s", name, CX_SHADER_CONFIGURATION_FILE_EXTENSION);
   }
   
-  cx_file vsFile, fsFile, scFile;
   GLuint vertexShader, fragmentShader, shaderProgram;
   
-  success = cx_file_load (&vsFile, vertexShaderFilename);
+  cx_data *vsFile = cx_data_create_from_file (vertexShaderFilename);
+  CX_FATAL_ASSERT (vsFile);
+  
+  cx_data *fsFile = cx_data_create_from_file (fragmentShaderFilename);
+  CX_FATAL_ASSERT (fsFile);
+  
+  cx_data *scFile = cx_data_create_from_file (shaderConfigFilename);
+  CX_FATAL_ASSERT (scFile);
+  
+  success = cx_shader_compile (&vertexShader, GL_VERTEX_SHADER, (const char *) vsFile->bytes, vsFile->size);
   CX_FATAL_ASSERT (success);
   
-  success = cx_file_load (&fsFile, fragmentShaderFilename);
-  CX_FATAL_ASSERT (success);
-  
-  success = cx_file_load (&scFile, shaderConfigFilename);
-  CX_FATAL_ASSERT (success);
-  
-  success = cx_shader_compile (&vertexShader, GL_VERTEX_SHADER, vsFile.data, vsFile.size);
-  CX_FATAL_ASSERT (success);
-  
-  success = cx_shader_compile (&fragmentShader, GL_FRAGMENT_SHADER, fsFile.data, fsFile.size);
+  success = cx_shader_compile (&fragmentShader, GL_FRAGMENT_SHADER, (const char *) fsFile->bytes, fsFile->size);
   CX_FATAL_ASSERT (success);
   
   success = cx_shader_link (&shaderProgram, vertexShader, fragmentShader);
@@ -467,12 +467,12 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
   memset (shader->attributes, -1, sizeof (shader->attributes));
   memset (shader->uniforms, -1, sizeof (shader->uniforms));
   
-  success = cx_shader_configure (scFile.data, scFile.size, shader);
+  success = cx_shader_configure ((const char *) scFile->bytes, scFile->size, shader);
   CX_FATAL_ASSERT (success);
   
-  cx_file_unload (&vsFile);
-  cx_file_unload (&fsFile);
-  cx_file_unload (&scFile);
+  cx_data_destroy (vsFile);
+  cx_data_destroy (fsFile);
+  cx_data_destroy (scFile);
   
   return shader;
 }

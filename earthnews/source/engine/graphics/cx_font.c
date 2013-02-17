@@ -5,7 +5,7 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#include "../system/cx_file.h"
+#include "../system/cx_data.h"
 #include "../system/cx_matrix4x4.h"
 #include "../3rdparty/stb/stb_truetype.h"
 
@@ -23,7 +23,7 @@
 
 #define CX_FONT_TEXTURE_WIDTH       (512)
 #define CX_FONT_TEXTURE_HEIGHT      (512)
-#define CX_FONT_MAX_NUM_FONT_CHARS  (96)
+#define CX_FONT_MAX_NUM_FONT_CHARS  (192)
 #define CX_FONT_FIRST_CHAR          (32)
 #define CX_FONT_LAST_CHAR           (CX_FONT_FIRST_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
 #define CX_FONT_MAX_TEXT_LENGTH     (512)
@@ -48,21 +48,18 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
 {
   CX_ASSERT (filename);
 
-  cx_file file;
-  
-  bool loaded = cx_file_load (&file, filename);
-  CX_ASSERT (loaded);
-  CX_REFERENCE_UNUSED_VARIABLE (loaded);
+  cx_data *filedata = cx_data_create_from_file (filename);
+  CX_ASSERT (filedata);
   
   cx_font_impl *fontImpl   = (cx_font_impl *) cx_malloc (sizeof (cx_font_impl));
   fontImpl->scaleX         = 1.0f;
   fontImpl->scaleY         = 1.0f;
   fontImpl->height         = fontSize;
-  fontImpl->ttfCharData    = (stbtt_bakedchar *) cx_malloc (96 * sizeof (stbtt_bakedchar));
+  fontImpl->ttfCharData    = (stbtt_bakedchar *) cx_malloc (CX_FONT_MAX_NUM_FONT_CHARS * sizeof (stbtt_bakedchar));
   fontImpl->texture        = cx_texture_create (CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
                                                  CX_TEXTURE_FORMAT_ALPHA);
   
-  stbtt_BakeFontBitmap (file.data, 
+  stbtt_BakeFontBitmap (filedata->bytes,
                         0, 
                         fontSize, 
                         fontImpl->texture->data, 
@@ -78,7 +75,7 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
   cx_font *font   = (cx_font *) cx_malloc (sizeof (cx_font));
   font->fontdata  = fontImpl;
   
-  cx_file_unload (&file);
+  cx_data_destroy (filedata);
   
   return font;
 }
@@ -175,7 +172,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
 #if 0
   const char *t = textBuffer;
-  char c = 0;
+  unsigned char c = 0;
   
   while ((c = *t++))
   {
@@ -225,7 +222,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   cx_vec2 uv [CX_FONT_MAX_TEXT_LENGTH * 4];
   
   const char *t = textBuffer;
-  char c = 0;
+  unsigned char c = 0;
   
   int len = 0;
   
@@ -278,12 +275,9 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
     glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
     glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
   }
-  
-  
+    
 #endif
 
-  
-  
   cx_shader_end (shader);
 }
 
@@ -351,7 +345,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   //cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   cx_str_html_unescape (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   
-  char c = 0;
+  unsigned char c = 0;
   char *t = textBuffer; 
   char *lastSpacePos = NULL;
   while ((c = *t))
@@ -447,7 +441,7 @@ cxf32 cx_font_get_text_width (const cx_font *font, const char *text)
   
   cxf32 sx = fontImpl->scaleX;
   cxf32 width = 0.0f;
-  char c = 0;
+  unsigned char c = 0;
   while ((c = *text++))
   {
     if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))

@@ -35,10 +35,15 @@ ui_context_t *ui_init (float width, float height)
 {
   ui_context_t *ctx = (ui_context_t *) cx_malloc (sizeof (ui_context_t));
   
+  memset (ctx, 0, sizeof (ui_context_t));
+  
   ctx->canvasWidth = width;
   ctx->canvasHeight = height;
-  
-  //ctx->intrList = NULL;
+  ctx->hover = NULL;
+  ctx->focus = NULL;
+  ctx->font = NULL;
+
+  cx_list2_init (&ctx->intrList);
 
   return ctx;
 }
@@ -50,6 +55,9 @@ ui_context_t *ui_init (float width, float height)
 void ui_deinit (ui_context_t *ctx)
 {
   CX_FATAL_ASSERT (ctx);
+  
+  cx_list2_deinit (&ctx->intrList);
+  
   cx_free (ctx);
 }
 
@@ -169,6 +177,8 @@ ui_button_t *ui_button_create (ui_context_t *ctx, int uid)
   
   ui_button_t *button = (ui_button_t *) cx_malloc (sizeof (ui_button_t));
   
+  memset (button, 0, sizeof (ui_button_t));
+  
   button->intr.uid = uid;
   button->intr.wtype = UI_WIDGET_BUTTON;
   button->intr._widget = button;
@@ -190,6 +200,8 @@ ui_custom_t *ui_custom_create (ui_context_t *ctx, int uid)
   CX_FATAL_ASSERT (ctx);
   
   ui_custom_t *custom = (ui_custom_t *) cx_malloc (sizeof (ui_custom_t));
+  
+  memset (custom, 0, sizeof (ui_custom_t));
   
   custom->intr.uid = uid;
   custom->intr.wtype = UI_WIDGET_CUSTOM;
@@ -299,11 +311,7 @@ static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr)
   CX_FATAL_ASSERT (ctx);
   CX_ASSERT (intr);
   
-#if SINGLY_LINKED_LIST
-  ctx->intrList = cx_list_insert (ctx->intrList, intr);
-#else
   cx_list2_insert_front (&ctx->intrList, intr);
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,11 +323,7 @@ static void ui_ctx_remove_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *in
   CX_FATAL_ASSERT (ctx);
   CX_ASSERT (intr);
   
-#if SINGLY_LINKED_LIST
-  ctx->intrList = cx_list_remove (ctx->intrList, intr);
-#else
   cx_list2_remove (&ctx->intrList, intr);
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -372,11 +376,7 @@ static void ui_ctx_press (ui_context_t *ctx)
 
 static void ui_ctx_render (ui_context_t *ctx)
 {
-#if SINGLY_LINKED_LIST
-  cx_list_node *intrNode = ctx->intrList;
-#else
   cx_list2_node *intrNode = ctx->intrList.head;
-#endif
   
   while (intrNode)
   {
@@ -393,7 +393,6 @@ static void ui_ctx_render (ui_context_t *ctx)
     
     intrNode = intrNode->next;
   }
-  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -520,45 +519,7 @@ static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point
   CX_ASSERT (point);
   
   ui_intrinsic_t *hit = NULL;
-  
-#if SINGLY_LINKED_LIST
-  // reverse list: touch test based on render order 
-  ctx->intrList = cx_list_reverse (ctx->intrList);
-  
-  cx_list_node *intrNode = ctx->intrList;
-  
-  float tx = ctx->canvasWidth * point->x;
-  float ty = ctx->canvasHeight * point->y;
-  
-  while (intrNode)
-  {
-    ui_intrinsic_t *intr = (ui_intrinsic_t *) intrNode->data;
-    CX_ASSERT (intr);
-    
-    if (intr->enable)
-    {    
-      float w = intr->dimension.x;
-      float h = intr->dimension.y;
-      float x = intr->position.x;
-      float y = intr->position.y;
-      
-      if ((tx >= x) && (tx <= (x + w)))
-      {
-        if ((ty >= y) && (ty <= (y + h)))
-        {
-          hit = intr;
-          break;
-        }
-      }
-    }
-    
-    intrNode = intrNode->next;
-  }
-  
-  // re-reverse list
-  ctx->intrList = cx_list_reverse (ctx->intrList);
-#else
-  
+
   cx_list2_node *intrNode = ctx->intrList.tail;
   
   float tx = ctx->canvasWidth * point->x;
@@ -599,7 +560,6 @@ static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point
     
     intrNode = intrNode->prev;
   }
-#endif
   
   return hit;
 }
@@ -882,7 +842,7 @@ void ui_render_element (const ui_intrinsic_t *elem)
     float tx = 4.0f;
     float ty = 36.0f;
     
-    cx_font_render (s_font[0], elem->text, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &elem->fgColour);
+    cx_font_render (font, elem->text, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &elem->fgColour);
   }
 #endif
 }

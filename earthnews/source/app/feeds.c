@@ -281,7 +281,7 @@ void feeds_news_search (feed_news_t *feed, const char *query)
   
   // q
   char q [256];
-  cx_http_percent_encode (q, 256, query);
+  cx_str_percent_encode (q, 256, query);
   
   CX_DEBUGLOG_CONSOLE (1, "%s", q);
   
@@ -483,7 +483,7 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
   
   // q
   char q [256];
-  cx_http_percent_encode (q, 256, query);
+  cx_str_percent_encode (q, 256, query);
   
   CX_DEBUGLOG_CONSOLE (1, "%s", q);
   

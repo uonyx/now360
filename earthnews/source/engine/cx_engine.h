@@ -11,6 +11,7 @@
 #include "system/cx_system.h"
 #include "system/cx_time.h"
 #include "system/cx_file.h"
+#include "system/cx_data.h"
 #include "system/cx_list.h"
 #include "system/cx_thread.h"
 #include "system/cx_xml.h"

@@ -28,7 +28,7 @@
 #define CAMERA_MIN_FOV (50.0f)
 #define CAMERA_MAX_FOV (90.0f)
 
-#define NUM_LOADING_STAGES 2
+#define NUM_LOADING_STAGES 3
 
 #define DEBUG_SHOW_TEMPERATURE 1
 
@@ -191,6 +191,9 @@ static cx_thread_exit_status app_init_load (void *userdata)
   s_render2dInfo.opacity = cx_malloc (sizeof (float) * cityCount);
   s_render2dInfo.font = cx_font_create ("data/fonts/verdana.ttf", 14);
   
+  memset (s_render2dInfo.renderPos, 0, (sizeof (cx_vec4) * cityCount));
+  memset (s_render2dInfo.opacity, 0, (sizeof (float) * cityCount));
+  
   //
   // other
   //
@@ -231,11 +234,10 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   
   // loading screen
   
-  
   s_logoTex = cx_texture_create_from_file ("data/loading/now360-500px.png");
-  
   s_ldImages [0] = cx_texture_create_from_file ("data/loading/uonyechi.com.png");
-  s_ldImages [1] = cx_texture_create_from_file ("data/loading/gear.png");
+  s_ldImages [1] = cx_texture_create_from_file ("data/loading/nasacredit.png");
+  s_ldImages [2] = cx_texture_create_from_file ("data/loading/gear.png");
   
   memset (&s_screenFade, 0, sizeof (s_screenFade));
   
@@ -749,9 +751,7 @@ static void app_render_load (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
   app_render_load_stage ();
-  
   app_render_2d_screen_fade ();
-  
   app_render_2d_logo ();
 }
 
@@ -772,14 +772,17 @@ static void app_render_load_stage (void)
   switch (s_ldStage) 
   {
     case 0:
+    case 1:
     {
-      const float timerDuration = 5.0f; // seconds;
+      const float timerDuration = 3.0f;
       static float timer = timerDuration; 
       
       if (timer <= 0.0f)
       {
-        timer = timerDuration;
-        app_render_2d_screen_fade_trigger (FADE_SCREEN_OUT, 1.0f, app_render_load_stage_transition, (void *) 1);
+        int nextStage = s_ldStage + 1;
+        app_render_2d_screen_fade_trigger (FADE_SCREEN_OUT, 1.0f, app_render_load_stage_transition, (void *) nextStage);
+        
+        timer = timerDuration + 1.0f;
       }
       else
       {
@@ -803,7 +806,7 @@ static void app_render_load_stage (void)
       break;
     }
       
-    case 1:
+    case 2:
     {
       static float rot = 0.0f;
       
@@ -837,7 +840,6 @@ static void app_render_load_stage (void)
   }
   
   cx_gdi_enable_z_write (true);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -850,9 +852,8 @@ static void app_render_load_stage_transition (void *userdata)
   
   s_ldStage = stage;
   
-  if (stage == 1)
+  if (stage == 2)
   {
-    // enable logo
     s_renderLogo = true;
   }
 }
@@ -1187,6 +1188,8 @@ static void app_render_2d_earth (void)
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_enable_z_write (true);
   
+  char unit [3] = { 176, 'C', 0 };
+  
   for (int i = 0, c = s_earth->data->count; i < c; ++i)
   {
     const char *text = s_earth->data->names [i];
@@ -1205,7 +1208,9 @@ static void app_render_2d_earth (void)
       cx_font_render (s_render2dInfo.font, text, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
       
       char temp [32];
-      cx_sprintf (temp, 32, "%d C", feed->celsius);
+      cx_sprintf (temp, 32, "%d", feed->celsius);
+      cx_strcat (temp, 32, unit);
+      
       cx_font_render (s_render2dInfo.font, temp, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
       
       // render weather icon
@@ -1355,7 +1360,8 @@ static void app_input_touch_began (float x, float y)
       int index = s_selectedCity;
       CX_ASSERT (index > -1);
       
-      const char *n = s_earth->data->names [index];
+      //const char *n = s_earth->data->names [index];
+      const char *n = s_earth->data->newsFeeds [index];
       
       feeds_twitter_search (&s_twitterFeeds [index], n);
       

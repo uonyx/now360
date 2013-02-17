@@ -111,6 +111,8 @@ void cx_vertex_data_sphere_compute_tangents_aos (struct cx_vertex_data_aos *vert
   cx_vec4 *tan1 = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * vertCount * 2);
   cx_vec4 *tan2 = tan1 + vertCount;
   
+  memset (tan1, 0, (sizeof (cx_vec4) * vertCount * 2));
+  
   CX_ASSERT ((triCount * 3) == vertexData->numIndices);
   
   cxi32 index = 0;

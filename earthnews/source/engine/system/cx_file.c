@@ -12,123 +12,28 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_FILE_DEBUG_LOG_ENABLED   1
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool cx_file_load (cx_file *file, const char *filename)
-{
-  CX_ASSERT (file);
-  CX_ASSERT (filename);
-  
-  bool success = false;
-  
-  char fullFilePath [512];
-  cx_native_file_get_path_from_resource (filename, fullFilePath, 512);
-  
-  file->size = 0;
-  file->data = NULL;
-  file->fp = fopen (fullFilePath, "rb");
-  
-  if (file->fp)
-  {
-    // get file size
-    fseek (file->fp, 0L, SEEK_END);
-    
-    file->size = (cxu32) ftell (file->fp);
-    
-    fseek (file->fp, 0L, SEEK_SET);
-    
-    // get data
-    file->data = (unsigned char *) cx_malloc (sizeof (unsigned char) * (file->size + 1));
-  
-    if (file->data)
-    {
-      size_t bytesRead = fread (file->data, sizeof (unsigned char), file->size, file->fp);
-      CX_ASSERT (bytesRead == file->size);
-      CX_REFERENCE_UNUSED_VARIABLE (bytesRead);
-      
-      unsigned char *data = (unsigned char *) file->data;
-      data [file->size] = 0;
-      
-      success = true;
-    }
-    else
-    {
-      CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_load: failed to malloc %d bytes", (file->size * sizeof(char)));
-    }
-  }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_load: failed to open file [%s]", fullFilePath);
-  }
-  
-  return success;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool cx_file_unload (cx_file *file)
-{
-  CX_ASSERT (file);
-  
-  bool success = false;
-  
-  int err = fclose (file->fp);
-  
-  if (err == 0)
-  {
-    cx_free (file->data);
-    
-    file->size = 0;
-    file->data = NULL;
-    file->fp = NULL;
-    
-    success = true;
-  }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_unload: failed to close file");
-  }
-  
-  return success;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 bool cx_file_open (cx_file *file, const char *filename, cxu32 mode)
 {
   CX_ASSERT (file);
   CX_ASSERT (filename);
+  CX_ASSERT ((mode >= 0) && (mode < CX_FILE_NUM_MODES));
   
-  bool success = false;
+  static const char *modes [CX_FILE_NUM_MODES] = 
+  {
+    "rb",
+    "wb",
+    "ab",
+  };
+  
+  const char *m = modes [mode];
   
   char fullFilePath [512];
+  
   cx_native_file_get_path_from_resource (filename, fullFilePath, 512);
-  
-  file->size = 0;
-  file->data = NULL;
-  file->fp = fopen (fullFilePath, "rb");
-  
-  if (file->fp)
-  {
-    // get file size
-    fseek (file->fp, 0L, SEEK_END);
-    
-    file->size = (cxu32) ftell (file->fp);
-    
-    fseek (file->fp, 0L, SEEK_SET);
-    
-    success = false;
-  }
-  
-  return success;
+
+  *file = fopen (fullFilePath, m);
+
+  return (file != NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,18 +42,11 @@ bool cx_file_open (cx_file *file, const char *filename, cxu32 mode)
 
 bool cx_file_close (cx_file *file)
 {
-  bool success = false;
+  int err = fclose (*file);
   
-  int err = fclose (file->fp);
+  *file = NULL;
   
-  if (err == 0)
-  {
-    file->size = 0;
-    file->fp = NULL;
-    success = true;
-  }
-  
-  return success;
+  return (err == 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,9 +56,8 @@ bool cx_file_close (cx_file *file)
 cxu32 cx_file_read (cx_file *file, void *buffer, cxu32 size, cxu32 count)
 {
   CX_ASSERT (file);
-  CX_ASSERT (file->fp);
   
-  return fread (buffer, size, count, file->fp);
+  return fread (buffer, size, count, *file);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,9 +67,8 @@ cxu32 cx_file_read (cx_file *file, void *buffer, cxu32 size, cxu32 count)
 cxu32 cx_file_write (cx_file *file, void *buffer, cxu32 size, cxu32 count)
 {
   CX_ASSERT (file);
-  CX_ASSERT (file->fp);
   
-  return fwrite (buffer, size, count, file->fp);
+  return fwrite (buffer, size, count, *file);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,9 +78,8 @@ cxu32 cx_file_write (cx_file *file, void *buffer, cxu32 size, cxu32 count)
 cxi32 cx_file_flush (cx_file *file)
 {
   CX_ASSERT (file);
-  CX_ASSERT (file->fp);
   
-  return fflush (file->fp);
+  return fflush (*file);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,41 +89,23 @@ cxi32 cx_file_flush (cx_file *file)
 cxi32 cx_file_seek (cx_file *file, cxi32 offset, cxi32 origin)
 {
   CX_ASSERT (file);
-  CX_ASSERT (file->fp);
   
-  return fseek (file->fp, offset, origin);
+  return fseek (*file, offset, origin);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxu32 cx_file_get_size (const char *filename)
+cxu32 cx_file_size (cx_file *file)
 {
-  CX_ASSERT (filename);
+  CX_ASSERT (file);
   
-  cxu32 size = 0;
+  fseek (*file, 0L, SEEK_END);
   
-  char fullFilePath [512];
-  cx_native_file_get_path_from_resource (filename, fullFilePath, 512);
+  cxu32 size = (cxu32) ftell (*file);
   
-  FILE *fp = fopen (fullFilePath, "rb");
-  
-  if (fp)
-  {
-    // get file size
-    fseek (fp, 0L, SEEK_END);
-    
-    size = (cxu32) ftell (fp);
-    
-    fseek (fp, 0L, SEEK_SET);
-    
-    fclose (fp);
-  }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (CX_FILE_DEBUG_LOG_ENABLED, "cx_file_get_size: failed to open file [%s]", fullFilePath);
-  }
+  fseek (*file, 0L, SEEK_SET);
   
   return size;
 }
@@ -237,28 +114,29 @@ cxu32 cx_file_get_size (const char *filename)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool cx_file_get_exists (const char *filename)
+bool cx_file_exists (const char *filename)
 {
   CX_ASSERT (filename);
+  
+  bool exists = false;
   
   FILE *fp = fopen (filename, "rb");
   
   if (fp)
   {
     fclose (fp);
-    return true;
+    
+    exists = true;
   }
-  else
-  {
-    return false;
-  }
+  
+  return exists;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_file_get_absolute_path (const char *filename, char *destFilepath, int destFilePathSize)
+void cx_file_absolute_path (const char *filename, char *destFilepath, int destFilePathSize)
 {
   CX_ASSERT (filename);
   CX_ASSERT (destFilepath);

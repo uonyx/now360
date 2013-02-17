@@ -74,3 +74,55 @@ cxi32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+cxu32 cx_str_percent_encode (char *dst, cxu32 dstSize, const char *src)
+{
+  CX_ASSERT (src);
+  CX_ASSERT (dst);
+  CX_ASSERT (dstSize);
+  
+  cxu32 len = 0;
+  cxu8 c = 0;
+  char enc [16];
+  const char *s = src;
+  
+  while ((c = *s))
+  {
+    // unreserved characters
+    if (((c >= '0') && (c <= '9')) ||
+        ((c >= 'a') && (c <= 'z')) ||
+        ((c >= 'A') && (c <= 'Z')) ||
+        ((c == '-') || (c == '.') || (c == '_') || (c == '~')))
+    {
+      CX_ASSERT (len < dstSize);
+      dst [len++] = c;
+    }
+    else // ascii control characters, reserved characters, unsafe characters
+    {
+      cxi32 encSize = cx_sprintf (enc, 16, "%%%02x", c);
+#if 1
+      for (cxi32 i = 0; i < encSize; ++i)
+      {
+        CX_ASSERT (len < dstSize);
+        dst [len++] = enc [i];
+      }
+#else
+      CX_ASSERT ((len + encSize) < dstSize); CX_REFERENCE_UNUSED_VARIABLE (encSize);
+      dst [len++] = enc [0];
+      dst [len++] = enc [1];
+      dst [len++] = enc [2];
+#endif
+    }
+    
+    s++;
+  }
+  
+  CX_ASSERT (len < dstSize);
+  
+  dst [len] = 0;
+  
+  return len;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////

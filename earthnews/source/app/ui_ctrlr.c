@@ -372,7 +372,7 @@ static void ui_ctrlr_news_create (void)
   memset (&s_uinews, 0, sizeof (s_uinews));
   
   s_uinews.opacity = 1.0f;
-  s_uinews.font = cx_font_create ("data/fonts/verdana.ttf", 14);
+  s_uinews.font = cx_font_create ("data/fonts/tahoma.ttf", 14);
   
   ui_custom_callbacks_t newsCallbacks;
   memset (&newsCallbacks, 0, sizeof (ui_custom_callbacks_t));
@@ -585,7 +585,7 @@ static void ui_ctrlr_twitter_create (void)
 {  
   memset (&s_uitwitter, 0, sizeof (s_uitwitter));
   
-  s_uitwitter.font = cx_font_create ("data/fonts/verdana.ttf", 14);
+  s_uitwitter.font = cx_font_create ("data/fonts/tahoma.ttf", 14);
   s_uitwitter.birdicon = cx_texture_create_from_file ("data/icons/twbird-16z.png");
   
   ui_custom_callbacks_t twViewCallbacks, twToggleCallbacks;
@@ -904,7 +904,7 @@ static void ui_ctrlr_music_create (void)
 {
   memset (&s_uimusic, 0, sizeof (s_uimusic));
   
-  s_uimusic.font = cx_font_create ("data/fonts/verdana.ttf", 14);
+  s_uimusic.font = cx_font_create ("data/fonts/tahoma.ttf", 14);
   
   s_uimusic.iconNote = cx_texture_create_from_file ("data/icons/mnote-16z.png");
   s_uimusic.iconPlay = cx_texture_create_from_file ("data/icons/play-12z.png");

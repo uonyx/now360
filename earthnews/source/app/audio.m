@@ -14,8 +14,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define DEBUG_LOG_ENABLE 1
-#define USE_MUSIC_PICKER_POP_UP 1
+#define USE_MUSIC_PICKER_POP_UP 1 // ipad only
 #define PLAYBACK_STATE_HACK_FIX 1
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,18 +42,6 @@ static void audio_music_now_playing_state_changed (void);
 @interface MusicPickerDelegate : UIViewController<MPMediaPickerControllerDelegate>
 {
 }
-@end
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-@interface MusicNotifcation : NSObject
-{
-}
-- (void) handleNowPlayingItemChanged:(NSNotification *)notification;
-- (void) handlePlaybackStateChanged:(NSNotification *)notification;
-- (void) handleVolumeChanged:(NSNotification *)notification;
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,6 +68,18 @@ static void audio_music_now_playing_state_changed (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+@interface MusicNotifcation : NSObject
+{
+}
+- (void) handleNowPlayingItemChanged:(NSNotification *)notification;
+- (void) handlePlaybackStateChanged:(NSNotification *)notification;
+- (void) handleVolumeChanged:(NSNotification *)notification;
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 @implementation MusicNotifcation
 
 - (void) handleNowPlayingItemChanged:(NSNotification *)notification
@@ -88,6 +95,55 @@ static void audio_music_now_playing_state_changed (void);
 - (void) handleVolumeChanged:(NSNotification *)notification
 {
   CX_DEBUG_BREAKABLE_EXPR;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@interface MusicPickerPopupBackground : UIPopoverBackgroundView
+{
+}
+
+@property (nonatomic, readwrite) UIPopoverArrowDirection arrowDirection;
+@property (nonatomic, readwrite) CGFloat arrowOffset;
+
++(UIEdgeInsets)contentViewInsets;
++(CGFloat)arrowHeight;
++(CGFloat)arrowBase;
+@end
+
+@implementation MusicPickerPopupBackground
+
+@synthesize arrowOffset, arrowDirection;
+
+-(id)initWithFrame:(CGRect)frame
+{
+  if (self = [super initWithFrame:frame])
+  {
+    self.backgroundColor = [UIColor colorWithWhite:0.1f alpha:0.5f];
+    self.arrowDirection = 0;
+    self.arrowOffset = 0.0f;
+  }
+
+  return self;
+}
+
++(UIEdgeInsets)contentViewInsets
+{
+  return UIEdgeInsetsMake (10.0f, 10.0f, 10.0f, 10.0f);
+}
+
++(CGFloat)arrowHeight
+{
+  return 30.0f;
+}
+
++(CGFloat)arrowBase
+{
+  return 30.0f;
 }
 
 @end
@@ -123,7 +179,7 @@ bool audio_init (void *rootvc)
   
   s_rootViewController = (UIViewController *) rootvc;
   
-  memset (&s_musicNotificationCallbacks, 0, sizeof (s_musicNotificationCallbacks));
+  cx_list2_init (&s_musicNotificationCallbacks);
   
   audio_music_init ();
   
@@ -142,7 +198,7 @@ void audio_deinit (void)
   
   audio_music_deinit ();
   
-  cx_list2_free_nodes (&s_musicNotificationCallbacks);
+  cx_list2_deinit (&s_musicNotificationCallbacks);
   
   s_initialised = false;
 }
@@ -310,7 +366,26 @@ static void audio_music_init (void)
   
   [s_musicPicker setDelegate:s_musicPickerDelegate];
   [s_musicPicker setAllowsPickingMultipleItems:YES];
+  [s_musicPicker setTitle:@""];
+  [s_musicPicker setModalInPopover:YES];
+  
   //[s_musicPicker setPrompt:@"Queue songs for playback"];
+  
+  //[[UIBarButtonItem appearanceWhenContainedIn:[UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.1f alpha:1.0f]];
+  
+  [[UINavigationBar appearanceWhenContainedIn:[UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.0f alpha:0.5f]];
+
+  [[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundColor:[UIColor colorWithWhite:0.0f alpha:0.4f]];
+  
+  //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundView:nil];
+  
+  //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setAlpha:0.3f];
+  
+
+  if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"5.0"))
+  {
+    [s_musicPopOver setPopoverBackgroundViewClass:[MusicPickerPopupBackground class]];
+  }
   
   NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
   
