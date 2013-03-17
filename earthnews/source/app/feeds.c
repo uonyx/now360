@@ -306,33 +306,31 @@ bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
   
   bool success = false;
   
-  cx_xml_doc doc;
-
-  cx_xml_doc_create (&doc, data, dataSize);
+  cx_xml_doc doc = cx_xml_doc_create (data, dataSize);
 
   if (doc)
   {
-    cx_xml_node rootNode = cx_xml_doc_get_root_node (doc);
-    cx_xml_node channelNode = cx_xml_node_get_child (rootNode, "channel", NULL);
-    cx_xml_node child = cx_xml_node_get_first_child (channelNode);
+    cx_xml_node rootNode = cx_xml_doc_root_node (doc);
+    cx_xml_node channelNode = cx_xml_node_child (rootNode, "channel", NULL);
+    cx_xml_node child = cx_xml_node_first_child (channelNode);
     
     while (child)
     {
-      const char *name = cx_xml_node_get_name (child);
+      const char *name = cx_xml_node_name (child);
       
       if (strcmp (name, "item") == 0)
       {
-        cx_xml_node title = cx_xml_node_get_child (child, "title", NULL);
-        cx_xml_node link = cx_xml_node_get_child (child, "link", NULL);
-        cx_xml_node pubDate = cx_xml_node_get_child (child, "pubDate", NULL);
+        cx_xml_node title = cx_xml_node_child (child, "title", NULL);
+        cx_xml_node link = cx_xml_node_child (child, "link", NULL);
+        cx_xml_node pubDate = cx_xml_node_child (child, "pubDate", NULL);
         
         feed_news_item_t *rssItem = cx_malloc (sizeof (feed_news_item_t));
         
-        rssItem->title = cx_xml_node_get_content (title);
-        rssItem->date = cx_xml_node_get_content (pubDate);
+        rssItem->title = cx_xml_node_content (title);
+        rssItem->date = cx_xml_node_content (pubDate);
         
         // strip out redirect url
-        const char *linkContent = cx_xml_node_get_content (link);
+        const char *linkContent = cx_xml_node_content (link);
         const char *http = "http://";
         const char *c = linkContent;    // original
         const char *s = linkContent;    // save
@@ -371,15 +369,15 @@ bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
       }
       else if (strcmp (name, "link") == 0)
       {
-        feed->link  = cx_xml_node_get_content (child);
+        feed->link  = cx_xml_node_content (child);
       }
       
-      child = cx_xml_node_get_next_sibling (child);
+      child = cx_xml_node_next_sibling (child);
     }
     
     success = true;
     
-    cx_xml_doc_destroy (&doc);
+    cx_xml_doc_destroy (doc);
   }
   
   return success;
@@ -909,20 +907,18 @@ bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize)
   // find > read temperature
   // find http:
   
-  cx_xml_doc doc;
-  
-  cx_xml_doc_create (&doc, data, dataSize);
+  cx_xml_doc doc = cx_xml_doc_create (data, dataSize);
   
   if (doc)
   {  
-    cx_xml_node rootNode = cx_xml_doc_get_root_node (doc);
-    cx_xml_node channelNode = cx_xml_node_get_child (rootNode, "channel", NULL);
-    cx_xml_node itemNode = cx_xml_node_get_child (channelNode, "item", NULL);
-    cx_xml_node conditionNode = cx_xml_node_get_child (itemNode, "condition", "yweather");
+    cx_xml_node rootNode = cx_xml_doc_root_node (doc);
+    cx_xml_node channelNode = cx_xml_node_child (rootNode, "channel", NULL);
+    cx_xml_node itemNode = cx_xml_node_child (channelNode, "item", NULL);
+    cx_xml_node conditionNode = cx_xml_node_child (itemNode, "condition", "yweather");
     
-    const char *temp = cx_xml_node_get_attr (conditionNode, "temp");
-    const char *code = cx_xml_node_get_attr (conditionNode, "code");
-    const char *date = cx_xml_node_get_attr (conditionNode, "date");
+    const char *temp = cx_xml_node_attr (conditionNode, "temp");
+    const char *code = cx_xml_node_attr (conditionNode, "code");
+    const char *date = cx_xml_node_attr (conditionNode, "date");
     
     int tempCelsius = atoi (temp);
     int conditionCode = atoi (code);
@@ -950,7 +946,7 @@ bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize)
     feed->conditionCode = conditionCode;
     cx_sprintf (feed->time, 8, "%02d:%02d", hour, minute);
     
-    cx_xml_doc_destroy (&doc);
+    cx_xml_doc_destroy (doc);
     
     success = true;
   }

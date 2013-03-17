@@ -381,11 +381,12 @@ static void audio_music_init (void)
   
   //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setAlpha:0.3f];
   
-
+#if USE_MUSIC_PICKER_POP_UP
   if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"5.0"))
   {
     [s_musicPopOver setPopoverBackgroundViewClass:[MusicPickerPopupBackground class]];
   }
+#endif
   
   NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
   

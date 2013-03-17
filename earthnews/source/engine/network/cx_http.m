@@ -394,6 +394,13 @@ void cx_http_cancel (cx_http_request_id requestId)
   {
     responseCallback (self->rId, &self->resp, self->callbackUserdata);
   }
+  
+  [self setRId:CX_HTTP_REQUEST_ID_INVALID];
+  [self setCallback:NULL];
+  [self setCallbackUserdata:NULL];
+  
+  [s_nsconnBusyList removeObject:self];
+  [s_nsconnFreeList addObject:self];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

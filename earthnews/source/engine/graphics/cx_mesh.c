@@ -17,14 +17,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define ENABLE_VAO 1
+#define ENABLE_CONSTANT_ARRAY 1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader);
-void cx_mesh_gpu_deinit (cx_mesh *mesh);
-void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize);
+static void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader);
+static void cx_mesh_gpu_deinit (cx_mesh *mesh);
+#ifdef CX_C99
+static void cx_mesh_get_attributes (cx_vertex_format format, bool attr [static CX_NUM_SHADER_ATTRIBUTES]);
+#else
+static void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize);
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +74,59 @@ void cx_mesh_destroy (cx_mesh *mesh)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize)
+#ifdef CX_C99
+static void cx_mesh_get_attributes (cx_vertex_format format, bool attr [static CX_NUM_SHADER_ATTRIBUTES])
+{  
+  memset (attr, false, sizeof (bool) * CX_NUM_SHADER_ATTRIBUTES);
+  
+  switch (format) 
+  {
+    case CX_VERTEX_FORMAT_P:
+    {
+      attr [CX_SHADER_ATTRIBUTE_POSITION] = true;
+      break;
+    }
+      
+    case CX_VERTEX_FORMAT_PN:
+    {
+      attr [CX_SHADER_ATTRIBUTE_POSITION] = true;
+      attr [CX_SHADER_ATTRIBUTE_NORMAL] = true;
+      break;
+    }
+      
+    case CX_VERTEX_FORMAT_PT:
+    {
+      attr [CX_SHADER_ATTRIBUTE_POSITION] = true;
+      attr [CX_SHADER_ATTRIBUTE_TEXCOORD] = true;
+      break;
+    }
+      
+    case CX_VERTEX_FORMAT_PTN:
+    {
+      attr [CX_SHADER_ATTRIBUTE_POSITION] = true;
+      attr [CX_SHADER_ATTRIBUTE_TEXCOORD] = true;
+      attr [CX_SHADER_ATTRIBUTE_NORMAL] = true;
+      break;
+    }
+      
+    case CX_VERTEX_FORMAT_PTNTB:
+    {
+      attr [CX_SHADER_ATTRIBUTE_POSITION] = true;
+      attr [CX_SHADER_ATTRIBUTE_TEXCOORD] = true;
+      attr [CX_SHADER_ATTRIBUTE_NORMAL] = true;
+      attr [CX_SHADER_ATTRIBUTE_TANGENT] = true;
+      attr [CX_SHADER_ATTRIBUTE_BITANGENT] = true;
+      break;
+    }
+      
+    default:
+    {
+      break;
+    }
+  }
+}
+#else
+static void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize)
 {
   CX_ASSERT (attr);
   CX_ASSERT (attrSize == CX_NUM_SHADER_ATTRIBUTES);
@@ -122,12 +179,12 @@ void cx_mesh_get_attributes (cx_vertex_format format, bool *attr, cxu32 attrSize
     }
   }
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
+static void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
 {
   // create vertex buffers
   
@@ -149,8 +206,11 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
 #endif
   
   bool enabled [CX_NUM_SHADER_ATTRIBUTES];
-  
+#ifdef CX_C99
+  cx_mesh_get_attributes (mesh->vertexData->format, enabled);
+#else
   cx_mesh_get_attributes (mesh->vertexData->format, enabled, CX_NUM_SHADER_ATTRIBUTES);
+#endif
   
   {
     glGenBuffers (CX_VERTEX_BUFFER_COUNT, mesh->vbos);
@@ -247,7 +307,7 @@ void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_mesh_gpu_deinit (cx_mesh *mesh)
+static void cx_mesh_gpu_deinit (cx_mesh *mesh)
 {
   CX_ASSERT (mesh);
   
@@ -294,9 +354,12 @@ void cx_mesh_render (cx_mesh *mesh)
 #if !ENABLE_VAO
   
   bool enabled [CX_NUM_SHADER_ATTRIBUTES];
-  
+#ifdef CX_C99
+  cx_mesh_get_attributes (mesh->vertexData->format, enabled);
+#else
   cx_mesh_get_attributes (mesh->vertexData->format, enabled, CX_NUM_SHADER_ATTRIBUTES);
-    
+#endif
+  
   cxu32 offset = 0;
   cxu32 vstride = sizeof (cx_vertex);
   

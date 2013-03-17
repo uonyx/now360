@@ -15,6 +15,7 @@
 #include "worker.h"
 #include "ui_ctrlr.h"
 #include "audio.h"
+#include "settings.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,6 +165,8 @@ static cx_thread_exit_status app_init_load (void *userdata)
   
   s_earth = earth_create ("data/earth_data.json", 1.0f, 128, 64);
   
+  settings_set_city_names (s_earth->data->names, s_earth->data->count);
+  
   glowtex = cx_texture_create_from_file ("data/textures/glowcircle.gb32-16.png");
   
   //
@@ -232,14 +235,11 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
-  // loading screen
+  //
+  // settings
+  //
   
-  s_logoTex = cx_texture_create_from_file ("data/loading/now360-500px.png");
-  s_ldImages [0] = cx_texture_create_from_file ("data/loading/uonyechi.com.png");
-  s_ldImages [1] = cx_texture_create_from_file ("data/loading/nasacredit.png");
-  s_ldImages [2] = cx_texture_create_from_file ("data/loading/gear.png");
-  
-  memset (&s_screenFade, 0, sizeof (s_screenFade));
+  settings_init (rootvc, "data/settings.json");
   
   //
   // globals
@@ -253,15 +253,6 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   
   audio_init (rootvc);
   
-  //
-  // input
-  //
-  
-  input_init ();
-  input_register_touch_event_callback (INPUT_TOUCH_TYPE_BEGIN, app_input_handle_touch_event);
-  input_register_touch_event_callback (INPUT_TOUCH_TYPE_END, app_input_handle_touch_event);
-  input_register_touch_event_callback (INPUT_TOUCH_TYPE_MOVE, app_input_handle_touch_event);
-  input_register_gesture_event_callback (INPUT_GESTURE_TYPE_PINCH, app_input_handle_gesture_event);
   
   //
   // ui
@@ -287,8 +278,18 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   // camera
   //
   
-  s_camera = camera_create (width / height, 65.0f);
+  s_camera = camera_create (width / height, 70.0f);
   
+  //
+  // loading screen
+  //
+  
+  s_logoTex = cx_texture_create_from_file ("data/loading/now360-500px.png");
+  s_ldImages [0] = cx_texture_create_from_file ("data/loading/uonyechi.com.png");
+  s_ldImages [1] = cx_texture_create_from_file ("data/loading/nasacredit.png");
+  s_ldImages [2] = cx_texture_create_from_file ("data/loading/gear.png");
+  
+  memset (&s_screenFade, 0, sizeof (s_screenFade));
   
   //
   // loading thread
@@ -398,6 +399,16 @@ void app_update (void)
       {
         // fade screen in
         app_render_2d_screen_fade_trigger (FADE_SCREEN_IN, 3.0f, app_render_2d_logo_fade_out, NULL);
+        
+        //
+        // input
+        //
+        
+        input_init ();
+        input_register_touch_event_callback (INPUT_TOUCH_TYPE_BEGIN, app_input_handle_touch_event);
+        input_register_touch_event_callback (INPUT_TOUCH_TYPE_END, app_input_handle_touch_event);
+        input_register_touch_event_callback (INPUT_TOUCH_TYPE_MOVE, app_input_handle_touch_event);
+        input_register_gesture_event_callback (INPUT_GESTURE_TYPE_PINCH, app_input_handle_gesture_event);
         
         s_state = APP_STATE_UPDATE;
       }
@@ -534,12 +545,26 @@ static void app_update_camera (float deltaTime)
   s_rotationAngle.y += (s_rotationSpeed.y * deltaTime);
 #else
   CX_DEBUGLOG_CONSOLE (0, "tdist.x: %.3f, tdist.y: %.3f", tdist.x, tdist.y);
+
+#if 1
+  float rx = tdist.x * deltaTime;
+  float ry = tdist.y * deltaTime;
   
+  s_rotTouchBegin.x += rx;
+  s_rotTouchBegin.y += ry;
+  
+  s_rotationAngle.x += rx;
+  s_rotationAngle.y += ry;
+  
+#else
   s_rotTouchBegin.x += (tdist.x * deltaTime);
   s_rotTouchBegin.y += (tdist.y * deltaTime);
   
   s_rotationAngle.x += (tdist.x * deltaTime);
   s_rotationAngle.y += (tdist.y * deltaTime);
+#endif
+  
+  
 #endif
   
   s_rotationAngle.x = fmodf (s_rotationAngle.x, 360.0f);
@@ -904,7 +929,30 @@ static void app_render_3d_earth (void)
   cx_colour col = *cx_colour_white ();
   col.a = opacity;
   
+  // gather points
+#if 1
+  int displayCount = 0;
+  cx_vec4 loc [256];
+  
+  memset (loc, 0, sizeof (loc));
+  
+  for (int i = 0, c = s_earth->data->count; i < c; ++i)
+  {
+    bool display = settings_get_city_display (i);
+    
+    if (display && (s_selectedCity != i))
+    {
+      cx_vec4 *pos = &s_earth->data->location [i];
+      
+      loc [displayCount++] = *pos;
+    }
+  }
+  
+  cx_draw_points (displayCount, loc, &col, glowtex);
+  
+#else
   cx_draw_points (s_earth->data->count, s_earth->data->location, &col, glowtex);
+#endif
   
   if (s_selectedCity > -1)
   {
@@ -913,7 +961,7 @@ static void app_render_3d_earth (void)
     
     // pulse colour
     
-    float time = (float) cx_system_time_get_total_time () * 50.0f;
+    float time = (float) cx_system_time_get_total_time () * 10.0f;
     float t = (cx_sin (time) + 1.0f) * 0.5f;
     
     cx_vec4_mul (&col, t, &col);
@@ -1192,6 +1240,10 @@ static void app_render_2d_earth (void)
   
   for (int i = 0, c = s_earth->data->count; i < c; ++i)
   {
+    bool display = settings_get_city_display (i);
+    //if (s_earth->data->display [i])
+    if (display)
+    {
     const char *text = s_earth->data->names [i];
     const feed_weather_t *feed = &s_weatherFeeds [i];
     const cx_vec4 *pos = &s_render2dInfo.renderPos [i];
@@ -1230,6 +1282,7 @@ static void app_render_2d_earth (void)
     // render weather icon
     feeds_weather_render (feed, pos->x, pos->y - 6.0f, pos->z, opacity);
 #endif
+    }
   }
   
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
@@ -1295,12 +1348,15 @@ static void app_render_2d_earth (void)
 
 static void app_input_handle_touch_event (const input_touch_event *event)
 {
-  if (audio_music_picker_active ())
+  if (ui_ctrlr_settings_get_active ())
+  {
+    ui_ctrlr_settings_set_active (false);
+  }
+  else if (ui_ctrlr_settings_get_active ())
   {
   }
   else if (ui_ctrlr_handle_input (event))
   {
-    CX_DEBUGLOG_CONSOLE (0, "UI input handled");
   }
   else
   {
@@ -1456,47 +1512,53 @@ static bool app_input_touch_earth (float screenX, float screenY, float screenWid
   
   int i, c;
   for (i = 0, c = s_earth->data->count; i < c; ++i)
-  {    
+  {
+    bool display = settings_get_city_display (i);
+    
+    if (display)
+      //if (s_earth->data->display [i])
+    {
 #if CX_DEBUG
-    const char *city = s_earth->data->names [i];
-    CX_REFERENCE_UNUSED_VARIABLE (city);
+      const char *city = s_earth->data->names [i];
+      CX_REFERENCE_UNUSED_VARIABLE (city);
 #endif
     
-    float opacity = s_render2dInfo.opacity [i];
-    
-    if (opacity > 0.1f)
-    {
-      normal = s_earth->data->normal [i];
-      position = s_earth->data->location [i];
+      float opacity = s_render2dInfo.opacity [i];
       
-      float dotp = cx_vec4_dot (&normal, &rayDir);
-      
-      if (dotp < 0.0f)
+      if (opacity > 0.1f)
       {
-        cx_vec4 intersectpt, tmp;
+        normal = s_earth->data->normal [i];
+        position = s_earth->data->location [i];
         
-        cx_vec4_sub (&tmp, &position, &rayOrigin);
+        float dotp = cx_vec4_dot (&normal, &rayDir);
         
-        float t = (cx_vec4_dot (&normal, &tmp)) / dotp;
-        
-        cx_vec4_mul (&tmp, t, &rayDir);
-        
-        cx_vec4_add (&intersectpt, &rayOrigin, &tmp);
-        
-        // get distance (squared)
-        
-        cx_vec4_sub (&toPos, &position, &intersectpt);
-        
-        float distSqr = cx_vec4_lengthSqr (&toPos);
-        
-        if (distSqr <= (0.025f * 0.025f))
+        if (dotp < 0.0f)
         {
-          CX_DEBUGLOG_CONSOLE (1, "%s", city);
+          cx_vec4 intersectpt, tmp;
           
-          cityIndex = i;
+          cx_vec4_sub (&tmp, &position, &rayOrigin);
           
-          break;
-        } 
+          float t = (cx_vec4_dot (&normal, &tmp)) / dotp;
+          
+          cx_vec4_mul (&tmp, t, &rayDir);
+          
+          cx_vec4_add (&intersectpt, &rayOrigin, &tmp);
+          
+          // get distance (squared)
+          
+          cx_vec4_sub (&toPos, &position, &intersectpt);
+          
+          float distSqr = cx_vec4_lengthSqr (&toPos);
+          
+          if (distSqr <= (0.025f * 0.025f))
+          {
+            CX_DEBUGLOG_CONSOLE (1, "%s", city);
+            
+            cityIndex = i;
+            
+            break;
+          } 
+        }
       }
     }
   }

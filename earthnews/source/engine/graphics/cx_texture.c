@@ -52,11 +52,11 @@ static bool cx_texture_load_img (cx_texture *texture, const char *filename)
 {
   bool success = false;
   
-  char fullfilePath [512];
-  cx_file_absolute_path (filename, fullfilePath, 512);
+  char path [512];
+  cx_file_storage_path (path, 512, filename, CX_FILE_STORAGE_BASE_RESOURCE);
   
   int w, h, ch;
-  texture->data = stbi_load (fullfilePath, &w, &h, &ch, STBI_default);
+  texture->data = stbi_load (path, &w, &h, &ch, STBI_default);
   
   if (texture->data)
   {

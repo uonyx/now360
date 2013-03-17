@@ -40,13 +40,13 @@ typedef cx_list_node cx_list;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_list *cx_list_insert (cx_list *list, const void *data);
-cx_list *cx_list_remove (cx_list *list, const void *data);
-cx_list *cx_list_reverse (cx_list *list);
-cx_list *cx_list_sort (cx_list *list, cx_list_sort_cmp_func cmpfunc);
-cxu32 cx_list_to_array (cx_list *list, cx_list_node *dest, int cxu32);
-bool cx_list_exists (cx_list *list, const void *data);
-void cx_list_free (cx_list *list);
+cx_list * cx_list_insert (cx_list *list, const void *data);
+cx_list * cx_list_remove (cx_list *list, const void *data);
+cx_list * cx_list_reverse (cx_list *list);
+cx_list * cx_list_sort (cx_list *list, cx_list_sort_cmp_func cmpfunc);
+cxu32     cx_list_to_array (cx_list *list, cx_list_node *dest, int cxu32);
+bool      cx_list_exists (cx_list *list, const void *data);
+void      cx_list_free (cx_list *list);
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

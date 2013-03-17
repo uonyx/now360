@@ -15,6 +15,7 @@
 #include "system/cx_list.h"
 #include "system/cx_thread.h"
 #include "system/cx_xml.h"
+#include "system/cx_json.h"
 #include "system/cx_utility.h"
 
 #include "graphics/cx_gdi.h"

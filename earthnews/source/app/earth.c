@@ -56,90 +56,101 @@ static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float lon
 
 static struct earth_data_t *earth_data_create (const char *filename, float radius, int slices, int parallels)
 {
-  struct earth_data_t *data = NULL;
-
-  cx_data *filedata = cx_data_create_from_file (filename);
+  struct earth_data_t *earthdata = NULL;
   
-  char errorBuffer [128];
-  json_settings settings;
-  memset (&settings, 0, sizeof (settings));
+  cxu8 *filedata = NULL;
+  cxu32 filedataSize = 0;
   
-  json_value *root = json_parse_ex (&settings, (const char *) filedata->bytes, filedata->size, errorBuffer, 128);
-  
-  if (root)
-  {
-    CX_ASSERT (root->type == json_array);
+  if (cx_file_storage_load_contents (&filedata, &filedataSize, filename, CX_FILE_STORAGE_BASE_RESOURCE))
+  {  
+    char errorBuffer [128];
+    json_settings settings;
+    memset (&settings, 0, sizeof (settings));
     
-    data = (struct earth_data_t *) cx_malloc (sizeof (struct earth_data_t));
+    json_value *root = json_parse_ex (&settings, (const char *) filedata, filedataSize, errorBuffer, 128);
     
-    unsigned int count = root->u.array.length;
-    
-    data->count = count;
-    data->location = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
-    data->normal = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
-    data->names = (const char **) cx_malloc (sizeof (char *) * count);
-    data->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
-    data->weatherId = (const char **) cx_malloc (sizeof (char *) * count);
-    
-    unsigned int i;
-    for (i = 0; i < count; ++i)
+    if (root)
     {
-      json_value *value = root->u.array.values [i];
-      CX_ASSERT (value->type == json_object);
+      CX_ASSERT (root->type == json_array);
       
-      unsigned int j;
-      for (j = 0; j < value->u.object.length; ++j)
+      earthdata = (struct earth_data_t *) cx_malloc (sizeof (struct earth_data_t));
+      
+      unsigned int count = root->u.array.length;
+      
+      earthdata->count = count;
+      earthdata->location = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
+      earthdata->normal = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
+      earthdata->names = (const char **) cx_malloc (sizeof (char *) * count);
+      earthdata->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
+      earthdata->weatherId = (const char **) cx_malloc (sizeof (char *) * count);
+      earthdata->display = (bool *) cx_malloc (sizeof (bool) * count);
+      
+      unsigned int i;
+      for (i = 0; i < count; ++i)
       {
-        json_value *v = value->u.object.values [j].value;
-        const char *vn = value->u.object.values [j].name;
+        json_value *value = root->u.array.values [i];
+        CX_ASSERT (value->type == json_object);
         
-        if (strcmp (vn, "name") == 0)
+        unsigned int j;
+        for (j = 0; j < value->u.object.length; ++j)
         {
-          CX_ASSERT (v->type == json_string);
+          json_value *v = value->u.object.values [j].value;
+          const char *vn = value->u.object.values [j].name;
           
-          data->names [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+          if (strcmp (vn, "display") == 0)
+          {
+            CX_ASSERT (v->type == json_boolean);
+            
+            earthdata->display [i] = v->u.boolean;
+          }
+          else if (strcmp (vn, "name") == 0)
+          {
+            CX_ASSERT (v->type == json_string);
+            
+            earthdata->names [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+          }
+          else if (strcmp (vn, "news") == 0)
+          {
+            CX_ASSERT (v->type == json_string);
+            
+            earthdata->newsFeeds [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+          }
+          else if (strcmp (vn, "weather") == 0)
+          {
+            CX_ASSERT (v->type == json_string);
+            
+            earthdata->weatherId [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+          }
+          else if (strcmp (vn, "location") == 0)
+          {
+            CX_ASSERT (v->type == json_object);
+            CX_ASSERT (v->u.object.length == 2);
+            
+            CX_ASSERT (v->u.object.values [0].value->type == json_double);
+            CX_ASSERT (v->u.object.values [1].value->type == json_double);
+            
+            CX_ASSERT (strcmp (v->u.object.values [0].name, "latitude") == 0);
+            CX_ASSERT (strcmp (v->u.object.values [1].name, "longitude") == 0);
+            
+            float lat = (float) v->u.object.values [0].value->u.dbl;
+            float lon = (float) v->u.object.values [1].value->u.dbl;
+            float r = radius + (radius * 0.015f); // slightly extend radius (for point sprite rendering)
+            
+            earth_convert_dd_to_world (&earthdata->location [i], lat, lon, r, slices, parallels, &earthdata->normal [i]);
+          }
         }
-        else if (strcmp (vn, "news") == 0)
-        {
-          CX_ASSERT (v->type == json_string);
-          
-          data->newsFeeds [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
-        }
-        else if (strcmp (vn, "weather") == 0)
-        {
-          CX_ASSERT (v->type == json_string);
-          
-          data->weatherId [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
-        }
-        else if (strcmp (vn, "location") == 0)
-        {
-          CX_ASSERT (v->type == json_object);
-          CX_ASSERT (v->u.object.length == 2);
-          
-          CX_ASSERT (v->u.object.values [0].value->type == json_double);
-          CX_ASSERT (v->u.object.values [1].value->type == json_double);
-          
-          CX_ASSERT (strcmp (v->u.object.values [0].name, "latitude") == 0);
-          CX_ASSERT (strcmp (v->u.object.values [1].name, "longitude") == 0);
-          
-          float lat = (float) v->u.object.values [0].value->u.dbl;
-          float lon = (float) v->u.object.values [1].value->u.dbl;
-          float r = radius + (radius * 0.015f); // slightly extend radius (for point sprite rendering)
-          
-          earth_convert_dd_to_world (&data->location [i], lat, lon, r, slices, parallels, &data->normal [i]);
-        }
-      }
-    }  
-  }
-  else
-  {
-    CX_DEBUGLOG_CONSOLE (1, errorBuffer);
-    data = NULL;
-  }
+      }  
+    }
+    else
+    {
+      CX_DEBUGLOG_CONSOLE (1, errorBuffer);
+      earthdata = NULL;
+    }
 
-  cx_data_destroy (filedata);
+    cx_free (filedata);
+  }
   
-  return data;
+  return earthdata;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -497,7 +508,6 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
 #endif
   
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

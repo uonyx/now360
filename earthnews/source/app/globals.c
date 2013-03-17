@@ -181,3 +181,60 @@ static void globals_destroy_fonts (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if 0
+
+
+static UIActivityIndicatorView *s_activityView = nil;
+static int s_activityCount = 0;
+
+static bool activity_indicator_init (void *rootvc)
+{
+  CX_ASSERT (rootvc);
+  
+  UIViewController *rootViewCtrlr = (UIViewController *) rootvc;
+  
+  s_activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+  
+  CGRect frame = s_activityView.frame;
+  frame.origin.x = 8.0f;
+  [s_activityView setFrame:frame];
+  
+  [rootViewCtrlr.view addSubview:s_activityView];
+  
+  return true;
+}
+
+static void activity_indicator_deinit (void)
+{
+  [s_activityView removeFromSuperview];
+}
+
+static void activity_indicator_set_active (bool active)
+{
+  if (active)
+  {
+    s_activityCount += 1;
+    
+    [s_activityView startAnimating];
+  }
+  else
+  {
+    CX_ASSERT (s_activityCount > 0);
+    
+    s_activityCount -= 1;
+    
+    if (s_activityCount <= 0)
+    {
+      [s_activityView stopAnimating];
+    }
+  }
+}
+
+static bool activity_indicator_get_active (void)
+{
+  return [s_activityView isAnimating];
+}
+
+
+#endif

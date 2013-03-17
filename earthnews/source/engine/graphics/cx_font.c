@@ -5,11 +5,11 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#include "../system/cx_data.h"
+#include "../system/cx_file.h"
 #include "../system/cx_matrix4x4.h"
+#include "../system/cx_vector2.h"
 #include "../3rdparty/stb/stb_truetype.h"
 
-#include "../system/cx_vector2.h"
 #include "cx_font.h"
 #include "cx_gdi.h"
 #include "cx_shader.h"
@@ -48,34 +48,39 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
 {
   CX_ASSERT (filename);
 
-  cx_data *filedata = cx_data_create_from_file (filename);
-  CX_ASSERT (filedata);
+  cx_font *font = NULL;
   
-  cx_font_impl *fontImpl   = (cx_font_impl *) cx_malloc (sizeof (cx_font_impl));
-  fontImpl->scaleX         = 1.0f;
-  fontImpl->scaleY         = 1.0f;
-  fontImpl->height         = fontSize;
-  fontImpl->ttfCharData    = (stbtt_bakedchar *) cx_malloc (CX_FONT_MAX_NUM_FONT_CHARS * sizeof (stbtt_bakedchar));
-  fontImpl->texture        = cx_texture_create (CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
-                                                 CX_TEXTURE_FORMAT_ALPHA);
+  cxu8 *filedata = NULL;
+  cxu32 filedataSize = 0;
   
-  stbtt_BakeFontBitmap (filedata->bytes,
-                        0, 
-                        fontSize, 
-                        fontImpl->texture->data, 
-                        CX_FONT_TEXTURE_WIDTH, 
-                        CX_FONT_TEXTURE_HEIGHT, 
-                        CX_FONT_FIRST_CHAR, 
-                        CX_FONT_MAX_NUM_FONT_CHARS, 
-                        fontImpl->ttfCharData);
-  
-  cx_texture_gpu_init (fontImpl->texture);
-  cx_texture_data_destroy (fontImpl->texture);
+  if (cx_file_storage_load_contents (&filedata, &filedataSize, filename, CX_FILE_STORAGE_BASE_RESOURCE))
+  { 
+    cx_font_impl *fontImpl   = (cx_font_impl *) cx_malloc (sizeof (cx_font_impl));
+    fontImpl->scaleX         = 1.0f;
+    fontImpl->scaleY         = 1.0f;
+    fontImpl->height         = fontSize;
+    fontImpl->ttfCharData    = (stbtt_bakedchar *) cx_malloc (CX_FONT_MAX_NUM_FONT_CHARS * sizeof (stbtt_bakedchar));
+    fontImpl->texture        = cx_texture_create (CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
+                                                   CX_TEXTURE_FORMAT_ALPHA);
+    
+    stbtt_BakeFontBitmap (filedata,
+                          0, 
+                          fontSize, 
+                          fontImpl->texture->data, 
+                          CX_FONT_TEXTURE_WIDTH, 
+                          CX_FONT_TEXTURE_HEIGHT, 
+                          CX_FONT_FIRST_CHAR, 
+                          CX_FONT_MAX_NUM_FONT_CHARS, 
+                          fontImpl->ttfCharData);
+    
+    cx_texture_gpu_init (fontImpl->texture);
+    cx_texture_data_destroy (fontImpl->texture);
 
-  cx_font *font   = (cx_font *) cx_malloc (sizeof (cx_font));
-  font->fontdata  = fontImpl;
+    font = (cx_font *) cx_malloc (sizeof (cx_font));
+    font->fontdata  = fontImpl;
   
-  cx_data_destroy (filedata);
+    cx_free (filedata);
+  }
   
   return font;
 }
@@ -167,8 +172,10 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
     py = py - (th * 0.5f);
   }
   
-  char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
-  cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  //char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
+  //cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  
+  const char *textBuffer = text;
   
 #if 0
   const char *t = textBuffer;
@@ -342,8 +349,9 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   cxf32 tw = 0.0f;
   
   char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
-  //cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
-  cx_str_html_unescape (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  
+  //cx_str_html_unescape (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   
   unsigned char c = 0;
   char *t = textBuffer; 

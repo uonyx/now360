@@ -226,6 +226,11 @@ void ui_custom_destroy (ui_context_t *ctx, ui_custom_t *custom)
   
   ui_ctx_remove_intrinsic (ctx, &custom->intr);
   
+  if (custom->_callbacks)
+  {
+    cx_free (custom->_callbacks);
+  }
+  
   cx_free (custom);
 }
 

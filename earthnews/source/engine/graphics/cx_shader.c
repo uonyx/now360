@@ -441,19 +441,24 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
   
   GLuint vertexShader, fragmentShader, shaderProgram;
   
-  cx_data *vsFile = cx_data_create_from_file (vertexShaderFilename);
-  CX_FATAL_ASSERT (vsFile);
+  cxu8 *vsData = NULL, *fsData = NULL, *scData = NULL;
+  cxu32 vsDataSize = 0, fsDataSize = 0, scDataSize = 0;
   
-  cx_data *fsFile = cx_data_create_from_file (fragmentShaderFilename);
-  CX_FATAL_ASSERT (fsFile);
+  bool loaded = false;
   
-  cx_data *scFile = cx_data_create_from_file (shaderConfigFilename);
-  CX_FATAL_ASSERT (scFile);
+  loaded = cx_file_storage_load_contents (&vsData, &vsDataSize, vertexShaderFilename, CX_FILE_STORAGE_BASE_RESOURCE);
+  CX_FATAL_ASSERT (loaded);
+
+  loaded = cx_file_storage_load_contents (&fsData, &fsDataSize, fragmentShaderFilename, CX_FILE_STORAGE_BASE_RESOURCE);
+  CX_FATAL_ASSERT (loaded);
   
-  success = cx_shader_compile (&vertexShader, GL_VERTEX_SHADER, (const char *) vsFile->bytes, vsFile->size);
+  loaded = cx_file_storage_load_contents (&scData, &scDataSize, shaderConfigFilename, CX_FILE_STORAGE_BASE_RESOURCE);
+  CX_FATAL_ASSERT (loaded);
+  
+  success = cx_shader_compile (&vertexShader, GL_VERTEX_SHADER, (const char *) vsData, vsDataSize);
   CX_FATAL_ASSERT (success);
   
-  success = cx_shader_compile (&fragmentShader, GL_FRAGMENT_SHADER, (const char *) fsFile->bytes, fsFile->size);
+  success = cx_shader_compile (&fragmentShader, GL_FRAGMENT_SHADER, (const char *) fsData, fsDataSize);
   CX_FATAL_ASSERT (success);
   
   success = cx_shader_link (&shaderProgram, vertexShader, fragmentShader);
@@ -467,12 +472,12 @@ cx_shader *cx_shader_create (const char *name, const char *dir)
   memset (shader->attributes, -1, sizeof (shader->attributes));
   memset (shader->uniforms, -1, sizeof (shader->uniforms));
   
-  success = cx_shader_configure ((const char *) scFile->bytes, scFile->size, shader);
+  success = cx_shader_configure ((const char *) scData, scDataSize, shader);
   CX_FATAL_ASSERT (success);
   
-  cx_data_destroy (vsFile);
-  cx_data_destroy (fsFile);
-  cx_data_destroy (scFile);
+  cx_free (vsData);
+  cx_free (fsData);
+  cx_free (scData);
   
   return shader;
 }

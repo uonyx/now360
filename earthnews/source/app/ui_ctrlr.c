@@ -9,6 +9,7 @@
 #include "ui_ctrlr.h"
 #include "browser.h"
 #include "audio.h"
+#include "settings.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,13 +25,14 @@ enum e_uid
 {
   UI_ID_TWITTER_VIEW,
   UI_ID_TWITTER_TOGGLE,
-  UI_ID_NEWS_BUTTON,
+  UI_ID_SETTINGS_BUTTON,
   UI_ID_MUSIC_TOGGLE,
   UI_ID_MUSIC_VIEW,
   UI_ID_MUSIC_QUEUE,
   UI_ID_MUSIC_PLAY,
   UI_ID_MUSIC_NEXT,
   UI_ID_MUSIC_PREV,
+  UI_ID_NEWS_BUTTON, // THIS HAS TO BE LAST (not elegant, I know)
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,6 +136,17 @@ static ui_music_t s_uimusic;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+typedef struct ui_settings_t
+{
+  ui_custom_t *button;
+} ui_settings_t;
+
+static ui_settings_t s_uisettings;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void ui_ctrlr_init_create_widgets (void);
 static void ui_ctrlr_deinit_destroy_widgets (void);
 static void ui_ctrlr_screen_resize_widgets (void);
@@ -177,6 +190,12 @@ static void ui_ctrlr_music_bar_fade_end (void);
 static void ui_ctrlr_music_bar_anim_update (void);
 static void ui_ctrlr_music_picked_callback (void);
 static void ui_ctrlr_music_notification_callback (audio_music_notification n);
+
+static void ui_ctrlr_settings_create (void);
+static void ui_ctrlr_settings_destroy (void);
+static void ui_ctrlr_settings_position_setup (void);
+static void ui_ctrlr_settings_button_pressed (ui_custom_t *custom);
+static void ui_ctrlr_settings_button_render (ui_custom_t *custom);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -261,6 +280,43 @@ void ui_ctrlr_set_news_feed_opacity (float opacity)
   s_uinews.opacity = opacity;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool ui_ctrlr_music_get_active (void)
+{
+  return audio_music_picker_active ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool ui_ctrlr_settings_get_active (void)
+{
+  return settings_ui_active ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ui_ctrlr_settings_set_active (bool active)
+{
+  if (active)
+  {
+    settings_ui_show ();
+    s_uisettings.button->userdata = NULL;
+  }
+  else
+  {
+    settings_ui_hide ();
+    s_uisettings.button->userdata = (void *) 0xffff;
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,6 +326,7 @@ static void ui_ctrlr_init_create_widgets (void)
   ui_ctrlr_news_create ();  
   ui_ctrlr_twitter_create ();
   ui_ctrlr_music_create ();
+  ui_ctrlr_settings_create ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -281,6 +338,7 @@ static void ui_ctrlr_deinit_destroy_widgets (void)
   ui_ctrlr_news_destroy ();
   ui_ctrlr_twitter_destroy ();
   ui_ctrlr_music_destroy ();
+  ui_ctrlr_settings_destroy ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -292,6 +350,7 @@ static void ui_ctrlr_screen_resize_widgets (void)
   ui_ctrlr_news_position_setup ();
   ui_ctrlr_twitter_position_setup ();
   ui_ctrlr_music_position_setup ();
+  ui_ctrlr_settings_position_setup ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +401,6 @@ static void ui_ctrlr_button_render_with_image (ui_custom_t *custom, cx_colour* c
   }
   else
   {
-    ui_widget_state_t wstate = ui_widget_get_state (s_uicontext, custom);
     col = (wstate == UI_WIDGET_STATE_HOVER) ? col2 : col1;
   }
   
@@ -412,7 +470,8 @@ static void ui_ctrlr_news_destroy (void)
 
 static void ui_ctrlr_news_position_setup (void)
 {
-  const float botMargin = 12.0f;
+  //const float botMargin = 12.0f;
+  const float botMargin = 12.0f + 36.0f;
   const float height = NEWS_LIST_HEIGHT;
   const float posX = NEWS_LIST_XOFFSET;
   const float posY = s_uicontext->canvasHeight - height - botMargin;
@@ -530,7 +589,9 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   
   if (title)
   {
-    cx_font_render (font, title, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &colour);
+    char titleText [256];
+    cx_str_html_unescape (titleText, 256, title);
+    cx_font_render (font, titleText, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &colour);
   }
 }
 
@@ -637,7 +698,8 @@ static void ui_ctrlr_twitter_destroy (void)
 
 static void ui_ctrlr_twitter_position_setup (void)
 {
-  float posY = 72.0f - 30.0f;
+  //float posY = 72.0f - 30.0f;
+  float posY = s_uicontext->canvasHeight - 36.0f;
   
   ui_widget_set_position (s_uitwitter.toggle, 0.0f, posY);
   ui_widget_set_dimension (s_uitwitter.toggle, 36.0f, 24.0f);
@@ -767,14 +829,14 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
       if (tweet->userhandle && tweet->text)
       {
         char namehandle [256];
-        
         cx_sprintf (namehandle, 256, "@%s: ", tweet->userhandle);
-        
         cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
         
         float x2 = x + cx_font_get_text_width (font, namehandle);
         
-        cx_font_render (font, tweet->text, x2, y, 0.0f, 0, &coltweet);
+        char tweetText [256] = {0};
+        cx_str_html_unescape (tweetText, 256, tweet->text);
+        cx_font_render (font, tweetText, x2, y, 0.0f, 0, &coltweet);
       }
 
       if ((wstate != UI_WIDGET_STATE_HOVER) && !browser_is_open ())
@@ -1023,7 +1085,8 @@ static void ui_ctrlr_music_destroy (void)
 
 static void ui_ctrlr_music_position_setup (void)
 {
-  float posY = 36.0f - 24.0f;
+  float posY = 36.0f - 24.0f; // 12.0f;
+  posY += 8.0f;
   
   ui_widget_set_position (s_uimusic.toggle, 0.0f, posY);
   ui_widget_set_dimension (s_uimusic.toggle, 36.0f, 24.0f);
@@ -1354,6 +1417,83 @@ static void ui_ctrlr_music_notification_callback (audio_music_notification n)
     
     // also do this if app is backgrounded
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_settings_create (void)
+{
+  memset (&s_uisettings, 0, sizeof (s_uisettings));
+  
+  ui_custom_t *custom = ui_custom_create (s_uicontext, UI_ID_SETTINGS_BUTTON);
+  
+  ui_custom_callbacks_t callbacks;
+  memset (&callbacks, 0, sizeof (ui_custom_callbacks_t));
+  
+  callbacks.pressFn = ui_ctrlr_settings_button_pressed;
+  callbacks.renderFn = ui_ctrlr_settings_button_render;
+  ui_custom_set_callbacks (custom, &callbacks);
+  
+  cx_colour darkgrey;
+  cx_colour_set (&darkgrey, 0.2f, 0.2f, 0.2f, 1.0f);
+  
+  ui_widget_set_colour (custom, UI_WIDGET_STATE_NORMAL, cx_colour_black ());
+  ui_widget_set_colour (custom, UI_WIDGET_STATE_HOVER, &darkgrey);
+  ui_widget_set_colour (custom, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
+  
+  s_uisettings.button = custom;
+  s_uisettings.button->userdata = (void *) 0xffff;
+  
+  ui_ctrlr_settings_position_setup ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_settings_destroy (void)
+{
+  ui_custom_destroy (s_uicontext, s_uisettings.button);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_settings_position_setup (void)
+{
+  float posY = 72.0f - 30.0f; // 42.0f;
+  posY += 8.0f;
+  
+  ui_widget_set_position (s_uisettings.button, 0.0f, posY);
+  ui_widget_set_dimension (s_uisettings.button, 36.0f, 24.0f);
+  ui_widget_set_visible (s_uisettings.button, true);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_settings_button_pressed (ui_custom_t *custom)
+{
+  ui_ctrlr_settings_set_active (true);
+ 
+  ui_clear_focus (s_uicontext);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_settings_button_render (ui_custom_t *custom)
+{
+  cx_colour col1 = *cx_colour_white ();
+  cx_colour col2 = *cx_colour_grey ();
+  cx_texture *image = s_uitwitter.birdicon;
+  
+  ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

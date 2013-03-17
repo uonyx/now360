@@ -36,7 +36,8 @@
 		3127E30A15E00F6D00793C60 /* worker.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30915E00F6D00793C60 /* worker.c */; };
 		3127E30D15E0557400793C60 /* cx_list.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30C15E0557200793C60 /* cx_list.c */; };
 		3127E31115F3F18500793C60 /* browser.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E31015F3F18100793C60 /* browser.m */; };
-		315EC7BF16D0895C0019E160 /* cx_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 315EC7BE16D0895B0019E160 /* cx_data.c */; };
+		315EC7C216D443E00019E160 /* settings.m in Sources */ = {isa = PBXBuildFile; fileRef = 315EC7C116D443DE0019E160 /* settings.m */; };
+		315EC7C416E258CC0019E160 /* cx_json.c in Sources */ = {isa = PBXBuildFile; fileRef = 315EC7C316E258CA0019E160 /* cx_json.c */; };
 		316846BE165B041500B80A66 /* cx_vertex_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846BD165B041400B80A66 /* cx_vertex_data.c */; };
 		316846C61660F97D00B80A66 /* cx_varmod.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846C41660F97D00B80A66 /* cx_varmod.c */; };
 		3169B0F616BF1AB2000D7AC9 /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3169B0F516BF1AB2000D7AC9 /* libpthread.dylib */; };
@@ -191,8 +192,10 @@
 		3127E30C15E0557200793C60 /* cx_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_list.c; sourceTree = "<group>"; };
 		3127E30F15F3F17F00793C60 /* browser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = browser.h; sourceTree = "<group>"; };
 		3127E31015F3F18100793C60 /* browser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = browser.m; sourceTree = "<group>"; };
-		315EC7BC16D0894C0019E160 /* cx_data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_data.h; sourceTree = "<group>"; };
-		315EC7BE16D0895B0019E160 /* cx_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_data.c; sourceTree = "<group>"; };
+		315EC7C016D443CC0019E160 /* settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = settings.h; sourceTree = "<group>"; };
+		315EC7C116D443DE0019E160 /* settings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = settings.m; sourceTree = "<group>"; };
+		315EC7C316E258CA0019E160 /* cx_json.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_json.c; sourceTree = "<group>"; };
+		315EC7C516E258E50019E160 /* cx_json.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_json.h; sourceTree = "<group>"; };
 		316846BB165B03F000B80A66 /* cx_vertex_data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_vertex_data.h; sourceTree = "<group>"; };
 		316846BD165B041400B80A66 /* cx_vertex_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_vertex_data.c; sourceTree = "<group>"; };
 		316846C41660F97D00B80A66 /* cx_varmod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_varmod.c; sourceTree = "<group>"; };
@@ -481,6 +484,8 @@
 				3127E31015F3F18100793C60 /* browser.m */,
 				311B943016A17EBB0057786F /* audio.h */,
 				311B943116A17EFA0057786F /* audio.m */,
+				315EC7C016D443CC0019E160 /* settings.h */,
+				315EC7C116D443DE0019E160 /* settings.m */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -514,8 +519,8 @@
 				3127E2D715DAFD7E00793C60 /* cx_xml.h */,
 				3127E30B15E0555B00793C60 /* cx_list.h */,
 				3127E30C15E0557200793C60 /* cx_list.c */,
-				315EC7BC16D0894C0019E160 /* cx_data.h */,
-				315EC7BE16D0895B0019E160 /* cx_data.c */,
+				315EC7C316E258CA0019E160 /* cx_json.c */,
+				315EC7C516E258E50019E160 /* cx_json.h */,
 			);
 			path = system;
 			sourceTree = "<group>";
@@ -1181,7 +1186,8 @@
 				31B4E7E6168CFA9100B5A371 /* ui_ctrlr.c in Sources */,
 				311B943216A17EFA0057786F /* audio.m in Sources */,
 				317FFA0E16BB29EB00154541 /* stb_image.c in Sources */,
-				315EC7BF16D0895C0019E160 /* cx_data.c in Sources */,
+				315EC7C216D443E00019E160 /* settings.m in Sources */,
+				315EC7C416E258CC0019E160 /* cx_json.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

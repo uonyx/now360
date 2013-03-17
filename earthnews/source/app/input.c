@@ -133,17 +133,19 @@ void input_register_gesture_event_callback (input_gesture_type type, input_gestu
 
 void _input_cache_touch_event (input_touch_type type, float x, float y, float px, float py)
 {
-  CX_ASSERT (s_initialised);
-  CX_ASSERT ((type > INPUT_TOUCH_TYPE_INVALID) && (type < NUM_INPUT_TOUCH_TYPES));
-  CX_ASSERT (s_touchEventsCount < INPUT_MAX_TOUCH_EVENTS_CACHE_SIZE);
-  
-  input_touch_event *touchEvent = &s_touchEventsCache [s_touchEventsCount++];
-  
-  touchEvent->type = type;
-  touchEvent->point.x = x;
-  touchEvent->point.y = y;
-  touchEvent->prevpoint.x = px;
-  touchEvent->prevpoint.y = py;
+  if (s_initialised)
+  {
+    CX_ASSERT ((type > INPUT_TOUCH_TYPE_INVALID) && (type < NUM_INPUT_TOUCH_TYPES));
+    CX_ASSERT (s_touchEventsCount < INPUT_MAX_TOUCH_EVENTS_CACHE_SIZE);
+    
+    input_touch_event *touchEvent = &s_touchEventsCache [s_touchEventsCount++];
+    
+    touchEvent->type = type;
+    touchEvent->point.x = x;
+    touchEvent->point.y = y;
+    touchEvent->prevpoint.x = px;
+    touchEvent->prevpoint.y = py;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,18 +154,20 @@ void _input_cache_touch_event (input_touch_type type, float x, float y, float px
 
 void _input_cache_gesture_event (input_gesture_type type, void *gestureData)
 {
-  CX_ASSERT (s_initialised);
-  CX_ASSERT ((type > INPUT_GESTURE_TYPE_INVALID) && (type < NUM_INPUT_GESTURE_TYPES));
-  CX_ASSERT (s_gestureEventsCount < INPUT_MAX_GESTURE_EVENTS_CACHE_SIZE);
-  
-  input_gesture_event *gestureEvent = &s_gestureEventsCache [s_gestureEventsCount++];
-  
-  gestureEvent->type = type;
-  
-  switch (type) 
+  if (s_initialised)
   {
-    case INPUT_GESTURE_TYPE_PINCH: { gestureEvent->data.pinch.factor = *(float *) gestureData; break; }
-    default: { break; }
+    CX_ASSERT ((type > INPUT_GESTURE_TYPE_INVALID) && (type < NUM_INPUT_GESTURE_TYPES));
+    CX_ASSERT (s_gestureEventsCount < INPUT_MAX_GESTURE_EVENTS_CACHE_SIZE);
+    
+    input_gesture_event *gestureEvent = &s_gestureEventsCache [s_gestureEventsCount++];
+    
+    gestureEvent->type = type;
+    
+    switch (type) 
+    {
+      case INPUT_GESTURE_TYPE_PINCH: { gestureEvent->data.pinch.factor = *(float *) gestureData; break; }
+      default: { break; }
+    }
   }
 }
 

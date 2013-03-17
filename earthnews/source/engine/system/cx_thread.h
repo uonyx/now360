@@ -62,13 +62,10 @@ typedef struct cx_thread
 
 cx_thread *cx_thread_create (const char *name, cx_thread_type type, cx_thread_func func, void *userdata);
 void cx_thread_destroy (cx_thread *thread);
-
 void cx_thread_start (cx_thread *thread);
 void cx_thread_cancel (cx_thread *thread);
-
 void cx_thread_join (cx_thread *thread, cx_thread_exit_status *exitStatus);
 void cx_thread_detach (cx_thread *thread);
-
 void cx_thread_sleep (cxu32 millisecs);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +74,6 @@ void cx_thread_sleep (cxu32 millisecs);
 
 bool cx_thread_mutex_init (cx_thread_mutex *mutex);
 bool cx_thread_mutex_deinit (cx_thread_mutex *mutex);
-
 void cx_thread_mutex_lock (cx_thread_mutex *mutex);
 void cx_thread_mutex_unlock (cx_thread_mutex *mutex);
 
@@ -87,14 +83,9 @@ void cx_thread_mutex_unlock (cx_thread_mutex *mutex);
 
 bool cx_thread_monitor_init (cx_thread_monitor *monitor);
 bool cx_thread_monitor_deinit (cx_thread_monitor *monitor);
-
 void cx_thread_monitor_signal (cx_thread_monitor *monitor);
 void cx_thread_monitor_wait (cx_thread_monitor *monitor);
 bool cx_thread_monitor_wait_timed (cx_thread_monitor *monitor, cxu32 timeout);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
