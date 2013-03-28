@@ -19,7 +19,7 @@
 static void ui_ctx_add_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr);
 static void ui_ctx_remove_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *intr);
 static void ui_ctx_render (ui_context_t *ctx);
-static void ui_ctx_press (ui_context_t *ctx);
+static void ui_ctx_press (ui_context_t *ctx, const cx_vec2 *point);
 static ui_intrinsic_t *ui_ctx_input_hit (ui_context_t *ctx, const cx_vec2 *point, bool ext);
 static ui_widget_state_t ui_ctx_widget_state (ui_context_t *ctx, const ui_intrinsic_t *intr);
 
@@ -124,7 +124,13 @@ bool ui_input (ui_context_t *ctx, const input_touch_event *tevent)
         if (hit != ctx->focus)
         {
           ctx->focus = hit;
-          ui_ctx_press (ctx);          
+          
+          cx_vec2 point;
+          
+          point.x = ctx->canvasWidth * tevent->point.x;
+          point.y = ctx->canvasHeight * tevent->point.y;
+          
+          ui_ctx_press (ctx, &point);          
         }
         
         handled = true;
@@ -335,7 +341,7 @@ static void ui_ctx_remove_intrinsic (ui_context_t *ctx, const ui_intrinsic_t *in
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctx_press (ui_context_t *ctx)
+static void ui_ctx_press (ui_context_t *ctx, const cx_vec2 *point)
 {
   CX_FATAL_ASSERT (ctx);
   CX_ASSERT (ctx->focus);
@@ -349,7 +355,7 @@ static void ui_ctx_press (ui_context_t *ctx)
       
       if (callbacks && callbacks->pressFn)
       {
-        callbacks->pressFn (custom);
+        callbacks->pressFn (custom, point);
       }
       
       break;
@@ -362,7 +368,7 @@ static void ui_ctx_press (ui_context_t *ctx)
       
       if (callbacks && callbacks->pressFn)
       {
-        callbacks->pressFn (button);
+        callbacks->pressFn (button, point);
       }
       
       break;

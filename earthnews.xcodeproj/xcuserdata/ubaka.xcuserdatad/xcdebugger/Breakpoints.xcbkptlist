@@ -2,19 +2,4 @@
 <Bucket
    type = "1"
    version = "1.0">
-   <FileBreakpoints>
-      <FileBreakpoint
-         shouldBeEnabled = "No"
-         ignoreCount = "0"
-         continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/app.c"
-         timestampString = "385176417.758951"
-         startingColumnNumber = "9223372036854775807"
-         endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1363"
-         endingLineNumber = "1363"
-         landmarkName = "app_input_handle_touch_event()"
-         landmarkType = "7">
-      </FileBreakpoint>
-   </FileBreakpoints>
 </Bucket>

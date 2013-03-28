@@ -1,6 +1,7 @@
 {
     "settings": {
         "time": 1,
+        "cloc": 0,
         "temp": 0,
         "city": [
             0,

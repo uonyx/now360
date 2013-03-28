@@ -6,31 +6,44 @@
 //
 
 #import "settings.h"
+#import "util.h"
 #import "earth.h"
 #import <UIKit/UIKit.h>
-#import <QuartzCore/QuartzCore.h>
+//#import <QuartzCore/QuartzCore.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define SETTINGS_SAVE_FILE "settings.dat"
+#define SETTINGS_ROOT_TABLE_DATA_ROWS (4)
+#define SETTINGS_TEMP_TABLE_DATA_ROWS (2)
+#define SETTINGS_CLOCK_TABLE_DATA_ROWS (2)
+#define SCREEN_FADE_OPACITY (0.6f)
+#define SCREEN_FADE_DURATION (0.5f)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char *s_list [3] = 
+static const char *s_rootTableData [SETTINGS_ROOT_TABLE_DATA_ROWS] = 
 {
-  "Edit Cities",
+  "Cities",
   "Temperature",
+  "Clock Format",
   "Show Time",
 };
 
-static const char *s_tempUnitStr [2] = 
+static const char *s_tempTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
 {
   "Celsius",
   "Farenheit",
+};
+
+static const char *s_clockTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
+{
+  "12-hour",
+  "24-hour",
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,6 +56,7 @@ typedef struct
   bool        *cityDisplay;
   int          cityCount;
   int          tempUnit;
+  int          clockFmt;
   bool         showTime;
 } settings_t;
 
@@ -59,30 +73,9 @@ static settings_t s_settings;
 
 @implementation CityTableViewController
 
-- (id) initWithStyle:(UITableViewStyle)style
-{
-  self = [super initWithStyle:style];
-  
-  if (self)
-  {
-  }
-  
-  return self;
-}
-
-- (void) dealloc
-{
-  [super dealloc];
-}
-
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  if (section == 0)
-  {
-    return s_settings.cityCount;
-  }
-
-  return 0;
+  return (section == 0) ? s_settings.cityCount : 0;
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -143,22 +136,6 @@ static settings_t s_settings;
 
 @implementation TemperatureTableViewController
 
-- (id) initWithStyle:(UITableViewStyle)style
-{
-  self = [super initWithStyle:style];
-  
-  if (self)
-  {
-  }
-  
-  return self;
-}
-
-- (void) dealloc
-{
-  [super dealloc];
-}
-
 - (void)viewWillDisappear:(BOOL)animated
 {
   [[self navigationController] popToRootViewControllerAnimated:FALSE];
@@ -186,12 +163,7 @@ static settings_t s_settings;
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  if (section == 0)
-  {
-    return 2;
-  }
-  
-  return 0;
+  return (section == 0) ? SETTINGS_TEMP_TABLE_DATA_ROWS : 0;
 }
 
 - (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -209,8 +181,71 @@ static settings_t s_settings;
   
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
   cell.accessoryType = (s_settings.tempUnit == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:s_tempUnitStr [idx] encoding:NSASCIIStringEncoding];
+  cell.textLabel.text = [NSString stringWithCString:s_tempTableData [idx] encoding:NSASCIIStringEncoding];
 
+  return cell;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@interface ClockTableViewController : UITableViewController
+{
+}
+@end
+
+@implementation ClockTableViewController
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+  [[self navigationController] popToRootViewControllerAnimated:FALSE];
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  int oldUnit = s_settings.clockFmt;
+  int newUnit = indexPath.row;
+  
+  if (newUnit != oldUnit)
+  {
+    UITableViewCell *newCell = [tableView cellForRowAtIndexPath:indexPath];
+    UITableViewCell *oldCell = [tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:oldUnit inSection:0]];
+    
+    CX_ASSERT (newCell);
+    CX_ASSERT (oldCell);
+    
+    newCell.accessoryType = UITableViewCellAccessoryCheckmark;
+    oldCell.accessoryType = UITableViewCellAccessoryNone;
+    
+    s_settings.clockFmt = newUnit;
+  }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+  return (section == 0) ? SETTINGS_CLOCK_TABLE_DATA_ROWS : 0;
+}
+
+- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  NSString *identifier = @"ClockCell";
+  
+  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+  
+  if (cell == nil) 
+  {
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+  }
+  
+  int idx = indexPath.row;
+  
+  cell.selectionStyle = UITableViewCellSelectionStyleNone;
+  cell.accessoryType = (s_settings.clockFmt == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+  cell.textLabel.text = [NSString stringWithCString:s_clockTableData [idx] encoding:NSASCIIStringEncoding];
+  
   return cell;
 }
 
@@ -226,9 +261,9 @@ static settings_t s_settings;
   UISwitch *_timeSwitch;
   TemperatureTableViewController *_temperatureViewController;
   CityTableViewController *_cityViewController;
+  ClockTableViewController *_clockViewController;
 }
 @end
-
 
 @implementation RootTableViewController
 
@@ -241,7 +276,13 @@ static settings_t s_settings;
     _timeSwitch = [[UISwitch alloc] init];
     _temperatureViewController = [[TemperatureTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _cityViewController = [[CityTableViewController alloc] initWithStyle:UITableViewStylePlain];
+    _clockViewController = [[ClockTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _navCtrlr = [[UINavigationController alloc] initWithRootViewController:self];
+    
+    CGRect frame = [[self tableView] frame];
+    frame.size.width = 400.0f;
+    frame.size.height = 300.0f;
+    [[self tableView] setFrame:frame];
   }
   
   return self;
@@ -251,6 +292,7 @@ static settings_t s_settings;
 {
   [_cityViewController release];
   [_temperatureViewController release];
+  [_clockViewController release];
   [_timeSwitch release];
   [_navCtrlr release];
   
@@ -265,9 +307,7 @@ static settings_t s_settings;
 }
 
 - (void)viewDidLoad
-{
-  CX_DEBUGLOG_CONSOLE (1, "RootTableViewController: viewDidLoad");
-  
+{ 
   [_timeSwitch addTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
 }
 
@@ -277,8 +317,8 @@ static settings_t s_settings;
 }
 
 - (void)viewWillAppear:(BOOL)animated
-{
-  CX_DEBUGLOG_CONSOLE (1, "RootTableViewController: viewWillAppear");
+{  
+  [[self tableView] reloadData];
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -288,18 +328,22 @@ static settings_t s_settings;
     case 0: // edit cities
     {
       [_navCtrlr pushViewController:_cityViewController animated:YES];
-      
       break;
     }
       
     case 1: // temperature unit
     {
       [_navCtrlr pushViewController:_temperatureViewController animated:YES];
-      
+      break;
+    }
+
+    case 2: // clock
+    {
+      [_navCtrlr pushViewController:_clockViewController animated:YES];
       break;
     }
       
-    case 2: // show time
+    case 3: // show time
     {
       break;
     }
@@ -311,20 +355,11 @@ static settings_t s_settings;
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  CX_DEBUGLOG_CONSOLE (1, "RootTableViewController: tableView numberOfRowsInSection:");
-  
-  if (section == 0)
-  {
-    return 3;
-  }
-  
-  return 0;
+  return (section == 0) ? SETTINGS_ROOT_TABLE_DATA_ROWS : 0;
 }
 
 - (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-  CX_DEBUGLOG_CONSOLE (1, "RootTableViewController: tableView cellForRowAtIndexPath:");
-  
   NSString *identifier = @"RootCell";
   
   UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
@@ -338,7 +373,7 @@ static settings_t s_settings;
   
   switch (idx)
   {
-    case 0: // edit cities
+    case 0: // cities
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -349,12 +384,19 @@ static settings_t s_settings;
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:s_tempUnitStr [s_settings.tempUnit] encoding:NSASCIIStringEncoding];
-      
+      cell.detailTextLabel.text = [NSString stringWithCString:s_tempTableData [s_settings.tempUnit] encoding:NSASCIIStringEncoding];
+      break;
+    }
+
+    case 2: // clock
+    {
+      cell.selectionStyle = UITableViewCellSelectionStyleNone;
+      cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+      cell.detailTextLabel.text = [NSString stringWithCString:s_clockTableData [s_settings.clockFmt] encoding:NSASCIIStringEncoding];
       break;
     }
       
-    case 2: // show time
+    case 3: // show time
     {
       [_timeSwitch setOn:s_settings.showTime];
       
@@ -371,7 +413,7 @@ static settings_t s_settings;
     }
   }
   
-  cell.textLabel.text = [NSString stringWithCString:s_list [idx] encoding:NSASCIIStringEncoding];
+  cell.textLabel.text = [NSString stringWithCString:s_rootTableData [idx] encoding:NSASCIIStringEncoding];
 
 #if 0
   cell.contentView.backgroundColor = [UIColor clearColor];
@@ -462,24 +504,42 @@ void settings_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void settings_data_save (void)
+{
+  bool saved = settings_save (SETTINGS_SAVE_FILE);
+  
+  CX_ASSERT (saved);
+  
+  CX_REFERENCE_UNUSED_VARIABLE (saved);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void settings_ui_show (void)
 {
-  UIView *parentView = s_rootViewCtrlr.view;
-  
-  float viewPosX = parentView.bounds.origin.x;
-  float viewPosY = parentView.bounds.origin.y;
-  float viewWidth  = parentView.bounds.size.width;
-  float viewHeight = parentView.bounds.size.height;
-  
-  float width = 800.0f;
-  float height = 600.0f;
-  float posX = viewPosX + ((viewWidth - width) * 0.5f);
-  float posY = viewPosY + ((viewHeight - height) * 0.5f);
-  
-  [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
-  [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
-  
-  s_uiActive = true;
+  if (!s_uiActive)
+  {
+    UIView *parentView = s_rootViewCtrlr.view;
+    /*
+    float viewPosX = parentView.bounds.origin.x;
+    float viewPosY = parentView.bounds.origin.y;
+    float viewWidth  = parentView.bounds.size.width;
+    float viewHeight = parentView.bounds.size.height;
+    */
+    float width = 400.0f;
+    float height = 300.0f;
+    float posX = 0.0f; //viewPosX + ((viewWidth - width) * 0.5f);
+    float posY = 0.0f; //viewPosY + ((viewHeight - height) * 0.5f);
+    
+    [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
+    [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
+    
+    util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
+    
+    s_uiActive = true;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -488,9 +548,14 @@ void settings_ui_show (void)
 
 void settings_ui_hide (void)
 {
-  [s_popover dismissPopoverAnimated:YES];
+  if (s_uiActive)
+  {
+    [s_popover dismissPopoverAnimated:YES];
   
-  s_uiActive = false;
+    util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
+    
+    s_uiActive = false;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -546,11 +611,25 @@ int settings_get_temperature_unit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int settings_get_clock_display_format (void)
+{
+  return s_settings.clockFmt;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void settings_init_view_create (void)
-{ 
+{
+  [[UINavigationBar appearanceWhenContainedIn:[UINavigationController class], [UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.0f alpha:0.5f]];
+  
   s_rootTableViewCtrlr = [[RootTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
   
   s_popover = [[UIPopoverController alloc] initWithContentViewController:[s_rootTableViewCtrlr navigationController]];
+  
+  [s_rootTableViewCtrlr setTitle:@"Settings"];
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -569,20 +648,7 @@ static void settings_init_view_destroy (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static bool settings_save (const char *filename)
-{
-/*
-  {
-      "settings": {
-      "time": true,
-      "temp": 0,
-      "city": [
-               0,
-               0,
-               0]
-    }
-  }
-*/
-  
+{  
   cxu8 buffer [2048];
   cxu32 bufferlen = 0;
   
@@ -590,7 +656,10 @@ static bool settings_save (const char *filename)
   
   char tmp [1024];
   
-  int l = cx_sprintf (tmp, 1024, "{\"settings\":{\"time\":%d,\"temp\":%d,\"city\":[", s_settings.showTime ? 1 : 0, s_settings.tempUnit);
+  int l = cx_sprintf (tmp, 1024, "{\"settings\":{\"time\":%d,\"cloc\":%d,\"temp\":%d,\"city\":[", 
+                      s_settings.showTime ? 1 : 0, 
+                      s_settings.clockFmt,
+                      s_settings.tempUnit);
   
   CX_ASSERT (l >= 0);
   
@@ -654,13 +723,16 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       cx_json_node timeNode = cx_json_object_child (settingsNode, "time");
       cx_json_node tempNode = cx_json_object_child (settingsNode, "temp");
       cx_json_node cityNode = cx_json_object_child (settingsNode, "city");
+      cx_json_node clocNode = cx_json_object_child (settingsNode, "cloc");
       
       CX_ASSERT (timeNode);
       CX_ASSERT (tempNode);
       CX_ASSERT (cityNode);
+      CX_ASSERT (clocNode);
       
       int showTime = (int) cx_json_value_int (timeNode);
       int tempUnit = (int) cx_json_value_int (tempNode);
+      int clockFmt = (int) cx_json_value_int (clocNode);
       int cityCount = cx_json_array_size (cityNode);
       bool *cityDisplay = cx_malloc (sizeof (bool) * cityCount);
       
@@ -672,9 +744,15 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
         
         cityDisplay [i] = on;
       }
+      if (s_settings.cityDisplay)
+      {
+        cx_free (s_settings.cityDisplay);
+        s_settings.cityDisplay = NULL;
+      }
         
       s_settings.showTime = showTime ? true : false;
       s_settings.tempUnit = tempUnit;
+      s_settings.clockFmt = clockFmt;
       s_settings.cityCount = cityCount;
       s_settings.cityDisplay = cityDisplay;
       

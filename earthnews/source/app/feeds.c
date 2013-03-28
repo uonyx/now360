@@ -7,7 +7,6 @@
 //
 
 #include "../engine/cx_engine.h"
-#include "globals.h"
 #include "feeds.h"
 #include "worker.h"
 
@@ -131,18 +130,18 @@ static cx_texture *s_weatherIcons [NUM_WEATHER_CONDITION_CODES];
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize);
-void feeds_news_clear (feed_news_t *feed);
+static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize);
+static void feeds_news_clear (feed_news_t *feed);
 
-bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize);
-void feeds_twitter_clear (feed_twitter_t *feed);
+static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize);
+static void feeds_twitter_clear (feed_twitter_t *feed);
 
-bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize);
-void feeds_weather_clear (feed_weather_t *feed);
+static bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize);
+static void feeds_weather_clear (feed_weather_t *feed);
 
-void news_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
-void twitter_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
-void weather_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata);
+static void http_callback_news (cx_http_request_id tId, const cx_http_response *response, void *userdata);
+static void http_callback_twitter (cx_http_request_id tId, const cx_http_response *response, void *userdata);
+static void http_callback_weather (cx_http_request_id tId, const cx_http_response *response, void *userdata);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +183,7 @@ bool feeds_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void news_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata)
+static void http_callback_news (cx_http_request_id tId, const cx_http_response *response, void *userdata)
 {
   CX_ASSERT (response);
   CX_ASSERT (userdata);
@@ -194,39 +193,59 @@ void news_http_callback (cx_http_request_id tId, const cx_http_response *respons
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
     // no internet connection ?
+    CX_DEBUGLOG_CONSOLE (1, "http_callback_news: Warning: no internet connection");
+    
+    feed->reqStatus = FEED_REQ_STATUS_ERROR;
   }
   else
   {
-    if (response->statusCode == 200)
+    switch (response->statusCode)
     {
-      int xmldataSize = response->dataSize;
-      char *xmldata = cx_malloc (sizeof (char) * (xmldataSize + 1));
-      memcpy (xmldata, response->data, xmldataSize);
-      xmldata [xmldataSize] = 0;
-      
-      // send xmldata to new thread to parse
-      feeds_news_clear (feed);
-      
-      bool parsed = feeds_news_parse (feed, xmldata, xmldataSize);
-      CX_ASSERT (parsed);
-      CX_REFERENCE_UNUSED_VARIABLE (parsed);
-      
-      feed->dataReady = true;
-      feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
-    }
-    else
-    {
+      case 200:
+      {      
+        if (response->dataSize > 0)
+        {
+          // send xmldata to new thread to parse
+          feeds_news_clear (feed);
+          
+          bool parsed = feeds_news_parse (feed, (const char *) response->data, response->dataSize);
+          
+          if (parsed)
+          {
+            feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+            feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
+          }
+          else
+          {
+            CX_DEBUGLOG_CONSOLE (1, "http_callback_news: Warning: Parse failed for query: %s", feed->query);
+            feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+          }
+        }
+        else 
+        {
+          feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+        }
+        
+        break;
+      }
+        
+      default:
+      {
+        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+        break;
+      }
     }
   }
   
-  feed->dataPending = false;
+  feed->httpReqId = CX_HTTP_REQUEST_ID_INVALID;
+  feed->query = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_news_clear (feed_news_t *feed)
+static void feeds_news_clear (feed_news_t *feed)
 {
   CX_ASSERT (feed);
   
@@ -237,9 +256,8 @@ void feeds_news_clear (feed_news_t *feed)
   {
     next = item->next;
     
-    cx_free ((void *) item->date);
-    cx_free ((void *) item->link);
-    cx_free ((void *) item->title);
+    cx_free ((char *) item->link);
+    cx_free ((char *) item->title);
     cx_free (item);
     
     item = next;
@@ -260,18 +278,13 @@ void feeds_news_clear (feed_news_t *feed)
 
 void feeds_news_search (feed_news_t *feed, const char *query)
 {
-  CX_ASSERT (feed);
-  CX_ASSERT (query);
-  
   // google: "https://news.google.com/news/feeds?q=lagos&output=rss"
   
-  if (feed->dataPending)
-  {
-    return;
-  }
+  CX_ASSERT (feed);
+  CX_ASSERT (query);
+  CX_ASSERT (feed->reqStatus == FEED_REQ_STATUS_INVALID);
   
-  feed->dataReady = false;
-  feed->dataPending = true;
+  feed->reqStatus = FEED_REQ_STATUS_IN_PROGRESS;
   
   // url
   
@@ -292,14 +305,31 @@ void feeds_news_search (feed_news_t *feed, const char *query)
   
   CX_DEBUGLOG_CONSOLE (1, "%s", request);
   
-  cx_http_get (request, NULL, 0, NEWS_HTTP_REQUEST_TIMEOUT, news_http_callback, feed);
+  feed->httpReqId = cx_http_get (request, NULL, 0, NEWS_HTTP_REQUEST_TIMEOUT, http_callback_news, feed);
+  
+  feed->query = query;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
+void feeds_news_cancel_search (feed_news_t *feed)
+{
+  CX_ASSERT (feed);
+  
+  cx_http_cancel (feed->httpReqId);
+  
+  feed->reqStatus = FEED_REQ_STATUS_INVALID;
+  feed->httpReqId = CX_HTTP_REQUEST_ID_INVALID;
+  feed->query = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
   CX_ASSERT (data);
@@ -327,9 +357,57 @@ bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
         feed_news_item_t *rssItem = cx_malloc (sizeof (feed_news_item_t));
         
         rssItem->title = cx_xml_node_content (title);
-        rssItem->date = cx_xml_node_content (pubDate);
+                
+        const char *d = cx_xml_node_content (pubDate);
+
+        char day [32];
+        char monn [32];
+        char zone [32];
+        int mday = 0;
+        int year = 0;
+        int hour = 0;
+        int mins = 0;
+        int secs = 0;
         
-        // strip out redirect url
+        // "Sat, 23 Mar 2013 12:17:18 GMT"
+        sscanf (d, "%s %d %s %d %d:%d:%d %s", day, &mday, monn, &year, &hour, &mins, &secs, zone);
+        
+        static const char *monthName [12] =
+        {
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        };
+        
+        int month = -1;
+        
+        for (int i = 0; i < 12; ++i)
+        {
+          if (strcmp (monn, monthName [i]) == 0)
+          {
+            month = i;
+            break;
+          }
+        }
+
+        CX_ASSERT (month > -1);
+    
+        int seconds = (hour * 3600) + (mins * 60) + secs;
+        
+        rssItem->pubDateInfo.mday = mday;
+        rssItem->pubDateInfo.mon = month;
+        rssItem->pubDateInfo.secs = seconds;
+    
+        // strip out redirect url to speed up browser page loading
         const char *linkContent = cx_xml_node_content (link);
         const char *http = "http://";
         const char *c = linkContent;    // original
@@ -357,9 +435,11 @@ bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
         // ESCAPE URLS WITH '%' IN THEM! //
         // ***************************** //
         
-        //CX_DEBUGLOG_CONSOLE (s, s);
+        //CX_DEBUGLOG_CONSOLE (s, "%s", s);
         
-        rssItem->link = cx_strdup (s, strlen (s));
+        cxu32 len = cx_roundupPow2 (strlen (s));
+        
+        rssItem->link = cx_strdup (s, len);
       
         cx_free ((void *) linkContent);
         
@@ -391,16 +471,19 @@ bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void twitter_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata)
+static void http_callback_twitter (cx_http_request_id tId, const cx_http_response *response, void *userdata)
 {
   CX_ASSERT (response);
   CX_ASSERT (userdata);
-  
+
   feed_twitter_t *feed = (feed_twitter_t *) userdata;
   
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
     // no internet connection ?
+    CX_DEBUGLOG_CONSOLE (1, "http_callback_twitter: Warning: no internet connection");
+    
+    feed->reqStatus = FEED_REQ_STATUS_ERROR;
   }
   else
   {
@@ -408,52 +491,53 @@ void twitter_http_callback (cx_http_request_id tId, const cx_http_response *resp
     {
       case 200:
       {
-        int jsondataSize = response->dataSize;
-        char *jsondata = cx_malloc (sizeof (char) * (jsondataSize + 1));
-        
-        if (jsondataSize && (jsondataSize > 0))
+        if (response->dataSize > 0)
         {
+#if 0
+          // memcpy data and dispatch to async task thread
+          int jsondataSize = response->dataSize;
+          char *jsondata = cx_malloc (sizeof (char) * (jsondataSize + 1));
           memcpy (jsondata, response->data, jsondataSize);
-          jsondata [jsondataSize] = 0;
-          
-          // send jsondata to new thread to parse
+          jsondata [jsondataSize] = 0;          
           CX_DEBUGLOG_CONSOLE (1, jsondata);
-          
+          //cx_free (jsondata);
+#endif
           feeds_twitter_clear (feed);
           
-          bool parsed = feeds_twitter_parse (feed, jsondata, jsondataSize);
-          CX_ASSERT (parsed);
-          CX_REFERENCE_UNUSED_VARIABLE (parsed);
+          bool parsed = feeds_twitter_parse (feed, (const char *) response->data, response->dataSize);
           
-          feed->dataReady = true;
-          feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+          if (parsed)
+          {
+            feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+            feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
+          }
+          else
+          {
+            CX_DEBUGLOG_CONSOLE (1, "http_callback_twitter: Warning: Parse failed for query: %s", feed->query);
+            feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+          }
         }
         else
         {
-          CX_DEBUGLOG_CONSOLE (1, "twitter_http_callback: Warning: JSON data size [%d]", jsondataSize);
+          CX_DEBUGLOG_CONSOLE (1, "http_callback_twitter: Warning: JSON data size < 0 [%d]", response->dataSize);
+          feed->reqStatus = FEED_REQ_STATUS_FAILURE;
         }
         
         break;
       }
         
       case 403:
-      {
-        break;
-      }
-        
       case 420:
-      {
-        break;
-      }
-        
       default:
       {
+        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
         break;
       }
     }
   }
   
-  feed->dataPending = false;
+  feed->httpReqId = CX_HTTP_REQUEST_ID_INVALID;
+  feed->query = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -464,14 +548,9 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
 {
   CX_ASSERT (feed);
   CX_ASSERT (query);
+  CX_ASSERT (feed->reqStatus == FEED_REQ_STATUS_INVALID);
   
-  if (feed->dataPending)
-  {
-    return;
-  }
-  
-  feed->dataReady = false;
-  feed->dataPending = true;
+  feed->reqStatus = FEED_REQ_STATUS_IN_PROGRESS;
   
   // url
   
@@ -492,14 +571,31 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
   
   CX_DEBUGLOG_CONSOLE (1, "%s", request);
   
-  cx_http_get (request, NULL, 0, TWITTER_HTTP_REQUEST_TIMEOUT, twitter_http_callback, feed);
+  feed->httpReqId = cx_http_get (request, NULL, 0, TWITTER_HTTP_REQUEST_TIMEOUT, http_callback_twitter, feed);
+  
+  feed->query = query;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_twitter_clear (feed_twitter_t *feed)
+void feeds_twitter_cancel_search (feed_twitter_t *feed)
+{
+  CX_ASSERT (feed);
+  
+  cx_http_cancel (feed->httpReqId);
+  
+  feed->reqStatus = FEED_REQ_STATUS_INVALID;
+  feed->httpReqId = CX_HTTP_REQUEST_ID_INVALID;
+  feed->query = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void feeds_twitter_clear (feed_twitter_t *feed)
 {
   CX_ASSERT (feed);
   
@@ -510,10 +606,10 @@ void feeds_twitter_clear (feed_twitter_t *feed)
   {
     next = tweet->next;
     
-    cx_free ((void *)tweet->date);
-    cx_free ((void *)tweet->userhandle);
-    cx_free ((void *)tweet->username);
-    cx_free ((void *)tweet->text);
+    cx_free ((char *)tweet->date);
+    cx_free ((char *)tweet->userhandle);
+    cx_free ((char *)tweet->username);
+    cx_free ((char *)tweet->text);
     cx_free (tweet);
     
     tweet = next;
@@ -599,7 +695,7 @@ void feeds_twitter_render (feed_twitter_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize)
+static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
   CX_ASSERT (data);
@@ -658,28 +754,30 @@ bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize)
             if (strcmp (pname, "created_at") == 0)
             {
               CX_ASSERT (pvalue->type == json_string);
-              tweetItem->date = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              tweetItem->date = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
               CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->date);
               done++;
             }
             else if (strcmp (pname, "from_user") == 0)
             {
               CX_ASSERT (pvalue->type == json_string);
-              tweetItem->userhandle = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              tweetItem->userhandle = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
               CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->userhandle);
               done++;
             }
             else if (strcmp (pname, "from_user_name") == 0)
             {
               CX_ASSERT (pvalue->type == json_string);
-              tweetItem->username = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              tweetItem->username = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
               CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->username);
               done++;
             }
             else if (strcmp (pname, "text") == 0)
             {
               CX_ASSERT (pvalue->type == json_string);
-              tweetItem->text = cx_strdup (pvalue->u.string.ptr, pvalue->u.string.length);
+              
+              tweetItem->text = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
+              tweetItem->textLen = pvalue->u.string.length;
               CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->text);
               done++;
             }
@@ -758,35 +856,7 @@ bool feeds_weather_data_valid (const feed_weather_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0
-struct temp
-{
-  char *data;
-  int dataSize;
-  feed_weather_t *feed;
-};
-
-static void async_task (void *data)
-{
-  struct temp *t = (struct temp *) data;
-  feed_weather_t *feed = t->feed;
-  char *xmldata = t->data;
-  int xmldataSize = t->dataSize;
-  
-  // send xmldata to new thread to parse
-  feeds_weather_clear (feed);
-  
-  bool parsed = feeds_weather_parse (feed, xmldata, xmldataSize);
-  CX_ASSERT (parsed);
-  CX_REFERENCE_UNUSED_VARIABLE (parsed);
-  
-  feed->dataReady = true;
-  feed->dataPending = false;
-  feed->lastUpdate = cx_time_get_utc_time ();
-}
-#endif
-
-void weather_http_callback (cx_http_request_id tId, const cx_http_response *response, void *userdata)
+static void http_callback_weather (cx_http_request_id tId, const cx_http_response *response, void *userdata)
 {
   CX_ASSERT (response);
   CX_ASSERT (userdata);
@@ -796,43 +866,41 @@ void weather_http_callback (cx_http_request_id tId, const cx_http_response *resp
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
     // no internet connection ?
-    feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+    feed->reqStatus = FEED_REQ_STATUS_ERROR;
+    
+    CX_DEBUGLOG_CONSOLE (1, "http_callback_weather: Warning: no internet connection");
   }
   else
   {
     if (response->statusCode == 200)
     {
-      int xmldataSize = response->dataSize;
-      char *xmldata = cx_malloc (sizeof (char) * (xmldataSize + 1));
-      memcpy (xmldata, response->data, xmldataSize);
-      xmldata [xmldataSize] = 0;
-      
-      // send xmldata to new thread to parse
       feeds_weather_clear (feed);
       
-      bool parsed = feeds_weather_parse (feed, xmldata, xmldataSize);
-      CX_ASSERT (parsed);
-      CX_REFERENCE_UNUSED_VARIABLE (parsed);
+      bool parsed = feeds_weather_parse (feed, (const char *) response->data, response->dataSize);
       
-      feed->dataReady = true;
-      feed->dataPending = false;
-      feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
-      feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
+      if (parsed)
+      {
+        feed->dataReady = true;
+        feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+        feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
 #if 0
-      struct temp t;
-      t.data = xmldata;
-      t.dataSize = xmldataSize;
-      t.feed = feed;
-      worker_add_task (async_task, (void*) &t, NULL);
+        struct temp t;
+        t.data = xmldata;
+        t.dataSize = xmldataSize;
+        t.feed = feed;
+        worker_add_task (async_task, (void*) &t, NULL);
 #endif
+      }
+      else
+      {
+        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+      }
     }
     else
     {
       feed->reqStatus = FEED_REQ_STATUS_FAILURE;
     }
   }
-  
-  feed->dataPending = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -843,60 +911,57 @@ bool feeds_weather_search (feed_weather_t *feed, const char *query)
 {
   CX_ASSERT (feed);
   CX_ASSERT (query);
+  CX_ASSERT (feed->reqStatus == FEED_REQ_STATUS_INVALID);
+
+  time_t currentTime = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
   
-  if (feed->dataPending)
+  if ((currentTime - feed->lastUpdate) > feed->ttlSecs)
   {
+    feed->dataReady = false;
+    feed->q = query;
+    feed->reqStatus = FEED_REQ_STATUS_IN_PROGRESS;    
+    
+    // url
+    
+    const char *url = WEATHER_SEARCH_API_URL;
+    
+    // request
+    
+    char request [512];
+    
+  #if WEATHER_YAHOO
+    cx_sprintf (request, 512, "%s?w=%s&u=c", url, query);
+  #else
+    cx_sprintf (request, 512, "%s/%s?cm_ven=LWO&cm_cat=rss&par=LWO_rss", url, query);
+  #endif
+    
+    CX_DEBUGLOG_CONSOLE (1, "%s", request);
+    
+    cx_http_get (request, NULL, 0, WEATHER_HTTP_REQUEST_TIMEOUT, http_callback_weather, feed);
+    
+    return true;
+  }
+  else
+  {
+    feed->reqStatus = FEED_REQ_STATUS_FAILURE;
     return false;
   }
-  
-  // weather.com: "http://rss.weather.com/weather/local/IVXX0001?cm_cat=rss"
-  
-  feed->dataReady = false;
-  feed->dataPending = true;
-  feed->q = query;
-  feed->reqStatus = FEED_REQ_STATUS_IN_PROGRESS;
-  
-  // url
-  
-  const char *url = WEATHER_SEARCH_API_URL;
-  
-  // request
-  
-  char request [512];
-  
-#if WEATHER_YAHOO
-  cx_sprintf (request, 512, "%s?w=%s&u=c", url, query);
-#else
-  cx_sprintf (request, 512, "%s/%s?cm_ven=LWO&cm_cat=rss&par=LWO_rss", url, query);
-#endif
-  
-  CX_DEBUGLOG_CONSOLE (1, "%s", request);
-  
-  cx_http_get (request, NULL, 0, WEATHER_HTTP_REQUEST_TIMEOUT, weather_http_callback, feed);
-  
-  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_weather_clear (feed_weather_t *feed)
+static void feeds_weather_clear (feed_weather_t *feed)
 {
   CX_ASSERT (feed);
-  
-  if (feed->date)
-  {
-    cx_free ((void *)feed->date);
-    feed->date = NULL;
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize)
+static bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
   CX_ASSERT (data);
@@ -913,13 +978,16 @@ bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize)
   {  
     cx_xml_node rootNode = cx_xml_doc_root_node (doc);
     cx_xml_node channelNode = cx_xml_node_child (rootNode, "channel", NULL);
+    cx_xml_node ttlNode = cx_xml_node_child (channelNode, "ttl", NULL);
     cx_xml_node itemNode = cx_xml_node_child (channelNode, "item", NULL);
     cx_xml_node conditionNode = cx_xml_node_child (itemNode, "condition", "yweather");
     
-    const char *temp = cx_xml_node_attr (conditionNode, "temp");
-    const char *code = cx_xml_node_attr (conditionNode, "code");
-    const char *date = cx_xml_node_attr (conditionNode, "date");
+    char *ttl = cx_xml_node_content (ttlNode);
+    char *temp = cx_xml_node_attr (conditionNode, "temp");
+    char *code = cx_xml_node_attr (conditionNode, "code");
+    char *date = cx_xml_node_attr (conditionNode, "date");
     
+    int ttlSecs = atoi (ttl) * 60;
     int tempCelsius = atoi (temp);
     int conditionCode = atoi (code);
 
@@ -938,13 +1006,16 @@ bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize)
       hour = 0;
     }
     
-    cx_free ((void *) temp);
-    cx_free ((void *) code);
-    cx_free ((void *) date);
-    
+    feed->ttlSecs = ttlSecs;
     feed->celsius = tempCelsius;
     feed->conditionCode = conditionCode;
-    cx_sprintf (feed->time, 8, "%02d:%02d", hour, minute);
+    feed->timeInfo.hour = hour;
+    feed->timeInfo.min = minute;
+    
+    cx_free (ttl);
+    cx_free (temp);
+    cx_free (code);
+    cx_free (date);
     
     cx_xml_doc_destroy (doc);
     

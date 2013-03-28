@@ -86,12 +86,12 @@ typedef struct ui_checkbox_t
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef void (*ui_button_cb_pressed) (const ui_button_t *button);
-typedef void (*ui_button_cb_render) (const ui_button_t *button);
-typedef void (*ui_custom_cb_pressed) (ui_custom_t *custom);
+typedef void (*ui_button_cb_pressed) (ui_button_t *button, const cx_vec2 *point);
+typedef void (*ui_button_cb_render) (ui_button_t *button);
+typedef void (*ui_custom_cb_pressed) (ui_custom_t *custom, const cx_vec2 *point);
 typedef void (*ui_custom_cb_render) (ui_custom_t *custom);
-typedef void (*ui_checkbox_cb_pressed) (const ui_checkbox_t *checkbox);
-typedef void (*ui_checkbox_cb_render) (const ui_checkbox_t *checkbox);
+typedef void (*ui_checkbox_cb_pressed) (ui_checkbox_t *checkbox, const cx_vec2 *point);
+typedef void (*ui_checkbox_cb_render) (ui_checkbox_t *checkbox);
 
 typedef struct ui_custom_callbacks_t
 {

@@ -54,7 +54,7 @@ static CX_INLINE void cx_vec4_cross (cx_vec4 * CX_RESTRICT v_out, const cx_vec4 
 static CX_INLINE cxf32 cx_vec4_dot (const cx_vec4 * CX_RESTRICT v0, const cx_vec4 * CX_RESTRICT v1);
 static CX_INLINE void cx_vec4_normalize (cx_vec4 *v);
 static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 *v);
-static CX_INLINE cxf32 cx_vec4_lengthSqr (const cx_vec4 *v);
+static CX_INLINE cxf32 cx_vec4_length_sq (const cx_vec4 *v);
 static CX_INLINE bool cx_vec4_is_zero (const cx_vec4 *v);
 static CX_INLINE bool cx_vec4_validate (const cx_vec4 *v);
 static CX_INLINE void cx_vec4_string (const cx_vec4 *v, char *destBuffer, cxu32 destbufferSize);
@@ -196,9 +196,9 @@ static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 *v)
 {
   CX_ASSERT (cx_vec4_validate (v));
   
-  cxf32 lsqr = cx_vec4_lengthSqr (v);
+  cxf32 lsq = cx_vec4_length_sq (v);
   
-  cxf32 l = cx_sqrt (lsqr);
+  cxf32 l = cx_sqrt (lsq);
   
   return l;
 }
@@ -207,7 +207,7 @@ static CX_INLINE cxf32 cx_vec4_length (const cx_vec4 *v)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static CX_INLINE cxf32 cx_vec4_lengthSqr (const cx_vec4 *v)
+static CX_INLINE cxf32 cx_vec4_length_sq (const cx_vec4 *v)
 {
   CX_ASSERT (cx_vec4_validate (v));
   

@@ -104,6 +104,7 @@ void cx_gdi_shared_context_destroy (void)
 cxf32 cx_gdi_get_aspect_ratio (void)
 {
   CX_ASSERT (s_initialised);
+  CX_ASSERT (s_screenWidth > 0);
   
   cxf32 aspectRatio = (cxf32) s_screenWidth / (cxf32) s_screenHeight;
   

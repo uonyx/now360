@@ -7,6 +7,7 @@
 //
 
 #include "ui_ctrlr.h"
+#include "util.h"
 #include "browser.h"
 #include "audio.h"
 #include "settings.h"
@@ -43,7 +44,7 @@ static ui_context_t *s_uicontext = NULL;
 
 #define NEWS_MAX_ENTRIES  5
 #define NEWS_LIST_HEIGHT  120.0f
-#define NEWS_LIST_XOFFSET 12.0f
+#define NEWS_LIST_XOFFSET 36.0f //12.0f
 
 const float height = 180.0f;
 const float posX = 12.0f;
@@ -51,7 +52,6 @@ const float posY = 582.0f;
 
 typedef struct ui_news_t
 {
-  cx_font *font;
   ui_custom_t *buttons [NEWS_MAX_ENTRIES];
   float opacity;
 } ui_news_t;
@@ -61,9 +61,6 @@ static ui_news_t s_uinews;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#define TWITTER_MAX_ENTRIES 15
-#define TICKER_MAX_ENTRIES 64
 
 #define ANIM_FADE_IN  1
 #define ANIM_FADE_OUT 0
@@ -77,6 +74,28 @@ typedef struct
   unsigned int type : 1;
 } animdata_t;
 
+#define TWITTER_MAX_ENTRIES                 (15)
+#define TWITTER_MAX_TWEET_LEN               (256)
+#define TWITTER_TWEET_VIS_LINK_URL_BUF_SIZE (64)
+#define TWITTER_TWEET_VIS_LINK_MAX_COUNT    (8)
+#define TWITTER_TICKER_MAX_ITEM_COUNT       (64)
+#define TWITTER_TICKER_TWEET_MAX_ENTRIES    (16)
+#define TWITTER_TICKER_TWEET_ELEM_TYPE_TEXT (0)
+#define TWITTER_TICKER_TWEET_ELEM_TYPE_LINK (1)
+
+typedef struct ticker_tweet_t
+{
+  struct 
+  {
+    cxu32 loc; //  start pos
+    cxu32 charCount;
+    cxu32 type; // text or link
+  } elems [TWITTER_TICKER_TWEET_MAX_ENTRIES];
+  
+  char buffer [TWITTER_MAX_TWEET_LEN]; // max tweet - 140 chars
+  cxu32 elemCount;
+} ticker_tweet_t;
+
 typedef struct
 {
   struct 
@@ -84,14 +103,13 @@ typedef struct
     void *data;
     float width;
     float posx;
-  } items [TICKER_MAX_ENTRIES];
+  } items [TWITTER_TICKER_MAX_ITEM_COUNT];
   int itemCount;
   float width;
 } ticker_t;
 
 typedef struct ui_twitter_t 
 {
-  cx_font *font;
   ui_custom_t *view;
   ui_custom_t *toggle;
   cx_texture *birdicon;
@@ -100,6 +118,14 @@ typedef struct ui_twitter_t
   
 } ui_twitter_t;
 
+typedef struct
+{
+  char url [TWITTER_TWEET_VIS_LINK_URL_BUF_SIZE];
+  float x, w;
+} tweet_visible_link_t;
+
+static tweet_visible_link_t s_visLinks [TWITTER_TWEET_VIS_LINK_MAX_COUNT];
+static unsigned int s_visLinkCount = 0;
 static ui_twitter_t s_uitwitter;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +134,6 @@ static ui_twitter_t s_uitwitter;
 
 typedef struct ui_music_t
 {
-  cx_font *font;
   ui_custom_t *view;
   ui_custom_t *toggle;
   ui_custom_t *queue;
@@ -139,6 +164,7 @@ static ui_music_t s_uimusic;
 typedef struct ui_settings_t
 {
   ui_custom_t *button;
+  cx_texture *icon;
 } ui_settings_t;
 
 static ui_settings_t s_uisettings;
@@ -154,7 +180,7 @@ static void ui_ctrlr_screen_resize_widgets (void);
 static void ui_ctrlr_news_create (void);
 static void ui_ctrlr_news_destroy (void);
 static void ui_ctrlr_news_position_setup (void);
-static void ui_ctrlr_news_button_pressed (ui_custom_t *custom);
+static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_news_button_render (ui_custom_t *custom);
 static void ui_ctrlr_news_populate (feed_news_t *feed);
 
@@ -163,8 +189,8 @@ static void ui_ctrlr_twitter_destroy (void);
 static void ui_ctrlr_twitter_position_setup (void);
 static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom);
 static void ui_ctrlr_twitter_button_render (ui_custom_t *custom);
-static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom);
-static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom);
+static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 *point);
+static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_twitter_populate (feed_twitter_t *feed);
 static void ui_ctrlr_twitter_ticker_fade_begin (int type, float duration);
 static void ui_ctrlr_twitter_ticker_fade_end (void);
@@ -174,27 +200,27 @@ static void ui_ctrlr_music_create (void);
 static void ui_ctrlr_music_destroy (void);
 static void ui_ctrlr_music_position_setup (void);
 static void ui_ctrlr_music_view_render (ui_custom_t *custom);
-static void ui_ctrlr_music_view_pressed (ui_custom_t *custom);
+static void ui_ctrlr_music_view_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_music_toggle_render (ui_custom_t *custom);
-static void ui_ctrlr_music_toggle_pressed (ui_custom_t *custom);
+static void ui_ctrlr_music_toggle_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_music_play_render (ui_custom_t *custom);
-static void ui_ctrlr_music_play_pressed (ui_custom_t *custom);
+static void ui_ctrlr_music_play_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_music_queue_render (ui_custom_t *custom);
-static void ui_ctrlr_music_queue_pressed (ui_custom_t *custom);
+static void ui_ctrlr_music_queue_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_music_prev_render (ui_custom_t *custom);
-static void ui_ctrlr_music_prev_pressed (ui_custom_t *custom);
+static void ui_ctrlr_music_prev_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_music_next_render (ui_custom_t *custom);
-static void ui_ctrlr_music_next_pressed (ui_custom_t *custom);
+static void ui_ctrlr_music_next_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_music_bar_fade_begin (int type, float duration);
 static void ui_ctrlr_music_bar_fade_end (void);
 static void ui_ctrlr_music_bar_anim_update (void);
 static void ui_ctrlr_music_picked_callback (void);
-static void ui_ctrlr_music_notification_callback (audio_music_notification n);
+static void ui_ctrlr_music_notification_callback (audio_music_notification_t n);
 
 static void ui_ctrlr_settings_create (void);
 static void ui_ctrlr_settings_destroy (void);
 static void ui_ctrlr_settings_position_setup (void);
-static void ui_ctrlr_settings_button_pressed (ui_custom_t *custom);
+static void ui_ctrlr_settings_button_pressed (ui_custom_t *custom, const cx_vec2 *point);
 static void ui_ctrlr_settings_button_render (ui_custom_t *custom);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -278,16 +304,6 @@ void ui_ctrlr_set_news_feed (feed_news_t *feed)
 void ui_ctrlr_set_news_feed_opacity (float opacity)
 {
   s_uinews.opacity = opacity;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool ui_ctrlr_music_get_active (void)
-{
-  return audio_music_picker_active ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -430,7 +446,6 @@ static void ui_ctrlr_news_create (void)
   memset (&s_uinews, 0, sizeof (s_uinews));
   
   s_uinews.opacity = 1.0f;
-  s_uinews.font = cx_font_create ("data/fonts/tahoma.ttf", 14);
   
   ui_custom_callbacks_t newsCallbacks;
   memset (&newsCallbacks, 0, sizeof (ui_custom_callbacks_t));
@@ -494,43 +509,154 @@ static void ui_ctrlr_news_position_setup (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 1
+static int cmp_feed_news_item (feed_news_item_t *item0, feed_news_item_t *item1)
+{
+  CX_ASSERT (item0);
+  CX_ASSERT (item1);
+  
+  //  1: 0 > 1
+  //  0: 0 = 1
+  // -1: 0 < 1
+  
+  if (item0->pubDateInfo.mon == item1->pubDateInfo.mon)
+  {
+    if (item0->pubDateInfo.mday == item1->pubDateInfo.mday)
+    {
+      if (item0->pubDateInfo.secs == item1->pubDateInfo.secs)
+      {
+        return 0;
+      }
+      else 
+      {
+        return (item0->pubDateInfo.secs > item1->pubDateInfo.secs) ? 1 : -1;
+      }
+    }
+    else
+    {
+      return (item0->pubDateInfo.mday > item1->pubDateInfo.mday) ? 1 : -1;
+    }
+  }
+  else
+  {
+    return (item0->pubDateInfo.mon > item1->pubDateInfo.mon) ? 1 : -1;
+  }
+}
+
 static void ui_ctrlr_news_populate (feed_news_t *feed)
 {
   CX_ASSERT (feed);
+  CX_ASSERT (feed->reqStatus != FEED_REQ_STATUS_IN_PROGRESS);
+    
+  feed_news_item_t *entry = feed->items;
   
-  if (feed->dataReady)
+  // to array
+  feed_news_item_t *entryArray [32] = {0};
+  
+  int entryCount = 0;
+  
+  while (entry && (entryCount < 32)) 
   {
-    int count = NEWS_MAX_ENTRIES - 1;
+    entryArray [entryCount++] = entry;
     
-    ui_custom_t **buttons = s_uinews.buttons;
+    entry = entry->next;
+  }
+  
+  // (selection) sort array according to entry pubDate
+  
+  for (int si = 0; si < (entryCount - 1); ++si)
+  {
+    int maxIdx = si;
     
-    feed_news_item_t *entry = feed->items;
+    feed_news_item_t *maxEntry = entryArray [maxIdx];
     
-    cx_font *font = s_uinews.font;
-    
-    float fh = 18.0f; //cx_font_get_height (font);
-    
-    int i = 0;
-    
-    while (entry && count--)
+    for (int sj = si + 1; sj < entryCount; ++sj)
     {
-      float fw = cx_font_get_text_width (font, entry->title);
+      feed_news_item_t *sjEntry = entryArray [sj];
       
-      ui_custom_t *custom = buttons [i++];
-      
-      custom->userdata = entry;
-      ui_widget_set_dimension (custom, fw, fh);
-      
-      entry = entry->next;
+      if (cmp_feed_news_item (sjEntry, maxEntry) == 1)
+      {
+        maxIdx = sj;
+        maxEntry = sjEntry;
+      }
     }
     
-    const char *morenews = "More news...";
+    feed_news_item_t *tmpEntry = entryArray [maxIdx];
+    entryArray [maxIdx] = entryArray [si];
+    entryArray [si] = tmpEntry;
+  }
+  
+  
+  const cx_font *font = util_get_font (FONT_SIZE_18);
+  
+  float fh = 24.0f; //cx_font_get_height (font);
+  
+  int displayCount = NEWS_MAX_ENTRIES - 1;
+  
+  ui_custom_t **buttons = s_uinews.buttons;
+  
+  CX_ASSERT (displayCount < entryCount);
+  
+  int i = 0, c = displayCount;
+  
+  for (i = 0; i < c; ++i)
+  {
+    feed_news_item_t *e = entryArray [i];
+    
+    float fw = cx_font_get_text_width (font, e->title);
+    
     ui_custom_t *custom = buttons [i];
     
-    custom->userdata = feed->link;    
-    ui_widget_set_dimension (custom, cx_font_get_text_width (font, morenews), fh);
+    custom->userdata = e;
+    
+    ui_widget_set_dimension (custom, fw, fh);
   }
+  
+  const char *morenews = "More news...";
+  ui_custom_t *custom = buttons [c];
+  
+  custom->userdata = feed->link;
+  
+  ui_widget_set_dimension (custom, cx_font_get_text_width (font, morenews), fh);
 }
+
+#else
+static void ui_ctrlr_news_populate (feed_news_t *feed)
+{
+  CX_ASSERT (feed);
+  CX_ASSERT (feed->reqStatus != FEED_REQ_STATUS_IN_PROGRESS);
+
+  int count = NEWS_MAX_ENTRIES - 1;
+  
+  ui_custom_t **buttons = s_uinews.buttons;
+  
+  feed_news_item_t *entry = feed->items;
+  
+  const cx_font *font = util_get_font (FONT_SIZE_18);
+  
+  float fh = 24.0f; //cx_font_get_height (font);
+  
+  int i = 0;
+  
+  while (entry && count--)
+  {
+    float fw = cx_font_get_text_width (font, entry->title);
+    
+    ui_custom_t *custom = buttons [i++];
+    
+    custom->userdata = entry;
+    ui_widget_set_dimension (custom, fw, fh);
+    
+    entry = entry->next;
+  }
+  
+  const char *morenews = "More news...";
+  ui_custom_t *custom = buttons [i];
+  
+  custom->userdata = feed->link;    
+  ui_widget_set_dimension (custom, cx_font_get_text_width (font, morenews), fh);
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,7 +679,7 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
     title = entry ? entry->title : NULL;
   }
 
-  cx_font *font = s_uinews.font;
+  const cx_font *font = util_get_font (FONT_SIZE_18);
   CX_ASSERT (font);
   
   float opacity = s_uinews.opacity;
@@ -589,8 +715,14 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   
   if (title)
   {
-    char titleText [256];
-    cx_str_html_unescape (titleText, 256, title);
+    char titleText [512] = {0};
+    
+#if CX_DEBUG
+    unsigned int titleLen = strlen (title);
+    CX_ASSERT (titleLen < 512);
+#endif
+    
+    cx_str_html_unescape (titleText, 512, title);
     cx_font_render (font, titleText, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &colour);
   }
 }
@@ -599,7 +731,7 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_news_button_pressed (ui_custom_t *custom)
+static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   CX_ASSERT (custom);
   
@@ -626,6 +758,8 @@ static void ui_ctrlr_news_button_pressed (ui_custom_t *custom)
     bool open = browser_open (link, title);
     CX_REFERENCE_UNUSED_VARIABLE (open);
   }
+  
+  audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -646,7 +780,6 @@ static void ui_ctrlr_twitter_create (void)
 {  
   memset (&s_uitwitter, 0, sizeof (s_uitwitter));
   
-  s_uitwitter.font = cx_font_create ("data/fonts/tahoma.ttf", 14);
   s_uitwitter.birdicon = cx_texture_create_from_file ("data/icons/twbird-16z.png");
   
   ui_custom_callbacks_t twViewCallbacks, twToggleCallbacks;
@@ -688,6 +821,7 @@ static void ui_ctrlr_twitter_create (void)
 
 static void ui_ctrlr_twitter_destroy (void)
 {
+  cx_texture_destroy (s_uitwitter.birdicon);
   ui_custom_destroy (s_uicontext, s_uitwitter.view);
   ui_custom_destroy (s_uicontext, s_uitwitter.toggle);
 }
@@ -717,68 +851,146 @@ static void ui_ctrlr_twitter_position_setup (void)
 static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
 {
   CX_ASSERT (feed);
+  CX_ASSERT (feed->reqStatus != FEED_REQ_STATUS_IN_PROGRESS);
   
   ui_custom_t *custom = s_uitwitter.view;
-  
   CX_ASSERT (custom);
   
-  if (!feed)
+  ticker_t *ticker = &s_uitwitter.ticker;
+  memset (ticker, 0, sizeof (ticker_t));
+  
+  feed_twitter_tweet_t *tweet = feed->items;
+  
+  float pixelwidthAvgChar = 6.0f;
+  float pixelwidthTotal = 0.0f;
+  
+  const cx_font *font = util_get_font (FONT_SIZE_16);
+  
+  while (tweet && (ticker->itemCount < TWITTER_TICKER_MAX_ITEM_COUNT))
   {
-    ui_widget_set_visible (s_uitwitter.view, false);
-    ui_widget_set_visible (s_uitwitter.toggle, false);
+    float pixelwidth = 0.0f;
+    
+    pixelwidth += cx_font_get_text_width (font, tweet->userhandle);
+    pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar); // space + @
+    
+    pixelwidth += cx_font_get_text_width (font, tweet->text);
+    pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar); // padding
+    
+    ticker->items [ticker->itemCount].data = tweet;
+    ticker->items [ticker->itemCount].width = pixelwidth;
+    ticker->items [ticker->itemCount++].posx = custom->intr.position.x + pixelwidthTotal;
+    
+    pixelwidthTotal += pixelwidth;
+    
+    tweet = tweet->next;
   }
   
-  if (feed->dataReady)
+  ticker->width = pixelwidthTotal;
+  
+  
+  for (int i = 0; i < ticker->itemCount; ++i)
   {
-    if (custom->userdata != feed)
+    ticker->items [i].posx += custom->intr.dimension.x;
+  }
+  
+  ui_widget_set_visible (s_uitwitter.view, false );
+  ui_widget_set_visible (s_uitwitter.toggle, true);
+  
+  if (!s_uitwitter.toggle->userdata)
+  {
+    ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_IN, 0.3f);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char *tweet)
+{
+  CX_ASSERT (tweet);
+  
+  cx_strcpy (dest->buffer, TWITTER_MAX_TWEET_LEN, tweet);
+  
+  const char *start = dest->buffer;
+  const char *curr = dest->buffer;
+  
+
+  cxu32 i = 0;
+  cxu32 currLoc = 0;
+  
+  dest->elems [i].loc = currLoc;
+  dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_TEXT;
+  
+  const char *http = strstr (curr, "http://");
+  
+  while (http)
+  {
+    cxu32 p0 = http - start;
+    
+    CX_ASSERT (i > 0);
+    
+    if (p0 == dest->elems [i-1].loc)
     {
-      custom->userdata = feed;
-      
-      ticker_t *ticker = &s_uitwitter.ticker;
-      
-      memset (ticker, 0, sizeof (ticker_t));
-      
-      feed_twitter_tweet_t *tweet = feed->items;
-      
-      float pixelwidthAvgChar = 6.0f;
-      float pixelwidthTotal = 0.0f;
-      
-      while (tweet && (ticker->itemCount < TICKER_MAX_ENTRIES))
+      i = i -1;
+    }
+
+    dest->elems [i].loc = p0;
+    dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_LINK;
+    
+    char c = 0;
+    char *t = (char *) http;
+    
+    while ((c = *t++))
+    {
+      if ((c == ' ') || (c == '#') || (c == '@') || (c > 127))
       {
-        float pixelwidth = 0.0f;
+        cxu32 p = t - start;
         
-        pixelwidth += cx_font_get_text_width (s_uitwitter.font, tweet->userhandle);
-        pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar); // space + @
+        dest->elems [i].loc = p;
+        dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_TEXT;
         
-        pixelwidth += cx_font_get_text_width (s_uitwitter.font, tweet->text);
-        pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar); // padding
+        currLoc = p;
         
-        ticker->items [ticker->itemCount].data = tweet;
-        ticker->items [ticker->itemCount].width = pixelwidth;
-        ticker->items [ticker->itemCount++].posx = custom->intr.position.x + pixelwidthTotal;
+        if (c != ' ')
+        {
+          --t;
+        }
         
-        pixelwidthTotal += pixelwidth;
-        
-        tweet = tweet->next;
-      }
-      
-      ticker->width = pixelwidthTotal;
-      
-      
-      for (int i = 0; i < ticker->itemCount; ++i)
-      {
-        ticker->items [i].posx += custom->intr.dimension.x;
-      }
-      
-      ui_widget_set_visible (s_uitwitter.view, true);
-      ui_widget_set_visible (s_uitwitter.toggle, true);
-      
-      if (!s_uitwitter.toggle->userdata)
-      {
-        ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_IN, 0.3f);
+        break;
       }
     }
+    
+    curr = t;
+    
+    http = strstr (curr, "http://");
   }
+  
+  dest->elemCount = i;
+
+  for (cxu32 j = 0; j < dest->elemCount; ++j)
+  {
+    cxu32 loc = dest->elems [j].loc;
+    
+    if (loc > 0)
+    {
+      dest->buffer [loc - 1] = 0;
+    }
+  }
+  
+#if 0
+  for (cxu32 j = 0; j < dest->elemCount; ++j)
+  {
+    cxu32 loc = dest->elems [j].loc;
+    
+    const char *str = &dest->buffer [loc];
+    
+    CX_DEBUGLOG_CONSOLE (1, "%s", str);
+    
+    CX_DEBUG_BREAKABLE_EXPR;
+  }
+#endif
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -788,6 +1000,9 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
 static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
 {
   CX_ASSERT (custom);
+
+  memset (s_visLinks, 0, sizeof (s_visLinks));
+  s_visLinkCount = 0;  
   
   ticker_t *ticker = &s_uitwitter.ticker;
   
@@ -802,10 +1017,12 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     cx_colour colbg = *colour;
     cx_colour colname = *cx_colour_green ();
     cx_colour coltweet = *cx_colour_white ();
+    cx_colour collink = *cx_colour_yellow ();
     
     colbg.a *= opacity;
     colname.a *= opacity;
     coltweet.a *= opacity;
+    collink.a *= opacity;
     
     float x1 = pos->x;
     float y1 = pos->y;
@@ -814,11 +1031,14 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     
     cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colbg, NULL);
     
-    cx_font *font = s_uitwitter.font;
+    const cx_font *font = util_get_font (FONT_SIZE_16);
     float scrollx = 60.0f * (float) cx_system_time_get_delta_time ();
+    char tt [512] = {0};
     
     for (int i = 0, c = ticker->itemCount; i < c; ++i)
     {
+      CX_ASSERT (i < TWITTER_TICKER_MAX_ITEM_COUNT);
+      
       float x = x1 + ticker->items [i].posx;
       float y = pos->y;
       
@@ -826,6 +1046,63 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
       
       CX_ASSERT (tweet);
       
+#if 1
+      if (tweet->userhandle && tweet->text)
+      {
+        ticker_tweet_t tickerTweet;
+        memset (&tickerTweet, 0, sizeof (ticker_tweet_t));
+        
+        cx_str_html_unescape (tt, 512, tweet->text);
+        ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, tt);
+        
+        if (i > TWITTER_TICKER_MAX_ITEM_COUNT)
+        {
+          CX_DEBUG_BREAKABLE_EXPR;
+        }
+        
+        char namehandle [256];
+        cx_sprintf (namehandle, 256, "@%s: ", tweet->userhandle);
+        cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
+        
+        float x2 = x + cx_font_get_text_width (font, namehandle);
+        
+        char dstr [256];
+        
+        for (cxu32 j = 0; j < tickerTweet.elemCount; ++j)
+        {
+          cxu32 loc = tickerTweet.elems [j].loc;
+          
+          const char *s = &tickerTweet.buffer [loc];
+          
+          cx_sprintf (dstr, 256, "%s ", s);
+          
+          bool isLink = (tickerTweet.elems [j].type == TWITTER_TICKER_TWEET_ELEM_TYPE_LINK);
+      
+          const cx_colour *col = isLink ? &collink : &coltweet;
+          
+          cx_font_render (font, dstr, x2, y, 0.0f, 0, col);
+          
+          if (isLink)
+          {
+            // collect visible elems for ui input check
+            if ((s_visLinkCount < TWITTER_TWEET_VIS_LINK_MAX_COUNT) && 
+                (x2 >= 0.0f) && (x2 <= s_uicontext->canvasWidth))
+            {
+              unsigned int idx = s_visLinkCount++;
+              CX_ASSERT (idx < TWITTER_TWEET_VIS_LINK_MAX_COUNT);
+              
+              s_visLinks [idx].x = x2;
+              s_visLinks [idx].w = cx_font_get_text_width (font, s);
+              cx_strcpy (s_visLinks [idx].url, TWITTER_TWEET_VIS_LINK_URL_BUF_SIZE, s);
+            }
+          }
+          
+          x2 = x2 + cx_font_get_text_width (font, dstr);
+        }
+        
+      }
+      
+#else
       if (tweet->userhandle && tweet->text)
       {
         char namehandle [256];
@@ -839,7 +1116,11 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
         cx_font_render (font, tweetText, x2, y, 0.0f, 0, &coltweet);
       }
 
-      if ((wstate != UI_WIDGET_STATE_HOVER) && !browser_is_open ())
+#endif
+      
+      bool activeSystemUI = browser_is_open () || audio_music_picker_active () || settings_ui_active ();
+      
+      if ((wstate != UI_WIDGET_STATE_HOVER) && !activeSystemUI)
       {
         if ((x + ticker->items [i].width) < 0.0f)
         {
@@ -858,8 +1139,31 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom)
+static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
+  // get x,y press position
+  // get positions of all currently visible ticker_tweets
+  // find visible link element
+  // go to browser
+  
+  CX_ASSERT (point);
+  
+  float touchX = point->x;
+  
+  for (unsigned int i = 0; i < s_visLinkCount; ++i) 
+  {
+    float x1 = s_visLinks [i].x;
+    float x2 = s_visLinks [i].w + x1;
+    
+    if ((touchX > x1) && (touchX < x2))
+    {
+      const char *url = s_visLinks [i].url;
+      browser_open (url, NULL);
+      
+      audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+    }
+  }
+  
   ui_clear_focus (s_uicontext);
 }
 
@@ -880,7 +1184,7 @@ static void ui_ctrlr_twitter_button_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom)
+static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   CX_ASSERT (custom);
   
@@ -901,6 +1205,8 @@ static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom)
   }
   
   ui_clear_focus (s_uicontext);
+  
+  audio_soundfx_play (AUDIO_SOUNDFX_CLICK2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -965,9 +1271,7 @@ static void ui_ctrlr_twitter_ticker_anim_update (void)
 static void ui_ctrlr_music_create (void)
 {
   memset (&s_uimusic, 0, sizeof (s_uimusic));
-  
-  s_uimusic.font = cx_font_create ("data/fonts/tahoma.ttf", 14);
-  
+    
   s_uimusic.iconNote = cx_texture_create_from_file ("data/icons/mnote-16z.png");
   s_uimusic.iconPlay = cx_texture_create_from_file ("data/icons/play-12z.png");
   s_uimusic.iconPause = cx_texture_create_from_file ("data/icons/pause-12z.png");
@@ -1086,7 +1390,7 @@ static void ui_ctrlr_music_destroy (void)
 static void ui_ctrlr_music_position_setup (void)
 {
   float posY = 36.0f - 24.0f; // 12.0f;
-  posY += 8.0f;
+  posY += 10.0f;
   
   ui_widget_set_position (s_uimusic.toggle, 0.0f, posY);
   ui_widget_set_dimension (s_uimusic.toggle, 36.0f, 24.0f);
@@ -1124,11 +1428,13 @@ static void ui_ctrlr_music_toggle_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_toggle_pressed (ui_custom_t *custom)
+static void ui_ctrlr_music_toggle_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   if (!audio_music_queued ())
   {
     audio_music_pick (ui_ctrlr_music_picked_callback);
+    custom->userdata = NULL;
+    audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
   }
   else
   {
@@ -1147,6 +1453,8 @@ static void ui_ctrlr_music_toggle_pressed (ui_custom_t *custom)
         ui_ctrlr_music_bar_fade_begin (ANIM_FADE_OUT, 0.3f);
       }
     }
+    
+    audio_soundfx_play (AUDIO_SOUNDFX_CLICK2);
   }
   
   ui_clear_focus (s_uicontext);
@@ -1164,6 +1472,10 @@ static void ui_ctrlr_music_picked_callback (void)
   {
     s_uimusic.toggle->userdata = NULL;
     ui_ctrlr_music_bar_fade_begin (ANIM_FADE_IN, 0.3f);
+  }
+  else
+  {
+    s_uimusic.toggle->userdata = (void *) 0xffff;
   }
 }
 
@@ -1184,7 +1496,7 @@ static void ui_ctrlr_music_play_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_play_pressed (ui_custom_t *custom)
+static void ui_ctrlr_music_play_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   if (audio_music_playing ())
   {
@@ -1196,6 +1508,8 @@ static void ui_ctrlr_music_play_pressed (ui_custom_t *custom)
   }
   
   ui_clear_focus (s_uicontext);
+  
+  audio_soundfx_play (AUDIO_SOUNDFX_CLICK2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1215,11 +1529,13 @@ static void ui_ctrlr_music_queue_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_queue_pressed (ui_custom_t *custom)
+static void ui_ctrlr_music_queue_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   audio_music_pick (NULL);
   
   ui_clear_focus (s_uicontext);
+  
+  audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1258,13 +1574,17 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
   if (trackIdLen > 0)
   {
     float xoffset = 12.0f;
+    float yoffset = 1.0f;
+    
     float tx = x1 + xoffset;
-    float ty = y1;
+    float ty = y1 + yoffset;
     
     col = *cx_colour_white ();
     col.a *= opacity;
     
-    cx_font_render (s_uimusic.font, trackId, tx, ty, 0.0f, 0, &col);
+    const cx_font *font = util_get_font (FONT_SIZE_14);
+    
+    cx_font_render (font, trackId, tx, ty, 0.0f, 0, &col);
   }
 }
 
@@ -1272,10 +1592,8 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_view_pressed (ui_custom_t *custom)
+static void ui_ctrlr_music_view_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
-  // get music info
-  
   ui_clear_focus (s_uicontext);
 }
 
@@ -1296,11 +1614,13 @@ static void ui_ctrlr_music_prev_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_prev_pressed (ui_custom_t *custom)
+static void ui_ctrlr_music_prev_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   audio_music_prev ();
   
   ui_clear_focus (s_uicontext);
+  
+  audio_soundfx_play (AUDIO_SOUNDFX_CLICK2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1320,11 +1640,13 @@ static void ui_ctrlr_music_next_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_next_pressed (ui_custom_t *custom)
+static void ui_ctrlr_music_next_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   audio_music_next ();
   
   ui_clear_focus (s_uicontext);
+  
+  audio_soundfx_play (AUDIO_SOUNDFX_CLICK2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1408,7 +1730,7 @@ static void ui_ctrlr_music_bar_anim_update (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_music_notification_callback (audio_music_notification n)
+static void ui_ctrlr_music_notification_callback (audio_music_notification_t n)
 {
   if ((n == AUDIO_MUSIC_NOTIFICATION_INTERRUPTED) ||
       (n == AUDIO_MUSIC_NOTIFICATION_STOPPED))
@@ -1445,6 +1767,7 @@ static void ui_ctrlr_settings_create (void)
   
   s_uisettings.button = custom;
   s_uisettings.button->userdata = (void *) 0xffff;
+  s_uisettings.icon = cx_texture_create_from_file ("data/icons/gears-18.png");
   
   ui_ctrlr_settings_position_setup ();
 }
@@ -1456,6 +1779,8 @@ static void ui_ctrlr_settings_create (void)
 static void ui_ctrlr_settings_destroy (void)
 {
   ui_custom_destroy (s_uicontext, s_uisettings.button);
+  
+  cx_texture_destroy (s_uisettings.icon);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1476,10 +1801,12 @@ static void ui_ctrlr_settings_position_setup (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void ui_ctrlr_settings_button_pressed (ui_custom_t *custom)
+static void ui_ctrlr_settings_button_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
   ui_ctrlr_settings_set_active (true);
  
+  audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+  
   ui_clear_focus (s_uicontext);
 }
 
@@ -1491,7 +1818,7 @@ static void ui_ctrlr_settings_button_render (ui_custom_t *custom)
 {
   cx_colour col1 = *cx_colour_white ();
   cx_colour col2 = *cx_colour_grey ();
-  cx_texture *image = s_uitwitter.birdicon;
+  cx_texture *image = s_uisettings.icon;
   
   ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, true);
 }
@@ -1499,3 +1826,4 @@ static void ui_ctrlr_settings_button_render (ui_custom_t *custom)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+

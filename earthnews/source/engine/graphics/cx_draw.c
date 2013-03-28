@@ -67,10 +67,10 @@ void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colou
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colour, const cx_texture *texture)
+void cx_draw_points (cxi32 numPoints, const cx_vec4 *points, const cx_colour *colour, const cx_texture *texture)
 {
   CX_ASSERT (numPoints > 0);
-  CX_ASSERT (pos);
+  CX_ASSERT (points);
   CX_ASSERT (colour);
   
   cx_shader_built_in shaderType = texture ? CX_SHADER_BUILT_IN_DRAW_POINTS_TEX : CX_SHADER_BUILT_IN_DRAW_POINTS;
@@ -98,7 +98,7 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colou
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_gdi_assert_no_errors ();
   
-  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, pos);
+  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, points);
   cx_gdi_assert_no_errors ();
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);

@@ -102,7 +102,7 @@ void *_cx_malloc (size_t size)
   void *block = malloc (allocsize);
   
 #if (CX_DEBUG || 1)
-  cx_malloc_memset(block, 0xDEADBEEF, allocsize);
+  cx_malloc_memset (block, 0xDEADBEEF, allocsize);
 #endif
   
   CX_FATAL_ASSERT (block);

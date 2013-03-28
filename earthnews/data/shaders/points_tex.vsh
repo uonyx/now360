@@ -17,6 +17,7 @@ const float screenWidth = 768.0;
 void main (void)
 {
   v_colour = a_colour;
+  v_colour.a = a_position.w;
   
   vec4 eyePos = u_viewmatrix * vec4 (a_position.xyz, 1.0);
   vec4 projCorner = u_projmatrix * vec4 (spriteWidth * 0.5, spriteWidth * 0.5, eyePos.z, eyePos.w);

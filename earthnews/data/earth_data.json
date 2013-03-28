@@ -2,7 +2,7 @@
   {
   "display": false,
   "name": "Abidjan",
-  "news": "ivory coast",
+  "news": "Ivory Coast",
   "weather": "1339615",
   "location": {
   "latitude": 5.3363889,
@@ -12,7 +12,7 @@
   {
   "display": false,
   "name": "Accra",
-  "news": "ghana",
+  "news": "Ghana",
   "weather": "1326075",
   "location": {
   "latitude": 5.555717,
@@ -22,7 +22,7 @@
   {
   "display": false,
   "name": "Algiers",
-  "news": "algeria",
+  "news": "Algeria",
   "weather": "1253079",
   "location": {
   "latitude": 36.752887,
@@ -32,7 +32,7 @@
   {
   "display": false,
   "name": "Amsterdam",
-  "news": "netherlands",
+  "news": "Netherlands",
   "weather": "727232",
   "location": {
   "latitude": 52.3738007,
@@ -42,7 +42,7 @@
   {
   "display": false,
   "name": "Athens",
-  "news": "greece",
+  "news": "Greece",
   "weather": "946738",
   "location": {
   "latitude": 37.97918,
@@ -52,7 +52,7 @@
   {
   "display": false,
   "name": "Bangkok",
-  "news": "thailand",
+  "news": "Thailand",
   "weather": "1225448",
   "location": {
   "latitude": 13.7505633,
@@ -62,7 +62,7 @@
   {
   "display": true,
   "name": "Beijing",
-  "news": "beijing",
+  "news": "Beijing",
   "weather": "2151330",
   "location": {
   "latitude": 39.904667,
@@ -72,7 +72,7 @@
   {
   "display": false,
   "name": "Belgrade",
-  "news": "serbia",
+  "news": "Serbia",
   "weather": "532697",
   "location": {
   "latitude": 44.802416,
@@ -82,7 +82,7 @@
   {
   "display": false,
   "name": "Berlin",
-  "news": "germany",
+  "news": "Germany",
   "weather": "638242",
   "location": {
   "latitude": 52.5234051,
@@ -92,7 +92,7 @@
   {
   "display": false,
   "name": "Bucharest",
-  "news": "romania",
+  "news": "Romania",
   "weather": "868274",
   "location": {
   "latitude": 44.430481,
@@ -102,7 +102,7 @@
   {
   "display": false,
   "name": "Budapest",
-  "news": "hungary",
+  "news": "Hungary",
   "weather": "804365",
   "location": {
   "latitude": 47.4984056,
@@ -112,7 +112,7 @@
   {
   "display": true,
   "name": "Buenos Aires",
-  "news": "argentina",
+  "news": "Argentina",
   "weather": "468739",
   "location": {
   "latitude": -34.6084175,
@@ -122,7 +122,7 @@
   {
   "display": true,
   "name": "Cairo",
-  "news": "egypt",
+  "news": "Egypt",
   "weather": "1521894",
   "location": {
   "latitude": 30.064742,
@@ -132,7 +132,7 @@
   {
   "display": false,
   "name": "Chicago",
-  "news": "chicago",
+  "news": "Chicago",
   "weather": "2379574",
   "location": {
   "latitude": 41.859218,
@@ -142,7 +142,7 @@
   {
   "display": false,
   "name": "Copenhagen",
-  "news": "denmark",
+  "news": "Denmark",
   "weather": "554890",
   "location": {
   "latitude": 55.6762944,
@@ -152,7 +152,7 @@
   {
   "display": false,
   "name": "Dakar",
-  "news": "senegal",
+  "news": "Senegal",
   "weather": "1411986",
   "location": {
   "latitude": 14.75,
@@ -162,7 +162,7 @@
   {
   "display": true,
   "name": "Delhi",
-  "news": "india",
+  "news": "India",
   "weather": "2295019",
   "location": {
   "latitude": 28.636217,
@@ -172,7 +172,7 @@
   {
   "display": true,
   "name": "Dhaka",
-  "news": "bangladesh",
+  "news": "Bangladesh",
   "weather": "1915035",
   "location": {
   "latitude": 23.709921,
@@ -182,7 +182,7 @@
   {
   "display": false,
   "name": "Dubai",
-  "news": "united arab emirates",
+  "news": "United Arab Emirates",
   "weather": "1940345",
   "location": {
   "latitude": 25.2722929,
@@ -192,7 +192,7 @@
   {
   "display": false,
   "name": "Dublin",
-  "news": "ireland",
+  "news": "Ireland",
   "weather": "560743",
   "location": {
   "latitude": 53.344104,
@@ -202,7 +202,7 @@
   {
   "display": false,
   "name": "Helsinki",
-  "news": "finland",
+  "news": "Finland",
   "weather": "565346",
   "location": {
   "latitude": 60.1690059,
@@ -212,7 +212,7 @@
   {
   "display": false,
   "name": "Houston",
-  "news": "houston",
+  "news": "Houston",
   "weather": "2424766",
   "location": {
   "latitude": 29.762307,
@@ -222,7 +222,7 @@
   {
   "display": true,
   "name": "Istanbul",
-  "news": "turkey",
+  "news": "Turkey",
   "weather": "2344116",
   "location": {
   "latitude": 41.012379,
@@ -232,7 +232,7 @@
   {
   "display": true,
   "name": "Jakarta",
-  "news": "indonesia",
+  "news": "Indonesia",
   "weather": "1047378",
   "location": {
   "latitude": -6.211544,
@@ -242,7 +242,7 @@
   {
   "display": true,
   "name": "Johannesburg",
-  "news": "south africa",
+  "news": "South Africa",
   "weather": "1582504",
   "location": {
   "latitude": -26.201452,
@@ -252,7 +252,7 @@
   {
   "display": true,
   "name": "Karachi",
-  "news": "pakistan",
+  "news": "Pakistan",
   "weather": "2211096",
   "location": {
   "latitude": 24.893379,
@@ -262,7 +262,7 @@
   {
   "display": false,
   "name": "Kinshasa",
-  "news": "dr congo",
+  "news": "DR Congo",
   "weather": "1290062",
   "location": {
   "latitude": -4.320836,
@@ -272,7 +272,7 @@
   {
   "display": false,
   "name": "Kuala Lumpur",
-  "news": "malaysia",
+  "news": "Malaysia",
   "weather": "1154781",
   "location": {
   "latitude": 3.1268661,
@@ -282,7 +282,7 @@
   {
   "display": true,
   "name": "Lagos",
-  "news": "nigeria",
+  "news": "Nigeria",
   "weather": "1398823",
   "location": {
   "latitude": 6.441158,
@@ -292,7 +292,7 @@
   {
   "display": false,
   "name": "Lima",
-  "news": "peru",
+  "news": "Peru",
   "weather": "418440",
   "location": {
   "latitude": -12.093084,
@@ -302,7 +302,7 @@
   {
   "display": true,
   "name": "London",
-  "news": "london",
+  "news": "London",
   "weather": "44418",
   "location": {
   "latitude": 51.5001524,
@@ -312,7 +312,7 @@
   {
   "display": true,
   "name": "Los Angeles",
-  "news": "los angeles",
+  "news": "Los angeles",
   "weather": "2442047",
   "location": {
   "latitude": 34.0522342,
@@ -322,7 +322,7 @@
   {
   "display": false,
   "name": "Madrid",
-  "news": "spain",
+  "news": "Spain",
   "weather": "766273",
   "location": {
   "latitude": 40.4166909,
@@ -332,7 +332,7 @@
   {
   "display": true,
   "name": "Manila",
-  "news": "philippines",
+  "news": "Philippines",
   "weather": "1199477",
   "location": {
   "latitude": 14.6010326,
@@ -342,7 +342,7 @@
   {
   "display": true,
   "name": "Mexico City",
-  "news": "mexico",
+  "news": "Mexico",
   "weather": "116545",
   "location": {
   "latitude": 19.4270499,
@@ -352,7 +352,7 @@
   {
   "display": false,
   "name": "Montreal",
-  "news": "montreal",
+  "news": "Montreal",
   "weather": "3534",
   "location": {
   "latitude": 45.545447,
@@ -362,7 +362,7 @@
   {
   "display": true,
   "name": "Moscow",
-  "news": "moscow",
+  "news": "Moscow",
   "weather": "2122265",
   "location": {
   "latitude": 55.755786,
@@ -372,7 +372,7 @@
   {
   "display": true,
   "name": "Mumbai",
-  "news": "mumbai",
+  "news": "Mumbai",
   "weather": "2295411",
   "location": {
   "latitude": 19.0177319,
@@ -382,7 +382,7 @@
   {
   "display": false,
   "name": "Nairobi",
-  "news": "kenya",
+  "news": "Kenya",
   "weather": "1528488",
   "location": {
   "latitude": -1.274359,
@@ -392,7 +392,7 @@
   {
   "display": true,
   "name": "New York",
-  "news": "new york",
+  "news": "New york",
   "weather": "2459115",
   "location": {
   "latitude": 40.7142691,
@@ -402,7 +402,7 @@
   {
   "display": true,
   "name": "Paris",
-  "news": "france",
+  "news": "France",
   "weather": "615702",
   "location": {
   "latitude": 48.8566667,
@@ -412,7 +412,7 @@
   {
   "display": false,
   "name": "Rio de Janeiro",
-  "news": "brazil",
+  "news": "Brazil",
   "weather": "455825",
   "location": {
   "latitude": -22.9035393,
@@ -422,7 +422,7 @@
   {
   "display": false,
   "name": "Rome",
-  "news": "italy",
+  "news": "Italy",
   "weather": "721943",
   "location": {
   "latitude": 41.8954656,
@@ -432,7 +432,7 @@
   {
   "display": false,
   "name": "San Francisco",
-  "news": "san francisco",
+  "news": "San francisco",
   "weather": "2487956",
   "location": {
   "latitude": 37.7749295,
@@ -442,7 +442,7 @@
   {
   "display": true,
   "name": "Seoul",
-  "news": "south korea",
+  "news": "South korea",
   "weather": "1132599",
   "location": {
   "latitude": 37.566535,
@@ -452,7 +452,7 @@
   {
   "display": true,
   "name": "Sao Paulo",
-  "news": "sao paulo",
+  "news": "Sao paulo",
   "weather": "455827",
   "location": {
   "latitude": -23.5436876,
@@ -462,7 +462,7 @@
   {
   "display": true,
   "name": "Shanghai",
-  "news": "shanghai",
+  "news": "Shanghai",
   "weather": "2151849",
   "location": {
   "latitude": 31.231717,
@@ -472,7 +472,7 @@
   {
   "display": true,
   "name": "Singapore",
-  "news": "singapore",
+  "news": "Singapore",
   "weather": "1062617",
   "location": {
   "latitude": 1.355274,
@@ -482,7 +482,7 @@
   {
   "display": true,
   "name": "Stockholm",
-  "news": "stockholm sweden",
+  "news": "Sweden",
   "weather": "906057",
   "location": {
   "latitude": 59.3329676,
@@ -492,7 +492,7 @@
   {
   "display": false,
   "name": "Suva",
-  "news": "fiji",
+  "news": "Fiji",
   "weather": "1064103",
   "location": {
   "latitude": -18.141674,
@@ -502,7 +502,7 @@
   {
   "display": true,
   "name": "Sydney",
-  "news": "australia",
+  "news": "Australia",
   "weather": "1105779",
   "location": {
   "latitude": -33.8775536,
@@ -512,7 +512,7 @@
   {
   "display": false,
   "name": "Tehran",
-  "news": "iran",
+  "news": "Iran",
   "weather": "2251945",
   "location": {
   "latitude": 35.696216,
@@ -522,7 +522,7 @@
   {
   "display": true,
   "name": "Tokyo",
-  "news": "japan",
+  "news": "Japan",
   "weather": "1118370",
   "location": {
   "latitude": 35.6894875,
@@ -532,7 +532,7 @@
   {
   "display": false,
   "name": "Wellington",
-  "news": "new zealand",
+  "news": "New Zealand",
   "weather": "2351310",
   "location": {
   "latitude": -41.2609884,

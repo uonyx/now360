@@ -93,7 +93,6 @@
 #endif
   
   app_init (self, self.context, (int) view.bounds.size.width, (int) view.bounds.size.height);
-  //app_update ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,6 +124,12 @@
 {
   [super didReceiveMemoryWarning];
   // release any cached data, images, etc that aren't in use
+  
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,8 +169,6 @@
 
 - (void) update
 {
-  //CX_DEBUGLOG_CONSOLE (1, "framesPerSecond: %d", self.framesPerSecond);
-  
   app_update ();
 }
 
@@ -182,11 +185,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int touchCount = 0;
-
 - (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "===========================[%d]=", touchCount);
   CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesBegan [%d]", [[event allTouches] count]);
   
   if ([[event allTouches] count] > 1)
@@ -208,11 +208,7 @@ int touchCount = 0;
   float normalised_prev_x = prevTouchPoint.x / screen_width;
   float normalised_prev_y = prevTouchPoint.y / screen_height;
   
-  //app_input_touch_began (normalised_x, normalised_y);
-  
   _input_cache_touch_event (INPUT_TOUCH_TYPE_BEGIN, normalised_x, normalised_y, normalised_prev_x, normalised_prev_y);
-  
-  touchCount++;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -309,7 +305,7 @@ int touchCount = 0;
 {
   CGFloat factor = [(UIPinchGestureRecognizer *)sender scale];
   
-  CX_DEBUGLOG_CONSOLE (1, "Pinch Gesture: factor [%.2f]", factor);
+  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 0, "Pinch Gesture: factor [%.2f]", factor);
   //self.view.transform = CGAffineTransformMakeScale (factor, factor);
   
   _input_cache_gesture_event (INPUT_GESTURE_TYPE_PINCH, (void *) &factor);

@@ -210,11 +210,15 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
     case CX_TIME_ZONE_UTC:
     {
       time_t rawTime = time (NULL);
+#if 0
       struct tm utcTm = *gmtime (&rawTime);
       time_t utcTime = mktime (&utcTm);
       
       date->calendar = utcTm;
       date->unixTimestamp = (cxi32) utcTime;
+#endif 
+      date->calendar = *gmtime (&rawTime);
+      date->unixTimestamp = mktime (&date->calendar);
       
       break;
     }
@@ -233,7 +237,6 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 void cx_time_start_timer (cx_timer *timer)
 {

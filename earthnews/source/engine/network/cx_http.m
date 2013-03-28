@@ -325,6 +325,34 @@ void cx_http_cancel (cx_http_request_id requestId)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
+{
+  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didFailWithError: Connection error: Internet offline maybe");
+  
+  self->resp.error = CX_HTTP_CONNECTION_ERROR;
+  self->resp.statusCode = -1;
+  self->resp.data = NULL;
+  self->resp.dataSize = 0;
+  
+  cx_http_response_callback responseCallback = self->callback;
+  
+  if (responseCallback)
+  {
+    responseCallback (self->rId, &self->resp, self->callbackUserdata);
+  }
+  
+  [self setRId:CX_HTTP_REQUEST_ID_INVALID];
+  [self setCallback:NULL];
+  [self setCallbackUserdata:NULL];
+  
+  [s_nsconnBusyList removeObject:self];
+  [s_nsconnFreeList addObject:self];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 - (void)connectionDidFinishLoading:(NSURLConnection *) connection
 {
   NSMutableData *data = self->respdata;
@@ -373,34 +401,6 @@ void cx_http_cancel (cx_http_request_id requestId)
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
   [self->respdata appendData:data];
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
-{
-  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didFailWithError: Connection error: Internet offline maybe");
-  
-  self->resp.error = CX_HTTP_CONNECTION_ERROR;
-  self->resp.statusCode = -1;
-  self->resp.data = NULL;
-  self->resp.dataSize = 0;
-  
-  cx_http_response_callback responseCallback = self->callback;
-  
-  if (responseCallback)
-  {
-    responseCallback (self->rId, &self->resp, self->callbackUserdata);
-  }
-  
-  [self setRId:CX_HTTP_REQUEST_ID_INVALID];
-  [self setCallback:NULL];
-  [self setCallbackUserdata:NULL];
-  
-  [s_nsconnBusyList removeObject:self];
-  [s_nsconnFreeList addObject:self];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

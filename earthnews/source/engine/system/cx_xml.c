@@ -166,13 +166,13 @@ const char *cx_xml_node_name (cx_xml_node node)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *cx_xml_node_content (cx_xml_node node)
+char *cx_xml_node_content (cx_xml_node node)
 {
   CX_ASSERT (node);
   
   xmlNodePtr xmlnode = (xmlNodePtr) node;
   
-  const char *content = (const char *) xmlNodeGetContent (xmlnode);
+  char *content = (char *) xmlNodeGetContent (xmlnode);
   
   // free
   
@@ -183,7 +183,7 @@ const char *cx_xml_node_content (cx_xml_node node)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *cx_xml_node_attr (cx_xml_node node, const char *name)
+char *cx_xml_node_attr (cx_xml_node node, const char *name)
 {
   CX_ASSERT (node);
   CX_ASSERT (name);
@@ -192,7 +192,7 @@ const char *cx_xml_node_attr (cx_xml_node node, const char *name)
   
   const xmlChar *xmlname = (const xmlChar *) name;
   
-  const char *content = (const char *) xmlGetProp (xmlnode, xmlname);
+  char *content = (char *) xmlGetProp (xmlnode, xmlname);
   
   // free
   

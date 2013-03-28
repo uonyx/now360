@@ -32,7 +32,7 @@ typedef struct cx_line cx_line;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_points (cxi32 numPoints, const cx_vec4 *pos, const cx_colour *colour, const cx_texture *texture);
+void cx_draw_points (cxi32 numPoints, const cx_vec4 *points, const cx_colour *colour, const cx_texture *texture);
 
 void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colour, cxf32 lineWidth);
 

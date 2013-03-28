@@ -7,7 +7,7 @@
 //
 
 #include "app.h"
-#include "globals.h"
+#include "util.h"
 #include "camera.h"
 #include "feeds.h"
 #include "earth.h"
@@ -26,8 +26,11 @@
 #define CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR  (-1.0f)
 #define CAMERA_PROJECTION_ORTHOGRAPHIC_FAR   (1.0f)
 
-#define CAMERA_MIN_FOV (50.0f)
-#define CAMERA_MAX_FOV (90.0f)
+#define CAMERA_MIN_FOV (40.0f)
+#define CAMERA_MAX_FOV (75.0f)
+#define CAMERA_START_FOV (50.0f)
+
+#define CITY_INDEX_INVALID (-1)
 
 #define NUM_LOADING_STAGES 3
 
@@ -52,15 +55,22 @@ typedef enum
 
 typedef enum
 {
-  FADE_SCREEN_IN,
-  FADE_SCREEN_OUT,
-} fade_screen_type_t;
+  APP_LOAD_STAGE_INVALID,
+  APP_LOAD_STAGE_1_BEGIN,
+  APP_LOAD_STAGE_1,
+  APP_LOAD_STAGE_1_END,
+  APP_LOAD_STAGE_2_BEGIN,
+  APP_LOAD_STAGE_2,
+  APP_LOAD_STAGE_2_END,
+  APP_LOAD_STAGE_3_BEGIN,
+  APP_LOAD_STAGE_3,
+  APP_LOAD_STAGE_3_END,
+} app_load_stage_t;
 
 typedef struct
 {
-  cx_font *font;
   cx_vec4 *renderPos;
-  float *opacity;
+  cx_vec2 *opacity; // x - point, y - text
 } render2d_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,31 +82,41 @@ static camera_t *s_camera = NULL;
 static browser_rect_t s_browserRect;
 static render2d_t s_render2dInfo;
 
+#define NEW_ROTATION 1
+
+#if NEW_ROTATION
+
+#define CAMERA_ROTATION_SPEED_EXPONENT_SWIPE (1.0f)
+#define CAMERA_ROTATION_SPEED_EXPONENT_CITY_SELECT (4.0f)
+
+static cx_vec2 s_rotAngle;
+static cx_vec2 s_rotTarget;
+static cxf32 s_rotSpeedExp = 1.0f;
+
+#else
 static cx_vec2 s_rotTouchBegin;
 static cx_vec2 s_rotTouchEnd;
 static cx_vec2 s_rotationSpeed;
 static cx_vec2 s_rotationAngle;
+#endif
 
 static feed_twitter_t *s_twitterFeeds = NULL;
 static feed_news_t *s_newsFeeds = NULL;
 static feed_weather_t *s_weatherFeeds = NULL;
 
-static int s_selectedCity = -1;
-static int s_currentWeatherCity = -1;
+static int s_selectedCity = CITY_INDEX_INVALID;
+static int s_currentWeatherCity = CITY_INDEX_INVALID;
 static bool s_refreshWeather = false;
 
 static cx_thread *s_ldThread = NULL;
 static cx_thread_monitor s_ldThreadMonitor;
 static app_state_t s_state = APP_STATE_INVALID;
 
-static fade_screen_type_t s_fadeType;
-static anim_t s_screenFade;
-static anim_t s_logoFade;
-
+app_load_stage_t s_loadStage = APP_LOAD_STAGE_1_BEGIN;
 static cx_texture *s_ldImages [NUM_LOADING_STAGES];
 static cx_texture *s_logoTex = NULL;
-static int s_ldStage = 0;
 static bool s_renderLogo = false;
+static anim_t s_logoFade;
 
 static cx_texture *glowtex = NULL;
 
@@ -105,6 +125,7 @@ static cx_texture *glowtex = NULL;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static float app_get_zoom_opacity (void);
+static bool app_get_city_index_valid (int index);
 //static int  app_get_selected_city (void);
 //static void app_set_selected_city (int index);
 
@@ -118,7 +139,15 @@ static void app_input_touch_began (float x, float y);
 static void app_input_touch_moved (float x, float y, float px, float py);
 static void app_input_touch_ended (float x, float y);
 static void app_input_zoom (float factor);
-static bool app_input_touch_earth (float screenX, float screenY, float screenWidth, float screenHeight);
+static int  app_input_touch_earth (float screenX, float screenY, float screenWidth, float screenHeight);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_load_stage_transition (void *userdata);
+static void app_load_stage_update (void);
+static void app_load_stage_render (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,23 +156,21 @@ static bool app_input_touch_earth (float screenX, float screenY, float screenWid
 static void app_update_camera (float deltaTime);
 static void app_update_earth (void);
 static void app_update_feeds (void);
+static void app_update_feeds_news (void);
+static void app_update_feeds_twitter (void);
 static void app_update_feeds_weather (void);
 static void app_update_feeds_weather_refresh (void);
-
-static void app_render_load (void);
-static void app_render_load_stage (void);
-static void app_render_load_stage_transition (void *userdata);
 
 static void app_render_3d (void);
 static void app_render_3d_earth (void);
 static void app_render_2d (void);
 static void app_render_2d_earth (void);
 static void app_render_2d_feeds (void);
-
+static void app_render_2d_local_clock (void);
 static void app_render_2d_screen_fade (void);
-static bool app_render_2d_screen_fade_trigger (fade_screen_type_t type, float secs, anim_finished_callback fn, void *fndata);
 static void app_render_2d_logo (void);
 static void app_render_2d_logo_fade_out (void *data);
+static void app_render_load (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,20 +218,23 @@ static cx_thread_exit_status app_init_load (void *userdata)
   //
   
   s_render2dInfo.renderPos = cx_malloc (sizeof (cx_vec4) * cityCount);
-  s_render2dInfo.opacity = cx_malloc (sizeof (float) * cityCount);
-  s_render2dInfo.font = cx_font_create ("data/fonts/verdana.ttf", 14);
-  
   memset (s_render2dInfo.renderPos, 0, (sizeof (cx_vec4) * cityCount));
-  memset (s_render2dInfo.opacity, 0, (sizeof (float) * cityCount));
+  
+  s_render2dInfo.opacity = cx_malloc (sizeof (cx_vec2) * cityCount);
+  memset (s_render2dInfo.opacity, 0, (sizeof (cx_vec2) * cityCount));
   
   //
   // other
   //
-  
+#if NEW_ROTATION
+  memset (&s_rotAngle, 0, sizeof (s_rotAngle));
+  memset (&s_rotTarget, 0, sizeof (s_rotTarget));
+#else
   memset (&s_rotTouchBegin, 0, sizeof (s_rotTouchBegin));
   memset (&s_rotTouchEnd, 0, sizeof (s_rotTouchEnd));
   memset (&s_rotationSpeed, 0, sizeof (s_rotationSpeed));
   memset (&s_rotationAngle, 0, sizeof (s_rotationAngle));
+#endif
   
   app_update_feeds_weather_refresh ();
   
@@ -245,7 +275,7 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   // globals
   //
   
-  globals_init ();
+  util_init (rootvc);
   
   //
   // audio
@@ -278,7 +308,7 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   // camera
   //
   
-  s_camera = camera_create (width / height, 70.0f);
+  s_camera = camera_create (width / height, CAMERA_START_FOV);
   
   //
   // loading screen
@@ -288,8 +318,6 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   s_ldImages [0] = cx_texture_create_from_file ("data/loading/uonyechi.com.png");
   s_ldImages [1] = cx_texture_create_from_file ("data/loading/nasacredit.png");
   s_ldImages [2] = cx_texture_create_from_file ("data/loading/gear.png");
-  
-  memset (&s_screenFade, 0, sizeof (s_screenFade));
   
   //
   // loading thread
@@ -360,7 +388,7 @@ void app_deinit (void)
   
   input_deinit ();
   
-  globals_deinit ();
+  util_deinit ();
   
   cx_engine_deinit ();
 }
@@ -398,7 +426,7 @@ void app_update (void)
       if (cx_thread_monitor_wait_timed (&s_ldThreadMonitor, 0))
       {
         // fade screen in
-        app_render_2d_screen_fade_trigger (FADE_SCREEN_IN, 3.0f, app_render_2d_logo_fade_out, NULL);
+        util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 3.0f, app_render_2d_logo_fade_out, NULL);
         
         //
         // input
@@ -480,9 +508,201 @@ void app_render (void)
 static float app_get_zoom_opacity (void)
 {
   float fov = s_camera->fov;
-  float opacity = 1.0f - cx_smoothstep (55.0f, 56.0f, fov);
+  
+  //float opacity = 1.0f - cx_smoothstep (CAMERA_MIN_FOV, 56.0f, fov);
+  float opacity = 1.0f - cx_smoothstep (CAMERA_START_FOV, CAMERA_START_FOV + 10.0f, fov);
   
   return opacity;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool app_get_city_index_valid (int index)
+{
+  CX_ASSERT (s_earth);
+  CX_ASSERT (s_earth->data);
+  
+  return (index > CITY_INDEX_INVALID) && (index < s_earth->data->count);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_load_stage_transition (void *userdata)
+{
+  CX_ASSERT (userdata);
+  
+  app_load_stage_t nextStage = (int) userdata;
+  
+  s_loadStage = nextStage;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_load_stage_update (void)
+{
+  const float deltaTime = (float) cx_system_time_get_delta_time ();
+  
+  switch (s_loadStage) 
+  {
+    case APP_LOAD_STAGE_1_BEGIN:
+    {
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_1);
+      break;
+    }
+      
+    case APP_LOAD_STAGE_1:
+    {
+      static float timer = 3.0f;
+      timer -= deltaTime;
+      
+      if (timer <= 0.0f)
+      {
+        s_loadStage = APP_LOAD_STAGE_1_END;
+      }
+      
+      break;
+    }
+      
+    case APP_LOAD_STAGE_1_END:
+    {
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_2_BEGIN);
+      break;
+    }
+      
+    case APP_LOAD_STAGE_2_BEGIN:
+    {
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_2);
+      break;
+    }
+      
+    case APP_LOAD_STAGE_2:
+    {
+      static float timer = 3.0f;
+      timer -= deltaTime;
+      
+      if (timer <= 0.0f)
+      {
+        s_loadStage = APP_LOAD_STAGE_2_END;
+      }
+      
+      break;
+    }
+      
+    case APP_LOAD_STAGE_2_END:
+    {
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_3_BEGIN);
+      break;
+    }
+      
+    case APP_LOAD_STAGE_3_BEGIN:
+    {
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_3);
+      s_renderLogo = true;
+      break;
+    }
+      
+    case APP_LOAD_STAGE_3:
+    {
+      break;
+    }
+      
+    default:
+    {
+      break;
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_load_stage_render (void)
+{
+  const float deltaTime = (float) cx_system_time_get_delta_time ();
+  const float screenWidth = cx_gdi_get_screen_width ();
+  const float screenHeight = cx_gdi_get_screen_height ();
+  
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
+  cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_enable_z_write (false);
+  
+  switch (s_loadStage) 
+  {
+    case APP_LOAD_STAGE_1_BEGIN:
+    case APP_LOAD_STAGE_1:
+    case APP_LOAD_STAGE_1_END:
+    {
+      cx_texture *tex = s_ldImages [0];
+      CX_ASSERT (tex);
+      
+      float tw = (float) tex->width;
+      float th = (float) tex->height;
+      float tx = 0.0f + (screenWidth - tw) * 0.5f;
+      float ty = 0.0f + (screenHeight - th) * 0.5f;
+      
+      cx_colour col = *cx_colour_white ();
+      cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, 0.0f, &col, tex);
+      
+      break;
+    }
+      
+    case APP_LOAD_STAGE_2_BEGIN:
+    case APP_LOAD_STAGE_2:
+    case APP_LOAD_STAGE_2_END:
+    {
+      cx_texture *tex = s_ldImages [1];
+      CX_ASSERT (tex);
+      
+      float tw = (float) tex->width;
+      float th = (float) tex->height;
+      float tx = 0.0f + (screenWidth - tw) * 0.5f;
+      float ty = 0.0f + (screenHeight - th) * 0.5f;
+      
+      cx_colour col = *cx_colour_white ();
+      cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, 0.0f, &col, tex);
+      
+      break;
+    }
+      
+    case APP_LOAD_STAGE_3_BEGIN:
+    case APP_LOAD_STAGE_3:
+    case APP_LOAD_STAGE_3_END:
+    {
+      static float rot = 0.0f;
+      const float mx = 24.0f;
+      const float my = 24.0f;
+      
+      cx_texture *tex = s_ldImages [2];
+      CX_ASSERT (tex);
+      
+      float tw = (float) tex->width;
+      float th = (float) tex->height;
+      float tx = (screenWidth - tw - mx);
+      float ty = (screenHeight - th - my);
+      
+      cx_colour col = *cx_colour_white ();
+      cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, rot, &col, tex);
+      
+      rot += deltaTime * 6.0f;
+      rot = fmodf (rot, 360.0f);
+      
+      break;
+    }
+      
+    default:
+    {
+      break;
+    }
+  }
+  
+  cx_gdi_enable_z_write (true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -503,48 +723,113 @@ static void app_update_camera (float deltaTime)
   CX_REFERENCE_UNUSED_VARIABLE (sw);
   CX_REFERENCE_UNUSED_VARIABLE (sh);
   
+#if NEW_ROTATION
+  
+#if 0
+  cx_vec2 desiredVel;
+  
+  float maxspeed = 1.0;
+  
+  desiredVel.x = (s_touchTargetPos.x - s_touchPos.x) * maxspeed * 0.25f;
+  desiredVel.y = (s_touchTargetPos.y - s_touchPos.y) * maxspeed * 0.25f;
+  
+  s_touchVel.x = desiredVel.x - s_touchVel.x;
+  s_touchVel.y = desiredVel.y - s_touchVel.y;
+  
+  s_touchPos.x = s_touchPos.x + (s_touchVel.x * deltaTime);
+  s_touchPos.y = s_touchPos.y + (s_touchVel.y * deltaTime);
+  
+  s_rotAngle.x += (s_touchVel.x * deltaTime);
+  s_rotAngle.y += (s_touchVel.y * deltaTime);
+  
+  s_rotAngle.x = fmodf (s_rotAngle.x, 360.0f);
+  s_rotAngle.y = cx_clamp (s_rotAngle.y, -89.9f, 89.9f);
+#endif
+  
+#if 1
+  float rotAddx = s_rotTarget.x - s_rotAngle.x;
+  float rotAddy = s_rotTarget.y - s_rotAngle.y;
+
+  //float alpha = cx_smoothstep (0.98f, 1.0f, dotp);
+  float zoomFactor = 1.0f - cx_linearstep (CAMERA_MIN_FOV, CAMERA_MAX_FOV, s_camera->fov);
+  
+#if 0
+  zoomFactor += 1.0f; // range (1.0, 2.0)
+#endif
+  
+#if 0
+  zoomFactor = cx_sin ((CX_PI * zoomFactor) + CX_HALF_PI); // sine interpolation // range (-1.0, 1.0)
+  zoomFactor = (zoomFactor + 1.0f) * 0.5f; // range (0.0, 1.0)
+  zoomFactor += 1.0f; // range (1.0, 2.0)
+#endif
+  
+#if 1
+  //zoomFactor *= 2.0f;
+  zoomFactor += 1.0f;
+  zoomFactor = cx_pow (zoomFactor, 3.0f);
+  //zoomFactor += 1.0f;
+#endif
+
+  
+  float rotDecel = 1.0f * zoomFactor * s_rotSpeedExp;
+  float rotSpeed = 10.0f;
+  
+  float rotSpeedx = (fabsf (rotAddx) / rotDecel);
+  float rotSpeedy = (fabsf (rotAddy) / rotDecel);
+  
+  //x ^ 5
+  (void) s_rotSpeedExp;
+  
+#if 0
+  float exponent = 1.0f;
+  rotSpeedx = cx_pow (rotSpeedx, exponent);
+  rotSpeedy = cx_pow (rotSpeedy, exponent);
+#endif
+  
+#if 0
+  rotSpeedx = cx_sin ((CX_PI * rotSpeedx) + CX_HALF_PI);
+  rotSpeedy = cx_sin ((CX_PI * rotSpeedy) + CX_HALF_PI);
+#endif
+  
+  if (rotSpeedx >= rotSpeed)
+  {
+    CX_DEBUGLOG_CONSOLE(1, "ORIA! X");
+  }
+  
+  if (rotSpeedy >= rotSpeed)
+  {
+    CX_DEBUGLOG_CONSOLE(1, "ORIA! Y");
+  }
+
+  rotSpeedx = cx_min (rotSpeedx, rotSpeed);
+  rotSpeedy = cx_min (rotSpeedy, rotSpeed);
+  
+  if (rotSpeedx < 0.1f)
+  {
+    rotSpeedx = 0.0f;
+  }
+
+  if (rotSpeedy < 0.1f)
+  {
+    rotSpeedy = 0.0f;
+  }
+  
+  s_rotAngle.x += (rotAddx * deltaTime * rotSpeedx);
+  s_rotAngle.y += (rotAddy * deltaTime * rotSpeedy);
+  
+  s_rotAngle.x = fmodf (s_rotAngle.x, 360.0f);
+  s_rotAngle.y = cx_clamp (s_rotAngle.y, -89.9f, 89.9f);
+#endif
+  
+  float rotx = s_rotAngle.x;
+  float roty = s_rotAngle.y;
+  
+#else // OLD_ROTATION
+  
   cx_vec2 tdist;
   
   tdist.x = s_rotTouchEnd.x - s_rotTouchBegin.x;
   tdist.y = s_rotTouchEnd.y - s_rotTouchBegin.y;
-  
-#if 0
-  cx_vec2 accel;
-  
-  accel.x = tdist.x - s_rotationSpeed.x;
-  accel.y = tdist.y - s_rotationSpeed.x;
-  
-  s_rotationSpeed.x += (accel.x * deltaTime);
-  s_rotationSpeed.y += (accel.y * deltaTime);
-  
-  s_rotationSpeed.x = cx_clamp (s_rotationSpeed.x, -MaxSpeed, MaxSpeed);
-  s_rotationSpeed.y = cx_clamp (s_rotationSpeed.y, -MaxSpeed, MaxSpeed);
-  
-  s_rotTouchBegin.x += (s_rotationSpeed.x * deltaTime);
-  s_rotTouchBegin.y += (s_rotationSpeed.y * deltaTime);
-  
-  s_rotationAngle.x += (s_rotationSpeed.x * deltaTime);
-  s_rotationAngle.y += (s_rotationSpeed.y * deltaTime);
-#elif 0
-  //tdist.x *= (sw / MaxSpeed);
-  //tdist.y *= (sh / MaxSpeed);
-  
-  tdist.x *= (MaxSpeed / sw);
-  tdist.y *= (MaxSpeed / sh);
-  
-  s_rotationSpeed.x += (tdist.x * deltaTime);
-  s_rotationSpeed.y += (tdist.y * deltaTime);
-  
-  s_rotationSpeed.x = cx_clamp (s_rotationSpeed.x, -MaxSpeed, MaxSpeed);
-  s_rotationSpeed.y = cx_clamp (s_rotationSpeed.y, -MaxSpeed, MaxSpeed);
-  
-  s_rotTouchBegin.x += (s_rotationSpeed.x * deltaTime);
-  s_rotTouchBegin.y += (s_rotationSpeed.y * deltaTime);
-  
-  s_rotationAngle.x += (s_rotationSpeed.x * deltaTime);
-  s_rotationAngle.y += (s_rotationSpeed.y * deltaTime);
-#else
-  CX_DEBUGLOG_CONSOLE (0, "tdist.x: %.3f, tdist.y: %.3f", tdist.x, tdist.y);
 
 #if 1
   float rx = tdist.x * deltaTime;
@@ -564,11 +849,13 @@ static void app_update_camera (float deltaTime)
   s_rotationAngle.y += (tdist.y * deltaTime);
 #endif
   
-  
-#endif
-  
   s_rotationAngle.x = fmodf (s_rotationAngle.x, 360.0f);
   s_rotationAngle.y = cx_clamp (s_rotationAngle.y, -89.9f, 89.9f);
+  
+  float rotx = s_rotationAngle.x;
+  float roty = s_rotationAngle.y;
+  
+#endif // END_ROTATION
   
 #if 1
   cx_vec4_set (&s_camera->position, 0.0f, 0.0f, -2.0f, 1.0f);
@@ -581,8 +868,8 @@ static void app_update_camera (float deltaTime)
   cx_vec4 axis_x = {{1.0f, 0.0f, 0.0f, 0.0f}};
   cx_vec4 axis_y = {{0.0f, -1.0f, 0.0f, 0.0f}};
   
-  camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngle.y), &axis_x);
-  camera_rotate_around_point (s_camera, &center, cx_rad (s_rotationAngle.x), &axis_y);
+  camera_rotate_around_point (s_camera, &center, cx_rad (roty), &axis_x);
+  camera_rotate_around_point (s_camera, &center, cx_rad (rotx), &axis_y);
   
   // get projection matrix
   cx_mat4x4 projmatrix;
@@ -626,6 +913,7 @@ static void app_update_camera (float deltaTime)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
   
 #endif
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -675,9 +963,11 @@ static void app_update_earth (void)
     s_render2dInfo.renderPos [i].w = scale * 0.7f;
     
     float dotp = cx_max (0.0f, cx_vec4_dot (nor, &look));
-    float alpha = cx_smoothstep (0.98f, 1.0f, dotp);
+    float alphaText = cx_smoothstep (0.95f, 1.0f, dotp);
+    float alphaPoint = cx_smoothstep (0.80f, 1.0f, dotp);
     
-    s_render2dInfo.opacity [i] = opacity * alpha;
+    s_render2dInfo.opacity [i].x = opacity * alphaText;
+    s_render2dInfo.opacity [i].y = opacity * alphaPoint;
   }
 }
 
@@ -687,7 +977,112 @@ static void app_update_earth (void)
 
 static void app_update_feeds (void)
 {
+  app_update_feeds_news ();
+  app_update_feeds_twitter ();
   app_update_feeds_weather ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_update_feeds_news (void)
+{
+  if (app_get_city_index_valid (s_selectedCity))
+  {
+    feed_news_t *feed = &s_newsFeeds [s_selectedCity];
+    CX_ASSERT (feed);
+    
+    switch (feed->reqStatus) 
+    {
+      case FEED_REQ_STATUS_SUCCESS:
+      {
+        ui_ctrlr_set_news_feed (feed);
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
+        util_activity_indicator_set_active (false);
+        break;
+      }
+        
+      case FEED_REQ_STATUS_FAILURE:
+      {
+        util_status_bar_set_msg (STATUS_BAR_MSG_SERVER_ERROR);
+        util_activity_indicator_set_active (false);
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
+
+        break;
+      }
+        
+      case FEED_REQ_STATUS_ERROR:
+      {
+        util_status_bar_set_msg (STATUS_BAR_MSG_CONNECTION_ERROR);
+        util_activity_indicator_set_active (false);
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
+        break;
+      }
+        
+      case FEED_REQ_STATUS_IN_PROGRESS:
+      {
+        break;
+      }
+        
+      default:
+      {
+        //CX_FATAL_ERROR ("FEED_REQ_STATUS_INVALID");
+        break;
+      }
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_update_feeds_twitter (void)
+{
+  if (app_get_city_index_valid (s_selectedCity))
+  {
+    feed_twitter_t *feed = &s_twitterFeeds [s_selectedCity];
+    CX_ASSERT (feed);
+    
+    switch (feed->reqStatus) 
+    {
+      case FEED_REQ_STATUS_SUCCESS:
+      {
+        ui_ctrlr_set_twitter_feed (feed);
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
+        util_activity_indicator_set_active (false);
+        break;
+      }
+        
+      case FEED_REQ_STATUS_FAILURE:
+      {
+        util_status_bar_set_msg (STATUS_BAR_MSG_SERVER_ERROR);
+        util_activity_indicator_set_active (false);
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
+        break;
+      }
+        
+      case FEED_REQ_STATUS_ERROR:
+      {
+        util_status_bar_set_msg (STATUS_BAR_MSG_CONNECTION_ERROR);
+        util_activity_indicator_set_active (false);
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
+        break;
+      }
+        
+      case FEED_REQ_STATUS_IN_PROGRESS:
+      {
+        break;
+      }
+        
+      default:
+      {
+        //CX_FATAL_ERROR ("FEED_REQ_STATUS_INVALID");
+        break;
+      }
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -703,14 +1098,19 @@ static void app_update_feeds_weather (void)
     s_refreshWeather = false;
     
     // if not already updating
-    if ((s_currentWeatherCity < 0) ||
-        (s_currentWeatherCity >= s_earth->data->count)) 
+    
+    if (!app_get_city_index_valid (s_currentWeatherCity))
     {
       s_currentWeatherCity = 0;
+      util_activity_indicator_set_active (true);
     }
   }
   
-  if (s_currentWeatherCity < s_earth->data->count)
+#if 0
+  static int success = 0;
+#endif
+  
+  if (app_get_city_index_valid (s_currentWeatherCity)) // is updating
   {
     feed_weather_t *feed = &s_weatherFeeds [s_currentWeatherCity];
     
@@ -727,6 +1127,9 @@ static void app_update_feeds_weather (void)
       {
         feed->reqStatus = FEED_REQ_STATUS_INVALID;
         s_currentWeatherCity++;
+#if 0
+        success++;
+#endif
         break;
       }
         
@@ -737,13 +1140,45 @@ static void app_update_feeds_weather (void)
         break;
       }
         
+      case FEED_REQ_STATUS_ERROR:
+      {
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
+        s_currentWeatherCity++;
+        util_status_bar_set_msg (STATUS_BAR_MSG_CONNECTION_ERROR);
+        break;
+      }
+        
       case FEED_REQ_STATUS_IN_PROGRESS:
       default:
       {
         break;
       }
     }
+    
+    if (s_currentWeatherCity >= s_earth->data->count)
+    {
+      util_activity_indicator_set_active (false);
+#if 0
+      if (!success)
+      {
+        util_status_bar_set_msg (STATUS_BAR_MSG_CONNECTION_ERROR);
+      }
+      
+      success = 0;
+#endif
+    }
   }
+#if 0
+  else // is not updating
+  {
+    if (s_refreshWeather)
+    {
+      s_currentWeatherCity = 0;
+      s_refreshWeather = false;
+      util_activity_indicator_set_active (true);
+    }
+  }
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -775,112 +1210,11 @@ static void app_render_load (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &view);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
-  app_render_load_stage ();
+  app_load_stage_update ();
+  app_load_stage_render ();
+
   app_render_2d_screen_fade ();
   app_render_2d_logo ();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void app_render_load_stage (void)
-{
-  const float deltaTime = (float) cx_system_time_get_delta_time ();
-  const float screenWidth = cx_gdi_get_screen_width ();
-  const float screenHeight = cx_gdi_get_screen_height ();
-  
-  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
-  cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
-  cx_gdi_enable_z_write (false);
-  
-  switch (s_ldStage) 
-  {
-    case 0:
-    case 1:
-    {
-      const float timerDuration = 3.0f;
-      static float timer = timerDuration; 
-      
-      if (timer <= 0.0f)
-      {
-        int nextStage = s_ldStage + 1;
-        app_render_2d_screen_fade_trigger (FADE_SCREEN_OUT, 1.0f, app_render_load_stage_transition, (void *) nextStage);
-        
-        timer = timerDuration + 1.0f;
-      }
-      else
-      {
-        timer -= deltaTime;
-      }
-      
-      CX_ASSERT (s_ldStage < NUM_LOADING_STAGES);
-      
-      cx_texture *tex = s_ldImages [s_ldStage];
-      CX_ASSERT (tex);
-      
-      float tw = (float) tex->width;
-      float th = (float) tex->height;
-      float tx = 0.0f + (screenWidth - tw) * 0.5f;
-      float ty = 0.0f + (screenHeight - th) * 0.5f;
-      
-      cx_colour col = *cx_colour_white ();
-      
-      cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, 0.0f, &col, tex);
-      
-      break;
-    }
-      
-    case 2:
-    {
-      static float rot = 0.0f;
-      
-      const float mx = 24.0f;
-      const float my = 24.0f;
-      
-      CX_ASSERT (s_ldStage < NUM_LOADING_STAGES);
-      
-      cx_texture *tex = s_ldImages [s_ldStage];
-      CX_ASSERT (tex);
-      
-      float tw = (float) tex->width;
-      float th = (float) tex->height;
-      float tx = (screenWidth - tw - mx);
-      float ty = (screenHeight - th - my);
-      
-      cx_colour col = *cx_colour_white ();
-      cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, rot, &col, tex);
-      
-      rot += deltaTime * 6.0f;
-      rot = fmodf (rot, 360.0f);
-      
-      break;
-    }
-      
-    default:
-    {
-      CX_FATAL_ERROR ("app_render_load_screen (): invalid stage");
-      break;
-    }
-  }
-  
-  cx_gdi_enable_z_write (true);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void app_render_load_stage_transition (void *userdata)
-{
-  int stage = (int) userdata;
-  
-  s_ldStage = stage;
-  
-  if (stage == 2)
-  {
-    s_renderLogo = true;
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -934,6 +1268,8 @@ static void app_render_3d_earth (void)
   int displayCount = 0;
   cx_vec4 loc [256];
   
+  CX_ASSERT (s_earth->data->count < 256);
+  
   memset (loc, 0, sizeof (loc));
   
   for (int i = 0, c = s_earth->data->count; i < c; ++i)
@@ -944,7 +1280,8 @@ static void app_render_3d_earth (void)
     {
       cx_vec4 *pos = &s_earth->data->location [i];
       
-      loc [displayCount++] = *pos;
+      loc [displayCount] = *pos;
+      loc [displayCount++].a = s_render2dInfo.opacity [i].y;
     }
   }
   
@@ -954,7 +1291,7 @@ static void app_render_3d_earth (void)
   cx_draw_points (s_earth->data->count, s_earth->data->location, &col, glowtex);
 #endif
   
-  if (s_selectedCity > -1)
+  if (app_get_city_index_valid (s_selectedCity))
   {
     cx_colour col = *cx_colour_yellow ();
     col.a = opacity;
@@ -965,7 +1302,10 @@ static void app_render_3d_earth (void)
     float t = (cx_sin (time) + 1.0f) * 0.5f;
     
     cx_vec4_mul (&col, t, &col);
-    cx_draw_points (1, &s_earth->data->location [s_selectedCity], &col, glowtex);
+    
+    cx_vec4 pos = s_earth->data->location [s_selectedCity];
+    pos.a = s_render2dInfo.opacity [s_selectedCity].y;
+    cx_draw_points (1, &pos, &col, glowtex);
   }
   
   cx_gdi_enable_z_write (true);
@@ -1082,20 +1422,24 @@ static void app_render_2d (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &view);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
-  globals_render_fps ();
+  util_render_fps ();
+  
+  util_status_bar_render ();
   
   //////////////
   // render
   //////////////
   
+  // render local clock 
+  app_render_2d_local_clock ();
+  
+  // render earth icons
   app_render_2d_earth ();
   
   // render feeds
-  
   app_render_2d_feeds ();
   
   // render browser
-  
   browser_render (&s_browserRect, 1.0f);
   
   // render fade
@@ -1115,21 +1459,88 @@ static void app_render_2d (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void app_render_2d_feeds (void)
-{  
-  if (s_selectedCity > -1)
+static void app_render_2d_local_clock (void)
+{
+  cx_date date;
+  cx_time_set_date (&date, CX_TIME_ZONE_LOCAL);
+
+  int wday = date.calendar.tm_wday;
+  int mday = date.calendar.tm_mday;
+  int mon  = date.calendar.tm_mon;
+  int hour = date.calendar.tm_hour;
+  int min  = date.calendar.tm_min;
+  
+  CX_ASSERT ((wday >= 0) && (wday < 7));
+  CX_ASSERT ((mon >= 0) && (mon < 12));
+  
+  static const char *wdayStr [7] = 
   {
-    CX_ASSERT (s_selectedCity < s_earth->data->count);
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  };
+  
+  static const char *monStr [12] =
+  {
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  };
+  
+  char timeStr [32], dateStr [32];
+  
+  int displayFmt = settings_get_clock_display_format ();
+  
+  if (displayFmt == SETTINGS_CLOCK_DISPLAY_FORMAT_24HR)
+  {
+    cx_sprintf (timeStr, 32, "%02d:%02d", hour, min);
+    cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
+  }
+  else 
+  {
+    const char *suffix = (hour > 11) ? "pm" : "am";
+    hour = ((hour == 0) || (hour == 12)) ? 12 : hour % 12;
     
-    feed_news_t *newsFeed = &s_newsFeeds [s_selectedCity];
-    
-    ui_ctrlr_set_news_feed (newsFeed);
-    
-    feed_twitter_t *twitterFeed = &s_twitterFeeds [s_selectedCity];
-    
-    ui_ctrlr_set_twitter_feed (twitterFeed);
+    cx_sprintf (timeStr, 32, "%d:%02d%s", hour, min, suffix);
+    cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
   }
   
+  const cx_font *font = util_get_font (FONT_SIZE_16);
+  CX_ASSERT (font);
+  
+  float sw = cx_gdi_get_screen_width ();
+  float tw = cx_font_get_text_width (font, timeStr);
+  float dw = cx_font_get_text_width (font, dateStr);
+
+  float tx = sw - tw - 12.0f;
+  float ty = 2.0f;
+  
+  float dx = tx - dw - 6.0f;
+  float dy = 2.0f;
+  
+  cx_font_render (font, dateStr, dx, dy, 0.0f, 0, cx_colour_grey ());
+  cx_font_render (font, timeStr, tx, ty, 0.0f, 0, cx_colour_white ());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_render_2d_feeds (void)
+{
   ui_ctrlr_render ();
 }
 
@@ -1141,40 +1552,13 @@ static void app_render_2d_screen_fade (void)
 {
   float deltaTime = (float) cx_system_time_get_delta_time ();
   
-  if (anim_update (&s_screenFade, deltaTime))
-  {  
-    float opacity = s_fadeType ? s_screenFade.t : (1.0f - s_screenFade.t);
+  cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
+  cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
+  cx_gdi_enable_z_write (false);
   
-    cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
-    cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
-    cx_gdi_enable_z_write (false);
-    
-    float screenWidth = cx_gdi_get_screen_width ();
-    float screenHeight = cx_gdi_get_screen_height ();
-    
-    cx_colour colour = *cx_colour_black ();
-    colour.a *= opacity;
-    
-    cx_draw_quad (0.0f, 0.0f, screenWidth, screenHeight, 0.0f, 0.0f, &colour, NULL);
-
-    cx_gdi_enable_z_write (true);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static bool app_render_2d_screen_fade_trigger (fade_screen_type_t type, float secs, anim_finished_callback fn, void *fndata)
-{
-  if (anim_begin (&s_screenFade, ANIM_LINEAR, secs, fn, fndata))
-  {
-    s_fadeType = type;
-    
-    return true;
-  }
+  util_screen_fade_render (deltaTime);
   
-  return false;
+  cx_gdi_enable_z_write (true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1189,7 +1573,7 @@ static void app_render_2d_logo (void)
     
     float opacity = 1.0f;
     
-    if (anim_update (&s_logoFade, deltaTime))
+    if (util_anim_update (&s_logoFade, deltaTime))
     {  
       opacity = 1.0f - s_logoFade.t;
     }
@@ -1222,7 +1606,7 @@ static void app_render_2d_logo (void)
 
 static void app_render_2d_logo_fade_out (void *data)
 {
-  anim_begin (&s_logoFade, ANIM_LINEAR, 1.0f, NULL, NULL);
+  util_anim_start (&s_logoFade, ANIM_TYPE_LINEAR, 1.0f, NULL, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1236,51 +1620,87 @@ static void app_render_2d_earth (void)
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_enable_z_write (true);
   
-  char unit [3] = { 176, 'C', 0 };
+  const char unit [2] = {'C', 'F'};
+  int unitType = settings_get_temperature_unit ();
+  char tempUnit [3] = { 176, unit [unitType], 0 };
+  
+  const cx_font *font = util_get_font (FONT_SIZE_14);
+  const cx_font *font2 = util_get_font (FONT_SIZE_12);
+  
+  char text2 [64];
   
   for (int i = 0, c = s_earth->data->count; i < c; ++i)
   {
-    bool display = settings_get_city_display (i);
-    //if (s_earth->data->display [i])
-    if (display)
+    if (settings_get_city_display (i))
     {
-    const char *text = s_earth->data->names [i];
-    const feed_weather_t *feed = &s_weatherFeeds [i];
-    const cx_vec4 *pos = &s_render2dInfo.renderPos [i];
-    float opacity = s_render2dInfo.opacity [i];
-    
-    cx_colour colour = (i == s_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
-    colour.a = opacity;
+      const char *text = s_earth->data->names [i];
+      const feed_weather_t *feed = &s_weatherFeeds [i];
+      const cx_vec4 *pos = &s_render2dInfo.renderPos [i];
+      float opacityText = s_render2dInfo.opacity [i].x;
+      
+      cx_colour colour = (i == s_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
+      colour.a = opacityText;
   
 #if DEBUG_SHOW_TEMPERATURE
-
-    if (feeds_weather_data_valid (feed))
-    {
-      // (icon width / 2) + margin offset 
-      cx_font_render (s_render2dInfo.font, text, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
-      
-      char temp [32];
-      cx_sprintf (temp, 32, "%d", feed->celsius);
-      cx_strcat (temp, 32, unit);
-      
-      cx_font_render (s_render2dInfo.font, temp, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
+      if (feeds_weather_data_valid (feed))
+      {
+        // (icon width / 2) + margin offset 
+        cx_font_render (font, text, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
+        
+        // temperature
+        
+        int tempValue = 0;
+        
+        if (unitType == SETTINGS_TEMPERATURE_UNIT_C)
+        {
+          tempValue = feed->celsius;
+        }
+        else
+        {
+          tempValue = (cx_roundupInt ((float) feed->celsius * 1.8f)) + 32;
+        }
+        
+        char temp [32];
+        cx_sprintf (temp, 32, "%d", tempValue);
+        cx_strcat (temp, 32, tempUnit);
+        
+        // time
+        
+        int hour = feed->timeInfo.hour;
+        int min = feed->timeInfo.min;
+        
+        char time [32];
+        int displayFmt = settings_get_clock_display_format ();
+        
+        if (displayFmt == SETTINGS_CLOCK_DISPLAY_FORMAT_24HR)
+        {
+          cx_sprintf (time, 32, "%02d:%02d", hour, min);
+        }
+        else 
+        {
+          const char *suffix = (hour > 11) ? "pm" : "am";
+          hour = ((hour == 0) || (hour == 12)) ? 12 : hour % 12;
+          cx_sprintf (time, 32, "%d:%02d%s", hour, min, suffix);  
+        }
+        
+        cx_sprintf (text2, 64, "%s / %s", temp, time);
+        
+        cx_font_render (font2, text2, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
+        
+        // render weather icon
+        feeds_weather_render (feed, pos->x + 24.0f, pos->y, pos->z, opacityText);
+      }
+      else
+      {
+        // (icon width / 2) + margin offset 
+        cx_font_render (font, text, pos->x + 12.0f, pos->y - 10.0f, pos->z, 0, &colour);
+      }
+#else  
+      //cx_font_set_scale (s_render2dInfo.font, pos->w, pos->w);
+      cx_font_render (font, text, pos->x, pos->y, pos->z, CX_FONT_ALIGNMENT_CENTRE_X, &colour);
       
       // render weather icon
-      feeds_weather_render (feed, pos->x + 24.0f, pos->y, pos->z, opacity);
-    }
-    else
-    {
-      // (icon width / 2) + margin offset 
-      cx_font_render (s_render2dInfo.font, text, pos->x + 12.0f, pos->y - 10.0f, pos->z, 0, &colour);
-    }
-    
-#else
-  
-    //cx_font_set_scale (s_render2dInfo.font, pos->w, pos->w);
-    cx_font_render (s_render2dInfo.font, text, pos->x, pos->y, pos->z, CX_FONT_ALIGNMENT_CENTRE_X, &colour);
-    
-    // render weather icon
-    feeds_weather_render (feed, pos->x, pos->y - 6.0f, pos->z, opacity);
+      feeds_weather_render (feed, pos->x, pos->y - 6.0f, pos->z, opacityText);
 #endif
     }
   }
@@ -1352,7 +1772,7 @@ static void app_input_handle_touch_event (const input_touch_event *event)
   {
     ui_ctrlr_settings_set_active (false);
   }
-  else if (ui_ctrlr_settings_get_active ())
+  else if (audio_music_picker_active ())
   {
   }
   else if (ui_ctrlr_handle_input (event))
@@ -1376,7 +1796,11 @@ static void app_input_handle_touch_event (const input_touch_event *event)
 
 static void app_input_handle_gesture_event (const input_gesture_event *event)
 {
-  if (audio_music_picker_active ())
+  if (ui_ctrlr_settings_get_active ())
+  {
+    ui_ctrlr_settings_set_active (false);
+  }
+  else if (audio_music_picker_active ())
   {
   }
   else
@@ -1411,24 +1835,104 @@ static void app_input_touch_began (float x, float y)
   }
   else
   {
-    if (app_input_touch_earth (touchX, touchY, sw, sh))
+    int oldSelectedCity = s_selectedCity;
+    int newSelectedCity = app_input_touch_earth (touchX, touchY, sw, sh);
+    
+    if (app_get_city_index_valid (newSelectedCity))
     {
-      int index = s_selectedCity;
-      CX_ASSERT (index > -1);
+      if (newSelectedCity != oldSelectedCity)
+      {
+        feed_news_t *oldFeedNews = &s_newsFeeds [oldSelectedCity];
+        feed_twitter_t *oldFeedTwitter = &s_twitterFeeds [oldSelectedCity];
+        
+        if (oldFeedNews->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
+        {
+          feeds_news_cancel_search (oldFeedNews);
+          util_activity_indicator_set_active (false);
+        }
+        
+        if (oldFeedTwitter->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
+        {
+          feeds_twitter_cancel_search (oldFeedTwitter);
+          util_activity_indicator_set_active (false);
+        }
+        
+        const char *query = s_earth->data->newsFeeds [newSelectedCity];
+        
+        feed_news_t *newFeedNews = &s_newsFeeds [newSelectedCity];
+        feed_twitter_t *newFeedTwitter = &s_twitterFeeds [newSelectedCity];
+        
+        if (newFeedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
+        {
+          feeds_twitter_search (newFeedTwitter, query);
+          util_activity_indicator_set_active (true);
+        }
+        
+        if (newFeedNews->reqStatus == FEED_REQ_STATUS_INVALID)
+        {
+          feeds_news_search (newFeedNews, query);
+          util_activity_indicator_set_active (true);
+        }
+      }
       
-      //const char *n = s_earth->data->names [index];
-      const char *n = s_earth->data->newsFeeds [index];
+      s_selectedCity = newSelectedCity;
       
-      feeds_twitter_search (&s_twitterFeeds [index], n);
+#if NEW_ROTATION
       
-      feeds_news_search (&s_newsFeeds [index], n);
+      float diffx = 0.5f - x;
+      float diffy = 0.5f - y;
+      
+      CX_DEBUGLOG_CONSOLE (1, "diffx = %.4f, diffy = %.4f", diffx, diffy);
+      
+      float aspectRatio = sw / sh;
+      
+      float rotAddx = diffx * 90.0f * aspectRatio;
+      float rotAddy = diffy * 90.0f;
+      
+      s_rotTarget = s_rotAngle;
+      
+      s_rotTarget.x += rotAddx;
+      s_rotTarget.y += rotAddy;
+      
+      s_rotSpeedExp = CAMERA_ROTATION_SPEED_EXPONENT_CITY_SELECT;
+      
+#else
+      float aspectRatio = sw / sh;
+      
+      s_rotTouchEnd.x = 0.5f * sw * 0.25f * aspectRatio;
+      s_rotTouchEnd.y = 0.5f * sh * 0.25f;
+      s_rotTouchBegin.x = x * sw * 0.25f;
+      s_rotTouchBegin.y = y * sh * 0.25f;
+#endif
+      
+      audio_soundfx_play (AUDIO_SOUNDFX_CLICK0);
+    }
+    else
+    {
+#if NEW_ROTATION
+
+      s_rotTarget = s_rotAngle;
+      
+      CX_DEBUGLOG_CONSOLE (1, "BEGIN-AFEQRTEY4534545RGDFGQ34TQQ4545411");
+      CX_DEBUGLOG_CONSOLE (1, "bx = %.4f, by = %.4f", x, y);
+      
+      s_rotSpeedExp = CAMERA_ROTATION_SPEED_EXPONENT_SWIPE;
+      
+#else
+      s_rotTouchBegin.x = x * sw * 0.25f;
+      s_rotTouchBegin.y = y * sh * 0.25f;
+      s_rotTouchEnd.x = x * sw * 0.25f;
+      s_rotTouchEnd.y = y * sh * 0.25f;
+#endif
     }
   }
   
+  /*
   s_rotTouchBegin.x = x * sw * 0.25f;
   s_rotTouchBegin.y = y * sh * 0.25f;
   s_rotTouchEnd.x = x * sw * 0.25f;
   s_rotTouchEnd.y = y * sh * 0.25f;
+  */
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1440,8 +1944,36 @@ static void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
   float sw = cx_gdi_get_screen_width ();
   float sh = cx_gdi_get_screen_height ();
   
+#if NEW_ROTATION
+  
+  float diffx = x - prev_x;
+  float diffy = y - prev_y;
+  
+  CX_DEBUGLOG_CONSOLE (1, "diffx = %.4f, diffy = %.4f", diffx, diffy);
+  
+  float aspectRatio = sw / sh;
+  
+  float rotAddx = diffx * 90.0f * aspectRatio;
+  float rotAddy = diffy * 90.0f;
+  
+#if 1
+  //s_rotTarget.x = s_rotAngle.x + rotAddx;
+  //s_rotTarget.y = s_rotAngle.y + rotAddy;
+  s_rotTarget.x += rotAddx;
+  s_rotTarget.y += rotAddy;
+#else
+  s_rotAngle.x += rotAddx;
+  s_rotAngle.y += rotAddy;
+  
+  s_rotAngle.x = fmodf (s_rotAngle.x, 360.0f);
+  s_rotAngle.y = cx_clamp (s_rotAngle.y, -89.9f, 89.9f);
+#endif
+  
+#else
   s_rotTouchEnd.x = x * sw * 0.25f;
   s_rotTouchEnd.y = y * sh * 0.25f;
+#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1461,8 +1993,15 @@ static void app_input_touch_ended (float x, float y)
     browser_handle_input (&s_browserRect, BROWSER_INPUT_TOUCH_END, touchX, touchY);
   }
   
+#if NEW_ROTATION
+  
+  CX_DEBUGLOG_CONSOLE (1, "ex = %.4f, ey = %.4f", x, y);
+  CX_DEBUGLOG_CONSOLE (1, "END-AFEQRTEY4534545RGDFGQ34TQQ4545411");
+  
+#else
   //s_rotTouchEnd.x = x * sw * 0.25f;
   //s_rotTouchEnd.y = y * sh * 0.25f;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1482,7 +2021,7 @@ static void app_input_zoom (float factor)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool app_input_touch_earth (float screenX, float screenY, float screenWidth, float screenHeight)
+static int app_input_touch_earth (float screenX, float screenY, float screenWidth, float screenHeight)
 {
   // do ray test
   
@@ -1508,7 +2047,7 @@ static bool app_input_touch_earth (float screenX, float screenY, float screenWid
   
   cx_vec4 normal, position, toPos;
   
-  int cityIndex = -1;
+  int cityIndex = CITY_INDEX_INVALID;
   
   int i, c;
   for (i = 0, c = s_earth->data->count; i < c; ++i)
@@ -1523,9 +2062,9 @@ static bool app_input_touch_earth (float screenX, float screenY, float screenWid
       CX_REFERENCE_UNUSED_VARIABLE (city);
 #endif
     
-      float opacity = s_render2dInfo.opacity [i];
+      float opacityPoint = s_render2dInfo.opacity [i].y;
       
-      if (opacity > 0.1f)
+      if (opacityPoint > 0.1f)
       {
         normal = s_earth->data->normal [i];
         position = s_earth->data->location [i];
@@ -1547,8 +2086,8 @@ static bool app_input_touch_earth (float screenX, float screenY, float screenWid
           // get distance (squared)
           
           cx_vec4_sub (&toPos, &position, &intersectpt);
-          
-          float distSqr = cx_vec4_lengthSqr (&toPos);
+        
+          float distSqr = cx_vec4_length_sq (&toPos);
           
           if (distSqr <= (0.025f * 0.025f))
           {
@@ -1562,15 +2101,52 @@ static bool app_input_touch_earth (float screenX, float screenY, float screenWid
       }
     }
   }
+
+  return cityIndex;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void app_on_background (void)
+{
+  // save settings
+  settings_data_save ();
   
-  if (cityIndex > -1)
+  util_activity_indicator_set_active (false);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void app_on_foreground (void)
+{
+  // load settings?
+  
+  // trigger weather update
+  s_refreshWeather = true;
+  
+  // refresh selected city
+  if (app_get_city_index_valid (s_selectedCity))
   {
-    s_selectedCity = cityIndex;
+    const char *query = s_earth->data->newsFeeds [s_selectedCity];    
+    feed_news_t *feedNews = &s_newsFeeds [s_selectedCity];
+    feed_twitter_t *feedTwitter = &s_twitterFeeds [s_selectedCity];
     
-    return true;
+    if (feedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
+    {
+      feeds_twitter_search (feedTwitter, query);
+      util_activity_indicator_set_active (true);
+    }
+    
+    if (feedNews->reqStatus == FEED_REQ_STATUS_INVALID)
+    {
+      feeds_news_search (feedNews, query);
+      util_activity_indicator_set_active (true);
+    }
   }
-  
-  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

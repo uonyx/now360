@@ -7,7 +7,9 @@
 //
 
 #import "audio.h"
+#import "util.h"
 #import <MediaPlayer/MediaPlayer.h>
+#import <AudioToolbox/AudioToolbox.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,6 +18,8 @@
 #define DEBUG_LOG_ENABLE 1
 #define USE_MUSIC_PICKER_POP_UP 1 // ipad only
 #define PLAYBACK_STATE_HACK_FIX 1
+#define SCREEN_FADE_OPACITY (0.6f)
+#define SCREEN_FADE_DURATION (0.5f)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,6 +32,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void audio_sndfx_init (void);
+static void audio_sndfx_deinit (void);
 static void audio_music_init (void);
 static void audio_music_deinit (void);
 static bool audio_music_update_queue (MPMediaItemCollection *collection);
@@ -54,7 +60,7 @@ static void audio_music_now_playing_state_changed (void);
 {
   audio_music_update_queue (mediaItemCollection);
       
-  audio_music_picker (false, NULL);  
+  audio_music_picker (false, NULL);
 }
 
 - (void) mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker
@@ -152,6 +158,12 @@ static void audio_music_now_playing_state_changed (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+typedef struct 
+{
+  const char *filepath;
+  SystemSoundID sndId;
+} audio_soundfx_info_t;
+
 static bool s_initialised = false;
 static bool s_pickerActive = false;
 static UIViewController *s_rootViewController = nil;
@@ -168,18 +180,25 @@ static UIPopoverController *s_musicPopOver = nil;
 #if PLAYBACK_STATE_HACK_FIX
 static bool s_musicPlaying = false;
 #endif
+audio_soundfx_info_t s_sndfxs [NUM_AUDIO_SOUNDFX] = 
+{
+  { "data/soundfx/beep-23.mp3", 0 },    // AUDIO_SOUNDFX_CLICK0
+  { "data/soundfx/button-46.mp3", 0 },  // AUDIO_SOUNDFX_CLICK1
+  { "data/soundfx/button-50.mp3", 0 },  // AUDIO_SOUNDFX_CLICK2
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool audio_init (void *rootvc)
+bool audio_init (const void *rootvc)
 {
   CX_ASSERT (!s_initialised);
   CX_ASSERT (rootvc);
   
   s_rootViewController = (UIViewController *) rootvc;
   
-  cx_list2_init (&s_musicNotificationCallbacks);
+  audio_sndfx_init ();
   
   audio_music_init ();
   
@@ -196,11 +215,24 @@ void audio_deinit (void)
 {
   CX_ASSERT (s_initialised);
   
+  audio_sndfx_deinit ();
+  
   audio_music_deinit ();
   
-  cx_list2_deinit (&s_musicNotificationCallbacks);
-  
   s_initialised = false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void audio_soundfx_play (audio_soundfx_t sndfx)
+{
+  CX_ASSERT ((sndfx > AUDIO_SOUNDFX_INVALID) && (sndfx < NUM_AUDIO_SOUNDFX));
+  
+  SystemSoundID sndId = s_sndfxs [sndfx].sndId;
+  
+  AudioServicesPlaySystemSound (sndId);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,8 +382,47 @@ int audio_music_get_track_id (char *buffer, int bufferlen)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void audio_sndfx_init (void)
+{  
+  for (int i = 0; i < NUM_AUDIO_SOUNDFX; ++i)
+  {
+    const char *path = s_sndfxs [i].filepath;
+    NSString *filepath = [NSString stringWithCString:path encoding:NSASCIIStringEncoding];
+    
+    NSURL *fileURL = [[NSBundle mainBundle] URLForResource:filepath withExtension:nil];
+    CX_ASSERT (fileURL != nil);
+    
+    SystemSoundID sndId = 0;
+    
+    OSStatus error = AudioServicesCreateSystemSoundID ((__bridge CFURLRef)fileURL, &sndId);
+    CX_ASSERT (error == kAudioServicesNoError);
+    CX_REFERENCE_UNUSED_VARIABLE (error);
+    
+    s_sndfxs [i].sndId = sndId;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void audio_sndfx_deinit (void)
+{
+  for (int i = 0; i < NUM_AUDIO_SOUNDFX; ++i)
+  {
+    SystemSoundID sndId = s_sndfxs [i].sndId;
+    AudioServicesDisposeSystemSoundID (sndId);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void audio_music_init (void)
 {
+  cx_list2_init (&s_musicNotificationCallbacks);
+  
   s_musicPlayer = [MPMusicPlayerController applicationMusicPlayer];
   
   s_musicNotification = [[MusicNotifcation alloc] init];
@@ -375,7 +446,7 @@ static void audio_music_init (void)
   
   [[UINavigationBar appearanceWhenContainedIn:[UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.0f alpha:0.5f]];
 
-  [[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundColor:[UIColor colorWithWhite:0.0f alpha:0.4f]];
+  [[UITableViewCell appearanceWhenContainedIn:[UITableView class], [UIViewController class], [UIPopoverController class], nil] setBackgroundColor:[UIColor colorWithWhite:0.0f alpha:0.4f]];
   
   //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundView:nil];
   
@@ -441,6 +512,8 @@ static void audio_music_deinit (void)
   [s_musicPickerDelegate release];
   
   [s_musicNotification release];
+  
+  cx_list2_deinit (&s_musicNotificationCallbacks);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -520,6 +593,8 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
       
       s_pickerActive = true;
       s_pickerCallback = fn;
+      
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     }
   }
   else
@@ -539,6 +614,8 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
         s_pickerCallback ();
         s_pickerCallback = NULL;
       }
+      
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     }
   }
 }
@@ -549,7 +626,7 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
 
 static void audio_music_playback_state_changed (void)
 {
-  audio_music_notification notification = AUDIO_MUSIC_NOTIFICATION_UNKNOWN;
+  audio_music_notification_t notification = AUDIO_MUSIC_NOTIFICATION_UNKNOWN;
   
   MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
   

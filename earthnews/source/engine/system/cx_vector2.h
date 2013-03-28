@@ -32,6 +32,8 @@ typedef union cx_vec2 cx_vec2;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static CX_INLINE void cx_vec2_set (cx_vec2 * CX_RESTRICT v, cxf32 x, cxf32 y);
+static CX_INLINE void cx_vec2_add (cx_vec2 * CX_RESTRICT v_out, const cx_vec2 * CX_RESTRICT v0, const cx_vec2 * CX_RESTRICT v1);
+static CX_INLINE void cx_vec2_sub (cx_vec2 * CX_RESTRICT v_out, const cx_vec2 * CX_RESTRICT v0, const cx_vec2 * CX_RESTRICT v1);
 static CX_INLINE void cx_vec2_normalise (cx_vec2 *v);
 static CX_INLINE cxf32 cx_vec2_length (cx_vec2 *v);
 static CX_INLINE void cx_vec2_mul (cx_vec2 * CX_RESTRICT v_out, cxf32 s, const cx_vec2 * CX_RESTRICT v);
@@ -46,6 +48,42 @@ static CX_INLINE void cx_vec2_set (cx_vec2 * CX_RESTRICT v, cxf32 x, cxf32 y)
   
   v->x = x;
   v->y = y;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static CX_INLINE void cx_vec2_add (cx_vec2 * CX_RESTRICT v_out, const cx_vec2 * CX_RESTRICT v0, const cx_vec2 * CX_RESTRICT v1)
+{
+  CX_ASSERT (v_out);
+  CX_ASSERT (v0);
+  CX_ASSERT (v1);
+  CX_ASSERT (cx_validatef (v0->x));
+  CX_ASSERT (cx_validatef (v0->y));
+  CX_ASSERT (cx_validatef (v1->x));
+  CX_ASSERT (cx_validatef (v1->y));
+  
+  v_out->x = v0->x + v1->x;
+  v_out->y = v0->y + v1->y;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static CX_INLINE void cx_vec2_sub (cx_vec2 * CX_RESTRICT v_out, const cx_vec2 * CX_RESTRICT v0, const cx_vec2 * CX_RESTRICT v1)
+{
+  CX_ASSERT (v_out);
+  CX_ASSERT (v0);
+  CX_ASSERT (v1);
+  CX_ASSERT (cx_validatef (v0->x));
+  CX_ASSERT (cx_validatef (v0->y));
+  CX_ASSERT (cx_validatef (v1->x));
+  CX_ASSERT (cx_validatef (v1->y));
+  
+  v_out->x = v0->x - v1->x;
+  v_out->y = v0->y - v1->y;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

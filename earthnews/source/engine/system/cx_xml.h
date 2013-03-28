@@ -36,8 +36,8 @@ cx_xml_node  cx_xml_node_last_child (cx_xml_node node);
 cx_xml_node  cx_xml_node_next_sibling (cx_xml_node node);
 cx_xml_node  cx_xml_node_parent (cx_xml_node node);
 const char * cx_xml_node_name (cx_xml_node node);
-const char * cx_xml_node_content (cx_xml_node node);
-const char * cx_xml_node_attr (cx_xml_node node, const char *name);
+char *       cx_xml_node_content (cx_xml_node node);
+char *       cx_xml_node_attr (cx_xml_node node, const char *name);
 
 cx_xml_attr  cx_xml_attr_get_next_sibling (cx_xml_attr attr);
 const char * cx_xml_attr_get_name (cx_xml_attr attr);

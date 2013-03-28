@@ -32,7 +32,6 @@ void ui_ctrlr_set_news_feed_opacity (float opacity);
 void ui_ctrlr_set_news_feed_visible (bool visible);
 void ui_ctrlr_set_twitter_feed (feed_twitter_t *feed);
 
-bool ui_ctrlr_music_get_active (void);
 bool ui_ctrlr_settings_get_active (void);
 void ui_ctrlr_settings_set_active (bool active);
 

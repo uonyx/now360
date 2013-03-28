@@ -170,17 +170,16 @@ void cx_texture_data_destroy (cx_texture *texture)
 
 void cx_texture_destroy (cx_texture *texture)
 {
-  if (texture)
+  CX_ASSERT (texture);
+  
+  cx_texture_gpu_deinit (texture);
+  
+  if (texture->data)
   {
-    cx_texture_gpu_deinit (texture);
-    
-    if (texture->data)
-    {
-      cx_free (texture->data);
-    }
-    
-    cx_free (texture);
+    cx_free (texture->data);
   }
+  
+  cx_free (texture);
 }
 
 
