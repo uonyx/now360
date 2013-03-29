@@ -92,7 +92,16 @@
   (void) rvc;
 #endif
   
-  app_init (self, self.context, (int) view.bounds.size.width, (int) view.bounds.size.height);
+  [[NSNotificationCenter defaultCenter]
+   addObserver:self
+   selector:@selector(deviceOrientationDidChangeNotification:)
+   name:UIDeviceOrientationDidChangeNotification
+   object:nil];
+  
+  int w = (int) self.view.bounds.size.width;
+  int h = (int) self.view.bounds.size.height;
+  
+  app_init (self, self.context, w, h);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,13 +114,15 @@
   
   [EAGLContext setCurrentContext:self.context];
   
-  // applicattion deinitialise
+  // application deinitialise
   app_deinit ();
   
   if ([EAGLContext currentContext] == self.context)
   {
     [EAGLContext setCurrentContext:nil];
   }
+  
+  [self.context release];
   
   self.context = nil;
 }
@@ -153,6 +164,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+- (void)deviceOrientationDidChangeNotification:(NSNotification*)note
+{
+  [EAGLContext setCurrentContext:self.context];
+  
+  int w = (int) self.view.bounds.size.width;
+  int h = (int) self.view.bounds.size.height;
+  
+  app_view_resize (w, h);
+}
+
 - (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
   [EAGLContext setCurrentContext:self.context];
@@ -161,6 +182,21 @@
   int h = (int) self.view.bounds.size.height;
   
   app_view_resize (w, h);
+}
+
+- (NSInteger) preferredInterfaceOrientationForPresentation
+{
+  return UIInterfaceOrientationMaskLandscape;
+}
+
+- (NSInteger) supportedInterfaceOrientations
+{
+  return UIInterfaceOrientationMaskLandscape;
+}
+
+- (BOOL) shouldAutorotate
+{
+  return YES;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

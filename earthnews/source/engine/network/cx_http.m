@@ -50,7 +50,7 @@ typedef struct cx_http_request
 @property (nonatomic, retain) NSURLConnection *conn;
 
 - (id)init;
-- (id)initWith: (cx_http_request_id)transactionId: (cx_http_response_callback)responseCallback: (void *)userdata;
+- (id)initWith:(cx_http_request_id)transactionId :(cx_http_response_callback)responseCallback :(void *)userdata;
 - (void)dealloc;
 
 @end
@@ -294,7 +294,7 @@ void cx_http_cancel (cx_http_request_id requestId)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (id)initWith: (cx_http_request_id)transactionId: (cx_http_response_callback)responseCallback: (void *)userdata;
+- (id)initWith: (cx_http_request_id)transactionId :(cx_http_response_callback)responseCallback :(void *)userdata;
 {
   self = [super init];
   

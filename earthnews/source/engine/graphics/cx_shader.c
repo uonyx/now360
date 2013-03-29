@@ -258,7 +258,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     return false;
   }
   
-#if CX_DEBUG
+#if CX_DEBUG && 0 // disabled for iOS6
   GLint validated = 0;
   glValidateProgram (outProgram);
   glGetProgramiv (outProgram, GL_VALIDATE_STATUS, &validated);

@@ -118,7 +118,7 @@ static cx_texture *s_logoTex = NULL;
 static bool s_renderLogo = false;
 static anim_t s_logoFade;
 
-static cx_texture *glowtex = NULL;
+static cx_texture *s_glowTex = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +194,7 @@ static cx_thread_exit_status app_init_load (void *userdata)
   
   settings_set_city_names (s_earth->data->names, s_earth->data->count);
   
-  glowtex = cx_texture_create_from_file ("data/textures/glowcircle.gb32-16.png");
+  s_glowTex = cx_texture_create_from_file ("data/textures/glowcircle.gb32-16.png");
   
   //
   // feeds
@@ -1247,12 +1247,11 @@ static void app_render_3d (void)
 static void app_render_3d_earth (void)
 {
   cx_date date;
-  
   cx_time_set_date (&date, CX_TIME_ZONE_UTC);
   
   earth_render (s_earth, &date, &s_camera->position);
 
-#if DEBUG_SHOW_TEMPERATURE
+#if DEBUG_SHOW_TEMPERATURE && 1
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
   cx_gdi_enable_z_write (false);
@@ -1260,8 +1259,8 @@ static void app_render_3d_earth (void)
   // draw points
   float opacity = app_get_zoom_opacity ();
   
-  cx_colour col = *cx_colour_white ();
-  col.a = opacity;
+  cx_colour white = *cx_colour_white ();
+  white.a = opacity;
   
   // gather points
 #if 1
@@ -1269,7 +1268,6 @@ static void app_render_3d_earth (void)
   cx_vec4 loc [256];
   
   CX_ASSERT (s_earth->data->count < 256);
-  
   memset (loc, 0, sizeof (loc));
   
   for (int i = 0, c = s_earth->data->count; i < c; ++i)
@@ -1279,35 +1277,52 @@ static void app_render_3d_earth (void)
     if (display && (s_selectedCity != i))
     {
       cx_vec4 *pos = &s_earth->data->location [i];
+      float a = s_render2dInfo.opacity [i].y;
       
       loc [displayCount] = *pos;
-      loc [displayCount++].a = s_render2dInfo.opacity [i].y;
+      loc [displayCount++].a = a;
     }
   }
   
-  cx_draw_points (displayCount, loc, &col, glowtex);
+  static bool hackFrameSkip = true;
+
+  if (hackFrameSkip)
+  {
+    hackFrameSkip = false;
+  }
+  else
+  {
+    cx_draw_points (displayCount, loc, &white, s_glowTex);
+  }
+  
   
 #else
-  cx_draw_points (s_earth->data->count, s_earth->data->location, &col, glowtex);
+  cx_draw_points (s_earth->data->count, s_earth->data->location, &white, s_glowTex);
 #endif
   
   if (app_get_city_index_valid (s_selectedCity))
   {
-    cx_colour col = *cx_colour_yellow ();
-    col.a = opacity;
+    cx_colour yellow = *cx_colour_yellow ();
+    yellow.a = opacity;
     
     // pulse colour
     
     float time = (float) cx_system_time_get_total_time () * 10.0f;
     float t = (cx_sin (time) + 1.0f) * 0.5f;
-    
-    cx_vec4_mul (&col, t, &col);
+    cx_vec4_mul (&yellow, t, &yellow);
     
     cx_vec4 pos = s_earth->data->location [s_selectedCity];
     pos.a = s_render2dInfo.opacity [s_selectedCity].y;
-    cx_draw_points (1, &pos, &col, glowtex);
+    cx_draw_points (1, &pos, &yellow, s_glowTex);
+    
+#if 0
+    cx_colour col2 = *cx_colour_red ();
+    cx_vec4 pos2 = s_earth->data->location [0];
+    pos2.a = s_render2dInfo.opacity [0].y;
+    cx_draw_points (1, &pos2, &col2, s_glowTex);
+#endif
   }
-  
+
   cx_gdi_enable_z_write (true);
 #endif
   
@@ -1593,8 +1608,10 @@ static void app_render_2d_logo (void)
     if (opacity <= CX_EPSILON)
     {
       // free texture
+    
       cx_texture_destroy (s_logoTex);
       s_logoTex = NULL;
+    
       s_renderLogo = false;
     }
   }

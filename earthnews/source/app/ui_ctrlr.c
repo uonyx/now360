@@ -893,7 +893,7 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
     ticker->items [i].posx += custom->intr.dimension.x;
   }
   
-  ui_widget_set_visible (s_uitwitter.view, false );
+  ui_widget_set_visible (s_uitwitter.view, true);
   ui_widget_set_visible (s_uitwitter.toggle, true);
   
   if (!s_uitwitter.toggle->userdata)

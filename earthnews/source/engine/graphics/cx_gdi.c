@@ -52,14 +52,14 @@ bool _cx_gdi_init (void *ctx, cxi32 w, cxi32 h)
   CX_ASSERT (!s_initialised);
   CX_ASSERT (ctx);
 
+  cx_native_eagl_context_init (ctx);
+  
   cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_P]);
   cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MV]);
   cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MVP]);
   
   cx_gdi_print_info ();
   cx_gdi_set_screen_dimensions (w, h);
-  
-  cx_native_eagl_context_init (ctx);
 
   s_initialised = true;
   

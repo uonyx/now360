@@ -393,8 +393,11 @@ static void audio_sndfx_init (void)
     CX_ASSERT (fileURL != nil);
     
     SystemSoundID sndId = 0;
-    
-    OSStatus error = AudioServicesCreateSystemSoundID ((__bridge CFURLRef)fileURL, &sndId);
+#if __has_feature(objc_arc)
+    OSStatus error = AudioServicesCreateSystemSoundID ((__bridge CFURLRef) fileURL, &sndId);
+#else
+    OSStatus error = AudioServicesCreateSystemSoundID ((CFURLRef) fileURL, &sndId);    
+#endif
     CX_ASSERT (error == kAudioServicesNoError);
     CX_REFERENCE_UNUSED_VARIABLE (error);
     

@@ -16,11 +16,11 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
   //self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    // Override point for customization after application launch.
-    //self.window.backgroundColor = [UIColor whiteColor];
+  // Override point for customization after application launch.
+  //self.window.backgroundColor = [UIColor whiteColor];
   //[self.window makeKeyAndVisible];
-
-    return YES;
+  
+  return YES;
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -68,10 +68,9 @@
 {
 }
 
-#if 0
 - (NSUInteger)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window
 {
-  return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+  return UIInterfaceOrientationMaskLandscape;
 }
-#endif
+
 @end
