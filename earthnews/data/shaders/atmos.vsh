@@ -5,7 +5,7 @@
 //  Copyright (c) 2011 uonyechi.com. All rights reserved.
 //
 
-precision mediump float;
+precision lowp float;
 
 attribute vec4 a_position;
 attribute vec3 a_normal;

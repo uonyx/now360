@@ -5,24 +5,28 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-uniform mediump mat4 u_projmatrix;
-uniform mediump mat4 u_viewmatrix;
-attribute mediump vec4 a_position;
-attribute lowp vec4 a_colour;
-varying lowp vec4 v_colour;
+precision lowp float;
+
+uniform mat4 u_projmatrix;
+uniform mat4 u_viewmatrix;
+attribute vec4 a_position;
+attribute vec4 a_colour;
+varying vec4 v_colour;
 
 const float spriteWidth = 0.005; //0.025;
 const float screenWidth = 768.0;
+const float c_half = 0.5;
+const float c_one = 1.0;
 
 void main (void)
 {
   v_colour = a_colour;
   
   // convert to view space
-  vec4 eyePos = u_viewmatrix * vec4 (a_position.xyz, 1.0);
+  vec4 eyePos = u_viewmatrix * vec4 (a_position.xyz, c_one);
   
   // scale quad
-  vec4 projCorner = u_projmatrix * vec4 (spriteWidth * 0.5, spriteWidth * 0.5, eyePos.z, eyePos.w);
+  vec4 projCorner = u_projmatrix * vec4 (spriteWidth * c_half, spriteWidth * c_half, eyePos.z, eyePos.w);
   gl_PointSize = screenWidth * (projCorner.x / projCorner.w);
   //gl_PointSize = 12.0;
   

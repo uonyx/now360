@@ -5,7 +5,9 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-varying lowp vec4 v_colour;
+precision lowp float;
+
+varying vec4 v_colour;
 
 void main (void)
 {

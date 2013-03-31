@@ -5,8 +5,10 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
+precision lowp float;
+
 uniform sampler2D u_sampler;
-varying lowp vec4 v_colour;
+varying vec4 v_colour;
 
 void main (void)
 {

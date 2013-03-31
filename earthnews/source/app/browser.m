@@ -16,7 +16,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define BROWSER_DEBUG_LOG_ENABLED   1
-#define BROWSER_CACHE_ENABLED       1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,19 +77,15 @@ NSMutableString *g_browserTitle = nil;
     }
   }
   
-#if BROWSER_DEBUG_LOG_ENABLED
   NSString *hostname = [[request URL] host];
   NSLog (@"Webview: Hostname: %@", hostname);
   NSLog (@"Webview: request: %@", request);
-#endif
-  
-#if BROWSER_CACHE_ENABLED
+
   if ([request isKindOfClass:[NSMutableURLRequest class]])
   {
     NSMutableURLRequest *mutableRequest = (NSMutableURLRequest *) request;
     [mutableRequest setCachePolicy:NSURLRequestReturnCacheDataElseLoad];
   }
-#endif
   
   return YES;
 }
@@ -231,32 +226,6 @@ bool browser_init (void *container)
   s_buttons [BROWSER_BUTTON_ID_REFRESH].altColour = colour2;
   s_buttons [BROWSER_BUTTON_ID_REFRESH].drawStyle = BROWSER_BUTTON_DRAW_STYLE_FLIP_HORIZONTAL;
   
-#if BROWSER_CACHE_ENABLED
-#if 0
-  const unsigned int cacheMemory  = 1024 * 1024 * 2;
-  const unsigned int cacheStorage = 1024 * 1024 * 8;
-  NSString *cacheLocation = @"browser";
-  
-  NSURLCache *sharedCache = [[NSURLCache alloc] initWithMemoryCapacity:cacheMemory 
-                                                          diskCapacity:cacheStorage 
-                                                              diskPath:cacheLocation];
-  [NSURLCache setSharedURLCache:sharedCache];
-#else
-  const unsigned int cacheMemory = [[NSURLCache sharedURLCache] memoryCapacity];
-  const unsigned int cacheStorage = [[NSURLCache sharedURLCache] diskCapacity];
-  
-  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "cacheMemory: %d", cacheMemory);
-  CX_DEBUGLOG_CONSOLE (BROWSER_DEBUG_LOG_ENABLED && 1, "cacheStorage: %d", cacheStorage);
-  
-  CX_REFERENCE_UNUSED_VARIABLE (cacheMemory);
-  CX_REFERENCE_UNUSED_VARIABLE (cacheStorage);
-  
-  const unsigned int newCacheMemory = MAX (cacheMemory, (1024 * 1024 * 2));
-  [[NSURLCache sharedURLCache] setMemoryCapacity:newCacheMemory];
-#endif
-  browser_clear_cache ();
-#endif
-  
   g_browserTitle = [[NSMutableString alloc] init];
   
   return true;
@@ -273,15 +242,6 @@ bool browser_deinit (void)
   [s_webviewDelegate release];
   
   return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void browser_clear_cache (void)
-{
-  [[NSURLCache sharedURLCache] removeAllCachedResponses];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -326,13 +286,13 @@ bool browser_open (const char *url, const char *title)
     
     NSString *nsurlString = [NSString stringWithCString:url encoding:NSASCIIStringEncoding];
     
-#if BROWSER_CACHE_ENABLED
+#if 1
     const int requestTimeoutSecs = 30;
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:nsurlString] 
                                              cachePolicy:NSURLRequestReturnCacheDataElseLoad 
                                          timeoutInterval:requestTimeoutSecs];
 #else
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:nsurlStirng]];
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:nsurlString]];
 #endif
     
     [s_webview loadRequest:request];

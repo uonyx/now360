@@ -8,6 +8,7 @@
 
 #import "cx_http.h"
 #import "../system/cx_string.h"
+#import "../system/cx_math.h"
 #import <Foundation/Foundation.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,6 +17,7 @@
 
 #define CX_HTTP_DEBUG_LOG_ENABLED   1
 #define CX_HTTP_MAX_NUM_NSCONN      16
+#define CX_HTTP_CACHE_CUSTOM        1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +70,7 @@ static NSMutableArray *s_nsconnBusyList = nil;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool _cx_http_init (void)
+bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache)
 {
   CX_ASSERT (!s_initialised);
   
@@ -83,6 +85,39 @@ bool _cx_http_init (void)
     [s_nsconnFreeList addObject:nsconn];
   }
   
+#if CX_HTTP_CACHE_CUSTOM
+  if ((cacheMemSizeMb > 0) && (cacheDiskSizeMb > 0))
+  {
+    cxu32 cacheMemory  = 1024 * 1024 * cacheMemSizeMb;
+    cxu32 cacheStorage = 1024 * 1024 * cacheDiskSizeMb;
+    
+    [NSURLCache setSharedURLCache:[[NSURLCache alloc] initWithMemoryCapacity:cacheMemory
+                                                                diskCapacity:cacheStorage
+                                                                    diskPath:@"cx_http"]];
+  }
+  else
+  {
+    CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: Warning: using default system cache");
+  }
+#else
+  cxu32 sharedCacheMemory = [[NSURLCache sharedURLCache] memoryCapacity];
+  cxu32 sharedCacheDisk = [[NSURLCache sharedURLCache] diskCapacity];
+  
+  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared memory cache size: %u", sharedCacheMemory);
+  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared disk cache size: %u", sharedCacheDisk);
+  
+  cxu32 newCacheMemory = cx_min (sharedCacheMemory, (1024 * 1024 * cacheMemSizeMb));
+  cxu32 newCacheDisk = cx_max (sharedCacheDisk, (1024 * 1024 * cacheDiskSizeMb));
+  
+  [[NSURLCache sharedURLCache] setMemoryCapacity:newCacheMemory];
+  [[NSURLCache sharedURLCache] setDiskCapacity:newCacheDisk];
+#endif
+  
+  if (clearCache)
+  {
+    [[NSURLCache sharedURLCache] removeAllCachedResponses];
+  }
+  
   s_initialised = true;
   
   return s_initialised;
@@ -94,31 +129,35 @@ bool _cx_http_init (void)
 
 bool _cx_http_deinit (void)
 {
-  if (s_initialised)
+  CX_ASSERT (s_initialised);
+  
+#if CX_HTTP_CACHE_CUSTOM
+  NSURLCache *sharedCache = [NSURLCache sharedURLCache];
+  [sharedCache release];
+#endif
+  
+  for (cxu32 i = 0; i < [s_nsconnFreeList count]; ++i)
   {
-    for (cxu32 i = 0; i < [s_nsconnFreeList count]; ++i)
-    {
-      CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:i];
-      
-      [s_nsconnFreeList removeObject:nsconn];
-      
-      [nsconn release];
-    }
+    CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:i];
     
-    for (cxu32 i = 0; i < [s_nsconnBusyList count]; ++i)
-    {
-      CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
-      
-      [s_nsconnBusyList removeObject:nsconn];
-      
-      [nsconn release];
-    }
+    [s_nsconnFreeList removeObject:nsconn];
     
-    [s_nsconnFreeList release];
-    [s_nsconnBusyList release];
-    
-    s_initialised = false;
+    [nsconn release];
   }
+  
+  for (cxu32 i = 0; i < [s_nsconnBusyList count]; ++i)
+  {
+    CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
+    
+    [s_nsconnBusyList removeObject:nsconn];
+    
+    [nsconn release];
+  }
+  
+  [s_nsconnFreeList release];
+  [s_nsconnBusyList release];
+  
+  s_initialised = false;
   
   return !s_initialised;
 }
@@ -252,6 +291,15 @@ void cx_http_cancel (cx_http_request_id requestId)
       break;
     }
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_http_clear_cache (void)
+{
+  [[NSURLCache sharedURLCache] removeAllCachedResponses];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

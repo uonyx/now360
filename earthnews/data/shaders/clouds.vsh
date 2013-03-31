@@ -2,14 +2,12 @@
 //  clouds.vsh
 //
 
-#if 0
+#if 1
 attribute vec4 a_position;
 attribute vec3 a_normal;
 attribute vec2 a_texcoord;
 
 uniform mat4 u_mvpMatrix;
-uniform mat3 u_normalMatrix;
-//uniform vec4 u_eyePosition;
 uniform vec4 u_lightPosition;
 
 varying vec4 v_colour;
@@ -20,13 +18,12 @@ const float c_one = 1.0;
 
 void main (void)
 {
-  vec3 eyeNormal = normalize (u_normalMatrix * a_normal);
-  //vec3 lightDirection = vec3 (c_zero, c_zero, -2.0); // target - position
+  vec3 eyeNormal = normalize (a_normal);
   vec3 lightDirection = (u_lightPosition - a_position).xyz;
   vec4 diffuseColor = vec4 (c_one, c_one, c_one, c_one);
   
-  float nDotVP = max(c_zero, dot(eyeNormal, normalize (lightDirection)));
-                 
+  float nDotVP = max (c_zero, dot(eyeNormal, normalize (lightDirection)));
+  
   v_colour = diffuseColor * nDotVP;
   
   v_texcoord = a_texcoord;

@@ -43,9 +43,20 @@ typedef cxu32 cx_engine_init_flags;
 
 typedef struct cx_engine_init_params
 {
-  cxi32 screenWidth;
-  cxi32 screenHeight;
-  void *graphicsContext;
+  struct
+  {
+    cxi32 screenWidth;
+    cxi32 screenHeight;
+    void *context;
+  } graphics;
+  
+  struct
+  {
+    cxu32 cacheMemSizeMb;
+    cxu32 cacheDiskSizeMb;
+    bool clearCache;
+  } http;
+  
 } cx_engine_init_params;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,12 +74,12 @@ static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init
     CX_ASSERT (params);
     
     _cx_shader_init ();
-    _cx_gdi_init (params->graphicsContext, params->screenWidth, params->screenHeight);
+    _cx_gdi_init (params->graphics.context, params->graphics.screenWidth, params->graphics.screenHeight);
   }
   
   if ((flags & CX_ENGINE_INIT_NETWORK) == CX_ENGINE_INIT_NETWORK)
   {
-    _cx_http_init ();
+    _cx_http_init (params->http.cacheMemSizeMb, params->http.cacheDiskSizeMb, params->http.clearCache);
   }
 }
 

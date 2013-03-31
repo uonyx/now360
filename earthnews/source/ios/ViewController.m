@@ -22,7 +22,7 @@
 
 @interface ViewController ()
 {
-  EAGLContext *m_context;
+  bool _isOrientationLandscape;
 }
 @property (strong, nonatomic) EAGLContext *context;
 
@@ -34,7 +34,7 @@
 
 @implementation ViewController
 
-@synthesize context = m_context;
+@synthesize context = _context;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@
 
 - (void) dealloc
 {
-  [m_context release];
+  [_context release];
   [super dealloc];
 }
 
@@ -92,6 +92,8 @@
   (void) rvc;
 #endif
   
+  _isOrientationLandscape = false;
+  
   [[NSNotificationCenter defaultCenter]
    addObserver:self
    selector:@selector(deviceOrientationDidChangeNotification:)
@@ -134,13 +136,6 @@
 - (void) didReceiveMemoryWarning
 {
   [super didReceiveMemoryWarning];
-  // release any cached data, images, etc that aren't in use
-  
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,14 +159,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)deviceOrientationDidChangeNotification:(NSNotification*)note
+- (void)deviceOrientationDidChangeNotification:(NSNotification*)notification
 {
-  [EAGLContext setCurrentContext:self.context];
+  UIDeviceOrientation deviceOrientation = [[UIDevice currentDevice] orientation];
   
-  int w = (int) self.view.bounds.size.width;
-  int h = (int) self.view.bounds.size.height;
+  if (!_isOrientationLandscape && UIDeviceOrientationIsLandscape (deviceOrientation))
+  {
+    [EAGLContext setCurrentContext:self.context];
   
-  app_view_resize (w, h);
+    int w = (int) self.view.bounds.size.width;
+    int h = (int) self.view.bounds.size.height;
+  
+    app_view_resize (w, h);
+    
+    _isOrientationLandscape = true;
+  }
 }
 
 - (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		31117DDB17070480000BB062 /* webview.m in Sources */ = {isa = PBXBuildFile; fileRef = 31117DDA17070480000BB062 /* webview.m */; };
 		311B943216A17EFA0057786F /* audio.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B943116A17EFA0057786F /* audio.m */; };
 		311B943416A1802B0057786F /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311B943316A1802B0057786F /* MediaPlayer.framework */; };
 		3127E2B915D38FDC00793C60 /* app.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2A915D38FDC00793C60 /* app.c */; };
@@ -131,6 +132,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		31117DD917070467000BB062 /* webview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = webview.h; sourceTree = "<group>"; };
+		31117DDA17070480000BB062 /* webview.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = webview.m; sourceTree = "<group>"; };
 		311B943016A17EBB0057786F /* audio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = audio.h; sourceTree = "<group>"; };
 		311B943116A17EFA0057786F /* audio.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = audio.m; sourceTree = "<group>"; };
 		311B943316A1802B0057786F /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
@@ -489,6 +492,8 @@
 				311B943116A17EFA0057786F /* audio.m */,
 				315EC7C016D443CC0019E160 /* settings.h */,
 				315EC7C116D443DE0019E160 /* settings.m */,
+				31117DD917070467000BB062 /* webview.h */,
+				31117DDA17070480000BB062 /* webview.m */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -1192,6 +1197,7 @@
 				315EC7C216D443E00019E160 /* settings.m in Sources */,
 				315EC7C416E258CC0019E160 /* cx_json.c in Sources */,
 				3163730816F62AAA0018D64C /* util.m in Sources */,
+				31117DDB17070480000BB062 /* webview.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

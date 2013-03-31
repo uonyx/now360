@@ -71,60 +71,6 @@ static settings_t s_settings;
 }
 @end
 
-@implementation CityTableViewController
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-  return (section == 0) ? s_settings.cityCount : 0;
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-  [[self navigationController] popToRootViewControllerAnimated:FALSE];
-}
-
-- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  NSString *identifier = @"CityCell";
-  
-  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
-  
-  if (cell == nil) 
-  {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
-  }
-  
-  int idx = indexPath.row;
-  
-  CX_ASSERT (idx < s_settings.cityCount);
-  CX_ASSERT (s_settings.cityNames);
-  
-  const char *label = s_settings.cityNames [idx];
-  bool display = s_settings.cityDisplay [idx];
-  
-  cell.textLabel.text = [NSString stringWithCString:label encoding:NSASCIIStringEncoding];  
-  cell.selectionStyle = UITableViewCellSelectionStyleNone;
-  cell.accessoryType = display ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  
-  return cell;
-}
-
--(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  int idx = indexPath.row;
-  UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-  
-  CX_ASSERT (cell);
-  CX_ASSERT (idx < s_settings.cityCount);
-  
-  bool display = !s_settings.cityDisplay [idx];
-  s_settings.cityDisplay [idx] = display;
-  
-  cell.accessoryType = display ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-}
-
-@end
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,60 +80,6 @@ static settings_t s_settings;
 }
 @end
 
-@implementation TemperatureTableViewController
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-  [[self navigationController] popToRootViewControllerAnimated:FALSE];
-}
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  int oldUnit = s_settings.tempUnit;
-  int newUnit = indexPath.row;
-  
-  if (newUnit != oldUnit)
-  {
-    UITableViewCell *newCell = [tableView cellForRowAtIndexPath:indexPath];
-    UITableViewCell *oldCell = [tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:oldUnit inSection:0]];
-    
-    CX_ASSERT (newCell);
-    CX_ASSERT (oldCell);
-    
-    newCell.accessoryType = UITableViewCellAccessoryCheckmark;
-    oldCell.accessoryType = UITableViewCellAccessoryNone;
-    
-    s_settings.tempUnit = newUnit;
-  }
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-  return (section == 0) ? SETTINGS_TEMP_TABLE_DATA_ROWS : 0;
-}
-
-- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  NSString *identifier = @"TempCell";
-  
-  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
-  
-  if (cell == nil) 
-  {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
-  }
-  
-  int idx = indexPath.row;
-  
-  cell.selectionStyle = UITableViewCellSelectionStyleNone;
-  cell.accessoryType = (s_settings.tempUnit == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:s_tempTableData [idx] encoding:NSASCIIStringEncoding];
-
-  return cell;
-}
-
-@end
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,60 +87,6 @@ static settings_t s_settings;
 @interface ClockTableViewController : UITableViewController
 {
 }
-@end
-
-@implementation ClockTableViewController
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-  [[self navigationController] popToRootViewControllerAnimated:FALSE];
-}
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  int oldUnit = s_settings.clockFmt;
-  int newUnit = indexPath.row;
-  
-  if (newUnit != oldUnit)
-  {
-    UITableViewCell *newCell = [tableView cellForRowAtIndexPath:indexPath];
-    UITableViewCell *oldCell = [tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:oldUnit inSection:0]];
-    
-    CX_ASSERT (newCell);
-    CX_ASSERT (oldCell);
-    
-    newCell.accessoryType = UITableViewCellAccessoryCheckmark;
-    oldCell.accessoryType = UITableViewCellAccessoryNone;
-    
-    s_settings.clockFmt = newUnit;
-  }
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-  return (section == 0) ? SETTINGS_CLOCK_TABLE_DATA_ROWS : 0;
-}
-
-- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  NSString *identifier = @"ClockCell";
-  
-  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
-  
-  if (cell == nil) 
-  {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
-  }
-  
-  int idx = indexPath.row;
-  
-  cell.selectionStyle = UITableViewCellSelectionStyleNone;
-  cell.accessoryType = (s_settings.clockFmt == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:s_clockTableData [idx] encoding:NSASCIIStringEncoding];
-  
-  return cell;
-}
-
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -263,170 +101,6 @@ static settings_t s_settings;
   CityTableViewController *_cityViewController;
   ClockTableViewController *_clockViewController;
 }
-@end
-
-@implementation RootTableViewController
-
-- (id) initWithStyle:(UITableViewStyle)style
-{
-  self = [super initWithStyle:style];
-  
-  if (self)
-  {
-    _timeSwitch = [[UISwitch alloc] init];
-    _temperatureViewController = [[TemperatureTableViewController alloc] initWithStyle:UITableViewStylePlain];
-    _cityViewController = [[CityTableViewController alloc] initWithStyle:UITableViewStylePlain];
-    _clockViewController = [[ClockTableViewController alloc] initWithStyle:UITableViewStylePlain];
-    _navCtrlr = [[UINavigationController alloc] initWithRootViewController:self];
-    
-    CGRect frame = [[self tableView] frame];
-    frame.size.width = 400.0f;
-    frame.size.height = 300.0f;
-    [[self tableView] setFrame:frame];
-  }
-  
-  return self;
-}
-
-- (void) dealloc
-{
-  [_cityViewController release];
-  [_temperatureViewController release];
-  [_clockViewController release];
-  [_timeSwitch release];
-  [_navCtrlr release];
-  
-  [super dealloc];
-}
-
-- (void)switchTouched
-{
-  bool showTime = !s_settings.showTime;
-  s_settings.showTime = showTime;
-  [_timeSwitch setOn:showTime animated:YES];
-}
-
-- (void)viewDidLoad
-{ 
-  [_timeSwitch addTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
-}
-
-- (void)viewDidUnload
-{
-  [_timeSwitch removeTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
-}
-
-- (void)viewWillAppear:(BOOL)animated
-{  
-  [[self tableView] reloadData];
-}
-
--(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  switch (indexPath.row) 
-  {
-    case 0: // edit cities
-    {
-      [_navCtrlr pushViewController:_cityViewController animated:YES];
-      break;
-    }
-      
-    case 1: // temperature unit
-    {
-      [_navCtrlr pushViewController:_temperatureViewController animated:YES];
-      break;
-    }
-
-    case 2: // clock
-    {
-      [_navCtrlr pushViewController:_clockViewController animated:YES];
-      break;
-    }
-      
-    case 3: // show time
-    {
-      break;
-    }
-      
-    default:
-      break;
-  }
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-  return (section == 0) ? SETTINGS_ROOT_TABLE_DATA_ROWS : 0;
-}
-
-- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-  NSString *identifier = @"RootCell";
-  
-  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
-  
-  if (cell == nil) 
-  {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
-  }
-    
-  int idx = indexPath.row;
-  
-  switch (idx)
-  {
-    case 0: // cities
-    {
-      cell.selectionStyle = UITableViewCellSelectionStyleNone;
-      cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      break;
-    }
-      
-    case 1: // temperature unit
-    {
-      cell.selectionStyle = UITableViewCellSelectionStyleNone;
-      cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:s_tempTableData [s_settings.tempUnit] encoding:NSASCIIStringEncoding];
-      break;
-    }
-
-    case 2: // clock
-    {
-      cell.selectionStyle = UITableViewCellSelectionStyleNone;
-      cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:s_clockTableData [s_settings.clockFmt] encoding:NSASCIIStringEncoding];
-      break;
-    }
-      
-    case 3: // show time
-    {
-      [_timeSwitch setOn:s_settings.showTime];
-      
-      cell.accessoryView = _timeSwitch;
-      cell.selectionStyle = UITableViewCellSelectionStyleNone;
-      cell.accessoryType = UITableViewCellAccessoryNone;
-      break;
-    }
-      
-    default:
-    {
-      CX_FATAL_ERROR ("invalid row");
-      break;
-    }
-  }
-  
-  cell.textLabel.text = [NSString stringWithCString:s_rootTableData [idx] encoding:NSASCIIStringEncoding];
-
-#if 0
-  cell.contentView.backgroundColor = [UIColor clearColor];
-  cell.backgroundColor = [UIColor clearColor];
-  UIView *bgView = [[UIView alloc] init];
-  [[bgView layer] setCornerRadius:10.0f];
-  [bgView setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.25f]];
-  cell.backgroundView = bgView;
-#endif
-  
-  return cell;
-}
-
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -456,7 +130,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool settings_init (void *rootvc, const char *filename)
+bool settings_init (const void *rootvc, const char *filename)
 {
   CX_ASSERT (!s_initialised);
   CX_ASSERT (rootvc);
@@ -497,6 +171,8 @@ void settings_deinit (void)
   
   cx_free (s_settings.cityDisplay);
   
+  s_rootViewCtrlr = nil;
+  
   s_initialised = false;
 }
 
@@ -521,6 +197,7 @@ void settings_ui_show (void)
 {
   if (!s_uiActive)
   {
+#if 1
     UIView *parentView = s_rootViewCtrlr.view;
     /*
     float viewPosX = parentView.bounds.origin.x;
@@ -535,7 +212,11 @@ void settings_ui_show (void)
     
     [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
     [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
-    
+#else
+    [s_rootTableViewCtrlr setModalTransitionStyle:UIModalTransitionStyleFlipHorizontal];
+    [s_rootTableViewCtrlr setModalPresentationStyle:UIModalPresentationFormSheet];
+    [s_rootViewCtrlr presentViewController:s_rootTableViewCtrlr animated:YES completion:nil];
+#endif
     util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     
     s_uiActive = true;
@@ -550,8 +231,12 @@ void settings_ui_hide (void)
 {
   if (s_uiActive)
   {
+#if 1
     [s_popover dismissPopoverAnimated:YES];
-  
+#else
+    [s_rootViewCtrlr dismissViewControllerAnimated:YES completion:nil];
+#endif
+    
     util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     
     s_uiActive = false;
@@ -779,3 +464,348 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation CityTableViewController
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+  return (section == 0) ? s_settings.cityCount : 0;
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+  [[self navigationController] popToRootViewControllerAnimated:FALSE];
+}
+
+- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  NSString *identifier = @"CityCell";
+  
+  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+  
+  if (cell == nil)
+  {
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+  }
+  
+  int idx = indexPath.row;
+  
+  CX_ASSERT (idx < s_settings.cityCount);
+  CX_ASSERT (s_settings.cityNames);
+  
+  const char *label = s_settings.cityNames [idx];
+  bool display = s_settings.cityDisplay [idx];
+  
+  cell.textLabel.text = [NSString stringWithCString:label encoding:NSASCIIStringEncoding];
+  cell.selectionStyle = UITableViewCellSelectionStyleNone;
+  cell.accessoryType = display ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+  
+  return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  int idx = indexPath.row;
+  UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+  
+  CX_ASSERT (cell);
+  CX_ASSERT (idx < s_settings.cityCount);
+  
+  bool display = !s_settings.cityDisplay [idx];
+  s_settings.cityDisplay [idx] = display;
+  
+  cell.accessoryType = display ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation TemperatureTableViewController
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+  [[self navigationController] popToRootViewControllerAnimated:FALSE];
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  int oldUnit = s_settings.tempUnit;
+  int newUnit = indexPath.row;
+  
+  if (newUnit != oldUnit)
+  {
+    UITableViewCell *newCell = [tableView cellForRowAtIndexPath:indexPath];
+    UITableViewCell *oldCell = [tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:oldUnit inSection:0]];
+    
+    CX_ASSERT (newCell);
+    CX_ASSERT (oldCell);
+    
+    newCell.accessoryType = UITableViewCellAccessoryCheckmark;
+    oldCell.accessoryType = UITableViewCellAccessoryNone;
+    
+    s_settings.tempUnit = newUnit;
+  }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+  return (section == 0) ? SETTINGS_TEMP_TABLE_DATA_ROWS : 0;
+}
+
+- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  NSString *identifier = @"TempCell";
+  
+  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+  
+  if (cell == nil)
+  {
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+  }
+  
+  int idx = indexPath.row;
+  
+  cell.selectionStyle = UITableViewCellSelectionStyleNone;
+  cell.accessoryType = (s_settings.tempUnit == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+  cell.textLabel.text = [NSString stringWithCString:s_tempTableData [idx] encoding:NSASCIIStringEncoding];
+  
+  return cell;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation ClockTableViewController
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+  [[self navigationController] popToRootViewControllerAnimated:FALSE];
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  int oldUnit = s_settings.clockFmt;
+  int newUnit = indexPath.row;
+  
+  if (newUnit != oldUnit)
+  {
+    UITableViewCell *newCell = [tableView cellForRowAtIndexPath:indexPath];
+    UITableViewCell *oldCell = [tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:oldUnit inSection:0]];
+    
+    CX_ASSERT (newCell);
+    CX_ASSERT (oldCell);
+    
+    newCell.accessoryType = UITableViewCellAccessoryCheckmark;
+    oldCell.accessoryType = UITableViewCellAccessoryNone;
+    
+    s_settings.clockFmt = newUnit;
+  }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+  return (section == 0) ? SETTINGS_CLOCK_TABLE_DATA_ROWS : 0;
+}
+
+- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  NSString *identifier = @"ClockCell";
+  
+  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+  
+  if (cell == nil)
+  {
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+  }
+  
+  int idx = indexPath.row;
+  
+  cell.selectionStyle = UITableViewCellSelectionStyleNone;
+  cell.accessoryType = (s_settings.clockFmt == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+  cell.textLabel.text = [NSString stringWithCString:s_clockTableData [idx] encoding:NSASCIIStringEncoding];
+  
+  return cell;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation RootTableViewController
+
+- (id) initWithStyle:(UITableViewStyle)style
+{
+  self = [super initWithStyle:style];
+  
+  if (self)
+  {
+    _timeSwitch = [[UISwitch alloc] init];
+    _temperatureViewController = [[TemperatureTableViewController alloc] initWithStyle:UITableViewStylePlain];
+    _cityViewController = [[CityTableViewController alloc] initWithStyle:UITableViewStylePlain];
+    _clockViewController = [[ClockTableViewController alloc] initWithStyle:UITableViewStylePlain];
+    _navCtrlr = [[UINavigationController alloc] initWithRootViewController:self];
+    
+    CGRect frame = [[self tableView] frame];
+    frame.size.width = 400.0f;
+    frame.size.height = 300.0f;
+    [[self tableView] setFrame:frame];
+  }
+  
+  return self;
+}
+
+- (void) dealloc
+{
+  [_cityViewController release];
+  [_temperatureViewController release];
+  [_clockViewController release];
+  [_timeSwitch release];
+  [_navCtrlr release];
+  
+  [super dealloc];
+}
+
+- (void)switchTouched
+{
+  bool showTime = !s_settings.showTime;
+  s_settings.showTime = showTime;
+  [_timeSwitch setOn:showTime animated:YES];
+}
+
+- (void)viewDidLoad
+{
+  [_timeSwitch addTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)viewDidUnload
+{
+  [_timeSwitch removeTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+  [[self tableView] reloadData];
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  switch (indexPath.row)
+  {
+    case 0: // edit cities
+    {
+      [_navCtrlr pushViewController:_cityViewController animated:YES];
+      break;
+    }
+      
+    case 1: // temperature unit
+    {
+      [_navCtrlr pushViewController:_temperatureViewController animated:YES];
+      break;
+    }
+      
+    case 2: // clock
+    {
+      [_navCtrlr pushViewController:_clockViewController animated:YES];
+      break;
+    }
+      
+    case 3: // show time
+    {
+      break;
+    }
+      
+    default:
+      break;
+  }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+  return (section == 0) ? SETTINGS_ROOT_TABLE_DATA_ROWS : 0;
+}
+
+- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  NSString *identifier = @"RootCell";
+  
+  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+  
+  if (cell == nil)
+  {
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+  }
+  
+  int idx = indexPath.row;
+  
+  switch (idx)
+  {
+    case 0: // cities
+    {
+      cell.selectionStyle = UITableViewCellSelectionStyleNone;
+      cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+      break;
+    }
+      
+    case 1: // temperature unit
+    {
+      cell.selectionStyle = UITableViewCellSelectionStyleNone;
+      cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+      cell.detailTextLabel.text = [NSString stringWithCString:s_tempTableData [s_settings.tempUnit] encoding:NSASCIIStringEncoding];
+      break;
+    }
+      
+    case 2: // clock
+    {
+      cell.selectionStyle = UITableViewCellSelectionStyleNone;
+      cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+      cell.detailTextLabel.text = [NSString stringWithCString:s_clockTableData [s_settings.clockFmt] encoding:NSASCIIStringEncoding];
+      break;
+    }
+      
+    case 3: // show time
+    {
+      [_timeSwitch setOn:s_settings.showTime];
+      
+      cell.accessoryView = _timeSwitch;
+      cell.selectionStyle = UITableViewCellSelectionStyleNone;
+      cell.accessoryType = UITableViewCellAccessoryNone;
+      break;
+    }
+      
+    default:
+    {
+      CX_FATAL_ERROR ("invalid row");
+      break;
+    }
+  }
+  
+  cell.textLabel.text = [NSString stringWithCString:s_rootTableData [idx] encoding:NSASCIIStringEncoding];
+  
+#if 0
+  cell.contentView.backgroundColor = [UIColor clearColor];
+  cell.backgroundColor = [UIColor clearColor];
+  UIView *bgView = [[UIView alloc] init];
+  [[bgView layer] setCornerRadius:10.0f];
+  [bgView setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.25f]];
+  cell.backgroundView = bgView;
+#endif
+  
+  return cell;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////

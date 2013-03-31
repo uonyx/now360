@@ -161,7 +161,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
 #define ENABLE_TOPOGRAPHY 1
 #define ENABLE_CLOUDS 1
 #define ENABLE_ATMOSPHERE 1
-#define BUMP_MAPPED_CLOUDS 1
+#define BUMP_MAPPED_CLOUDS 0
 #define FAST_LIGHT_ORBIT 1
 
 static struct earth_visual_t *earth_visual_create (float radius, int slices, int parallels)
@@ -179,13 +179,13 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   
   cx_material *material = cx_material_create ("earth");
   
+  cx_texture *specTexture = cx_texture_create_from_file ("data/maps/2048-spec.png");
+  cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal.png");
+  //cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal-30.png");
+  cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
   //cx_texture *texture   = cx_texture_create_from_file ("data/textures/earthmap1k.png");
   //cx_texture *texture     = cx_texture_create_from_file ("data/maps/4096-clean.png");
   //cx_texture *texture     = cx_texture_create_from_file ("data/maps/4096-diff.png");
-  cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
-  cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal.png");
-  //cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal-30.png");
-  cx_texture *specTexture = cx_texture_create_from_file ("data/maps/2048-spec.png");
   
   cx_material_set_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
   cx_material_set_texture (material, specTexture, CX_MATERIAL_TEXTURE_SPECULAR);
@@ -227,9 +227,9 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   
   float radius1 = radius + 0.01f;
 #if BUMP_MAPPED_CLOUDS
-  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PTNTB);
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 32, 16, CX_VERTEX_FORMAT_PTNTB);
 #else
-  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PTN);
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 30, 15, CX_VERTEX_FORMAT_PTN);
 #endif
   
   visual->mesh [1] = cx_mesh_create (sphere1, shader1, material1);
@@ -238,7 +238,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   //////////////////////////////////////////////////////////////////////////////////////////
 #if ENABLE_ATMOSPHERE
   float radius2 = radius + 0.02f;
-  cx_vertex_data *sphere2 = cx_vertex_data_create_sphere (radius2, (short) slices, (short) parallels, CX_VERTEX_FORMAT_PN);
+  cx_vertex_data *sphere2 = cx_vertex_data_create_sphere (radius2, 96, 48, CX_VERTEX_FORMAT_PN);
   
   cx_shader *shader2 = cx_shader_create ("atmos", "data/shaders");
   cx_material *material2 = cx_material_create ("atmos");
@@ -254,9 +254,19 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-earth_t *earth_create (const char *filename, float radius, int slices, int parallels)
+earth_t *earth_create (const char *filename)
 {
   earth_t *earth = (earth_t *) cx_malloc (sizeof (earth_t));
+  
+  float radius = 1.0f;
+#if 1
+  // ipad 2 configuration
+  int slices = 64;
+  int parallels = 32;
+#else
+  int slices = 128;
+  int parallels = 64;
+#endif
   
   // create earth data    
   earth->data = earth_data_create (filename, radius, slices, parallels);
@@ -299,7 +309,12 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
   cx_vec4 eyePos, lightPos;
   
   cx_colour ambient, diffuse, specular;
-  float shininess;
+  float shininess = 0.0f;
+  
+  CX_REFERENCE_UNUSED_VARIABLE (ambient);
+  CX_REFERENCE_UNUSED_VARIABLE (diffuse);
+  CX_REFERENCE_UNUSED_VARIABLE (specular);
+  CX_REFERENCE_UNUSED_VARIABLE (shininess);
   
   /////////////////////////////
   // mvp matrix
@@ -415,12 +430,6 @@ void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye
     cx_mesh *mesh1 = earth->visual->mesh [1];
     
     cx_shader_begin (mesh1->shader);
-    
-  #if !BUMP_MAPPED_CLOUDS
-    cx_mat3x3 normalMatrix;
-    cx_mat3x3_identity (&normalMatrix);
-    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_N, &normalMatrix);
-  #endif
     
     cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
     cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_LIGHT_POSITION, &lightPos);

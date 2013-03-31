@@ -14,9 +14,7 @@ void main (void)
 {
   lowp vec4 colour = texture2D (u_sampler, v_texcoord);
   
-  colour.r = v_colour.r;
-  colour.g = v_colour.g;
-  colour.b = v_colour.b;
+  colour.rgb = v_colour.rgb;
   colour.a *= v_colour.a;
   
   gl_FragColor = colour;

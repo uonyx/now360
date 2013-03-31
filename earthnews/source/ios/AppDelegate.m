@@ -64,6 +64,13 @@
      */
 }
 
+- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
+{
+  // release any cached data, images, etc that aren't in use
+  
+  app_on_memory_warning ();
+}
+
 - (void)application:(UIApplication *)application didChangeStatusBarOrientation:(UIInterfaceOrientation)oldStatusBarOrientation
 {
 }

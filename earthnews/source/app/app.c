@@ -190,7 +190,7 @@ static cx_thread_exit_status app_init_load (void *userdata)
   // earth data
   //
   
-  s_earth = earth_create ("data/earth_data.json", 1.0f, 128, 64);
+  s_earth = earth_create ("data/earth_data.json");
   
   settings_set_city_names (s_earth->data->names, s_earth->data->count);
   
@@ -249,7 +249,7 @@ static cx_thread_exit_status app_init_load (void *userdata)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void app_init (void *rootvc, void *gctx, float width, float height)
+void app_init (void *rootvc, void *gctx, int width, int height)
 { 
   CX_ASSERT (rootvc);
   
@@ -259,9 +259,14 @@ void app_init (void *rootvc, void *gctx, float width, float height)
   
   cx_engine_init_params params;
   memset (&params, 0, sizeof (params));
-  params.screenWidth = (int) width;
-  params.screenHeight = (int) height;
-  params.graphicsContext = gctx;
+  
+  params.graphics.screenWidth = width;
+  params.graphics.screenHeight = height;
+  params.graphics.context = gctx;
+  
+  params.http.cacheMemSizeMb = 2;
+  params.http.cacheDiskSizeMb = 8;
+  params.http.clearCache = true;
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
@@ -817,12 +822,16 @@ static void app_update_camera (float deltaTime)
   s_rotAngle.x += (rotAddx * deltaTime * rotSpeedx);
   s_rotAngle.y += (rotAddy * deltaTime * rotSpeedy);
   
-  s_rotAngle.x = fmodf (s_rotAngle.x, 360.0f);
-  s_rotAngle.y = cx_clamp (s_rotAngle.y, -89.9f, 89.9f);
+  
+  float rotx = fmodf (s_rotAngle.x, 360.0f);
+  float roty = cx_clamp (s_rotAngle.y, -89.9f, 89.9f);
+  
+  //s_rotAngle.x = fmodf (s_rotAngle.x, 360.0f);
+  //s_rotAngle.y = cx_clamp (s_rotAngle.y, -89.9f, 89.9f);
 #endif
   
-  float rotx = s_rotAngle.x;
-  float roty = s_rotAngle.y;
+  //float rotx = s_rotAngle.x;
+  //float roty = s_rotAngle.y;
   
 #else // OLD_ROTATION
   
@@ -1437,7 +1446,9 @@ static void app_render_2d (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &view);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
+#if 0
   util_render_fps ();
+#endif
   
   util_status_bar_render ();
   
@@ -2164,6 +2175,21 @@ void app_on_foreground (void)
       util_activity_indicator_set_active (true);
     }
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void app_on_memory_warning (void)
+{
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  
+  cx_http_clear_cache ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

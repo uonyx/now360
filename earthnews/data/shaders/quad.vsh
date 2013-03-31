@@ -5,13 +5,15 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-uniform mediump mat4 u_mvpmatrix;
-uniform mediump float u_z;
+precision lowp float;
 
-attribute mediump vec2 a_position;
-attribute lowp vec4 a_colour;
+uniform mat4 u_mvpmatrix;
+uniform float u_z;
 
-varying lowp vec4 v_colour;
+attribute vec2 a_position;
+attribute vec4 a_colour;
+
+varying vec4 v_colour;
 
 void main (void)
 {

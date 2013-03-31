@@ -32,42 +32,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void audio_sndfx_init (void);
-static void audio_sndfx_deinit (void);
-static void audio_music_init (void);
-static void audio_music_deinit (void);
-static bool audio_music_update_queue (MPMediaItemCollection *collection);
-static void audio_music_picker (bool show, audio_music_picked_callback fn);
-static void audio_music_playback_state_changed (void);
-static void audio_music_now_playing_state_changed (void);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 @interface MusicPickerDelegate : UIViewController<MPMediaPickerControllerDelegate>
 {
 }
-@end
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-@implementation MusicPickerDelegate
-
-- (void) mediaPicker:(MPMediaPickerController *)mediaPicker didPickMediaItems:(MPMediaItemCollection *)mediaItemCollection
-{
-  audio_music_update_queue (mediaItemCollection);
-      
-  audio_music_picker (false, NULL);
-}
-
-- (void) mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker
-{
-  audio_music_picker (false, NULL);
-}
-
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,29 +53,6 @@ static void audio_music_now_playing_state_changed (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation MusicNotifcation
-
-- (void) handleNowPlayingItemChanged:(NSNotification *)notification
-{
-  audio_music_now_playing_state_changed ();
-}
-
-- (void) handlePlaybackStateChanged:(NSNotification *)notification
-{
-  audio_music_playback_state_changed ();
-}
-
-- (void) handleVolumeChanged:(NSNotification *)notification
-{
-  CX_DEBUG_BREAKABLE_EXPR;
-}
-
-@end
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 @interface MusicPickerPopupBackground : UIPopoverBackgroundView
 {
 }
@@ -121,52 +65,13 @@ static void audio_music_now_playing_state_changed (void);
 +(CGFloat)arrowBase;
 @end
 
-@implementation MusicPickerPopupBackground
-
-@synthesize arrowOffset, arrowDirection;
-
--(id)initWithFrame:(CGRect)frame
-{
-  if (self = [super initWithFrame:frame])
-  {
-    self.backgroundColor = [UIColor colorWithWhite:0.1f alpha:0.5f];
-    self.arrowDirection = 0;
-    self.arrowOffset = 0.0f;
-  }
-
-  return self;
-}
-
-+(UIEdgeInsets)contentViewInsets
-{
-  return UIEdgeInsetsMake (10.0f, 10.0f, 10.0f, 10.0f);
-}
-
-+(CGFloat)arrowHeight
-{
-  return 30.0f;
-}
-
-+(CGFloat)arrowBase
-{
-  return 30.0f;
-}
-
-@end
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef struct 
-{
-  const char *filepath;
-  SystemSoundID sndId;
-} audio_soundfx_info_t;
 
 static bool s_initialised = false;
 static bool s_pickerActive = false;
-static UIViewController *s_rootViewController = nil;
+static UIViewController *s_rootViewCtrlr = nil;
 static MPMusicPlayerController *s_musicPlayer = nil;
 static MPMediaPickerController *s_musicPicker = nil;
 static MusicPickerDelegate *s_musicPickerDelegate = nil;
@@ -180,12 +85,27 @@ static UIPopoverController *s_musicPopOver = nil;
 #if PLAYBACK_STATE_HACK_FIX
 static bool s_musicPlaying = false;
 #endif
-audio_soundfx_info_t s_sndfxs [NUM_AUDIO_SOUNDFX] = 
+
+SystemSoundID s_sndfxIds [NUM_AUDIO_SOUNDFX];
+const char *s_sndfxPaths [NUM_AUDIO_SOUNDFX] =
 {
-  { "data/soundfx/beep-23.mp3", 0 },    // AUDIO_SOUNDFX_CLICK0
-  { "data/soundfx/button-46.mp3", 0 },  // AUDIO_SOUNDFX_CLICK1
-  { "data/soundfx/button-50.mp3", 0 },  // AUDIO_SOUNDFX_CLICK2
+  "data/soundfx/beep-23.mp3",    // AUDIO_SOUNDFX_CLICK0
+  "data/soundfx/button-46.mp3",  // AUDIO_SOUNDFX_CLICK1
+  "data/soundfx/button-50.mp3",  // AUDIO_SOUNDFX_CLICK2
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void audio_sndfx_init (void);
+static void audio_sndfx_deinit (void);
+static void audio_music_init (void);
+static void audio_music_deinit (void);
+static bool audio_music_update_queue (MPMediaItemCollection *collection);
+static void audio_music_picker (bool show, audio_music_picked_callback fn);
+static void audio_music_playback_state_changed (void);
+static void audio_music_now_playing_state_changed (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +116,7 @@ bool audio_init (const void *rootvc)
   CX_ASSERT (!s_initialised);
   CX_ASSERT (rootvc);
   
-  s_rootViewController = (UIViewController *) rootvc;
+  s_rootViewCtrlr = (UIViewController *) rootvc;
   
   audio_sndfx_init ();
   
@@ -219,6 +139,8 @@ void audio_deinit (void)
   
   audio_music_deinit ();
   
+  s_rootViewCtrlr = nil;
+  
   s_initialised = false;
 }
 
@@ -230,7 +152,7 @@ void audio_soundfx_play (audio_soundfx_t sndfx)
 {
   CX_ASSERT ((sndfx > AUDIO_SOUNDFX_INVALID) && (sndfx < NUM_AUDIO_SOUNDFX));
   
-  SystemSoundID sndId = s_sndfxs [sndfx].sndId;
+  SystemSoundID sndId = s_sndfxIds [sndfx];
   
   AudioServicesPlaySystemSound (sndId);
 }
@@ -386,7 +308,7 @@ static void audio_sndfx_init (void)
 {  
   for (int i = 0; i < NUM_AUDIO_SOUNDFX; ++i)
   {
-    const char *path = s_sndfxs [i].filepath;
+    const char *path = s_sndfxPaths [i];
     NSString *filepath = [NSString stringWithCString:path encoding:NSASCIIStringEncoding];
     
     NSURL *fileURL = [[NSBundle mainBundle] URLForResource:filepath withExtension:nil];
@@ -401,7 +323,7 @@ static void audio_sndfx_init (void)
     CX_ASSERT (error == kAudioServicesNoError);
     CX_REFERENCE_UNUSED_VARIABLE (error);
     
-    s_sndfxs [i].sndId = sndId;
+    s_sndfxIds [i] = sndId;
   }
 }
 
@@ -413,7 +335,7 @@ static void audio_sndfx_deinit (void)
 {
   for (int i = 0; i < NUM_AUDIO_SOUNDFX; ++i)
   {
-    SystemSoundID sndId = s_sndfxs [i].sndId;
+    SystemSoundID sndId = s_sndfxIds [i];
     AudioServicesDisposeSystemSoundID (sndId);
   }
 }
@@ -574,7 +496,7 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
     if (!s_pickerActive)
     {
 #if USE_MUSIC_PICKER_POP_UP
-      UIView *parentView = s_rootViewController.view;
+      UIView *parentView = s_rootViewCtrlr.view;
       
       float viewPosX = parentView.bounds.origin.x;
       float viewPosY = parentView.bounds.origin.y;
@@ -591,7 +513,7 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
 #else
       [s_musicPicker setModalTransitionStyle:UIModalTransitionStyleFlipHorizontal];
       [s_musicPicker setModalPresentationStyle:UIModalPresentationFormSheet];
-      [s_rootViewController presentViewController:s_musicPicker animated:YES completion:nil];
+      [s_rootViewCtrlr presentViewController:s_musicPicker animated:YES completion:nil];
 #endif
       
       s_pickerActive = true;
@@ -607,7 +529,7 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
 #if USE_MUSIC_PICKER_POP_UP
       [s_musicPopOver dismissPopoverAnimated:YES];
 #else
-      [s_rootViewController dismissViewControllerAnimated:YES completion:nil];
+      [s_rootViewCtrlr dismissViewControllerAnimated:YES completion:nil];
 #endif
       
       s_pickerActive = false;
@@ -698,3 +620,86 @@ static void audio_music_now_playing_state_changed (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation MusicPickerDelegate
+
+- (void) mediaPicker:(MPMediaPickerController *)mediaPicker didPickMediaItems:(MPMediaItemCollection *)mediaItemCollection
+{
+  audio_music_update_queue (mediaItemCollection);
+  
+  audio_music_picker (false, NULL);
+}
+
+- (void) mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker
+{
+  audio_music_picker (false, NULL);
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation MusicNotifcation
+
+- (void) handleNowPlayingItemChanged:(NSNotification *)notification
+{
+  audio_music_now_playing_state_changed ();
+}
+
+- (void) handlePlaybackStateChanged:(NSNotification *)notification
+{
+  audio_music_playback_state_changed ();
+}
+
+- (void) handleVolumeChanged:(NSNotification *)notification
+{
+  CX_DEBUG_BREAKABLE_EXPR;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation MusicPickerPopupBackground
+
+@synthesize arrowOffset, arrowDirection;
+
+-(id)initWithFrame:(CGRect)frame
+{
+  if (self = [super initWithFrame:frame])
+  {
+    self.backgroundColor = [UIColor colorWithWhite:0.1f alpha:0.5f];
+    self.arrowDirection = 0;
+    self.arrowOffset = 0.0f;
+  }
+  
+  return self;
+}
+
++(UIEdgeInsets)contentViewInsets
+{
+  return UIEdgeInsetsMake (10.0f, 10.0f, 10.0f, 10.0f);
+}
+
++(CGFloat)arrowHeight
+{
+  return 30.0f;
+}
+
++(CGFloat)arrowBase
+{
+  return 30.0f;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
