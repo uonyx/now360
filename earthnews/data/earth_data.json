@@ -1,539 +1,539 @@
  [
   {
-  "display": false,
   "name": "Abidjan",
   "news": "Ivory Coast",
   "weather": "1339615",
+  "utcoffset": 0,
   "location": {
   "latitude": 5.3363889,
   "longitude": -4.0266667
   }
   },
   {
-  "display": false,
   "name": "Accra",
   "news": "Ghana",
   "weather": "1326075",
+  "utcoffset": 0,
   "location": {
   "latitude": 5.555717,
   "longitude": -0.196306
   }
   },
   {
-  "display": false,
   "name": "Algiers",
   "news": "Algeria",
   "weather": "1253079",
+  "utcoffset": 100,
   "location": {
   "latitude": 36.752887,
   "longitude": 3.042048
   }
   },
   {
-  "display": false,
   "name": "Amsterdam",
   "news": "Netherlands",
   "weather": "727232",
+  "utcoffset": 100,
   "location": {
   "latitude": 52.3738007,
   "longitude": 4.8909347
   }
   },
   {
-  "display": false,
   "name": "Athens",
   "news": "Greece",
   "weather": "946738",
+  "utcoffset": 200,
   "location": {
   "latitude": 37.97918,
   "longitude": 23.716647
   }
   },
   {
-  "display": false,
   "name": "Bangkok",
   "news": "Thailand",
   "weather": "1225448",
+  "utcoffset": 700,
   "location": {
   "latitude": 13.7505633,
   "longitude": 100.5030358
   }
   },
   {
-  "display": true,
   "name": "Beijing",
   "news": "Beijing",
   "weather": "2151330",
+  "utcoffset": 800,
   "location": {
   "latitude": 39.904667,
   "longitude": 116.408198
   }
   },
   {
-  "display": false,
   "name": "Belgrade",
   "news": "Serbia",
   "weather": "532697",
+  "utcoffset": 100,
   "location": {
   "latitude": 44.802416,
   "longitude": 20.465601
   }
   },
   {
-  "display": false,
   "name": "Berlin",
   "news": "Germany",
   "weather": "638242",
+  "utcoffset": 100,
   "location": {
   "latitude": 52.5234051,
   "longitude": 13.4113999
   }
   },
   {
-  "display": false,
   "name": "Bucharest",
   "news": "Romania",
   "weather": "868274",
+  "utcoffset": 200,
   "location": {
   "latitude": 44.430481,
   "longitude": 26.12298
   }
   },
   {
-  "display": false,
   "name": "Budapest",
   "news": "Hungary",
   "weather": "804365",
+  "utcoffset": 100,
   "location": {
   "latitude": 47.4984056,
   "longitude": 19.0407578
   }
   },
   {
-  "display": true,
   "name": "Buenos Aires",
   "news": "Argentina",
   "weather": "468739",
+  "utcoffset": -300,
   "location": {
   "latitude": -34.6084175,
   "longitude": -58.3731613
   }
   },
   {
-  "display": true,
   "name": "Cairo",
   "news": "Egypt",
   "weather": "1521894",
+  "utcoffset": 200,
   "location": {
   "latitude": 30.064742,
   "longitude": 31.249509
   }
   },
   {
-  "display": false,
   "name": "Chicago",
   "news": "Chicago",
   "weather": "2379574",
+  "utcoffset": -600,
   "location": {
   "latitude": 41.859218,
   "longitude": -87.638099
   }
   },
   {
-  "display": false,
   "name": "Copenhagen",
   "news": "Denmark",
   "weather": "554890",
+  "utcoffset": 100,
   "location": {
   "latitude": 55.6762944,
   "longitude": 12.5681157
   }
   },
   {
-  "display": false,
   "name": "Dakar",
   "news": "Senegal",
   "weather": "1411986",
+  "utcoffset": 0,
   "location": {
   "latitude": 14.75,
   "longitude": -17.3333333
   }
   },
   {
-  "display": true,
   "name": "Delhi",
   "news": "India",
   "weather": "2295019",
+  "utcoffset": 530,
   "location": {
   "latitude": 28.636217,
   "longitude": 77.225495
   }
   },
   {
-  "display": true,
   "name": "Dhaka",
   "news": "Bangladesh",
   "weather": "1915035",
+  "utcoffset": 600,
   "location": {
   "latitude": 23.709921,
   "longitude": 90.407143
   }
   },
   {
-  "display": false,
   "name": "Dubai",
   "news": "United Arab Emirates",
   "weather": "1940345",
+  "utcoffset": 400,
   "location": {
   "latitude": 25.2722929,
   "longitude": 55.316197
   }
   },
   {
-  "display": false,
   "name": "Dublin",
   "news": "Ireland",
   "weather": "560743",
+  "utcoffset": 100,
   "location": {
   "latitude": 53.344104,
   "longitude": -6.2674937
   }
   },
   {
-  "display": false,
   "name": "Helsinki",
   "news": "Finland",
   "weather": "565346",
+  "utcoffset": 200,
   "location": {
   "latitude": 60.1690059,
   "longitude": 24.9606128
   }
   },
   {
-  "display": false,
   "name": "Houston",
   "news": "Houston",
   "weather": "2424766",
+  "utcoffset": -500,
   "location": {
   "latitude": 29.762307,
   "longitude": -95.361339
   }
   },
   {
-  "display": true,
   "name": "Istanbul",
   "news": "Turkey",
   "weather": "2344116",
+  "utcoffset": 200,
   "location": {
   "latitude": 41.012379,
   "longitude": 28.975926
   }
   },
   {
-  "display": true,
   "name": "Jakarta",
   "news": "Indonesia",
   "weather": "1047378",
+  "utcoffset": 700,
   "location": {
   "latitude": -6.211544,
   "longitude": 106.845172
   }
   },
   {
-  "display": true,
   "name": "Johannesburg",
   "news": "South Africa",
   "weather": "1582504",
+  "utcoffset": 200,
   "location": {
   "latitude": -26.201452,
   "longitude": 28.045488
   }
   },
   {
-  "display": true,
   "name": "Karachi",
   "news": "Pakistan",
   "weather": "2211096",
+  "utcoffset": 500,
   "location": {
   "latitude": 24.893379,
   "longitude": 67.028061
   }
   },
   {
-  "display": false,
   "name": "Kinshasa",
   "news": "DR Congo",
   "weather": "1290062",
+  "utcoffset": 0,
   "location": {
   "latitude": -4.320836,
   "longitude": 15.29866
   }
   },
   {
-  "display": false,
   "name": "Kuala Lumpur",
   "news": "Malaysia",
   "weather": "1154781",
+  "utcoffset": 100,
   "location": {
   "latitude": 3.1268661,
   "longitude": 101.6879791
   }
   },
   {
-  "display": true,
   "name": "Lagos",
   "news": "Nigeria",
   "weather": "1398823",
+  "utcoffset": 100,
   "location": {
   "latitude": 6.441158,
   "longitude": 3.417877
   }
   },
   {
-  "display": false,
   "name": "Lima",
   "news": "Peru",
   "weather": "418440",
+  "utcoffset": -500,
   "location": {
   "latitude": -12.093084,
   "longitude": -77.046491
   }
   },
   {
-  "display": true,
   "name": "London",
-  "news": "London",
+  "news": "England",
   "weather": "44418",
+  "utcoffset": 0,
   "location": {
   "latitude": 51.5001524,
   "longitude": -0.1262362
   }
   },
   {
-  "display": true,
   "name": "Los Angeles",
   "news": "Los angeles",
   "weather": "2442047",
+  "utcoffset": -800,
   "location": {
   "latitude": 34.0522342,
   "longitude": -118.2436849
   }
   },
   {
-  "display": false,
   "name": "Madrid",
   "news": "Spain",
   "weather": "766273",
+  "utcoffset": 100,
   "location": {
   "latitude": 40.4166909,
   "longitude": -3.7003454
   }
   },
   {
-  "display": true,
   "name": "Manila",
   "news": "Philippines",
   "weather": "1199477",
+  "utcoffset": 800,
   "location": {
   "latitude": 14.6010326,
   "longitude": 120.9761599
   }
   },
   {
-  "display": true,
   "name": "Mexico City",
   "news": "Mexico",
   "weather": "116545",
+  "utcoffset": -600,
   "location": {
   "latitude": 19.4270499,
   "longitude": -99.1275711
   }
   },
   {
-  "display": false,
   "name": "Montreal",
   "news": "Montreal",
   "weather": "3534",
+  "utcoffset": -500,
   "location": {
   "latitude": 45.545447,
   "longitude": -73.639076
   }
   },
   {
-  "display": true,
   "name": "Moscow",
   "news": "Moscow",
   "weather": "2122265",
+  "utcoffset": 400,
   "location": {
   "latitude": 55.755786,
   "longitude": 37.617633
   }
   },
   {
-  "display": true,
   "name": "Mumbai",
   "news": "Mumbai",
   "weather": "2295411",
+  "utcoffset": 530,
   "location": {
   "latitude": 19.0177319,
   "longitude": 72.8560135
   }
   },
   {
-  "display": false,
   "name": "Nairobi",
   "news": "Kenya",
   "weather": "1528488",
+  "utcoffset": 300,
   "location": {
   "latitude": -1.274359,
   "longitude": 36.813106
   }
   },
   {
-  "display": true,
   "name": "New York",
   "news": "New york",
   "weather": "2459115",
+  "utcoffset": -500,
   "location": {
   "latitude": 40.7142691,
   "longitude": -74.0059729
   }
   },
   {
-  "display": true,
   "name": "Paris",
   "news": "France",
   "weather": "615702",
+  "utcoffset": 100,
   "location": {
   "latitude": 48.8566667,
   "longitude": 2.3509871
   }
   },
   {
-  "display": false,
   "name": "Rio de Janeiro",
   "news": "Brazil",
   "weather": "455825",
+  "utcoffset": -300,
   "location": {
   "latitude": -22.9035393,
   "longitude": -43.2095869
   }
   },
   {
-  "display": false,
   "name": "Rome",
   "news": "Italy",
   "weather": "721943",
+  "utcoffset": 100,
   "location": {
   "latitude": 41.8954656,
   "longitude": 12.4823243
   }
   },
   {
-  "display": false,
   "name": "San Francisco",
   "news": "San francisco",
   "weather": "2487956",
+  "utcoffset": -800,
   "location": {
   "latitude": 37.7749295,
   "longitude": -122.4194155
   }
   },
   {
-  "display": true,
   "name": "Seoul",
   "news": "South korea",
   "weather": "1132599",
+  "utcoffset": 900,
   "location": {
   "latitude": 37.566535,
   "longitude": 126.9779692
   }
   },
   {
-  "display": true,
   "name": "Sao Paulo",
   "news": "Sao paulo",
   "weather": "455827",
+  "utcoffset": -300,
   "location": {
   "latitude": -23.5436876,
   "longitude": -46.636948
   }
   },
   {
-  "display": true,
   "name": "Shanghai",
   "news": "Shanghai",
   "weather": "2151849",
+  "utcoffset": 800,
   "location": {
   "latitude": 31.231717,
   "longitude": 121.475911
   }
   },
   {
-  "display": true,
   "name": "Singapore",
   "news": "Singapore",
   "weather": "1062617",
+  "utcoffset": 800,
   "location": {
   "latitude": 1.355274,
   "longitude": 103.823154
   }
   },
   {
-  "display": true,
   "name": "Stockholm",
   "news": "Sweden",
   "weather": "906057",
+  "utcoffset": 100,
   "location": {
   "latitude": 59.3329676,
   "longitude": 18.0644475
   }
   },
   {
-  "display": false,
   "name": "Suva",
   "news": "Fiji",
   "weather": "1064103",
+  "utcoffset": 1200,
   "location": {
   "latitude": -18.141674,
   "longitude": 178.441839
   }
   },
   {
-  "display": true,
   "name": "Sydney",
   "news": "Australia",
   "weather": "1105779",
+  "utcoffset": 1000,
   "location": {
   "latitude": -33.8775536,
   "longitude": 151.2159773
   }
   },
   {
-  "display": false,
   "name": "Tehran",
   "news": "Iran",
   "weather": "2251945",
+  "utcoffset": 330,
   "location": {
   "latitude": 35.696216,
   "longitude": 51.422945
   }
   },
   {
-  "display": true,
   "name": "Tokyo",
   "news": "Japan",
   "weather": "1118370",
+  "utcoffset": 900,
   "location": {
   "latitude": 35.6894875,
   "longitude": 139.6917064
   }
   },
   {
-  "display": false,
   "name": "Wellington",
   "news": "New Zealand",
   "weather": "2351310",
+  "utcoffset": 1200,
   "location": {
   "latitude": -41.2609884,
   "longitude": 174.7580977

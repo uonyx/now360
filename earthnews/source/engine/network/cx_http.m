@@ -106,7 +106,7 @@ bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache
   CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared memory cache size: %u", sharedCacheMemory);
   CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared disk cache size: %u", sharedCacheDisk);
   
-  cxu32 newCacheMemory = cx_min (sharedCacheMemory, (1024 * 1024 * cacheMemSizeMb));
+  cxu32 newCacheMemory = cx_max (sharedCacheMemory, (1024 * 1024 * cacheMemSizeMb));
   cxu32 newCacheDisk = cx_max (sharedCacheDisk, (1024 * 1024 * cacheDiskSizeMb));
   
   [[NSURLCache sharedURLCache] setMemoryCapacity:newCacheMemory];

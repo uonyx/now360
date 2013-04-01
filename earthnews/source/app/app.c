@@ -11,11 +11,11 @@
 #include "camera.h"
 #include "feeds.h"
 #include "earth.h"
-#include "browser.h"
 #include "worker.h"
 #include "ui_ctrlr.h"
 #include "audio.h"
 #include "settings.h"
+#include "webview.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,7 +79,6 @@ typedef struct
 
 static earth_t *s_earth = NULL;
 static camera_t *s_camera = NULL;
-static browser_rect_t s_browserRect;
 static render2d_t s_render2dInfo;
 
 #define NEW_ROTATION 1
@@ -266,7 +265,11 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   
   params.http.cacheMemSizeMb = 2;
   params.http.cacheDiskSizeMb = 8;
+#if CX_DEBUG
+  params.http.clearCache = false;
+#else
   params.http.clearCache = true;
+#endif
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
@@ -297,17 +300,10 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   
   
   //
-  // browser
+  // webview
   //
   
-  browser_init (rootvc);
-  
-  memset (&s_browserRect, 0, sizeof (s_browserRect));
-  
-  s_browserRect.width  = 778.0f;
-  s_browserRect.height = 620.0f;
-  s_browserRect.posX   = 0.0f + ((width - s_browserRect.width) * 0.5f);
-  s_browserRect.posY   = 0.0f + ((height - s_browserRect.height) * 0.5f);
+  webview_init (rootvc);
   
   //
   // camera
@@ -335,52 +331,6 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   cx_thread_monitor_init (&s_ldThreadMonitor);
   
   cx_thread_start (s_ldThread);
-  
-  //
-  // test code
-  //
-  
-#if 0
-  cx_file file0, file1, file2;
-  cx_file_load (&file0, "data/rss.txt");
-  cx_file_load (&file1, "data/twitter.txt");
-  cx_file_load (&file2, "data/weather2.txt");
-  
-  feed_news_t rssFeed;
-  memset (&rssFeed, 0, sizeof (feed_news_t));
-  feeds_news_parse (&rssFeed, file0.data, file0.size);
-  
-  feed_twitter_t tweets;
-  memset (&tweets, 0, sizeof (feed_twitter_t));
-  feeds_twitter_parse (&tweets, file1.data, file1.size);
-  
-  feed_weather_t weather;
-  memset(&weather, 0, sizeof (feed_weather_t));
-  feeds_weather_parse (&weather, file2.data, file2.size);
-  
-  feed_news_item_t *rssItem = rssFeed.items;
-  while (rssItem)
-  {
-    CX_DEBUGLOG_CONSOLE(1, "====rss=====");
-    CX_DEBUGLOG_CONSOLE(1, rssItem->date);
-    CX_DEBUGLOG_CONSOLE(1, rssItem->link);
-    CX_DEBUGLOG_CONSOLE(1, rssItem->title);
-    rssItem = rssItem->next;
-  }
-  
-  feed_twitter_tweet_t *twItem = tweets.items;
-  while (twItem)
-  {
-    CX_DEBUGLOG_CONSOLE(1, "===twitter===");
-    CX_DEBUGLOG_CONSOLE(1, twItem->date);
-    CX_DEBUGLOG_CONSOLE(1, twItem->userhandle);
-    CX_DEBUGLOG_CONSOLE(1, twItem->username);
-    CX_DEBUGLOG_CONSOLE(1, twItem->text);
-    twItem = twItem->next;
-  }
-  
-  CX_DEBUG_BREAKABLE_EXPR;
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -409,11 +359,6 @@ void app_view_resize (float width, float height)
   cx_gdi_set_screen_dimensions ((int) width, (int) height);
   
   ui_ctrlr_screen_resize (width, height);
-  
-  s_browserRect.width  = 778.0f;
-  s_browserRect.height = 620.0f;
-  s_browserRect.posX   = 0.0f + ((width - s_browserRect.width) * 0.5f);
-  s_browserRect.posY   = 0.0f + ((height - s_browserRect.height) * 0.5f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1146,6 +1091,7 @@ static void app_update_feeds_weather (void)
       {
         feed->reqStatus = FEED_REQ_STATUS_INVALID;
         s_currentWeatherCity++;
+        util_status_bar_set_msg (STATUS_BAR_MSG_SERVER_ERROR);
         break;
       }
         
@@ -1464,9 +1410,6 @@ static void app_render_2d (void)
   
   // render feeds
   app_render_2d_feeds ();
-  
-  // render browser
-  browser_render (&s_browserRect, 1.0f);
   
   // render fade
   app_render_2d_screen_fade ();
@@ -1796,9 +1739,13 @@ static void app_render_2d_earth (void)
 
 static void app_input_handle_touch_event (const input_touch_event *event)
 {
-  if (ui_ctrlr_settings_get_active ())
+  if (settings_ui_active ())
   {
     ui_ctrlr_settings_set_active (false);
+  }
+  else if (webview_active ())
+  {
+    //webview_hide ();
   }
   else if (audio_music_picker_active ())
   {
@@ -1849,112 +1796,100 @@ static void app_input_touch_began (float x, float y)
 {
   float sw = cx_gdi_get_screen_width ();
   float sh = cx_gdi_get_screen_height ();
-  
   float touchX = x * sw;
   float touchY = y * sh;
+
+  int oldSelectedCity = s_selectedCity;
+  int newSelectedCity = app_input_touch_earth (touchX, touchY, sw, sh);
   
-  if (browser_is_open ())
+  if (app_get_city_index_valid (newSelectedCity))
   {
-    if (!browser_handle_input (&s_browserRect, BROWSER_INPUT_TOUCH_BEGIN, touchX, touchY))
+    if (newSelectedCity != oldSelectedCity)
     {
-      bool closed = browser_close ();
-      CX_REFERENCE_UNUSED_VARIABLE (closed);
+      feed_news_t *oldFeedNews = &s_newsFeeds [oldSelectedCity];
+      feed_twitter_t *oldFeedTwitter = &s_twitterFeeds [oldSelectedCity];
+      
+      if (oldFeedNews->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
+      {
+        feeds_news_cancel_search (oldFeedNews);
+        util_activity_indicator_set_active (false);
+      }
+      
+      if (oldFeedTwitter->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
+      {
+        feeds_twitter_cancel_search (oldFeedTwitter);
+        util_activity_indicator_set_active (false);
+      }
+      
+      const char *query = s_earth->data->newsFeeds [newSelectedCity];
+      
+      feed_news_t *newFeedNews = &s_newsFeeds [newSelectedCity];
+      feed_twitter_t *newFeedTwitter = &s_twitterFeeds [newSelectedCity];
+      
+      if (newFeedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
+      {
+        feeds_twitter_search (newFeedTwitter, query);
+        util_activity_indicator_set_active (true);
+      }
+      
+      if (newFeedNews->reqStatus == FEED_REQ_STATUS_INVALID)
+      {
+        feeds_news_search (newFeedNews, query);
+        util_activity_indicator_set_active (true);
+      }
     }
+    
+    s_selectedCity = newSelectedCity;
+    
+#if NEW_ROTATION
+      
+    float diffx = 0.5f - x;
+    float diffy = 0.5f - y;
+    
+    CX_DEBUGLOG_CONSOLE (1, "diffx = %.4f, diffy = %.4f", diffx, diffy);
+    
+    float aspectRatio = sw / sh;
+    
+    float rotAddx = diffx * 90.0f * aspectRatio;
+    float rotAddy = diffy * 90.0f;
+    
+    s_rotTarget = s_rotAngle;
+    
+    s_rotTarget.x += rotAddx;
+    s_rotTarget.y += rotAddy;
+    
+    s_rotSpeedExp = CAMERA_ROTATION_SPEED_EXPONENT_CITY_SELECT;
+    
+#else
+    float aspectRatio = sw / sh;
+    
+    s_rotTouchEnd.x = 0.5f * sw * 0.25f * aspectRatio;
+    s_rotTouchEnd.y = 0.5f * sh * 0.25f;
+    s_rotTouchBegin.x = x * sw * 0.25f;
+    s_rotTouchBegin.y = y * sh * 0.25f;
+#endif
+      
+    audio_soundfx_play (AUDIO_SOUNDFX_CLICK0);
   }
   else
   {
-    int oldSelectedCity = s_selectedCity;
-    int newSelectedCity = app_input_touch_earth (touchX, touchY, sw, sh);
-    
-    if (app_get_city_index_valid (newSelectedCity))
-    {
-      if (newSelectedCity != oldSelectedCity)
-      {
-        feed_news_t *oldFeedNews = &s_newsFeeds [oldSelectedCity];
-        feed_twitter_t *oldFeedTwitter = &s_twitterFeeds [oldSelectedCity];
-        
-        if (oldFeedNews->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
-        {
-          feeds_news_cancel_search (oldFeedNews);
-          util_activity_indicator_set_active (false);
-        }
-        
-        if (oldFeedTwitter->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
-        {
-          feeds_twitter_cancel_search (oldFeedTwitter);
-          util_activity_indicator_set_active (false);
-        }
-        
-        const char *query = s_earth->data->newsFeeds [newSelectedCity];
-        
-        feed_news_t *newFeedNews = &s_newsFeeds [newSelectedCity];
-        feed_twitter_t *newFeedTwitter = &s_twitterFeeds [newSelectedCity];
-        
-        if (newFeedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
-        {
-          feeds_twitter_search (newFeedTwitter, query);
-          util_activity_indicator_set_active (true);
-        }
-        
-        if (newFeedNews->reqStatus == FEED_REQ_STATUS_INVALID)
-        {
-          feeds_news_search (newFeedNews, query);
-          util_activity_indicator_set_active (true);
-        }
-      }
-      
-      s_selectedCity = newSelectedCity;
-      
-#if NEW_ROTATION
-      
-      float diffx = 0.5f - x;
-      float diffy = 0.5f - y;
-      
-      CX_DEBUGLOG_CONSOLE (1, "diffx = %.4f, diffy = %.4f", diffx, diffy);
-      
-      float aspectRatio = sw / sh;
-      
-      float rotAddx = diffx * 90.0f * aspectRatio;
-      float rotAddy = diffy * 90.0f;
-      
-      s_rotTarget = s_rotAngle;
-      
-      s_rotTarget.x += rotAddx;
-      s_rotTarget.y += rotAddy;
-      
-      s_rotSpeedExp = CAMERA_ROTATION_SPEED_EXPONENT_CITY_SELECT;
-      
-#else
-      float aspectRatio = sw / sh;
-      
-      s_rotTouchEnd.x = 0.5f * sw * 0.25f * aspectRatio;
-      s_rotTouchEnd.y = 0.5f * sh * 0.25f;
-      s_rotTouchBegin.x = x * sw * 0.25f;
-      s_rotTouchBegin.y = y * sh * 0.25f;
-#endif
-      
-      audio_soundfx_play (AUDIO_SOUNDFX_CLICK0);
-    }
-    else
-    {
 #if NEW_ROTATION
 
-      s_rotTarget = s_rotAngle;
-      
-      CX_DEBUGLOG_CONSOLE (1, "BEGIN-AFEQRTEY4534545RGDFGQ34TQQ4545411");
-      CX_DEBUGLOG_CONSOLE (1, "bx = %.4f, by = %.4f", x, y);
-      
-      s_rotSpeedExp = CAMERA_ROTATION_SPEED_EXPONENT_SWIPE;
-      
+    s_rotTarget = s_rotAngle;
+    
+    CX_DEBUGLOG_CONSOLE (1, "BEGIN-AFEQRTEY4534545RGDFGQ34TQQ4545411");
+    CX_DEBUGLOG_CONSOLE (1, "bx = %.4f, by = %.4f", x, y);
+    
+    s_rotSpeedExp = CAMERA_ROTATION_SPEED_EXPONENT_SWIPE;
+    
 #else
-      s_rotTouchBegin.x = x * sw * 0.25f;
-      s_rotTouchBegin.y = y * sh * 0.25f;
-      s_rotTouchEnd.x = x * sw * 0.25f;
-      s_rotTouchEnd.y = y * sh * 0.25f;
+    s_rotTouchBegin.x = x * sw * 0.25f;
+    s_rotTouchBegin.y = y * sh * 0.25f;
+    s_rotTouchEnd.x = x * sw * 0.25f;
+    s_rotTouchEnd.y = y * sh * 0.25f;
 #endif
-    }
   }
-  
+
   /*
   s_rotTouchBegin.x = x * sw * 0.25f;
   s_rotTouchBegin.y = y * sh * 0.25f;
@@ -2010,17 +1945,6 @@ static void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
 
 static void app_input_touch_ended (float x, float y)
 {
-  float sw = cx_gdi_get_screen_width ();
-  float sh = cx_gdi_get_screen_height ();
-  
-  float touchX = x * sw;
-  float touchY = y * sh;
-  
-  if (browser_is_open ())
-  {
-    browser_handle_input (&s_browserRect, BROWSER_INPUT_TOUCH_END, touchX, touchY);
-  }
-  
 #if NEW_ROTATION
   
   CX_DEBUGLOG_CONSOLE (1, "ex = %.4f, ey = %.4f", x, y);

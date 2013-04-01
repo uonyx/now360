@@ -15,12 +15,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define SETTINGS_SAVE_FILE "settings.dat"
-#define SETTINGS_ROOT_TABLE_DATA_ROWS (4)
-#define SETTINGS_TEMP_TABLE_DATA_ROWS (2)
-#define SETTINGS_CLOCK_TABLE_DATA_ROWS (2)
-#define SCREEN_FADE_OPACITY (0.6f)
-#define SCREEN_FADE_DURATION (0.5f)
+#define SETTINGS_SAVE_FILE              "settings.dat"
+#define SETTINGS_ROOT_TABLE_DATA_ROWS   (4)
+#define SETTINGS_TEMP_TABLE_DATA_ROWS   (2)
+#define SETTINGS_CLOCK_TABLE_DATA_ROWS  (2)
+#define SCREEN_FADE_OPACITY             (0.6f)
+#define SCREEN_FADE_DURATION            (0.5f)
+#define SETTINGS_UI_SIZE_WIDTH          (300.0f)
+#define SETTINGS_UI_SIZE_HEIGHT         (400.0f)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,8 +69,6 @@ static settings_t s_settings;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @interface CityTableViewController : UITableViewController
-{
-}
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,8 +76,6 @@ static settings_t s_settings;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @interface TemperatureTableViewController : UITableViewController
-{
-}
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,8 +83,6 @@ static settings_t s_settings;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @interface ClockTableViewController : UITableViewController
-{
-}
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,10 +98,6 @@ static settings_t s_settings;
   ClockTableViewController *_clockViewController;
 }
 @end
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,26 +189,21 @@ void settings_ui_show (void)
 {
   if (!s_uiActive)
   {
-#if 1
     UIView *parentView = s_rootViewCtrlr.view;
-    /*
+
     float viewPosX = parentView.bounds.origin.x;
     float viewPosY = parentView.bounds.origin.y;
     float viewWidth  = parentView.bounds.size.width;
     float viewHeight = parentView.bounds.size.height;
-    */
-    float width = 400.0f;
-    float height = 300.0f;
-    float posX = 0.0f; //viewPosX + ((viewWidth - width) * 0.5f);
-    float posY = 0.0f; //viewPosY + ((viewHeight - height) * 0.5f);
+    float width = SETTINGS_UI_SIZE_WIDTH;
+    float height = SETTINGS_UI_SIZE_HEIGHT;
+    float posX = viewPosX + ((viewWidth - width) * 0.5f);
+    float posY = viewPosY + ((viewHeight - height) * 0.5f);
     
+    //[s_popover setPopoverContentSize:CGSizeMake(width, height)];
     [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
     [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
-#else
-    [s_rootTableViewCtrlr setModalTransitionStyle:UIModalTransitionStyleFlipHorizontal];
-    [s_rootTableViewCtrlr setModalPresentationStyle:UIModalPresentationFormSheet];
-    [s_rootViewCtrlr presentViewController:s_rootTableViewCtrlr animated:YES completion:nil];
-#endif
+    
     util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     
     s_uiActive = true;
@@ -231,11 +218,7 @@ void settings_ui_hide (void)
 {
   if (s_uiActive)
   {
-#if 1
     [s_popover dismissPopoverAnimated:YES];
-#else
-    [s_rootViewCtrlr dismissViewControllerAnimated:YES completion:nil];
-#endif
     
     util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     
@@ -314,7 +297,6 @@ static void settings_init_view_create (void)
   s_popover = [[UIPopoverController alloc] initWithContentViewController:[s_rootTableViewCtrlr navigationController]];
   
   [s_rootTableViewCtrlr setTitle:@"Settings"];
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -475,6 +457,11 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   return (section == 0) ? s_settings.cityCount : 0;
 }
 
+- (void)viewWillAppear:(BOOL)animated
+{
+  [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
+}
+
 - (void)viewWillDisappear:(BOOL)animated
 {
   [[self navigationController] popToRootViewControllerAnimated:FALSE];
@@ -533,6 +520,11 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   [[self navigationController] popToRootViewControllerAnimated:FALSE];
 }
 
+- (void)viewWillAppear:(BOOL)animated
+{
+  [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
   int oldUnit = s_settings.tempUnit;
@@ -589,6 +581,11 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 - (void)viewWillDisappear:(BOOL)animated
 {
   [[self navigationController] popToRootViewControllerAnimated:FALSE];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+  [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -656,10 +653,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     _clockViewController = [[ClockTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _navCtrlr = [[UINavigationController alloc] initWithRootViewController:self];
     
-    CGRect frame = [[self tableView] frame];
-    frame.size.width = 400.0f;
-    frame.size.height = 300.0f;
-    [[self tableView] setFrame:frame];
+    [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
   }
   
   return self;
@@ -695,7 +689,12 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (void)viewWillAppear:(BOOL)animated
 {
-  [[self tableView] reloadData];
+  [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
+}
+
+- (NSInteger) supportedInterfaceOrientations
+{
+  return UIInterfaceOrientationMaskLandscape;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath

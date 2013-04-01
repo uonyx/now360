@@ -108,9 +108,10 @@ cx_json_type cx_json_node_type (cx_json_node node)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_json_node cx_json_object_child (cx_json_node node, const char * CX_RESTRICT name)
+cx_json_node cx_json_object_child (cx_json_node node, const char * CX_RESTRICT key)
 {
   CX_ASSERT (node);
+  CX_ASSERT (key);
   CX_ASSERT (cx_json_node_type (node) == CX_JSON_TYPE_OBJECT);
   
   json_value *jnode = node;
@@ -119,7 +120,8 @@ cx_json_node cx_json_object_child (cx_json_node node, const char * CX_RESTRICT n
   for (cxu32 i = 0, c = jnode->u.object.length; i < c; ++i)
   {
     const char *n = jnode->u.object.values [i].name;
-    if (strcmp (name, n) == 0)
+    
+    if (strcmp (key, n) == 0)
     {
       jchild = jnode->u.object.values [i].value;
       break;
@@ -127,6 +129,58 @@ cx_json_node cx_json_object_child (cx_json_node node, const char * CX_RESTRICT n
   }
   
   return jchild;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cx_json_node cx_json_object_child_node (cx_json_node node, cxu32 index)
+{
+  CX_ASSERT (node);
+  CX_ASSERT (cx_json_node_type (node) == CX_JSON_TYPE_OBJECT);
+  
+  json_value *jnode = node;
+  
+  CX_ASSERT (index < jnode->u.object.length);
+  
+  json_value *jchild = jnode->u.object.values [index].value;
+  
+  return jchild;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char * cx_json_object_child_key (cx_json_node node, cxu32 index)
+{
+  CX_ASSERT (node);
+  CX_ASSERT (cx_json_node_type (node) == CX_JSON_TYPE_OBJECT);
+  
+  json_value *jnode = node;
+  
+  CX_ASSERT (index < jnode->u.object.length);
+  
+  const char *key = jnode->u.object.values [index].name;
+  
+  return key;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cxu32 cx_json_object_length (cx_json_node node)
+{
+  CX_ASSERT (node);
+  CX_ASSERT (cx_json_node_type (node) == CX_JSON_TYPE_OBJECT);
+  
+  json_value *jnode = node;
+  
+  cxu32 len = jnode->u.object.length;
+  
+  return len;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,9 +212,9 @@ cxu32 cx_json_array_size (cx_json_node node)
   
   json_value *jnode = node;
   
-  cxu32 length = jnode->u.array.length;
+  cxu32 size = jnode->u.array.length;
   
-  return length;
+  return size;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -77,7 +77,8 @@
 
 - (NSUInteger)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window
 {
-  return UIInterfaceOrientationMaskLandscape;
+  //return UIInterfaceOrientationMaskLandscape;
+  return UIInterfaceOrientationMaskAll;
 }
 
 @end

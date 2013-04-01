@@ -23,6 +23,7 @@
 @interface ViewController ()
 {
   bool _isOrientationLandscape;
+  UIInterfaceOrientation _toOrientation;
 }
 @property (strong, nonatomic) EAGLContext *context;
 
@@ -53,6 +54,9 @@
 - (void) viewDidLoad
 {
   [super viewDidLoad];
+  
+  _isOrientationLandscape = false;
+  _toOrientation = UIInterfaceOrientationPortrait;
   
   self.context = [[[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2] autorelease];
   
@@ -91,8 +95,6 @@
   UIViewController *rvc = appWindow.rootViewController;
   (void) rvc;
 #endif
-  
-  _isOrientationLandscape = false;
   
   [[NSNotificationCenter defaultCenter]
    addObserver:self
@@ -151,8 +153,6 @@
   }
   
   return YES;
-  
-  //if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,19 +176,42 @@
   }
 }
 
+- (void) willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
+{
+  _toOrientation = toInterfaceOrientation;
+}
+
 - (void) didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-  [EAGLContext setCurrentContext:self.context];
-  
-  int w = (int) self.view.bounds.size.width;
-  int h = (int) self.view.bounds.size.height;
-  
-  app_view_resize (w, h);
+  if (!_isOrientationLandscape && UIInterfaceOrientationIsLandscape (_toOrientation))
+  {
+    [EAGLContext setCurrentContext:self.context];
+    
+    int w = (int) self.view.bounds.size.width;
+    int h = (int) self.view.bounds.size.height;
+    
+    app_view_resize (w, h);
+    
+    _isOrientationLandscape = true;
+  }
 }
 
 - (NSInteger) preferredInterfaceOrientationForPresentation
 {
-  return UIInterfaceOrientationMaskLandscape;
+  /*
+  UIDeviceOrientation deviceOrientation = [[UIDevice currentDevice] orientation];
+  
+  if (deviceOrientation == UIDeviceOrientationLandscapeLeft)
+  {
+    return UIInterfaceOrientationLandscapeLeft;
+  }
+  else
+  {
+    return UIInterfaceOrientationLandscapeRight;
+  }
+  */
+  
+  return [[UIApplication sharedApplication] statusBarOrientation];
 }
 
 - (NSInteger) supportedInterfaceOrientations

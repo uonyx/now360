@@ -8,11 +8,12 @@
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 
+#include "../system/cx_file.h"
+#include "../system/cx_json.h"
+#include "../system/cx_string.h"
+
 #include "cx_shader.h"
 #include "cx_gdi.h"
-#include "../system/cx_file.h"
-#include "../system/cx_data.h"
-#include "../system/cx_string.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,112 +304,95 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
 
 static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx_shader *shader)
 {
-  json_settings settings;
-  memset (&settings, 0, sizeof(settings));
+  bool success = false;
   
-  char errorBuffer [512];
-  errorBuffer [0] = '\0';
+  cx_json_tree jsonTree = cx_json_tree_create (buffer, bufferSize);
   
-  json_value *root = json_parse_ex (&settings, buffer, bufferSize, errorBuffer, 512);
-  
-  if (root == NULL)
+  if (jsonTree)
   {
-    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, errorBuffer);
-    CX_FATAL_ERROR ("JSON Parse Error");
+    cx_json_node rootNode = cx_json_tree_root_node (jsonTree);
     
-    return false;
-  }
-
-#if (CX_SHADER_DEBUG && 0)
-  CX_FATAL_ASSERT (root->u.object.length == 2);
-  
-  const char *attributes = root->u.object.values [0].name;
-  const char *uniforms = root->u.object.values [1].name;
-  
-  CX_FATAL_ASSERT (strcmp (attributes, "attributes") == 0);
-  CX_FATAL_ASSERT (strcmp (uniforms, "uniforms") == 0);
-#endif
-  
-  unsigned int i;
-  
-  //
-  // attributes
-  //
-
-  int attribCount = 0;
-  json_value *attributeNode = root->u.object.values [0].value;
-  
-  for (i = 0; i < attributeNode->u.object.length; ++i)
-  {
-    const char *attribStr = attributeNode->u.object.values [i].name;
-    json_value *value = attributeNode->u.object.values [i].value;
-    
-    int attribIdx = cx_get_shader_attribute_from_string (attribStr);
-    
-    CX_ASSERT (attribIdx != CX_SHADER_ATTRIBUTE_INVALID);
-    CX_ASSERT (value->type == json_string);
-    
-    const char *attribName = value->u.string.ptr;
-    int attribLocation = glGetAttribLocation (shader->program, attribName);
-
-    CX_ASSERT ((attribLocation >= 0) && "unused attribute");
-    
-    shader->attributes [attribIdx] = attribLocation;
-    
-    cx_gdi_assert_no_errors ();
-    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, attribLocation);
-     
-    attribCount++;
-  }
-  
-#if CX_DEBUG
-  GLint numAttributes;
-  glGetProgramiv (shader->program, GL_ACTIVE_ATTRIBUTES, &numAttributes);
-  CX_ASSERT (numAttributes <= attribCount);
-#endif
-  
-  //
-  // uniforms
-  //
-  
-  int uniformCount = 0;
-  json_value *uniformNode = root->u.object.values [1].value;
-  
-  for (i = 0; i < uniformNode->u.object.length; ++i)
-  {
-    const char *uniformStr = uniformNode->u.object.values [i].name;
-    json_value *value = uniformNode->u.object.values [i].value;
-    
-    int uniformIdx = cx_get_shader_uniform_from_string (uniformStr);
-    
-    CX_ASSERT (uniformIdx != CX_SHADER_UNIFORM_INVALID);
-    CX_ASSERT (value->type == json_string);
-    
-    if (uniformIdx != CX_SHADER_UNIFORM_USER_DEFINED)
     {
-      const char *uniformName = value->u.string.ptr;
-      int uniformLocation = glGetUniformLocation (shader->program, uniformName);
+      //
+      // attributes
+      //
       
-      CX_ASSERT ((uniformLocation >= 0) && "unused uniform");
+      cx_json_node attributesNode = cx_json_object_child_node (rootNode, 0);
+      cxu32 attributesCount = cx_json_object_length (attributesNode);
       
-      shader->uniforms [uniformIdx] = uniformLocation;
+      for (cxu32 i = 0; i < attributesCount; ++i)
+      {
+        const char *attribStr = cx_json_object_child_key (attributesNode, i);
+        cx_json_node attribNode = cx_json_object_child_node (attributesNode, i);
+        
+        int attribIdx = cx_get_shader_attribute_from_string (attribStr);
+        CX_ASSERT (attribIdx != CX_SHADER_ATTRIBUTE_INVALID);
+        
+        const char *attribName = cx_json_value_string (attribNode);
+        int attribLocation = glGetAttribLocation (shader->program, attribName);
+        
+        CX_ASSERT ((attribLocation >= 0) && "unused attribute");
+        
+        shader->attributes [attribIdx] = attribLocation;
+        
+        cx_gdi_assert_no_errors ();
+        CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, attribLocation);
+      }
       
-      cx_gdi_assert_no_errors ();
-      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, uniformLocation);
+#if CX_DEBUG
+      GLint activeAttribs = 0;
+      glGetProgramiv (shader->program, GL_ACTIVE_ATTRIBUTES, &activeAttribs);
+      CX_ASSERT (activeAttribs <= (GLint) attributesCount);
+#endif
     }
     
-    uniformCount++;
+    {
+      //
+      // uniforms
+      //
+      
+      cx_json_node uniformsNode = cx_json_object_child_node (rootNode, 1);
+      cxu32 uniformsCount = cx_json_object_length (uniformsNode);
+      
+      for (cxu32 i = 0; i < uniformsCount; ++i)
+      {
+        const char *uniformStr = cx_json_object_child_key (uniformsNode, i);
+        cx_json_node uniformNode = cx_json_object_child_node (uniformsNode, i);
+        
+        int uniformIdx = cx_get_shader_uniform_from_string (uniformStr);
+        CX_ASSERT (uniformIdx != CX_SHADER_UNIFORM_INVALID);
+        
+        if (uniformIdx != CX_SHADER_UNIFORM_USER_DEFINED)
+        {
+          const char *uniformName = cx_json_value_string (uniformNode);
+          int uniformLocation = glGetUniformLocation (shader->program, uniformName);
+          
+          CX_ASSERT ((uniformLocation >= 0) && "unused uniform");
+          
+          shader->uniforms [uniformIdx] = uniformLocation;
+          
+          cx_gdi_assert_no_errors ();
+          CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, uniformLocation);
+        }
+      }
+      
+#if CX_DEBUG
+      GLint activeUniforms = 0;
+      glGetProgramiv (shader->program, GL_ACTIVE_UNIFORMS, &activeUniforms);
+      CX_ASSERT (activeUniforms <= (GLint) uniformsCount);
+#endif
+    }
+  
+    cx_json_tree_destroy (jsonTree);
+    
+    success = true;
+  }
+  else
+  {
+    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "JSON parse error");
   }
   
-#if CX_DEBUG
-  GLint numUniforms;
-  glGetProgramiv (shader->program, GL_ACTIVE_UNIFORMS, &numUniforms);
-  CX_ASSERT (numUniforms <= uniformCount);
-#endif
-  
-  json_value_free (root);
-  
-  return true;
+  return success;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

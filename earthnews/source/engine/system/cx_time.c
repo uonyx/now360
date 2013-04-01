@@ -115,11 +115,11 @@ cxf64 cx_system_time_get_total_time (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxi32 cx_time_get_unix_timestamp (cx_time_zone zone)
+cxi64 cx_time_get_unix_timestamp (cx_time_zone zone)
 {
   CX_ASSERT ((zone > CX_TIME_ZONE_INVALID) && (zone < CX_NUM_TIME_ZONES));
   
-  cxi32 timestamp = 0;
+  cxi64 timestamp = 0;
   
   cx_thread_mutex_lock (&s_criticalSection);
   
@@ -130,7 +130,7 @@ cxi32 cx_time_get_unix_timestamp (cx_time_zone zone)
       time_t rawTime = time (NULL);
       CX_ASSERT (rawTime != -1);
       
-      timestamp = (cxi32) rawTime;
+      timestamp = (cxi64) rawTime;
       break;
     }
     
@@ -143,7 +143,7 @@ cxi32 cx_time_get_unix_timestamp (cx_time_zone zone)
       time_t utcTime = mktime (gmt);
       CX_ASSERT (utcTime != -1);
       
-      timestamp = (cxi32) utcTime;
+      timestamp = (cxi64) utcTime;
       break;
     }
       
@@ -198,11 +198,9 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
     case CX_TIME_ZONE_LOCAL:
     {
       time_t rawTime = time (NULL);
-      struct tm locTm = *localtime (&rawTime);
-      time_t locTime = mktime (&locTm);
       
-      date->calendar = locTm;
-      date->unixTimestamp = (cxi32) locTime;
+      date->calendar = *localtime (&rawTime);
+      date->unixTimestamp = (cxi64) mktime (&date->calendar);
       
       break;
     }
@@ -210,15 +208,8 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
     case CX_TIME_ZONE_UTC:
     {
       time_t rawTime = time (NULL);
-#if 0
-      struct tm utcTm = *gmtime (&rawTime);
-      time_t utcTime = mktime (&utcTm);
-      
-      date->calendar = utcTm;
-      date->unixTimestamp = (cxi32) utcTime;
-#endif 
       date->calendar = *gmtime (&rawTime);
-      date->unixTimestamp = mktime (&date->calendar);
+      date->unixTimestamp = (cxi64) mktime (&date->calendar);
       
       break;
     }

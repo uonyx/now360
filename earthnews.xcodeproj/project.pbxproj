@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		31117DDB17070480000BB062 /* webview.m in Sources */ = {isa = PBXBuildFile; fileRef = 31117DDA17070480000BB062 /* webview.m */; };
+		31117DE91708AA3A000BB062 /* SVWebViewController.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31117DDD1708AA3A000BB062 /* SVWebViewController.strings */; };
+		31117DEA1708AA3A000BB062 /* SVModalWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31117DE31708AA3A000BB062 /* SVModalWebViewController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		31117DEB1708AA3A000BB062 /* SVWebViewController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 31117DE41708AA3A000BB062 /* SVWebViewController.bundle */; };
+		31117DEC1708AA3A000BB062 /* SVWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31117DE61708AA3A000BB062 /* SVWebViewController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		31117DEE1708AAD8000BB062 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31117DED1708AAD7000BB062 /* MessageUI.framework */; };
 		311B943216A17EFA0057786F /* audio.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B943116A17EFA0057786F /* audio.m */; };
 		311B943416A1802B0057786F /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311B943316A1802B0057786F /* MediaPlayer.framework */; };
 		3127E2B915D38FDC00793C60 /* app.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2A915D38FDC00793C60 /* app.c */; };
@@ -56,7 +61,6 @@
 		3182B9B314B0B6C40097A87E /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B9B214B0B6C40097A87E /* OpenGLES.framework */; };
 		3182B9B514B0B6CC0097A87E /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B9B414B0B6CC0097A87E /* GLKit.framework */; };
 		3190B1D2158E5A70008B54FD /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3190B1D1158E5A70008B54FD /* libxml2.dylib */; };
-		3190B1D715929495008B54FD /* Twitter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3190B1D615929495008B54FD /* Twitter.framework */; };
 		3199A9AA167E35AF00A390CE /* input.c in Sources */ = {isa = PBXBuildFile; fileRef = 3199A9A9167E35AF00A390CE /* input.c */; };
 		31B4E7DB1686956C00B5A371 /* ui.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7DA1686956C00B5A371 /* ui.c */; };
 		31B4E7E6168CFA9100B5A371 /* ui_ctrlr.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */; };
@@ -134,6 +138,18 @@
 /* Begin PBXFileReference section */
 		31117DD917070467000BB062 /* webview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = webview.h; sourceTree = "<group>"; };
 		31117DDA17070480000BB062 /* webview.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = webview.m; sourceTree = "<group>"; };
+		31117DDE1708AA3A000BB062 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/SVWebViewController.strings; sourceTree = "<group>"; };
+		31117DDF1708AA3A000BB062 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SVWebViewController.strings; sourceTree = "<group>"; };
+		31117DE01708AA3A000BB062 /* es-ES */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-ES"; path = "es-ES.lproj/SVWebViewController.strings"; sourceTree = "<group>"; };
+		31117DE11708AA3A000BB062 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/SVWebViewController.strings; sourceTree = "<group>"; };
+		31117DE21708AA3A000BB062 /* SVModalWebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVModalWebViewController.h; sourceTree = "<group>"; };
+		31117DE31708AA3A000BB062 /* SVModalWebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVModalWebViewController.m; sourceTree = "<group>"; };
+		31117DE41708AA3A000BB062 /* SVWebViewController.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVWebViewController.bundle; sourceTree = "<group>"; };
+		31117DE51708AA3A000BB062 /* SVWebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVWebViewController.h; sourceTree = "<group>"; };
+		31117DE61708AA3A000BB062 /* SVWebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVWebViewController.m; sourceTree = "<group>"; };
+		31117DE71708AA3A000BB062 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SVWebViewController.strings"; sourceTree = "<group>"; };
+		31117DE81708AA3A000BB062 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/SVWebViewController.strings"; sourceTree = "<group>"; };
+		31117DED1708AAD7000BB062 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
 		311B943016A17EBB0057786F /* audio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = audio.h; sourceTree = "<group>"; };
 		311B943116A17EFA0057786F /* audio.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = audio.m; sourceTree = "<group>"; };
 		311B943316A1802B0057786F /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
@@ -447,10 +463,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31117DEE1708AAD8000BB062 /* MessageUI.framework in Frameworks */,
 				3179D04917049D4F00F623AF /* AudioToolbox.framework in Frameworks */,
 				3169B0F616BF1AB2000D7AC9 /* libpthread.dylib in Frameworks */,
 				311B943416A1802B0057786F /* MediaPlayer.framework in Frameworks */,
-				3190B1D715929495008B54FD /* Twitter.framework in Frameworks */,
 				3190B1D2158E5A70008B54FD /* libxml2.dylib in Frameworks */,
 				3182B9B514B0B6CC0097A87E /* GLKit.framework in Frameworks */,
 				3182B9B314B0B6C40097A87E /* OpenGLES.framework in Frameworks */,
@@ -463,6 +479,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		31117DDC1708AA39000BB062 /* SVWebViewController */ = {
+			isa = PBXGroup;
+			children = (
+				31117DDD1708AA3A000BB062 /* SVWebViewController.strings */,
+				31117DE21708AA3A000BB062 /* SVModalWebViewController.h */,
+				31117DE31708AA3A000BB062 /* SVModalWebViewController.m */,
+				31117DE41708AA3A000BB062 /* SVWebViewController.bundle */,
+				31117DE51708AA3A000BB062 /* SVWebViewController.h */,
+				31117DE61708AA3A000BB062 /* SVWebViewController.m */,
+			);
+			path = SVWebViewController;
+			sourceTree = "<group>";
+		};
 		3127E2A815D38FDC00793C60 /* app */ = {
 			isa = PBXGroup;
 			children = (
@@ -631,6 +660,7 @@
 		316FAA6B1517C06400CC39F2 /* ios */ = {
 			isa = PBXGroup;
 			children = (
+				31117DDC1708AA39000BB062 /* SVWebViewController */,
 				316FAA6C1517C06400CC39F2 /* AppDelegate.h */,
 				316FAA6D1517C06400CC39F2 /* AppDelegate.m */,
 				316FAA6E1517C06400CC39F2 /* main.m */,
@@ -653,6 +683,7 @@
 		3182B98C14B0B6680097A87E = {
 			isa = PBXGroup;
 			children = (
+				31117DED1708AAD7000BB062 /* MessageUI.framework */,
 				3179D04817049D4E00F623AF /* AudioToolbox.framework */,
 				3169B0F516BF1AB2000D7AC9 /* libpthread.dylib */,
 				311B943316A1802B0057786F /* MediaPlayer.framework */,
@@ -1060,6 +1091,11 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				da,
+				"es-ES",
+				es,
+				"zh-Hans",
+				"zh-Hant",
 			);
 			mainGroup = 3182B98C14B0B6680097A87E;
 			productRefGroup = 3182B99814B0B6680097A87E /* Products */;
@@ -1079,6 +1115,8 @@
 				316FAA691517C01900CC39F2 /* InfoPlist.strings in Resources */,
 				316FAA6A1517C01900CC39F2 /* MainStoryboard.storyboard in Resources */,
 				316FAA8D1517C49A00CC39F2 /* data in Resources */,
+				31117DE91708AA3A000BB062 /* SVWebViewController.strings in Resources */,
+				31117DEB1708AA3A000BB062 /* SVWebViewController.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1198,12 +1236,27 @@
 				315EC7C416E258CC0019E160 /* cx_json.c in Sources */,
 				3163730816F62AAA0018D64C /* util.m in Sources */,
 				31117DDB17070480000BB062 /* webview.m in Sources */,
+				31117DEA1708AA3A000BB062 /* SVModalWebViewController.m in Sources */,
+				31117DEC1708AA3A000BB062 /* SVWebViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		31117DDD1708AA3A000BB062 /* SVWebViewController.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				31117DDE1708AA3A000BB062 /* da */,
+				31117DDF1708AA3A000BB062 /* en */,
+				31117DE01708AA3A000BB062 /* es-ES */,
+				31117DE11708AA3A000BB062 /* es */,
+				31117DE71708AA3A000BB062 /* zh-Hans */,
+				31117DE81708AA3A000BB062 /* zh-Hant */,
+			);
+			name = SVWebViewController.strings;
+			sourceTree = "<group>";
+		};
 		316FAA651517C01900CC39F2 /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

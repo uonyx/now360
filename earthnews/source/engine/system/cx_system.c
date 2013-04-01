@@ -119,6 +119,9 @@ void _cx_free (void *data)
 {
   CX_ASSERT (s_initialised);
   
+  CX_ASSERT (data);
+  //CX_ASSERT (data != 0xDEADBEEF);
+  
   free (data);
 }
 

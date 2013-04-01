@@ -62,20 +62,16 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
   cxu32 filedataSize = 0;
   
   if (cx_file_storage_load_contents (&filedata, &filedataSize, filename, CX_FILE_STORAGE_BASE_RESOURCE))
-  {  
-    char errorBuffer [128];
-    json_settings settings;
-    memset (&settings, 0, sizeof (settings));
+  {
+    cx_json_tree jsonTree = cx_json_tree_create ((const char *) filedata, filedataSize);
     
-    json_value *root = json_parse_ex (&settings, (const char *) filedata, filedataSize, errorBuffer, 128);
-    
-    if (root)
+    if (jsonTree)
     {
-      CX_ASSERT (root->type == json_array);
+      cx_json_node rootNode = cx_json_tree_root_node (jsonTree);
+      
+      unsigned int count = cx_json_array_size (rootNode);
       
       earthdata = (struct earth_data_t *) cx_malloc (sizeof (struct earth_data_t));
-      
-      unsigned int count = root->u.array.length;
       
       earthdata->count = count;
       earthdata->location = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
@@ -83,73 +79,74 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
       earthdata->names = (const char **) cx_malloc (sizeof (char *) * count);
       earthdata->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
       earthdata->weatherId = (const char **) cx_malloc (sizeof (char *) * count);
-      earthdata->display = (bool *) cx_malloc (sizeof (bool) * count);
+      earthdata->utcOffset = (int *) cx_malloc (sizeof (int) * count);
       
-      unsigned int i;
-      for (i = 0; i < count; ++i)
+      memset (earthdata->location, 0, (sizeof (cx_vec4) * count));
+      memset (earthdata->normal, 0, (sizeof (cx_vec4) * count));
+      memset (earthdata->names, 0, (sizeof (char *) * count));
+      memset (earthdata->newsFeeds, 0, (sizeof (char *) * count));
+      memset (earthdata->weatherId, 0, (sizeof (char *) * count));
+      memset (earthdata->utcOffset, 0, (sizeof (int) * count));
+      
+      for (unsigned int i = 0; i < count; ++i)
       {
-        json_value *value = root->u.array.values [i];
-        CX_ASSERT (value->type == json_object);
+        cx_json_node objectNode = cx_json_array_member (rootNode, i);
+       
+        unsigned int objectLength = cx_json_object_length (objectNode);
         
-        unsigned int j;
-        for (j = 0; j < value->u.object.length; ++j)
+        for (unsigned int j = 0; j < objectLength; ++j)
         {
-          json_value *v = value->u.object.values [j].value;
-          const char *vn = value->u.object.values [j].name;
+          cx_json_node p = cx_json_object_child_node (objectNode, j);
+          const char *pk = cx_json_object_child_key (objectNode, j);
           
-          if (strcmp (vn, "display") == 0)
+          if (strcmp (pk, "utcoffset") == 0)
           {
-            CX_ASSERT (v->type == json_boolean);
-            
-            earthdata->display [i] = v->u.boolean;
+            earthdata->utcOffset [i] = cx_json_value_int (p);
           }
-          else if (strcmp (vn, "name") == 0)
+          else if (strcmp (pk, "name") == 0)
           {
-            CX_ASSERT (v->type == json_string);
-            
-            earthdata->names [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+            const char *str = cx_json_value_string (p);
+            earthdata->names [i] = cx_strdup (str, 32);
           }
-          else if (strcmp (vn, "news") == 0)
+          else if (strcmp (pk, "news") == 0)
           {
-            CX_ASSERT (v->type == json_string);
-            
-            earthdata->newsFeeds [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+            const char *str = cx_json_value_string (p);
+            earthdata->newsFeeds [i] = cx_strdup (str, 32);
           }
-          else if (strcmp (vn, "weather") == 0)
+          else if (strcmp (pk, "weather") == 0)
           {
-            CX_ASSERT (v->type == json_string);
-            
-            earthdata->weatherId [i] = cx_strdup (v->u.string.ptr, v->u.string.length);
+            const char *str = cx_json_value_string (p);
+            earthdata->weatherId [i] = cx_strdup (str, 16);
           }
-          else if (strcmp (vn, "location") == 0)
+          else if (strcmp (pk, "location") == 0)
           {
-            CX_ASSERT (v->type == json_object);
-            CX_ASSERT (v->u.object.length == 2);
+            cx_json_node latNode = cx_json_object_child (p, "latitude");
+            cx_json_node lonNode = cx_json_object_child (p, "longitude");
             
-            CX_ASSERT (v->u.object.values [0].value->type == json_double);
-            CX_ASSERT (v->u.object.values [1].value->type == json_double);
+            float lat = cx_json_value_float (latNode);
+            float lon = cx_json_value_float (lonNode);
             
-            CX_ASSERT (strcmp (v->u.object.values [0].name, "latitude") == 0);
-            CX_ASSERT (strcmp (v->u.object.values [1].name, "longitude") == 0);
-            
-            float lat = (float) v->u.object.values [0].value->u.dbl;
-            float lon = (float) v->u.object.values [1].value->u.dbl;
             float r = radius + (radius * 0.015f); // slightly extend radius (for point sprite rendering)
             
             earth_convert_dd_to_world (&earthdata->location [i], lat, lon, r, slices, parallels, &earthdata->normal [i]);
           }
         }
-      }  
+      }
+      
+      cx_json_tree_destroy (jsonTree);
     }
     else
     {
-      CX_DEBUGLOG_CONSOLE (1, errorBuffer);
-      earthdata = NULL;
+      CX_DEBUGLOG_CONSOLE (1, "JSON parse error: %s", filename);
     }
-
+    
     cx_free (filedata);
   }
-  
+  else
+  {
+    CX_DEBUGLOG_CONSOLE (1, "Failed to load %s", filename);
+  }
+
   return earthdata;
 }
 
@@ -184,8 +181,8 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   //cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal-30.png");
   cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
   //cx_texture *texture   = cx_texture_create_from_file ("data/textures/earthmap1k.png");
-  //cx_texture *texture     = cx_texture_create_from_file ("data/maps/4096-clean.png");
-  //cx_texture *texture     = cx_texture_create_from_file ("data/maps/4096-diff.png");
+  //cx_texture *texture   = cx_texture_create_from_file ("data/maps/4096-clean.png");
+  //cx_texture *texture   = cx_texture_create_from_file ("data/maps/4096-diff.png");
   
   cx_material_set_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
   cx_material_set_texture (material, specTexture, CX_MATERIAL_TEXTURE_SPECULAR);
@@ -229,7 +226,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
 #if BUMP_MAPPED_CLOUDS
   cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 32, 16, CX_VERTEX_FORMAT_PTNTB);
 #else
-  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 30, 15, CX_VERTEX_FORMAT_PTN);
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 32, 16, CX_VERTEX_FORMAT_PTN);
 #endif
   
   visual->mesh [1] = cx_mesh_create (sphere1, shader1, material1);

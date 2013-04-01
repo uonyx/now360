@@ -8,7 +8,7 @@
 
 #include "ui_ctrlr.h"
 #include "util.h"
-#include "browser.h"
+#include "webview.h"
 #include "audio.h"
 #include "settings.h"
 
@@ -75,7 +75,7 @@ typedef struct
 } animdata_t;
 
 #define TWITTER_MAX_ENTRIES                 (15)
-#define TWITTER_MAX_TWEET_LEN               (256)
+#define TWITTER_MAX_TWEET_LEN               FEED_TWITTER_TWEET_MESSAGE_MAX_LEN
 #define TWITTER_TWEET_VIS_LINK_URL_BUF_SIZE (64)
 #define TWITTER_TWEET_VIS_LINK_MAX_COUNT    (8)
 #define TWITTER_TICKER_MAX_ITEM_COUNT       (64)
@@ -751,15 +751,15 @@ static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *po
     title = entry ? entry->title : NULL;
     link = entry ? entry->link : NULL;
   }
-
   
-  if (link && title)
+  if (link)
   {
-    bool open = browser_open (link, title);
-    CX_REFERENCE_UNUSED_VARIABLE (open);
+    webview_show (link, title);
   }
   
   audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+  
+  ui_clear_focus (s_uicontext);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -870,7 +870,7 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
   {
     float pixelwidth = 0.0f;
     
-    pixelwidth += cx_font_get_text_width (font, tweet->userhandle);
+    pixelwidth += cx_font_get_text_width (font, tweet->username);
     pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar); // space + @
     
     pixelwidth += cx_font_get_text_width (font, tweet->text);
@@ -1043,11 +1043,10 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
       float y = pos->y;
       
       feed_twitter_tweet_t *tweet = ticker->items [i].data;
-      
       CX_ASSERT (tweet);
       
 #if 1
-      if (tweet->userhandle && tweet->text)
+      if (tweet->username && tweet->text)
       {
         ticker_tweet_t tickerTweet;
         memset (&tickerTweet, 0, sizeof (ticker_tweet_t));
@@ -1055,13 +1054,8 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
         cx_str_html_unescape (tt, 512, tweet->text);
         ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, tt);
         
-        if (i > TWITTER_TICKER_MAX_ITEM_COUNT)
-        {
-          CX_DEBUG_BREAKABLE_EXPR;
-        }
-        
         char namehandle [256];
-        cx_sprintf (namehandle, 256, "@%s: ", tweet->userhandle);
+        cx_sprintf (namehandle, 256, "@%s: ", tweet->username);
         cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
         
         float x2 = x + cx_font_get_text_width (font, namehandle);
@@ -1118,7 +1112,7 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
 
 #endif
       
-      bool activeSystemUI = browser_is_open () || audio_music_picker_active () || settings_ui_active ();
+      bool activeSystemUI = webview_active () || audio_music_picker_active () || settings_ui_active ();
       
       if ((wstate != UI_WIDGET_STATE_HOVER) && !activeSystemUI)
       {
@@ -1158,7 +1152,7 @@ static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 
     if ((touchX > x1) && (touchX < x2))
     {
       const char *url = s_visLinks [i].url;
-      browser_open (url, NULL);
+      webview_show (url, NULL);
       
       audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
     }

@@ -41,7 +41,10 @@ void         cx_json_tree_destroy (cx_json_tree tree);
 cx_json_node cx_json_tree_root_node (cx_json_tree tree);
 
 cx_json_type cx_json_node_type (cx_json_node node);
-cx_json_node cx_json_object_child (cx_json_node node, const char * CX_RESTRICT name);
+cx_json_node cx_json_object_child (cx_json_node node, const char * CX_RESTRICT key);
+cx_json_node cx_json_object_child_node (cx_json_node node, cxu32 index);
+const char * cx_json_object_child_key (cx_json_node node, cxu32 index);
+cxu32        cx_json_object_length (cx_json_node node);
 cx_json_node cx_json_array_member (cx_json_node node, cxu32 index);
 cxu32        cx_json_array_size (cx_json_node node);
 

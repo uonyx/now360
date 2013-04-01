@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#include "../engine/cx_engine.h"
 #include "feeds.h"
 #include "worker.h"
 
@@ -14,9 +13,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define DEBUG_LOG 0
-
-#define WEATHER_YAHOO  1
+#define WEATHER_YAHOO 1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,7 +351,8 @@ static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
         cx_xml_node link = cx_xml_node_child (child, "link", NULL);
         cx_xml_node pubDate = cx_xml_node_child (child, "pubDate", NULL);
         
-        feed_news_item_t *rssItem = cx_malloc (sizeof (feed_news_item_t));
+        feed_news_item_t *rssItem = (feed_news_item_t *) cx_malloc (sizeof (feed_news_item_t));
+        memset (rssItem, 0, sizeof (feed_news_item_t));
         
         rssItem->title = cx_xml_node_content (title);
                 
@@ -606,10 +604,6 @@ static void feeds_twitter_clear (feed_twitter_t *feed)
   {
     next = tweet->next;
     
-    cx_free ((char *)tweet->date);
-    cx_free ((char *)tweet->userhandle);
-    cx_free ((char *)tweet->username);
-    cx_free ((char *)tweet->text);
     cx_free (tweet);
     
     tweet = next;
@@ -622,79 +616,6 @@ static void feeds_twitter_clear (feed_twitter_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0
-void feeds_twitter_render (feed_twitter_t *feed)
-{
-  CX_ASSERT (feed);
-  
-  if (feed->dataReady)
-  {
-    const float width = 360.0f;
-    const float height = cx_gdi_get_screen_height ();
-    
-    float x1 = cx_gdi_get_screen_width() - width;
-    float y1 = 0.0f;
-    float x2 = x1 + width;
-    float y2 = y1 + height;
-    
-    cx_colour colour;
-    
-    colour.r = 0.2f;
-    colour.g = 0.2f;
-    colour.b = 0.2f;
-    colour.a = 0.7f;
-    
-    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colour, NULL);
-    
-    int max_rpp = 15;
-    
-    float itemHeight = height / (float) max_rpp;
-    (void)itemHeight;
-    
-    float itemTextSpacingY = 10.0f; //(itemHeight * 0.2f);
-    
-    float tx = x1 + 10.0f;
-    float ty = y1 + 12.0f;
-    
-    const cx_font *font0 = render_get_ui_font (UI_FONT_SIZE_14);
-    //cx_font *font1 = s_font [UI_FONT_SIZE_18];
-    //cx_font_set_scale (s_fontui, 1.0f, 1.0f);
-    
-    char name [128];
-    feed_twitter_tweet_t *tweet = feed->items;
-    
-    int twcount = 0;
-    
-    while (tweet)
-    {
-      twcount++;
-      
-      cx_sprintf (name, 128, "%s @%s", tweet->username, tweet->userhandle);
-      cx_font_render (font0, name, tx, ty, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_green ());
-      
-      float tty = ty + itemTextSpacingY;
-      
-      int lines = cx_font_render_word_wrap (font0, tweet->text, tx, tty, x2 - 24.0f, y2, 0.0f, 
-                                            CX_FONT_ALIGNMENT_DEFAULT, cx_colour_white ());
-      
-      float fontHeight = cx_font_get_height (font0) * (lines + 2);
-      
-      ty += fontHeight;
-      
-      //ty += itemHeight;
-      
-      tweet = tweet->next;
-    }
-    
-    
-    twcount += 0;
-  }
-}
-#endif
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize)
 {
   CX_ASSERT (feed);
@@ -702,85 +623,68 @@ static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dat
   
   bool success = false;
   
-  json_settings settings;
-  memset (&settings, 0, sizeof(settings));
+  cx_json_tree jsonTree = cx_json_tree_create (data, dataSize);
   
-  char errorBuffer [512];
-  errorBuffer [0] = '\0';
-  
-  json_value *root = json_parse_ex (&settings, data, dataSize, errorBuffer, 512);
-  
-  if (root)
+  if (jsonTree)
   {
-    CX_ASSERT (root->type == json_object);
-    
-    unsigned int i, c;
-    for (i = 0, c = root->u.object.length; i < c; ++i)
+    cx_json_node rootNode = cx_json_tree_root_node (jsonTree);
+  
+    for (unsigned int i = 0, c = cx_json_object_length (rootNode); i < c; ++i)
     {
-      const char *name = root->u.object.values [i].name;
-      json_value *value = root->u.object.values [i].value;
+      const char *name = cx_json_object_child_key (rootNode, i);
+      cx_json_node node = cx_json_object_child_node (rootNode, i);
       
       if (strcmp (name, "max_id") == 0)
       {
-        CX_ASSERT (value->type == json_integer);
-        feed->maxId = value->u.integer;
+        feed->maxId = cx_json_value_int (node);
       }
       else if (strcmp (name, "results") == 0)
       {
-        CX_ASSERT (value->type == json_array);
+        unsigned int resultsLength = cx_json_array_size (node);
         
-        json_value **avalues = value->u.array.values;
-        unsigned int alength = value->u.array.length;
-        unsigned int j;
-        for (j = 0; j < alength; ++j)
+        for (unsigned int j = 0; j < resultsLength; ++j)
         {
-          json_value *avalue = avalues [j];
-          CX_ASSERT (avalue->type == json_object);
+          cx_json_node resulstNode = cx_json_array_member (node, j);
           
           //
           // for memory optimisation, do a pre-pass for one-time malloc of stringdatabuffer for all strings for tweet_item/all tweets
           //
           
           feed_twitter_tweet_t *tweetItem = (feed_twitter_tweet_t *) cx_malloc (sizeof (feed_twitter_tweet_t));
-          CX_DEBUGLOG_CONSOLE (DEBUG_LOG, "=====entry=====");
+          memset (tweetItem, 0, sizeof (feed_twitter_tweet_t));
           
           int done = 0;
-          unsigned int k, n;
-          for (k = 0, n = avalue->u.object.length; (k < n) && (done < 4); ++k)
+          for (unsigned int k = 0, n = cx_json_object_length (resulstNode); (k < n) && (done < 3); ++k)
           {
-            const char *pname = avalue->u.object.values [k].name; // created at
-            json_value *pvalue = avalue->u.object.values [k].value; // "date";
+            const char *pname = cx_json_object_child_key (resulstNode, k);
+            cx_json_node pnode = cx_json_object_child_node (resulstNode, k);
             
-            if (strcmp (pname, "created_at") == 0)
+            if (strcmp (pname, "from_user") == 0)
             {
-              CX_ASSERT (pvalue->type == json_string);
-              tweetItem->date = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
-              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->date);
-              done++;
-            }
-            else if (strcmp (pname, "from_user") == 0)
-            {
-              CX_ASSERT (pvalue->type == json_string);
-              tweetItem->userhandle = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
-              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->userhandle);
+              const char *str = cx_json_value_string (pnode);
+              cx_strcpy (tweetItem->username, FEED_TWITTER_TWEET_USERNAME_MAX_LEN, str);
               done++;
             }
             else if (strcmp (pname, "from_user_name") == 0)
             {
-              CX_ASSERT (pvalue->type == json_string);
-              tweetItem->username = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
-              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->username);
+              const char *str = cx_json_value_string (pnode);
+              cx_strcpy (tweetItem->realname, FEED_TWITTER_TWEET_REALNAME_MAX_LEN, str);
               done++;
             }
             else if (strcmp (pname, "text") == 0)
             {
-              CX_ASSERT (pvalue->type == json_string);
-              
-              tweetItem->text = cx_strdup (pvalue->u.string.ptr, cx_roundupPow2 (pvalue->u.string.length));
-              tweetItem->textLen = pvalue->u.string.length;
-              CX_DEBUGLOG_CONSOLE (DEBUG_LOG, tweetItem->text);
+              const char *str = cx_json_value_string (pnode);
+              cx_strcpy (tweetItem->text, FEED_TWITTER_TWEET_MESSAGE_MAX_LEN, str);
               done++;
             }
+#if 0
+            else if (strcmp (pname, "created_at") == 0)
+            {
+              const char *str = cx_json_value_string (pnode);
+              (void) str;
+              done++;
+            }
+#endif
           }
           
           tweetItem->next = feed->items;
@@ -788,16 +692,14 @@ static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dat
         }
       }
     }
+  
+    cx_json_tree_destroy (jsonTree);
     
-    json_value_free (root);
     success = true;
   }
-  else 
+  else
   {
-    CX_DEBUGLOG_CONSOLE (1, errorBuffer);
-    CX_FATAL_ERROR ("JSON Parse Error");
-    
-    success = false;
+    CX_DEBUGLOG_CONSOLE (1, "JSON parse error");
   }
   
   return success;
@@ -977,49 +879,80 @@ static bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dat
   if (doc)
   {  
     cx_xml_node rootNode = cx_xml_doc_root_node (doc);
-    cx_xml_node channelNode = cx_xml_node_child (rootNode, "channel", NULL);
-    cx_xml_node ttlNode = cx_xml_node_child (channelNode, "ttl", NULL);
-    cx_xml_node itemNode = cx_xml_node_child (channelNode, "item", NULL);
-    cx_xml_node conditionNode = cx_xml_node_child (itemNode, "condition", "yweather");
+    cx_xml_node errorNode = cx_xml_node_child (rootNode, "error", NULL);
     
-    char *ttl = cx_xml_node_content (ttlNode);
-    char *temp = cx_xml_node_attr (conditionNode, "temp");
-    char *code = cx_xml_node_attr (conditionNode, "code");
-    char *date = cx_xml_node_attr (conditionNode, "date");
-    
-    int ttlSecs = atoi (ttl) * 60;
-    int tempCelsius = atoi (temp);
-    int conditionCode = atoi (code);
+    if (errorNode)
+    {
+      success = false;
+    }
+    else
+    {
+      cx_xml_node channelNode = cx_xml_node_child (rootNode, "channel", NULL);
+      
+      if (channelNode)
+      {
+        cx_xml_node ttlNode = cx_xml_node_child (channelNode, "ttl", NULL);
+        
+        int ttlSecs = 0;
+        
+        if (ttlNode)
+        {
+          char *ttl = cx_xml_node_content (ttlNode);
+          ttlSecs = atoi (ttl) * 60;
+          cx_free (ttl);
+        }
+        
+        cx_xml_node itemNode = cx_xml_node_child (channelNode, "item", NULL);
+        
+        if (itemNode)
+        {
+          cx_xml_node conditionNode = cx_xml_node_child (itemNode, "condition", "yweather");
 
-    char oclock [8];
-    int hour, minute;
-    
-    //  "Wed, 30 Nov 2005 1:56 pm PST" (RFC822 Section 5 format)
-    sscanf (date, "%*s %*d %*s %*d %d:%d %s %*s", &hour, &minute, oclock);
-    
-    if (strcmp (oclock, "pm") == 0)
-    {
-      hour += (hour == 12) ? 0 : 12;
+          
+          int tempCelsius = 0;
+          int conditionCode = WEATHER_CONDITION_CODE_INVALID;
+          
+          if (conditionCode)
+          {
+            char *temp = cx_xml_node_attr (conditionNode, "temp");
+            char *code = cx_xml_node_attr (conditionNode, "code");
+            char *date = cx_xml_node_attr (conditionNode, "date");
+            
+            tempCelsius = atoi (temp);
+            conditionCode = atoi (code);
+          
+            char oclock [8];
+            int hour, minute;
+            
+            //  "Wed, 30 Nov 2005 1:56 pm PST" (RFC822 Section 5 format)
+            sscanf (date, "%*s %*d %*s %*d %d:%d %s %*s", &hour, &minute, oclock);
+            
+            if (strcmp (oclock, "pm") == 0)
+            {
+              hour += (hour == 12) ? 0 : 12;
+            }
+            else if ((strcmp (oclock, "am") == 0) && (hour == 12))
+            {
+              hour = 0;
+            }
+            
+            feed->ttlSecs = ttlSecs;
+            feed->celsius = tempCelsius;
+            feed->conditionCode = conditionCode;
+            feed->timeInfo.hour = hour;
+            feed->timeInfo.min = minute;
+
+            cx_free (temp);
+            cx_free (code);
+            cx_free (date);
+          }
+          
+          success = true;
+        }
+      }
     }
-    else if ((strcmp (oclock, "am") == 0) && (hour == 12))
-    {
-      hour = 0;
-    }
-    
-    feed->ttlSecs = ttlSecs;
-    feed->celsius = tempCelsius;
-    feed->conditionCode = conditionCode;
-    feed->timeInfo.hour = hour;
-    feed->timeInfo.min = minute;
-    
-    cx_free (ttl);
-    cx_free (temp);
-    cx_free (code);
-    cx_free (date);
     
     cx_xml_doc_destroy (doc);
-    
-    success = true;
   }
   
   return success;

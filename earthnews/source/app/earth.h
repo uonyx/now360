@@ -36,7 +36,7 @@ struct earth_data_t
   const char **weatherId;
   cx_vec4 *location;
   cx_vec4 *normal;
-  bool *display;
+  int *utcOffset;
   int count;
 };
 

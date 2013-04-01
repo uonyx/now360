@@ -51,7 +51,7 @@ typedef struct feed_news_t
   const char *query;
   feed_news_item_t *items;
   const char *link;
-  time_t lastUpdate;
+  cxi64 lastUpdate;
   feed_req_status_t reqStatus;
   cx_http_request_id httpReqId;
 } feed_news_t;
@@ -60,13 +60,19 @@ typedef struct feed_news_t
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define FEED_TWITTER_TWEET_USERNAME_MAX_LEN (16)
+#define FEED_TWITTER_TWEET_REALNAME_MAX_LEN (32)
+#define FEED_TWITTER_TWEET_MESSAGE_MAX_LEN (256)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef struct feed_twitter_tweet_t
 {
-  const char *username;
-  const char *userhandle;
-  const char *date;
-  const char *text;
-  unsigned int textLen;
+  char realname [FEED_TWITTER_TWEET_REALNAME_MAX_LEN];
+  char username [FEED_TWITTER_TWEET_USERNAME_MAX_LEN];
+  char text [FEED_TWITTER_TWEET_MESSAGE_MAX_LEN];
   struct feed_twitter_tweet_t *next;
 } feed_twitter_tweet_t;
 
@@ -75,7 +81,7 @@ typedef struct feed_twitter_t
   const char *query;
   feed_twitter_tweet_t *items;
   unsigned int maxId;
-  time_t lastUpdate;
+  cxi64 lastUpdate;
   feed_req_status_t reqStatus;
   cx_http_request_id httpReqId;
 } feed_twitter_t;
@@ -94,7 +100,7 @@ typedef struct feed_weather_t
     int hour;
     int min;
   } timeInfo;
-  time_t lastUpdate;
+  cxi64 lastUpdate;
   int ttlSecs;
   bool dataReady;
   feed_req_status_t reqStatus;
@@ -134,3 +140,8 @@ void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+

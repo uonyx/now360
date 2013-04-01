@@ -65,7 +65,7 @@
 
 #ifndef STBI_malloc
 #define STBI_malloc(x)  cx_malloc(x)
-#define STBI_free(x)    cx_free(x)
+#define STBI_free(x)    x ? cx_free(x) : (void)x
 #endif
 
 #include "stb_image.h"

@@ -303,7 +303,7 @@ int main(int arg, char **argv)
    #ifndef STBTT_malloc
 //#include <malloc.h>
    #define STBTT_malloc(x,u)  cx_malloc(x)
-   #define STBTT_free(x,u)    cx_free(x)
+   #define STBTT_free(x,u)    x ? cx_free(x) : (void)x
    #endif
 
    #ifndef STBTT_assert

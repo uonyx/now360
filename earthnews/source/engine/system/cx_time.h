@@ -36,7 +36,7 @@ typedef struct cx_timer
 typedef struct cx_date
 {
   struct tm calendar;
-  cxi32 unixTimestamp;
+  cxi64 unixTimestamp;
 } cx_date;
 
 typedef enum cx_date_str_format
@@ -49,7 +49,7 @@ typedef enum cx_date_str_format
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxi32 cx_time_get_unix_timestamp (cx_time_zone zone);
+cxi64 cx_time_get_unix_timestamp (cx_time_zone zone);
 cxi32 cx_time_get_utc_offset (void);
 void  cx_time_set_date (cx_date *date, cx_time_zone zone);
 void  cx_time_get_date_string (cx_date *date, char *dst, cxu32 dstSize);
