@@ -30,6 +30,8 @@ void cx_native_file_get_documents_path (char *dstPath, cxu32 dstSize);
 
 void cx_native_eagl_context_init (void *eaglContext);
 
+void cx_native_eagl_context_deinit (void);
+
 void cx_native_eagl_context_add (void);
 
 void cx_native_eagl_context_remove (void);

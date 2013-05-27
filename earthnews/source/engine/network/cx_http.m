@@ -38,12 +38,8 @@ typedef struct cx_http_request
 
 @interface CXNSURLConnection : NSObject <NSURLConnectionDelegate>
 {
-  NSURLConnection *conn;
   NSMutableData *respdata;
-  cx_http_request_id rId;
   cx_http_response resp;
-  cx_http_response_callback callback;
-  void *callbackUserdata;
 }
 
 @property cx_http_request_id rId;
@@ -129,35 +125,32 @@ bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache
 
 bool _cx_http_deinit (void)
 {
-  CX_ASSERT (s_initialised);
-  
+  if (s_initialised)
+  {
 #if CX_HTTP_CACHE_CUSTOM
-  NSURLCache *sharedCache = [NSURLCache sharedURLCache];
-  [sharedCache release];
+    NSURLCache *sharedCache = [NSURLCache sharedURLCache];
+    [sharedCache release];
 #endif
   
-  for (cxu32 i = 0; i < [s_nsconnFreeList count]; ++i)
-  {
-    CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:i];
+    for (cxu32 i = 0; i < [s_nsconnFreeList count]; ++i)
+    {
+      CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:i];
+      [s_nsconnFreeList removeObject:nsconn];
+      [nsconn release];
+    }
     
-    [s_nsconnFreeList removeObject:nsconn];
+    for (cxu32 i = 0; i < [s_nsconnBusyList count]; ++i)
+    {
+      CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
+      [s_nsconnBusyList removeObject:nsconn];
+      [nsconn release];
+    }
     
-    [nsconn release];
+    [s_nsconnFreeList release];
+    [s_nsconnBusyList release];
+    
+    s_initialised = false;
   }
-  
-  for (cxu32 i = 0; i < [s_nsconnBusyList count]; ++i)
-  {
-    CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
-    
-    [s_nsconnBusyList removeObject:nsconn];
-    
-    [nsconn release];
-  }
-  
-  [s_nsconnFreeList release];
-  [s_nsconnBusyList release];
-  
-  s_initialised = false;
   
   return !s_initialised;
 }
@@ -444,7 +437,6 @@ void cx_http_clear_cache (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {

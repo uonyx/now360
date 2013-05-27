@@ -23,9 +23,9 @@
 
 #define CX_FONT_TEXTURE_WIDTH       (512)
 #define CX_FONT_TEXTURE_HEIGHT      (512)
-#define CX_FONT_MAX_NUM_FONT_CHARS  (160)
-#define CX_FONT_FIRST_CHAR          (32)
-#define CX_FONT_LAST_CHAR           (CX_FONT_FIRST_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
+#define CX_FONT_MAX_NUM_FONT_CHARS  (256)
+#define CX_FONT_BEGIN_CHAR          (32)
+#define CX_FONT_END_CHAR            (CX_FONT_BEGIN_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
 #define CX_FONT_MAX_TEXT_LENGTH     (512)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
                           fontImpl->texture->data, 
                           CX_FONT_TEXTURE_WIDTH, 
                           CX_FONT_TEXTURE_HEIGHT, 
-                          CX_FONT_FIRST_CHAR, 
+                          CX_FONT_BEGIN_CHAR, 
                           CX_FONT_MAX_NUM_FONT_CHARS, 
                           fontImpl->ttfCharData);
     
@@ -183,14 +183,14 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   while ((c = *t++))
   {
-    if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
+    if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
     {
       cx_vec2 pos [4];
       cx_vec2 uv [4];
       
       stbtt_aligned_quad quad;
       stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
-                          (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
+                          (c - CX_FONT_BEGIN_CHAR), sx, sy, &px, &py, &quad, 1);
       
       pos [0].x = quad.x0;
       pos [0].y = quad.y0;
@@ -238,12 +238,12 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   while ((c = *t++))
   {
-    if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
+    if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
     {
       
       stbtt_aligned_quad quad;
       stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
-                          (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
+                          (c - CX_FONT_BEGIN_CHAR), sx, sy, &px, &py, &quad, 1);
       
       int i = len * 4;
       
@@ -358,9 +358,9 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   char *lastSpacePos = NULL;
   while ((c = *t))
   {
-    if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
+    if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
     {
-      stbtt_bakedchar *bakedChar = fontImpl->ttfCharData + (c - CX_FONT_FIRST_CHAR);
+      stbtt_bakedchar *bakedChar = fontImpl->ttfCharData + (c - CX_FONT_BEGIN_CHAR);
       tw += bakedChar->xadvance * sx;
       
       if (c == 0x20)
@@ -391,14 +391,14 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
       py += fontHeight;
       newlines++;
     }
-    else if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
+    else if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
     {
       cx_vec2 pos [4];
       cx_vec2 uv [4];
       
       stbtt_aligned_quad quad;
       stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
-                          (c - CX_FONT_FIRST_CHAR), sx, sy, &px, &py, &quad, 1);
+                          (c - CX_FONT_BEGIN_CHAR), sx, sy, &px, &py, &quad, 1);
       
       pos [0].x = quad.x0;
       pos [0].y = quad.y0;
@@ -452,9 +452,9 @@ cxf32 cx_font_get_text_width (const cx_font *font, const char *text)
   unsigned char c = 0;
   while ((c = *text++))
   {
-    if ((c >= CX_FONT_FIRST_CHAR) && (c <= CX_FONT_LAST_CHAR))
+    if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
     {
-      stbtt_bakedchar *bakedChar = fontImpl->ttfCharData + (c - CX_FONT_FIRST_CHAR);
+      stbtt_bakedchar *bakedChar = fontImpl->ttfCharData + (c - CX_FONT_BEGIN_CHAR);
       width += bakedChar->xadvance * sx;
     }
   }

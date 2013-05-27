@@ -26,18 +26,14 @@ typedef enum cx_time_zone
   CX_NUM_TIME_ZONES
 } cx_time_zone;
 
-typedef struct cx_timer
+typedef enum cx_time_dst
 {
-  uint64_t startTime;
-  cxf64 elapsedTime; /* milliseconds */
-  bool active;
-} cx_timer;
-
-typedef struct cx_date
-{
-  struct tm calendar;
-  cxi64 unixTimestamp;
-} cx_date;
+  CX_TIME_DST_NIL,
+  CX_TIME_DST_AFR,
+  CX_TIME_DST_AMR,
+  CX_TIME_DST_EUR,
+  CX_TIME_DST_OCN,
+} cx_time_dst;
 
 typedef enum cx_date_str_format
 {
@@ -45,12 +41,26 @@ typedef enum cx_date_str_format
   CX_DATE_STR_FORMAT_HHMMSSYYMMDD
 } cx_date_str_format;
 
+typedef struct cx_date
+{
+  struct tm calendar;
+  cxi64 epochTime;
+} cx_date;
+
+typedef struct cx_timer
+{
+  uint64_t startTime;
+  cxf64 elapsedTime; /* milliseconds */
+  bool active;
+} cx_timer;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxi64 cx_time_get_unix_timestamp (cx_time_zone zone);
+cxi64 cx_time_get_utc_epoch (void);
 cxi32 cx_time_get_utc_offset (void);
+cxi32 cx_time_get_dst_offset_2015 (cx_time_dst dst);
 void  cx_time_set_date (cx_date *date, cx_time_zone zone);
 void  cx_time_get_date_string (cx_date *date, char *dst, cxu32 dstSize);
 

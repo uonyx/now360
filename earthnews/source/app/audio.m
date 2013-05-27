@@ -361,17 +361,12 @@ static void audio_music_init (void)
   
   //[s_musicPicker setPrompt:@"Queue songs for playback"];
   
-  //[[UIBarButtonItem appearanceWhenContainedIn:[UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.1f alpha:1.0f]];
+  if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"6.0"))
+  {
+    [s_musicPicker setShowsCloudItems:YES];
+  }
   
-  [[UINavigationBar appearanceWhenContainedIn:[UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.0f alpha:0.5f]];
-
-  [[UITableViewCell appearanceWhenContainedIn:[UITableView class], [UIViewController class], [UIPopoverController class], nil] setBackgroundColor:[UIColor colorWithWhite:0.0f alpha:0.4f]];
-  
-  //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundView:nil];
-  
-  //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setAlpha:0.3f];
-  
-#if USE_MUSIC_PICKER_POP_UP
+#if USE_MUSIC_PICKER_POP_UP && 0
   if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"5.0"))
   {
     [s_musicPopOver setPopoverBackgroundViewClass:[MusicPickerPopupBackground class]];
@@ -620,14 +615,14 @@ static void audio_music_now_playing_state_changed (void)
 
 @implementation MusicPickerDelegate
 
-- (void) mediaPicker:(MPMediaPickerController *)mediaPicker didPickMediaItems:(MPMediaItemCollection *)mediaItemCollection
+- (void)mediaPicker:(MPMediaPickerController *)mediaPicker didPickMediaItems:(MPMediaItemCollection *)mediaItemCollection
 {
   audio_music_update_queue (mediaItemCollection);
   
   audio_music_picker (false, NULL);
 }
 
-- (void) mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker
+- (void)mediaPickerDidCancel:(MPMediaPickerController *)mediaPicker
 {
   audio_music_picker (false, NULL);
 }
@@ -640,17 +635,17 @@ static void audio_music_now_playing_state_changed (void)
 
 @implementation MusicNotifcation
 
-- (void) handleNowPlayingItemChanged:(NSNotification *)notification
+- (void)handleNowPlayingItemChanged:(NSNotification *)notification
 {
   audio_music_now_playing_state_changed ();
 }
 
-- (void) handlePlaybackStateChanged:(NSNotification *)notification
+- (void)handlePlaybackStateChanged:(NSNotification *)notification
 {
   audio_music_playback_state_changed ();
 }
 
-- (void) handleVolumeChanged:(NSNotification *)notification
+- (void)handleVolumeChanged:(NSNotification *)notification
 {
   CX_DEBUG_BREAKABLE_EXPR;
 }
@@ -665,11 +660,11 @@ static void audio_music_now_playing_state_changed (void)
 
 @synthesize arrowOffset, arrowDirection;
 
--(id)initWithFrame:(CGRect)frame
+- (id) initWithFrame:(CGRect)frame
 {
   if (self = [super initWithFrame:frame])
   {
-    self.backgroundColor = [UIColor colorWithWhite:0.1f alpha:0.5f];
+    self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.9f];
     self.arrowDirection = 0;
     self.arrowOffset = 0.0f;
   }
@@ -677,17 +672,17 @@ static void audio_music_now_playing_state_changed (void)
   return self;
 }
 
-+(UIEdgeInsets)contentViewInsets
++ (UIEdgeInsets)contentViewInsets
 {
   return UIEdgeInsetsMake (10.0f, 10.0f, 10.0f, 10.0f);
 }
 
-+(CGFloat)arrowHeight
++ (CGFloat)arrowHeight
 {
   return 30.0f;
 }
 
-+(CGFloat)arrowBase
++ (CGFloat)arrowBase
 {
   return 30.0f;
 }

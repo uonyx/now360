@@ -209,7 +209,7 @@ static void http_callback_news (cx_http_request_id tId, const cx_http_response *
           
           if (parsed)
           {
-            feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+            feed->lastUpdate = cx_time_get_utc_epoch ();
             feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
           }
           else
@@ -344,110 +344,122 @@ static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
     while (child)
     {
       const char *name = cx_xml_node_name (child);
-      
+            
       if (strcmp (name, "item") == 0)
       {
         cx_xml_node title = cx_xml_node_child (child, "title", NULL);
         cx_xml_node link = cx_xml_node_child (child, "link", NULL);
-        cx_xml_node pubDate = cx_xml_node_child (child, "pubDate", NULL);
         
-        feed_news_item_t *rssItem = (feed_news_item_t *) cx_malloc (sizeof (feed_news_item_t));
-        memset (rssItem, 0, sizeof (feed_news_item_t));
-        
-        rssItem->title = cx_xml_node_content (title);
-                
-        const char *d = cx_xml_node_content (pubDate);
-
-        char day [32];
-        char monn [32];
-        char zone [32];
-        int mday = 0;
-        int year = 0;
-        int hour = 0;
-        int mins = 0;
-        int secs = 0;
-        
-        // "Sat, 23 Mar 2013 12:17:18 GMT"
-        sscanf (d, "%s %d %s %d %d:%d:%d %s", day, &mday, monn, &year, &hour, &mins, &secs, zone);
-        
-        static const char *monthName [12] =
-        {
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec"
-        };
-        
-        int month = -1;
-        
-        for (int i = 0; i < 12; ++i)
-        {
-          if (strcmp (monn, monthName [i]) == 0)
-          {
-            month = i;
-            break;
-          }
-        }
-
-        CX_ASSERT (month > -1);
-    
-        int seconds = (hour * 3600) + (mins * 60) + secs;
-        
-        rssItem->pubDateInfo.mday = mday;
-        rssItem->pubDateInfo.mon = month;
-        rssItem->pubDateInfo.secs = seconds;
-    
-        // strip out redirect url to speed up browser page loading
-        const char *linkContent = cx_xml_node_content (link);
-        const char *http = "http://";
-        const char *c = linkContent;    // original
-        const char *s = linkContent;    // save
-        
-        while (c)
-        {
-          c = strstr (c, http);
+        if (title && link)
+        {        
+          feed_news_item_t *rssItem = (feed_news_item_t *) cx_malloc (sizeof (feed_news_item_t));
+          memset (rssItem, 0, sizeof (feed_news_item_t));
           
-          if (c)
-          {
-            s = c;
-            c += strlen (http);
-          }
-        }
-        
-        CX_ASSERT (s);
-        
-        if (!s)
-        {
-          s = linkContent;
-        }
-        
-        // ***************************** //
-        // ESCAPE URLS WITH '%' IN THEM! //
-        // ***************************** //
-        
-        //CX_DEBUGLOG_CONSOLE (s, "%s", s);
-        
-        cxu32 len = cx_roundupPow2 (strlen (s));
-        
-        rssItem->link = cx_strdup (s, len);
+          // title
+          rssItem->title = cx_xml_node_content (title);
       
-        cx_free ((void *) linkContent);
+          // link - strip out redirect url to speed up browser page loading
+          const char *linkContent = cx_xml_node_content (link);
+          const char *http = "http://";
+          const char *c = linkContent;    // original
+          const char *s = linkContent;    // save
+          
+          while (c)
+          {
+            c = strstr (c, http);
+            
+            if (c)
+            {
+              s = c;
+              c += strlen (http);
+            }
+          }
+          
+          CX_ASSERT (s);
+          
+          if (!s)
+          {
+            s = linkContent;
+          }
+          
+          // ***************************** //
+          // ESCAPE URLS WITH '%' IN THEM! //
+          // ***************************** //
+          
+          //CX_DEBUGLOG_CONSOLE (s, "%s", s);
+          
+          cxu32 len = cx_roundupPow2 (strlen (s));
+          
+          rssItem->link = cx_strdup (s, len);
         
-        rssItem->next = feed->items;
-        
-        feed->items = rssItem;
+          cx_free ((void *) linkContent);
+          
+          // pubDate
+          
+          cx_xml_node pubDate = cx_xml_node_child (child, "pubDate", NULL);
+          
+          if (pubDate)
+          {
+            const char *d = cx_xml_node_content (pubDate);
+            
+            char day [32];
+            char monn [32];
+            char zone [32];
+            int mday = 0;
+            int year = 0;
+            int hour = 0;
+            int mins = 0;
+            int secs = 0;
+            
+            // "Sat, 23 Mar 2013 12:17:18 GMT"
+            sscanf (d, "%s %d %s %d %d:%d:%d %s", day, &mday, monn, &year, &hour, &mins, &secs, zone);
+            
+            static const char *monthName [12] =
+            {
+              "Jan",
+              "Feb",
+              "Mar",
+              "Apr",
+              "May",
+              "Jun",
+              "Jul",
+              "Aug",
+              "Sep",
+              "Oct",
+              "Nov",
+              "Dec"
+            };
+            
+            int month = -1;
+            
+            for (int i = 0; i < 12; ++i)
+            {
+              if (strcmp (monn, monthName [i]) == 0)
+              {
+                month = i;
+                break;
+              }
+            }
+            
+            CX_ASSERT (month > -1);
+            
+            int seconds = (hour * 3600) + (mins * 60) + secs;
+            
+            rssItem->pubDateInfo.mday = mday;
+            rssItem->pubDateInfo.mon = month;
+            rssItem->pubDateInfo.secs = seconds;
+          }
+          
+          // next
+          
+          rssItem->next = feed->items;
+          
+          feed->items = rssItem;
+        }
       }
       else if (strcmp (name, "link") == 0)
       {
-        feed->link  = cx_xml_node_content (child);
+        feed->link = cx_xml_node_content (child);
       }
       
       child = cx_xml_node_next_sibling (child);
@@ -506,7 +518,7 @@ static void http_callback_twitter (cx_http_request_id tId, const cx_http_respons
           
           if (parsed)
           {
-            feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+            feed->lastUpdate = cx_time_get_utc_epoch ();
             feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
           }
           else
@@ -745,12 +757,11 @@ void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_weather_data_valid (const feed_weather_t *feed)
+bool feeds_weather_data_cc_valid (const feed_weather_t *feed)
 {
   CX_ASSERT (feed);
   
-  return (feed->dataReady && 
-          (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
+  return ((feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) &&
           (feed->conditionCode < NUM_WEATHER_CONDITION_CODES));
 }
 
@@ -767,14 +778,13 @@ static void http_callback_weather (cx_http_request_id tId, const cx_http_respons
   
   if (response->error == CX_HTTP_CONNECTION_ERROR)
   {
-    // no internet connection ?
     feed->reqStatus = FEED_REQ_STATUS_ERROR;
     
     CX_DEBUGLOG_CONSOLE (1, "http_callback_weather: Warning: no internet connection");
   }
   else
   {
-    if (response->statusCode == 200)
+    if ((response->statusCode == 200) && response->data && (response->dataSize > 0))
     {
       feeds_weather_clear (feed);
       
@@ -783,7 +793,7 @@ static void http_callback_weather (cx_http_request_id tId, const cx_http_respons
       if (parsed)
       {
         feed->dataReady = true;
-        feed->lastUpdate = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+        feed->lastUpdate = cx_time_get_utc_epoch ();
         feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
 #if 0
         struct temp t;
@@ -815,7 +825,7 @@ bool feeds_weather_search (feed_weather_t *feed, const char *query)
   CX_ASSERT (query);
   CX_ASSERT (feed->reqStatus == FEED_REQ_STATUS_INVALID);
 
-  time_t currentTime = cx_time_get_unix_timestamp (CX_TIME_ZONE_UTC);
+  time_t currentTime = cx_time_get_utc_epoch ();
   
   if ((currentTime - feed->lastUpdate) > feed->ttlSecs)
   {
@@ -879,76 +889,76 @@ static bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dat
   if (doc)
   {  
     cx_xml_node rootNode = cx_xml_doc_root_node (doc);
-    cx_xml_node errorNode = cx_xml_node_child (rootNode, "error", NULL);
+    cx_xml_node channelNode = cx_xml_node_child (rootNode, "channel", NULL);
     
-    if (errorNode)
+    if (channelNode)
     {
-      success = false;
-    }
-    else
-    {
-      cx_xml_node channelNode = cx_xml_node_child (rootNode, "channel", NULL);
+      cx_xml_node ttlNode = cx_xml_node_child (channelNode, "ttl", NULL);
       
-      if (channelNode)
+      int ttlSecs = 0;
+      
+      if (ttlNode)
       {
-        cx_xml_node ttlNode = cx_xml_node_child (channelNode, "ttl", NULL);
-        
-        int ttlSecs = 0;
-        
-        if (ttlNode)
-        {
-          char *ttl = cx_xml_node_content (ttlNode);
-          ttlSecs = atoi (ttl) * 60;
-          cx_free (ttl);
-        }
-        
-        cx_xml_node itemNode = cx_xml_node_child (channelNode, "item", NULL);
-        
-        if (itemNode)
-        {
-          cx_xml_node conditionNode = cx_xml_node_child (itemNode, "condition", "yweather");
+        char *ttl = cx_xml_node_content (ttlNode);
+        ttlSecs = atoi (ttl) * 60;
+        cx_free (ttl);
+      }
+      
+      cx_xml_node itemNode = cx_xml_node_child (channelNode, "item", NULL);
+      
+      if (itemNode)
+      {
+        cx_xml_node conditionNode = cx_xml_node_child (itemNode, "condition", "yweather");
 
+        int tempCelsius = 0;
+        int conditionCode = WEATHER_CONDITION_CODE_INVALID;
+        
+        if (conditionCode)
+        {
+          char *temp = cx_xml_node_attr (conditionNode, "temp");
+          char *code = cx_xml_node_attr (conditionNode, "code");
           
-          int tempCelsius = 0;
-          int conditionCode = WEATHER_CONDITION_CODE_INVALID;
+          tempCelsius = atoi (temp);
+          conditionCode = atoi (code);
           
-          if (conditionCode)
+          cx_free (temp);
+          cx_free (code);
+  
+#if 0
+          char *date = cx_xml_node_attr (conditionNode, "date");
+          
+          char oclock [8];
+          int hour, minute;
+          
+          //  "Wed, 30 Nov 2005 1:56 pm PST" (RFC822 Section 5 format)
+          sscanf (date, "%*s %*d %*s %*d %d:%d %s %*s", &hour, &minute, oclock);
+          
+          if (strcmp (oclock, "pm") == 0)
           {
-            char *temp = cx_xml_node_attr (conditionNode, "temp");
-            char *code = cx_xml_node_attr (conditionNode, "code");
-            char *date = cx_xml_node_attr (conditionNode, "date");
-            
-            tempCelsius = atoi (temp);
-            conditionCode = atoi (code);
-          
-            char oclock [8];
-            int hour, minute;
-            
-            //  "Wed, 30 Nov 2005 1:56 pm PST" (RFC822 Section 5 format)
-            sscanf (date, "%*s %*d %*s %*d %d:%d %s %*s", &hour, &minute, oclock);
-            
-            if (strcmp (oclock, "pm") == 0)
-            {
-              hour += (hour == 12) ? 0 : 12;
-            }
-            else if ((strcmp (oclock, "am") == 0) && (hour == 12))
-            {
-              hour = 0;
-            }
-            
-            feed->ttlSecs = ttlSecs;
-            feed->celsius = tempCelsius;
-            feed->conditionCode = conditionCode;
-            feed->timeInfo.hour = hour;
-            feed->timeInfo.min = minute;
-
-            cx_free (temp);
-            cx_free (code);
-            cx_free (date);
+            hour += (hour == 12) ? 0 : 12;
+          }
+          else if ((strcmp (oclock, "am") == 0) && (hour == 12))
+          {
+            hour = 0;
           }
           
-          success = true;
+
+          feed->timeInfo.hour = hour;
+          feed->timeInfo.min = minute;
+
+          cx_free (date);
+#endif
+          
+          feed->ttlSecs = ttlSecs;
+          feed->celsius = tempCelsius;
+          feed->conditionCode = conditionCode;  
         }
+        else
+        {
+          feed->ttlSecs = 0;
+        }
+        
+        success = true;
       }
     }
     

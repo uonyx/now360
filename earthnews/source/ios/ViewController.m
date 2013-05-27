@@ -87,6 +87,25 @@
   NSString *appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
   NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   */
+  
+  //[[UINavigationBar appearanceWhenContainedIn:[UINavigationController class], [UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.0f alpha:0.5f]];
+  
+  //[[UINavigationBar appearanceWhenContainedIn:[UIViewController class], nil] setTintColor:[UIColor colorWithWhite:0.0f alpha:0.5f]];
+  
+  //[[UIBarButtonItem appearanceWhenContainedIn:[UINavigationBar class], nil] setTintColor:[UIColor colorWithWhite:0.1f alpha:1.0f]];
+  
+  //[[UINavigationBar appearance] setBarStyle:UIBarStyleBlack];
+  
+  //[[UINavigationBar appearance] setTranslucent:YES];
+  
+  [[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
+  
+  //[[UITableViewCell appearanceWhenContainedIn:[UITableView class], [UIViewController class], [UIPopoverController class], nil] setBackgroundColor:[UIColor colorWithWhite:0.0f alpha:0.4f]];
+  
+  //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundView:nil];
+  
+  //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setAlpha:0.3f];
+  
 #if 0
   AppDelegate* appDelegate = (((AppDelegate*) [UIApplication sharedApplication].delegate));
   UIViewController *rootViewController = [appDelegate.window rootViewController];

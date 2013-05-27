@@ -13,6 +13,7 @@
 		31117DEB1708AA3A000BB062 /* SVWebViewController.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 31117DE41708AA3A000BB062 /* SVWebViewController.bundle */; };
 		31117DEC1708AA3A000BB062 /* SVWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31117DE61708AA3A000BB062 /* SVWebViewController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		31117DEE1708AAD8000BB062 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31117DED1708AAD7000BB062 /* MessageUI.framework */; };
+		31117DF11752C9E2000BB062 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31117DF31752C9E2000BB062 /* Localizable.strings */; };
 		311B943216A17EFA0057786F /* audio.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B943116A17EFA0057786F /* audio.m */; };
 		311B943416A1802B0057786F /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311B943316A1802B0057786F /* MediaPlayer.framework */; };
 		3127E2B915D38FDC00793C60 /* app.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2A915D38FDC00793C60 /* app.c */; };
@@ -150,6 +151,11 @@
 		31117DE71708AA3A000BB062 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/SVWebViewController.strings"; sourceTree = "<group>"; };
 		31117DE81708AA3A000BB062 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/SVWebViewController.strings"; sourceTree = "<group>"; };
 		31117DED1708AAD7000BB062 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
+		31117DF21752C9E2000BB062 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		31117DF41752C9EC000BB062 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		31117DF61752CA37000BB062 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
+		31117DF71752CA38000BB062 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		31117DF81752CA3D000BB062 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		311B943016A17EBB0057786F /* audio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = audio.h; sourceTree = "<group>"; };
 		311B943116A17EFA0057786F /* audio.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = audio.m; sourceTree = "<group>"; };
 		311B943316A1802B0057786F /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
@@ -653,6 +659,7 @@
 				316FAA641517C01900CC39F2 /* earthnews-Prefix.pch */,
 				316FAA651517C01900CC39F2 /* InfoPlist.strings */,
 				316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */,
+				31117DF31752C9E2000BB062 /* Localizable.strings */,
 			);
 			path = resource_ios;
 			sourceTree = "<group>";
@@ -1117,6 +1124,7 @@
 				316FAA8D1517C49A00CC39F2 /* data in Resources */,
 				31117DE91708AA3A000BB062 /* SVWebViewController.strings in Resources */,
 				31117DEB1708AA3A000BB062 /* SVWebViewController.bundle in Resources */,
+				31117DF11752C9E2000BB062 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1255,6 +1263,18 @@
 				31117DE81708AA3A000BB062 /* zh-Hant */,
 			);
 			name = SVWebViewController.strings;
+			sourceTree = "<group>";
+		};
+		31117DF31752C9E2000BB062 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				31117DF21752C9E2000BB062 /* en */,
+				31117DF41752C9EC000BB062 /* es */,
+				31117DF61752CA37000BB062 /* da */,
+				31117DF71752CA38000BB062 /* zh-Hans */,
+				31117DF81752CA3D000BB062 /* zh-Hant */,
+			);
+			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
 		316FAA651517C01900CC39F2 /* InfoPlist.strings */ = {

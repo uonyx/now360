@@ -85,6 +85,72 @@ void util_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int util_get_dst_offset_secs (const char *tzname)
+{
+#if 0
+  NSLog(@"%@", [NSTimeZone knownTimeZoneNames]);
+  
+  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"EST"]; // new york
+  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"GMT"]; // uk
+  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"BST"]; // uk
+  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"CET"]; // europe
+  NSTimeZone *tz2 = [NSTimeZone timeZoneWithName:@"Australia/Sydney"];
+  
+  bool dst2 = [tz2 isDaylightSavingTime];
+  (void) dst2;
+  
+  NSTimeInterval dst2OffsetSecs = [tz2 daylightSavingTimeOffset];
+  (void) dst2OffsetSecs;
+  
+  NSTimeInterval dst2OffsetDateSecs = [tz2 daylightSavingTimeOffsetForDate:[NSDate date]];
+  (void) dst2OffsetDateSecs;
+  
+#if 0
+  NSCalendarUnit unitFlags = NSYearCalendarUnit | NSMonthCalendarUnit |  NSDayCalendarUnit | NSHourCalendarUnit | NSMinuteCalendarUnit | NSSecondCalendarUnit;
+  
+  NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier: NSGregorianCalendar];
+  
+  [gregorian setTimeZone:tz2];
+  
+  NSDate *date = [NSDate date];
+  
+  NSDateComponents *dateComponents = [gregorian components:unitFlags fromDate:date];
+  
+  NSInteger year = [dateComponents year];
+  NSInteger month = [dateComponents month];
+  NSInteger day = [dateComponents day];
+  NSInteger hour = [dateComponents hour];
+  NSInteger minute = [dateComponents minute];
+  NSInteger second = [dateComponents second];
+  
+  (void) year;
+  (void) month;
+  (void) day;
+  (void) hour;
+  (void) minute;
+  (void) second;
+  
+  [gregorian release];
+#endif
+  
+#endif
+  
+  if (*tzname == 0)
+  {
+    CX_DEBUG_BREAKABLE_EXPR;
+  }
+  
+  NSTimeZone *tz = [NSTimeZone timeZoneWithName:[NSString stringWithCString:tzname encoding:NSASCIIStringEncoding]];
+  
+  int dstOffsetSecs = (tz == nil) ? 0 : (int) [tz daylightSavingTimeOffset];
+  
+  return dstOffsetSecs;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const cx_font *util_get_font (font_size_t size)
 {
   CX_ASSERT ((size > FONT_SIZE_INVALID) && (size < NUM_FONT_SIZES));
@@ -98,6 +164,7 @@ const cx_font *util_get_font (font_size_t size)
 
 void util_render_fps (void)
 {
+#if 0
   static float fps = 0.0f;
   static float totalTime = 0.0f;
   static unsigned int frameCount = 0;
@@ -129,6 +196,30 @@ void util_render_fps (void)
   float sh = 768.0f;
   
   cx_font_render (font, fpsStr, (sw - 24.0f) - 2.0f, sh - 12.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_red ());
+#endif
+  
+#if 1
+  
+  const unsigned int textLen = 255 - 32; // 161;
+  const unsigned int textBufLen = textLen + 1;
+  
+  unsigned char text [textBufLen];
+  
+  for (unsigned char i = 0; i < textLen; ++i)
+  {
+    unsigned char ch = i + 32;
+    
+    text [i] = ch;
+  }
+  
+  text [textLen] = 0;
+  
+  const cx_font *font = util_get_font (FONT_SIZE_12);
+  
+  cx_font_render (font, (const char *) text, 1.0f, 744.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_cyan ());
+  
+#endif
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,16 +312,20 @@ void util_activity_indicator_set_active (bool active)
     {
       [s_activityView startAnimating];
     }
-    
-    s_activityCount += 1;
+    else
+    {
+      s_activityCount += 1;
+    }
   }
   else
   {
-    s_activityCount -= 1;
-    
     if (s_activityCount <= 0)
     {
       [s_activityView stopAnimating];
+    }
+    else
+    {
+      s_activityCount -= 1;
     }
   }
 } 

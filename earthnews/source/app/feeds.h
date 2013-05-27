@@ -95,11 +95,6 @@ typedef struct feed_weather_t
   const char *q;
   int celsius;
   int conditionCode;
-  struct
-  {
-    int hour;
-    int min;
-  } timeInfo;
   cxi64 lastUpdate;
   int ttlSecs;
   bool dataReady;
@@ -132,7 +127,7 @@ void feeds_twitter_cancel_search (feed_twitter_t *feed);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool feeds_weather_search (feed_weather_t *feed, const char *query);
-bool feeds_weather_data_valid (const feed_weather_t *feed);
+bool feeds_weather_data_cc_valid (const feed_weather_t *feed);
 void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z, float opacity);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

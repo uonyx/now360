@@ -4,16 +4,29 @@
    version = "1.0">
    <FileBreakpoints>
       <FileBreakpoint
-         shouldBeEnabled = "Yes"
+         shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/system/cx_debug.c"
-         timestampString = "386386126.194696"
+         filePath = "earthnews/source/app/util.m"
+         timestampString = "389125494.85218"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "92"
-         endingLineNumber = "92"
-         landmarkName = "_cx_assert()"
+         startingLineNumber = "217"
+         endingLineNumber = "217"
+         landmarkName = "util_render_fps()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/webview.m"
+         timestampString = "391303315.852948"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "77"
+         endingLineNumber = "77"
+         landmarkName = "webview_init()"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

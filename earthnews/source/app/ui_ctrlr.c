@@ -16,7 +16,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define UI_DEBUG 0
+#define UI_CTRLR_DEBUG 0
+#define UI_CTRLR_DEBUG_NEW_TICKER 1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -690,7 +691,7 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   cx_colour colour = *cx_colour_white (); //custom->intr.colour [wstate];
   colour.a *= opacity;
   
-#if UI_DEBUG
+#if UI_CTRLR_DEBUG
   float x2 = x1 + custom->intr.dimension.x;
   float y2 = y1 + custom->intr.dimension.y;
   
@@ -887,7 +888,6 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
   
   ticker->width = pixelwidthTotal;
   
-  
   for (int i = 0; i < ticker->itemCount; ++i)
   {
     ticker->items [i].posx += custom->intr.dimension.x;
@@ -905,7 +905,7 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if UI_CTRLR_DEBUG_NEW_TICKER
 static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char *tweet)
 {
   CX_ASSERT (tweet);
@@ -922,7 +922,12 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
   dest->elems [i].loc = currLoc;
   dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_TEXT;
   
-  const char *http = strstr (curr, "http://");
+  const char *http = strstr (curr, "http://"); 
+  
+  if (http == NULL)
+  {
+    http = strstr (curr, "https://");
+  }
   
   while (http)
   {
@@ -964,6 +969,11 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
     curr = t;
     
     http = strstr (curr, "http://");
+    
+    if (http == NULL)
+    {
+      http = strstr (curr, "https://");
+    }
   }
   
   dest->elemCount = i;
@@ -992,7 +1002,7 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
 #endif
   
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1015,9 +1025,9 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     float opacity = ui_widget_get_opacity (custom);
     
     cx_colour colbg = *colour;
-    cx_colour colname = *cx_colour_green ();
+    cx_colour colname = *cx_colour_grey ();
     cx_colour coltweet = *cx_colour_white ();
-    cx_colour collink = *cx_colour_yellow ();
+    cx_colour collink = *cx_colour_cyan ();
     
     colbg.a *= opacity;
     colname.a *= opacity;
@@ -1033,74 +1043,74 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     
     const cx_font *font = util_get_font (FONT_SIZE_16);
     float scrollx = 60.0f * (float) cx_system_time_get_delta_time ();
-    char tt [512] = {0};
+    char unescapedText [256] = {0};
     
     for (int i = 0, c = ticker->itemCount; i < c; ++i)
     {
       CX_ASSERT (i < TWITTER_TICKER_MAX_ITEM_COUNT);
       
-      float x = x1 + ticker->items [i].posx;
-      float y = pos->y;
+      float ix = x1 + ticker->items [i].posx;
+      float iy = pos->y;
+      float ix2 = ix + ticker->items [i].width;
       
       feed_twitter_tweet_t *tweet = ticker->items [i].data;
       CX_ASSERT (tweet);
-      
-#if 1
+    
+      bool outOfBounds = (((ix <= 0.0f) && (ix2 <= 0.0f)) ||
+                          ((ix >= s_uicontext->canvasWidth) && (ix2 >= s_uicontext->canvasWidth)));
+    
+      if (!outOfBounds)
+      {
+#if UI_CTRLR_DEBUG_NEW_TICKER
       if (tweet->username && tweet->text)
       {
         ticker_tweet_t tickerTweet;
         memset (&tickerTweet, 0, sizeof (ticker_tweet_t));
         
-        cx_str_html_unescape (tt, 512, tweet->text);
-        ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, tt);
+        cx_str_html_unescape (unescapedText, 256, tweet->text);
+        ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, unescapedText);
         
-        char namehandle [256];
-        cx_sprintf (namehandle, 256, "@%s: ", tweet->username);
-        cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
+        char username [32];
+        cx_sprintf (username, 32, "@%s: ", tweet->username);
+        cx_font_render (font, username, ix, iy, 0.0f, 0, &colname);
         
-        float x2 = x + cx_font_get_text_width (font, namehandle);
+        float rx = ix + cx_font_get_text_width (font, username);
         
-        char dstr [256];
-        
+        char tickerTweetText [256];
         for (cxu32 j = 0; j < tickerTweet.elemCount; ++j)
         {
           cxu32 loc = tickerTweet.elems [j].loc;
-          
           const char *s = &tickerTweet.buffer [loc];
-          
-          cx_sprintf (dstr, 256, "%s ", s);
+          cx_sprintf (tickerTweetText, 256, "%s ", s);
           
           bool isLink = (tickerTweet.elems [j].type == TWITTER_TICKER_TWEET_ELEM_TYPE_LINK);
       
           const cx_colour *col = isLink ? &collink : &coltweet;
           
-          cx_font_render (font, dstr, x2, y, 0.0f, 0, col);
+          cx_font_render (font, tickerTweetText, rx, iy, 0.0f, 0, col);
           
-          if (isLink)
+          // collect visible link elems for ui input check - funky hack works!
+          if (isLink && (s_visLinkCount < TWITTER_TWEET_VIS_LINK_MAX_COUNT))
           {
-            // collect visible elems for ui input check
-            if ((s_visLinkCount < TWITTER_TWEET_VIS_LINK_MAX_COUNT) && 
-                (x2 >= 0.0f) && (x2 <= s_uicontext->canvasWidth))
+            //if ((rx >= 0.0f) && (rx <= s_uicontext->canvasWidth))
             {
               unsigned int idx = s_visLinkCount++;
               CX_ASSERT (idx < TWITTER_TWEET_VIS_LINK_MAX_COUNT);
               
-              s_visLinks [idx].x = x2;
+              s_visLinks [idx].x = rx;
               s_visLinks [idx].w = cx_font_get_text_width (font, s);
               cx_strcpy (s_visLinks [idx].url, TWITTER_TWEET_VIS_LINK_URL_BUF_SIZE, s);
             }
           }
           
-          x2 = x2 + cx_font_get_text_width (font, dstr);
+          rx = rx + cx_font_get_text_width (font, tickerTweetText);
         }
-        
       }
-      
 #else
-      if (tweet->userhandle && tweet->text)
+      if (tweet->username && tweet->text)
       {
-        char namehandle [256];
-        cx_sprintf (namehandle, 256, "@%s: ", tweet->userhandle);
+        char namehandle [32];
+        cx_sprintf (namehandle, 32, "@%s: ", tweet->username);
         cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
         
         float x2 = x + cx_font_get_text_width (font, namehandle);
@@ -1109,20 +1119,20 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
         cx_str_html_unescape (tweetText, 256, tweet->text);
         cx_font_render (font, tweetText, x2, y, 0.0f, 0, &coltweet);
       }
-
 #endif
+      }
       
       bool activeSystemUI = webview_active () || audio_music_picker_active () || settings_ui_active ();
       
       if ((wstate != UI_WIDGET_STATE_HOVER) && !activeSystemUI)
       {
-        if ((x + ticker->items [i].width) < 0.0f)
+        if ((ix + ticker->items [i].width) < 0.0f)
         {
-          ticker->items [i].posx = x + ticker->width + custom->intr.dimension.x;
+          ticker->items [i].posx = ix + ticker->width + custom->intr.dimension.x;
         }
         else
         {
-          ticker->items [i].posx = x - scrollx;
+          ticker->items [i].posx = ix - scrollx;
         }
       }
     }

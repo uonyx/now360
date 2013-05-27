@@ -11,6 +11,7 @@
 
 #include "cx_time.h"
 #include "cx_thread.h"
+#include "cx_string.h"
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 #include <unistd.h>
@@ -115,43 +116,20 @@ cxf64 cx_system_time_get_total_time (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxi64 cx_time_get_unix_timestamp (cx_time_zone zone)
+cxi64 cx_time_get_utc_epoch (void)
 {
-  CX_ASSERT ((zone > CX_TIME_ZONE_INVALID) && (zone < CX_NUM_TIME_ZONES));
-  
   cxi64 timestamp = 0;
   
   cx_thread_mutex_lock (&s_criticalSection);
   
-  switch (zone) 
-  {
-    case CX_TIME_ZONE_LOCAL:
-    {
-      time_t rawTime = time (NULL);
-      CX_ASSERT (rawTime != -1);
-      
-      timestamp = (cxi64) rawTime;
-      break;
-    }
-    
-    case CX_TIME_ZONE_UTC:
-    {
-      time_t rawTime = time (NULL);
-      CX_ASSERT (rawTime != -1);
-      
-      struct tm *gmt = gmtime (&rawTime);
-      time_t utcTime = mktime (gmt);
-      CX_ASSERT (utcTime != -1);
-      
-      timestamp = (cxi64) utcTime;
-      break;
-    }
-      
-    default:
-    {
-      break;
-    }
-  }
+  time_t rawTime = time (NULL);
+  CX_ASSERT (rawTime != -1);
+  
+  struct tm gmt = *gmtime (&rawTime);
+  time_t utcTime = timegm (&gmt);
+  CX_ASSERT (utcTime != -1);
+  
+  timestamp = (cxi64) utcTime;
   
   cx_thread_mutex_unlock (&s_criticalSection);
   
@@ -167,19 +145,149 @@ cxi32 cx_time_get_utc_offset (void)
   cx_thread_mutex_lock (&s_criticalSection);
   
   time_t rawTime = time (NULL);
-  
-  struct tm utcTm = *gmtime (&rawTime);
+  CX_ASSERT (rawTime != -1);
+
   struct tm locTm = *localtime (&rawTime);
   
-  time_t utcTime = mktime (&utcTm);
-  time_t locTime = mktime (&locTm);
+#if 1
+  cxi32 diffSecs = locTm.tm_gmtoff;
+#else
+  struct tm utcTm = *gmtime (&rawTime);
+  time_t utcTime = timegm (&utcTm);
+  time_t locTime = timegm (&locTm);
+  cxi32 diffSecs = (cxi32) difftime (locTime, utcTime);
+#endif
   
-  double diffSecs = difftime (locTime, utcTime);
-  cxi32 diffHr = (cxi32) (diffSecs / (60.0f * 60.0f));
+  cxi32 offsetMin = (diffSecs / 60) % 60;
+  cxi32 offsetHr = (diffSecs / 3600) * 100;
+  cxi32 offset = offsetHr + offsetMin;
   
   cx_thread_mutex_unlock (&s_criticalSection);
   
-  return diffHr;
+  return offset;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if 0
+cxi32 cx_time_get_dst_offset_tz (const char *tzabv)
+{
+  cxi32 dstOffset = 0;
+  
+  char *env = getenv ("TZ");
+  
+  if (env)
+  {
+    char tzprev [32];
+  
+    cx_sprintf (tzprev, 32, "%s", env);
+    
+    setenv ("TZ", tzabv, 1);
+    tzset ();
+    
+    time_t rawTime = time (NULL);
+    CX_ASSERT (rawTime != -1);
+    
+    struct tm tzLocaltime = *localtime (&rawTime);
+    
+    dstOffset = tzLocaltime.tm_isdst;
+    
+    setenv ("TZ", tzprev, 1);
+    tzset ();
+  }
+  else
+  {
+    setenv ("TZ", tzabv, 1);
+    tzset ();
+    
+    time_t rawTime = time (NULL);
+    CX_ASSERT (rawTime != -1);
+    
+    struct tm tzLocaltime = *localtime (&rawTime);
+    dstOffset = tzLocaltime.tm_isdst;
+    
+    unsetenv ("TZ");
+    tzset ();
+  }
+  
+  return dstOffset;
+}
+#endif
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cxi32 cx_time_get_dst_offset_2015 (cx_time_dst dst)
+{
+  cxi32 dstOffset = 0;
+  
+  cx_date date;
+  cx_time_set_date (&date, CX_TIME_ZONE_UTC);
+
+  switch (dst)
+  {
+    case CX_TIME_DST_EUR:
+    {
+      int yr = date.calendar.tm_year;
+      int mo = date.calendar.tm_mon;
+      int dy = date.calendar.tm_mday;
+      int hr = date.calendar.tm_hour;
+      
+      int beginMon = 2; // march
+      int endMon = 9; // october
+      
+      if (mo == beginMon)
+      {
+        int a = ((((5 * yr) / 4) + 4) % 7);
+        int beginDay = 31 - a;
+        
+        if (dy >= beginDay)
+        {
+          dstOffset = 1;
+        }
+        else if (dy == beginDay)
+        {
+          if (hr >= 1)
+          {
+            dstOffset = 1;
+          }
+        }
+      }
+      else if (mo == endMon)
+      {
+        int b = ((((5 * yr) / 4) + 1) % 7);
+        int endDay = 31 - b;
+        
+        if (dy < endDay)
+        {
+          dstOffset = 1;
+        }
+        else if (dy == endDay)
+        {
+          if (hr < 1)
+          {
+            dstOffset = 1;
+          }
+        }
+      }
+      else if ((mo > beginMon) && (mo < endMon))
+      {
+        dstOffset = 1;
+      }
+      
+      dstOffset *= 100;
+      
+      break;
+    }
+      
+    default:
+    {
+      break;
+    }
+  }
+  
+  return dstOffset;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,9 +306,8 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
     case CX_TIME_ZONE_LOCAL:
     {
       time_t rawTime = time (NULL);
-      
       date->calendar = *localtime (&rawTime);
-      date->unixTimestamp = (cxi64) mktime (&date->calendar);
+      date->epochTime = (cxi64) mktime (&date->calendar);
       
       break;
     }
@@ -209,14 +316,14 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
     {
       time_t rawTime = time (NULL);
       date->calendar = *gmtime (&rawTime);
-      date->unixTimestamp = (cxi64) mktime (&date->calendar);
+      date->epochTime = (cxi64) timegm (&date->calendar);
       
       break;
     }
       
     default:
     {
-      date->unixTimestamp = 0;
+      date->epochTime = 0;
       
       break;
     }

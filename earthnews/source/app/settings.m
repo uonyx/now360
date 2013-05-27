@@ -93,6 +93,7 @@ static settings_t s_settings;
 {
   UINavigationController *_navCtrlr;
   UISwitch *_timeSwitch;
+  UIBarButtonItem *_doneButton;
   TemperatureTableViewController *_temperatureViewController;
   CityTableViewController *_cityViewController;
   ClockTableViewController *_clockViewController;
@@ -289,9 +290,7 @@ int settings_get_clock_display_format (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void settings_init_view_create (void)
-{
-  [[UINavigationBar appearanceWhenContainedIn:[UINavigationController class], [UIPopoverController class], nil] setTintColor:[UIColor colorWithWhite:0.0f alpha:0.5f]];
-  
+{  
   s_rootTableViewCtrlr = [[RootTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
   
   s_popover = [[UIPopoverController alloc] initWithContentViewController:[s_rootTableViewCtrlr navigationController]];
@@ -641,7 +640,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 @implementation RootTableViewController
 
-- (id) initWithStyle:(UITableViewStyle)style
+- (id)initWithStyle:(UITableViewStyle)style
 {
   self = [super initWithStyle:style];
   
@@ -653,18 +652,24 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     _clockViewController = [[ClockTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _navCtrlr = [[UINavigationController alloc] initWithRootViewController:self];
     
+    _doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                                                target:self
+                                                                action:@selector(doneButtonClicked:)];
+    
+    self.navigationItem.rightBarButtonItem = _doneButton;
     [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
   }
   
   return self;
 }
 
-- (void) dealloc
+- (void)dealloc
 {
   [_cityViewController release];
   [_temperatureViewController release];
   [_clockViewController release];
   [_timeSwitch release];
+  [_doneButton release];
   [_navCtrlr release];
   
   [super dealloc];
@@ -677,13 +682,20 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   [_timeSwitch setOn:showTime animated:YES];
 }
 
+- (void)doneButtonClicked:(id)sender
+{
+  settings_ui_hide ();
+}
+
 - (void)viewDidLoad
 {
+  [super viewDidLoad];
   [_timeSwitch addTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)viewDidUnload
 {
+  [super viewDidUnload];
   [_timeSwitch removeTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
 }
 
@@ -734,7 +746,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   return (section == 0) ? SETTINGS_ROOT_TABLE_DATA_ROWS : 0;
 }
 
-- (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
   NSString *identifier = @"RootCell";
   

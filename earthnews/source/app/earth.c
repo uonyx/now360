@@ -7,6 +7,7 @@
 //
 
 #include "earth.h"
+#include "util.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,15 +79,28 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
       earthdata->normal = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
       earthdata->names = (const char **) cx_malloc (sizeof (char *) * count);
       earthdata->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
+#if DEBUG_WEATHER_ID
+      earthdata->weatherId = (char *) cx_malloc (sizeof (char) * 16 * count);
+#else
       earthdata->weatherId = (const char **) cx_malloc (sizeof (char *) * count);
+#endif
       earthdata->utcOffset = (int *) cx_malloc (sizeof (int) * count);
+      earthdata->dstOffset = (int *) cx_malloc (sizeof (int) * count);
+      earthdata->tznames = (const char **) cx_malloc (sizeof (char *) * count);
+    
       
       memset (earthdata->location, 0, (sizeof (cx_vec4) * count));
       memset (earthdata->normal, 0, (sizeof (cx_vec4) * count));
       memset (earthdata->names, 0, (sizeof (char *) * count));
       memset (earthdata->newsFeeds, 0, (sizeof (char *) * count));
+#if DEBUG_WEATHER_ID
+      memset (earthdata->weatherId, 0, sizeof (char) * 16 * count);
+#else
       memset (earthdata->weatherId, 0, (sizeof (char *) * count));
+#endif
       memset (earthdata->utcOffset, 0, (sizeof (int) * count));
+      memset (earthdata->dstOffset, 0, (sizeof (int) * count));
+      memset (earthdata->tznames, 0, (sizeof (char *) * count));
       
       for (unsigned int i = 0; i < count; ++i)
       {
@@ -99,11 +113,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
           cx_json_node p = cx_json_object_child_node (objectNode, j);
           const char *pk = cx_json_object_child_key (objectNode, j);
           
-          if (strcmp (pk, "utcoffset") == 0)
-          {
-            earthdata->utcOffset [i] = cx_json_value_int (p);
-          }
-          else if (strcmp (pk, "name") == 0)
+          if (strcmp (pk, "name") == 0)
           {
             const char *str = cx_json_value_string (p);
             earthdata->names [i] = cx_strdup (str, 32);
@@ -116,7 +126,40 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
           else if (strcmp (pk, "weather") == 0)
           {
             const char *str = cx_json_value_string (p);
+            
+#if DEBUG_WEATHER_ID
+            int loc = i * 16;
+            
+            char *d = &earthdata->weatherId [loc];
+            
+            cx_strcpy (d, 16, str);
+#else
             earthdata->weatherId [i] = cx_strdup (str, 16);
+#endif
+          }
+          else if (strcmp (pk, "timezone") == 0)
+          {
+            cx_json_node utcNode = cx_json_object_child (p, "utcoffset");
+            cx_json_node tznNode = cx_json_object_child (p, "name");
+            
+            const char *tzn = cx_json_value_string (tznNode);
+            unsigned int tznlen = cx_roundupPow2 (strlen (tzn));
+            
+            if (tznlen > 0)
+            {
+              earthdata->tznames [i] = cx_strdup (tzn, tznlen);
+            }
+            else
+            {
+              earthdata->tznames [i] = cx_strdup ("", 16);
+            }
+            
+            int utcOffsetSecs = cx_json_value_int (utcNode);
+            int dstOffsetSecs = util_get_dst_offset_secs (tzn);
+            
+            earthdata->dstOffset [i] = dstOffsetSecs;
+            
+            earthdata->utcOffset [i] = utcOffsetSecs;
           }
           else if (strcmp (pk, "location") == 0)
           {
@@ -159,7 +202,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
 #define ENABLE_CLOUDS 1
 #define ENABLE_ATMOSPHERE 1
 #define BUMP_MAPPED_CLOUDS 0
-#define FAST_LIGHT_ORBIT 1
+#define FAST_LIGHT_ORBIT 0
 
 static struct earth_visual_t *earth_visual_create (float radius, int slices, int parallels)
 {
@@ -294,7 +337,25 @@ void earth_destroy (earth_t *earth)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void earth_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye)
+void earth_data_update_dst_offsets (earth_t *earth)
+{
+  CX_ASSERT (earth);
+  
+  for (int i = 0, c = earth->data->count; i < c; ++i)
+  {
+    const char *tzn = earth->data->tznames [i];
+  
+    int dstOffsetSecs = util_get_dst_offset_secs (tzn);
+    
+    earth->data->dstOffset [i] = dstOffsetSecs;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void earth_visual_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye)
 {
   CX_ASSERT (earth);
   CX_ASSERT (date);

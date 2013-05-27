@@ -21,20 +21,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CAMERA_PROJECTION_PERSPECTIVE_NEAR   (0.1f)
-#define CAMERA_PROJECTION_PERSPECTIVE_FAR    (100.0f)
-#define CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR  (-1.0f)
-#define CAMERA_PROJECTION_ORTHOGRAPHIC_FAR   (1.0f)
-
-#define CAMERA_MIN_FOV (40.0f)
-#define CAMERA_MAX_FOV (75.0f)
-#define CAMERA_START_FOV (50.0f)
-
-#define CITY_INDEX_INVALID (-1)
-
-#define NUM_LOADING_STAGES 3
-
-#define DEBUG_SHOW_TEMPERATURE 1
+#define CAMERA_PROJECTION_PERSPECTIVE_NEAR    (0.1f)
+#define CAMERA_PROJECTION_PERSPECTIVE_FAR     (100.0f)
+#define CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR   (-1.0f)
+#define CAMERA_PROJECTION_ORTHOGRAPHIC_FAR    (1.0f)
+#define CAMERA_MIN_FOV                        (40.0f)
+#define CAMERA_MAX_FOV                        (75.0f)
+#define CAMERA_START_FOV                      (50.0f)
+#define CLOCK_UPDATE_INTERVAL_SECONDS         (30.0f)
+#define CITY_INDEX_INVALID                    (-1)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,10 +107,13 @@ static cx_thread_monitor s_ldThreadMonitor;
 static app_state_t s_state = APP_STATE_INVALID;
 
 app_load_stage_t s_loadStage = APP_LOAD_STAGE_1_BEGIN;
-static cx_texture *s_ldImages [NUM_LOADING_STAGES];
+static cx_texture *s_ldImages [3];
 static cx_texture *s_logoTex = NULL;
 static bool s_renderLogo = false;
 static anim_t s_logoFade;
+
+static cx_date s_dateUTC;
+static cx_date s_dateLocal;
 
 static cx_texture *s_glowTex = NULL;
 
@@ -125,6 +123,8 @@ static cx_texture *s_glowTex = NULL;
 
 static float app_get_zoom_opacity (void);
 static bool app_get_city_index_valid (int index);
+static int app_get_clock_str (const cx_date *date, int offset, char *dst, int dstSize);
+
 //static int  app_get_selected_city (void);
 //static void app_set_selected_city (int index);
 
@@ -152,7 +152,8 @@ static void app_load_stage_render (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void app_update_camera (float deltaTime);
+static void app_update_clocks (void);
+static void app_update_camera (void);
 static void app_update_earth (void);
 static void app_update_feeds (void);
 static void app_update_feeds_news (void);
@@ -263,12 +264,12 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   params.graphics.screenHeight = height;
   params.graphics.context = gctx;
   
-  params.http.cacheMemSizeMb = 2;
-  params.http.cacheDiskSizeMb = 8;
+  params.network.httpCacheMemSizeMb = 2;
+  params.network.httpCacheDiskSizeMb = 8;
 #if CX_DEBUG
-  params.http.clearCache = false;
+  params.network.httpCacheClear = false;
 #else
-  params.http.clearCache = true;
+  params.network.httpCacheClear = true;
 #endif
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
@@ -398,11 +399,9 @@ void app_update (void)
     {
       input_update ();
       
-      float deltaTime = (float) cx_system_time_get_delta_time ();
+      app_update_camera ();
       
-      deltaTime = cx_min (deltaTime, (1.0f / 60.0f));
-      
-      app_update_camera (deltaTime);
+      app_update_clocks ();
       
       app_update_earth ();
       
@@ -475,6 +474,57 @@ static bool app_get_city_index_valid (int index)
   CX_ASSERT (s_earth->data);
   
   return (index > CITY_INDEX_INVALID) && (index < s_earth->data->count);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int app_get_clock_str (const cx_date *date, int offset, char *dst, int dstSize)
+{
+  CX_ASSERT (date);
+  CX_ASSERT (dst);
+  CX_ASSERT (dstSize > 0);
+  
+  int dstLen = 0;
+  
+#if 0
+  int offsetHr = offset / 100;
+  int offsetMin = offset - (offsetHr * 100);
+#else
+  
+  int offsetSecs = offset;
+  int offsetMin = (offsetSecs / 60) % 60;
+  int offsetHr = (offsetSecs / 3600);
+  
+#endif
+  
+  int hr = date->calendar.tm_hour;
+  int mn = date->calendar.tm_min;
+  
+  int hour = (hr + offsetHr) % 24;
+  int min = (mn + offsetMin);
+  
+  if (min > 60)
+  {
+    hour = hour + 1;
+    min = min % 60;
+  }
+  
+  int displayFmt = settings_get_clock_display_format ();
+  
+  if (displayFmt == SETTINGS_CLOCK_DISPLAY_FORMAT_24HR)
+  {
+    dstLen = cx_sprintf (dst, dstSize, "%02d:%02d", hour, min);
+  }
+  else
+  {
+    const char *suffix = (hour > 11) ? "pm" : "am";
+    hour = ((hour == 0) || (hour == 12)) ? 12 : hour % 12;
+    dstLen = cx_sprintf (dst, dstSize, "%d:%02d%s", hour, min, suffix);
+  }
+  
+  return dstLen;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -659,13 +709,13 @@ static void app_load_stage_render (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void app_update_camera (float deltaTime)
+static void app_update_camera (void)
 {
+  float deltaTime = (float) cx_system_time_get_delta_time ();
+  deltaTime = cx_min (deltaTime, (1.0f / 60.0f));
+  
   float aspectRatio = cx_gdi_get_aspect_ratio ();
   CX_REFERENCE_UNUSED_VARIABLE (aspectRatio);
-  
-  const float MaxSpeed = 60.0f;
-  CX_REFERENCE_UNUSED_VARIABLE (MaxSpeed);
   
   float sw = cx_gdi_get_screen_width ();
   float sh = cx_gdi_get_screen_height ();
@@ -812,6 +862,7 @@ static void app_update_camera (float deltaTime)
 #endif // END_ROTATION
   
 #if 1
+  
   cx_vec4_set (&s_camera->position, 0.0f, 0.0f, -2.0f, 1.0f);
   cx_vec4_set (&s_camera->target, 0.0f, 0.0f, 0.0f, 1.0f);
   
@@ -868,6 +919,27 @@ static void app_update_camera (float deltaTime)
   
 #endif
   
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_update_clocks (void)
+{
+  static float updateTimer = 0.0f;
+  
+  float deltaTime = (float) cx_system_time_get_delta_time ();
+
+  updateTimer -= deltaTime;
+  
+  if (updateTimer <= 0.0f)
+  {
+    cx_time_set_date (&s_dateUTC, CX_TIME_ZONE_UTC);
+    cx_time_set_date (&s_dateLocal, CX_TIME_ZONE_LOCAL);
+    
+    updateTimer = CLOCK_UPDATE_INTERVAL_SECONDS;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1072,7 +1144,13 @@ static void app_update_feeds_weather (void)
     {
       case FEED_REQ_STATUS_INVALID:
       {
+#if DEBUG_WEATHER_ID
+        int loc = s_currentWeatherCity * 16;
+        const char *wId = &s_earth->data->weatherId [loc];
+#else
         const char *wId = s_earth->data->weatherId [s_currentWeatherCity];
+        
+#endif
         feeds_weather_search (feed, wId);
         break;
       }
@@ -1201,12 +1279,10 @@ static void app_render_3d (void)
 
 static void app_render_3d_earth (void)
 {
-  cx_date date;
-  cx_time_set_date (&date, CX_TIME_ZONE_UTC);
-  
-  earth_render (s_earth, &date, &s_camera->position);
+  // earth
+  earth_visual_render (s_earth, &s_dateUTC, &s_camera->position);
 
-#if DEBUG_SHOW_TEMPERATURE && 1
+  // points
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
   cx_gdi_enable_z_write (false);
@@ -1279,7 +1355,8 @@ static void app_render_3d_earth (void)
   }
 
   cx_gdi_enable_z_write (true);
-#endif
+  
+  // debug
   
 #if 0
   static cx_line *normalLines = NULL;
@@ -1430,18 +1507,6 @@ static void app_render_2d (void)
 
 static void app_render_2d_local_clock (void)
 {
-  cx_date date;
-  cx_time_set_date (&date, CX_TIME_ZONE_LOCAL);
-
-  int wday = date.calendar.tm_wday;
-  int mday = date.calendar.tm_mday;
-  int mon  = date.calendar.tm_mon;
-  int hour = date.calendar.tm_hour;
-  int min  = date.calendar.tm_min;
-  
-  CX_ASSERT ((wday >= 0) && (wday < 7));
-  CX_ASSERT ((mon >= 0) && (mon < 12));
-  
   static const char *wdayStr [7] = 
   {
     "Sunday",
@@ -1471,22 +1536,18 @@ static void app_render_2d_local_clock (void)
   
   char timeStr [32], dateStr [32];
   
-  int displayFmt = settings_get_clock_display_format ();
+  const cx_date *date = &s_dateLocal;
   
-  if (displayFmt == SETTINGS_CLOCK_DISPLAY_FORMAT_24HR)
-  {
-    cx_sprintf (timeStr, 32, "%02d:%02d", hour, min);
-    cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
-  }
-  else 
-  {
-    const char *suffix = (hour > 11) ? "pm" : "am";
-    hour = ((hour == 0) || (hour == 12)) ? 12 : hour % 12;
-    
-    cx_sprintf (timeStr, 32, "%d:%02d%s", hour, min, suffix);
-    cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
-  }
+  int wday = date->calendar.tm_wday;
+  int mday = date->calendar.tm_mday;
+  int mon  = date->calendar.tm_mon;
   
+  CX_ASSERT ((wday >= 0) && (wday < 7));
+  CX_ASSERT ((mon >= 0) && (mon < 12));
+  
+  app_get_clock_str (date, 0, timeStr, 32);
+  cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
+
   const cx_font *font = util_get_font (FONT_SIZE_16);
   CX_ASSERT (font);
   
@@ -1562,10 +1623,8 @@ static void app_render_2d_logo (void)
     if (opacity <= CX_EPSILON)
     {
       // free texture
-    
       cx_texture_destroy (s_logoTex);
       s_logoTex = NULL;
-    
       s_renderLogo = false;
     }
   }
@@ -1586,151 +1645,101 @@ static void app_render_2d_logo_fade_out (void *data)
 
 static void app_render_2d_earth (void)
 {
-#if 1
-  
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_enable_z_write (true);
   
   const char unit [2] = {'C', 'F'};
   int unitType = settings_get_temperature_unit ();
   char tempUnit [3] = { 176, unit [unitType], 0 };
+  const cx_date *date = &s_dateUTC;
   
   const cx_font *font = util_get_font (FONT_SIZE_14);
   const cx_font *font2 = util_get_font (FONT_SIZE_12);
   
+  char tempStr [32];
+  char timeStr [32];
   char text2 [64];
   
   for (int i = 0, c = s_earth->data->count; i < c; ++i)
   {
     if (settings_get_city_display (i))
     {
-      const char *text = s_earth->data->names [i];
+      const char *cityStr = s_earth->data->names [i];
+      int utcOffset = s_earth->data->utcOffset [i];
+      int dstOffset = s_earth->data->dstOffset [i];
       const feed_weather_t *feed = &s_weatherFeeds [i];
       const cx_vec4 *pos = &s_render2dInfo.renderPos [i];
       float opacityText = s_render2dInfo.opacity [i].x;
       
+      app_get_clock_str (date, utcOffset + dstOffset, timeStr, 32);
+      
       cx_colour colour = (i == s_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
       colour.a = opacityText;
   
-#if DEBUG_SHOW_TEMPERATURE
-      if (feeds_weather_data_valid (feed))
+      if (feed->dataReady)
       {
-        // (icon width / 2) + margin offset 
-        cx_font_render (font, text, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
+        int tempFarenHeit = (cx_roundupInt ((float) feed->celsius * 1.8f)) + 32;
+        int tempValue = (unitType == SETTINGS_TEMPERATURE_UNIT_C) ? feed->celsius : tempFarenHeit;
         
-        // temperature
+        cx_sprintf (tempStr, 32, "%d", tempValue);
+        cx_strcat (tempStr, 32, tempUnit);
+        cx_sprintf (text2, 64, "%s / %s", tempStr, timeStr);
         
-        int tempValue = 0;
-        
-        if (unitType == SETTINGS_TEMPERATURE_UNIT_C)
+        if (feeds_weather_data_cc_valid (feed))
         {
-          tempValue = feed->celsius;
+          //////////////////
+          // city 
+          //////////////////
+          
+          // (icon width / 2) + margin offset
+          cx_font_render (font, cityStr, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
+          
+          ////////////////////////
+          // temperature / time
+          ///////////////////////
+          
+          cx_font_render (font2, text2, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
+          
+          //////////////////
+          // weather icon
+          //////////////////
+          
+          feeds_weather_render (feed, pos->x + 24.0f, pos->y, pos->z, opacityText);
         }
         else
         {
-          tempValue = (cx_roundupInt ((float) feed->celsius * 1.8f)) + 32;
+          //////////////////
+          // city
+          //////////////////
+          
+          cx_font_render (font, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
+          
+          ////////////////////////
+          // temperature / time
+          ///////////////////////
+          
+          cx_font_render (font2, text2, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
         }
-        
-        char temp [32];
-        cx_sprintf (temp, 32, "%d", tempValue);
-        cx_strcat (temp, 32, tempUnit);
-        
-        // time
-        
-        int hour = feed->timeInfo.hour;
-        int min = feed->timeInfo.min;
-        
-        char time [32];
-        int displayFmt = settings_get_clock_display_format ();
-        
-        if (displayFmt == SETTINGS_CLOCK_DISPLAY_FORMAT_24HR)
-        {
-          cx_sprintf (time, 32, "%02d:%02d", hour, min);
-        }
-        else 
-        {
-          const char *suffix = (hour > 11) ? "pm" : "am";
-          hour = ((hour == 0) || (hour == 12)) ? 12 : hour % 12;
-          cx_sprintf (time, 32, "%d:%02d%s", hour, min, suffix);  
-        }
-        
-        cx_sprintf (text2, 64, "%s / %s", temp, time);
-        
-        cx_font_render (font2, text2, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
-        
-        // render weather icon
-        feeds_weather_render (feed, pos->x + 24.0f, pos->y, pos->z, opacityText);
       }
       else
       {
-        // (icon width / 2) + margin offset 
-        cx_font_render (font, text, pos->x + 12.0f, pos->y - 10.0f, pos->z, 0, &colour);
+        //////////////////
+        // city
+        //////////////////
+        
+        cx_font_render (font, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
+        
+        //////////////////
+        // time
+        //////////////////
+        
+        cx_font_render (font2, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
       }
-#else  
-      //cx_font_set_scale (s_render2dInfo.font, pos->w, pos->w);
-      cx_font_render (font, text, pos->x, pos->y, pos->z, CX_FONT_ALIGNMENT_CENTRE_X, &colour);
-      
-      // render weather icon
-      feeds_weather_render (feed, pos->x, pos->y - 6.0f, pos->z, opacityText);
-#endif
     }
   }
   
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
   cx_gdi_enable_z_write (false);
-  
-#else
-  float fov = s_camera->fov;
-  float opacity = 1.0f - cx_smoothstep (55.0f, 56.0f, fov);
-  
-  float screenWidth = cx_gdi_get_screen_width ();
-  float screenHeight = cx_gdi_get_screen_height ();
-  
-  cx_mat4x4 view, proj;
-  
-  camera_get_projection_matrix (s_camera, &proj);
-  camera_get_view_matrix (s_camera, &view);
-  
-  // for each point, get 2d point
-  float depth, scale;
-  cx_vec2 screen;
-  
-  float zfar = CAMERA_PROJECTION_ORTHOGRAPHIC_FAR;
-  float znear = CAMERA_PROJECTION_ORTHOGRAPHIC_NEAR;
-  
-  int i, c;
-  
-  cx_vec4 look;
-  cx_vec4_sub (&look, &s_camera->position, &s_camera->target); // use inverse direction vector for dot product calcuation
-  cx_vec4_normalize (&look);
-  
-  for (i = 0, c = s_earth->data->count; i < c; ++i)
-  {
-    const char *text = s_earth->data->names [i];
-    const cx_vec4 *pos = &s_earth->data->location [i];
-    const cx_vec4 *nor = &s_earth->data->normal [i];
-    
-    float dotp = cx_max (0.0f, cx_vec4_dot (nor, &look));
-    float alpha = cx_smoothstep (0.95f, 1.0f, dotp);
-    
-    cx_colour colour = (i == s_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
-    colour.a = opacity * alpha;
-    
-    cx_util_world_space_to_screen_space (screenWidth, screenHeight, &proj, &view, pos, &screen, &depth, &scale);
-    
-    float clipz = (2.0f * depth) - 1.0f;
-    float z = ((clipz + (zfar + znear) / (zfar - znear)) * (zfar - znear)) / -2.0f;
-    
-    cx_font_set_scale (s_font, scale, scale);
-    cx_font_render (s_font, text, screen.x, screen.y, z, CX_FONT_ALIGNMENT_CENTRE_X, &colour);
-    
-    screen.y -= 6.0f;
-    
-    // render weather icon
-    feed_weather_t *feed = &s_weatherFeeds [i];
-    feeds_weather_render (feed, screen.x, screen.y, z, (opacity * alpha));
-  }
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2099,6 +2108,8 @@ void app_on_foreground (void)
       util_activity_indicator_set_active (true);
     }
   }
+  
+  earth_data_update_dst_offsets (s_earth);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

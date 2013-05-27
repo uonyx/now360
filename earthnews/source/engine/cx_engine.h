@@ -16,15 +16,11 @@
 #include "system/cx_xml.h"
 #include "system/cx_json.h"
 #include "system/cx_utility.h"
-
 #include "graphics/cx_gdi.h"
 #include "graphics/cx_font.h"
 #include "graphics/cx_mesh.h"
 #include "graphics/cx_draw.h"
-
 #include "network/cx_http.h"
-
-#include "utility/cx_varmod.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,10 +47,10 @@ typedef struct cx_engine_init_params
   
   struct
   {
-    cxu32 cacheMemSizeMb;
-    cxu32 cacheDiskSizeMb;
-    bool clearCache;
-  } http;
+    cxu32 httpCacheMemSizeMb;
+    cxu32 httpCacheDiskSizeMb;
+    bool httpCacheClear;
+  } network;
   
 } cx_engine_init_params;
 
@@ -68,7 +64,7 @@ static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init
   
   _cx_system_init ();
   
-  if ((flags & CX_ENGINE_INIT_GRAPHICS) == CX_ENGINE_INIT_GRAPHICS)
+  if (flags & CX_ENGINE_INIT_GRAPHICS)
   {
     CX_ASSERT (params);
     
@@ -76,9 +72,9 @@ static CX_INLINE void cx_engine_init (cx_engine_init_flags flags, cx_engine_init
     _cx_gdi_init (params->graphics.context, params->graphics.screenWidth, params->graphics.screenHeight);
   }
   
-  if ((flags & CX_ENGINE_INIT_NETWORK) == CX_ENGINE_INIT_NETWORK)
+  if (flags & CX_ENGINE_INIT_NETWORK)
   {
-    _cx_http_init (params->http.cacheMemSizeMb, params->http.cacheDiskSizeMb, params->http.clearCache);
+    _cx_http_init (params->network.httpCacheMemSizeMb, params->network.httpCacheDiskSizeMb, params->network.httpCacheClear);
   }
 }
 

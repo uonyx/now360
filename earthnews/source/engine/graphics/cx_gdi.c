@@ -72,9 +72,12 @@ bool _cx_gdi_init (void *ctx, cxi32 w, cxi32 h)
 
 bool _cx_gdi_deinit (void)
 {
-  CX_ASSERT (s_initialised);
+  if (s_initialised)
+  {
+    cx_native_eagl_context_deinit ();
   
-  s_initialised = false;
+    s_initialised = false;
+  }
   
   return !s_initialised;
 }
