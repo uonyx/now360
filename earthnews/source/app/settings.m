@@ -9,7 +9,6 @@
 #import "util.h"
 #import "earth.h"
 #import <UIKit/UIKit.h>
-//#import <QuartzCore/QuartzCore.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char *s_rootTableData [SETTINGS_ROOT_TABLE_DATA_ROWS] = 
+static const char *g_rootTableData [SETTINGS_ROOT_TABLE_DATA_ROWS] = 
 {
   "Cities",
   "Temperature",
@@ -36,13 +35,13 @@ static const char *s_rootTableData [SETTINGS_ROOT_TABLE_DATA_ROWS] =
   "Show Time",
 };
 
-static const char *s_tempTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
+static const char *g_tempTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
 {
   "Celsius",
   "Farenheit",
 };
 
-static const char *s_clockTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
+static const char *g_clockTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
 {
   "12-hour",
   "24-hour",
@@ -62,7 +61,7 @@ typedef struct
   bool         showTime;
 } settings_t;
 
-static settings_t s_settings;
+static settings_t g_settings;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,11 +112,11 @@ static settings_t s_settings;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool s_initialised = false;
-static bool s_uiActive = false;
-static UIViewController *s_rootViewCtrlr = nil;
-static UIPopoverController *s_popover = nil;
-static RootTableViewController *s_rootTableViewCtrlr = nil;
+static bool g_initialised = false;
+static bool g_uiActive = false;
+static UIViewController *g_rootViewCtrlr = nil;
+static UIPopoverController *g_popover = nil;
+static RootTableViewController *g_rootTableViewCtrlr = nil;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,14 +133,14 @@ static bool settings_load (const char *filename, cx_file_storage_base base);
 
 bool settings_init (const void *rootvc, const char *filename)
 {
-  CX_ASSERT (!s_initialised);
+  CX_ASSERT (!g_initialised);
   CX_ASSERT (rootvc);
   
   bool init = false;
   
-  memset (&s_settings, 0, sizeof (s_settings));
+  memset (&g_settings, 0, sizeof (g_settings));
   
-  s_rootViewCtrlr = (UIViewController *) rootvc;
+  g_rootViewCtrlr = (UIViewController *) rootvc;
   
   settings_init_view_create ();
     
@@ -156,9 +155,9 @@ bool settings_init (const void *rootvc, const char *filename)
   
   CX_DEBUGLOG_CONSOLE (1 && !init, "settings_init: failed");
   
-  s_initialised = init;
+  g_initialised = init;
   
-  return s_initialised;
+  return g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,15 +166,15 @@ bool settings_init (const void *rootvc, const char *filename)
 
 void settings_deinit (void)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   
   settings_init_view_destroy ();
   
-  cx_free (s_settings.cityDisplay);
+  cx_free (g_settings.cityDisplay);
   
-  s_rootViewCtrlr = nil;
+  g_rootViewCtrlr = nil;
   
-  s_initialised = false;
+  g_initialised = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,9 +196,9 @@ void settings_data_save (void)
 
 void settings_ui_show (void)
 {
-  if (!s_uiActive)
+  if (!g_uiActive)
   {
-    UIView *parentView = s_rootViewCtrlr.view;
+    UIView *parentView = g_rootViewCtrlr.view;
 
     float viewPosX = parentView.bounds.origin.x;
     float viewPosY = parentView.bounds.origin.y;
@@ -210,13 +209,13 @@ void settings_ui_show (void)
     float posX = viewPosX + ((viewWidth - width) * 0.5f);
     float posY = viewPosY + ((viewHeight - height) * 0.5f);
     
-    //[s_popover setPopoverContentSize:CGSizeMake(width, height)];
-    [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
-    [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
+    //[g_popover setPopoverContentSize:CGSizeMake(width, height)];
+    [g_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
+    [g_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
     
     util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     
-    s_uiActive = true;
+    g_uiActive = true;
   }
 }
 
@@ -226,13 +225,13 @@ void settings_ui_show (void)
 
 void settings_ui_hide (void)
 {
-  if (s_uiActive)
+  if (g_uiActive)
   {
-    [s_popover dismissPopoverAnimated:YES];
+    [g_popover dismissPopoverAnimated:YES];
     
     util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     
-    s_uiActive = false;
+    g_uiActive = false;
   }
 }
 
@@ -242,7 +241,7 @@ void settings_ui_hide (void)
 
 bool settings_ui_active (void)
 {
-  return s_uiActive;
+  return g_uiActive;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,9 +250,9 @@ bool settings_ui_active (void)
 
 void settings_set_city_names (const char **names, int count)
 {
-  CX_ASSERT (s_settings.cityCount == count);
+  CX_ASSERT (g_settings.cityCount == count);
   
-  s_settings.cityNames = names;
+  g_settings.cityNames = names;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -262,7 +261,7 @@ void settings_set_city_names (const char **names, int count)
 
 bool settings_get_city_display (int cityIdx)
 {
-  bool b = s_settings.cityDisplay [cityIdx];
+  bool b = g_settings.cityDisplay [cityIdx];
   
   return b;
 }
@@ -273,7 +272,7 @@ bool settings_get_city_display (int cityIdx)
 
 bool settings_get_show_clock (void)
 {
-  return s_settings.showTime;
+  return g_settings.showTime;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -282,7 +281,7 @@ bool settings_get_show_clock (void)
 
 int settings_get_temperature_unit (void)
 {
-  return s_settings.tempUnit;
+  return g_settings.tempUnit;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,7 +290,7 @@ int settings_get_temperature_unit (void)
 
 int settings_get_clock_display_format (void)
 {
-  return s_settings.clockFmt;
+  return g_settings.clockFmt;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -300,13 +299,13 @@ int settings_get_clock_display_format (void)
 
 static void settings_init_view_create (void)
 {  
-  s_rootTableViewCtrlr = [[RootTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
+  g_rootTableViewCtrlr = [[RootTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
   
-  s_popover = [[UIPopoverController alloc] initWithContentViewController:[s_rootTableViewCtrlr navigationController]];
+  g_popover = [[UIPopoverController alloc] initWithContentViewController:[g_rootTableViewCtrlr navigationController]];
   
-  [s_popover setPopoverBackgroundViewClass:[PopoverBackground class]];
+  [g_popover setPopoverBackgroundViewClass:[PopoverBackground class]];
   
-  [s_rootTableViewCtrlr setTitle:@"Settings"];
+  [g_rootTableViewCtrlr setTitle:@"Settings"];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,9 +314,9 @@ static void settings_init_view_create (void)
 
 static void settings_init_view_destroy (void)
 {
-  [s_rootTableViewCtrlr release];
+  [g_rootTableViewCtrlr release];
   
-  [s_popover release];
+  [g_popover release];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -334,9 +333,9 @@ static bool settings_save (const char *filename)
   char tmp [1024];
   
   int l = cx_sprintf (tmp, 1024, "{\"settings\":{\"time\":%d,\"cloc\":%d,\"temp\":%d,\"city\":[", 
-                      s_settings.showTime ? 1 : 0, 
-                      s_settings.clockFmt,
-                      s_settings.tempUnit);
+                      g_settings.showTime ? 1 : 0, 
+                      g_settings.clockFmt,
+                      g_settings.tempUnit);
   
   CX_ASSERT (l >= 0);
   
@@ -344,9 +343,9 @@ static bool settings_save (const char *filename)
   
   bufferlen += l;
   
-  for (int i = 0, c = s_settings.cityCount; i < c; ++i)
+  for (int i = 0, c = g_settings.cityCount; i < c; ++i)
   {
-    int b = s_settings.cityDisplay [i] ? 1 : 0;
+    int b = g_settings.cityDisplay [i] ? 1 : 0;
     
     if (i != 0)
     {
@@ -421,17 +420,17 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
         
         cityDisplay [i] = on;
       }
-      if (s_settings.cityDisplay)
+      if (g_settings.cityDisplay)
       {
-        cx_free (s_settings.cityDisplay);
-        s_settings.cityDisplay = NULL;
+        cx_free (g_settings.cityDisplay);
+        g_settings.cityDisplay = NULL;
       }
         
-      s_settings.showTime = showTime ? true : false;
-      s_settings.tempUnit = tempUnit;
-      s_settings.clockFmt = clockFmt;
-      s_settings.cityCount = cityCount;
-      s_settings.cityDisplay = cityDisplay;
+      g_settings.showTime = showTime ? true : false;
+      g_settings.tempUnit = tempUnit;
+      g_settings.clockFmt = clockFmt;
+      g_settings.cityCount = cityCount;
+      g_settings.cityDisplay = cityDisplay;
       
       cx_json_tree_destroy (jsonTree);
       
@@ -464,7 +463,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  return (section == 0) ? s_settings.cityCount : 0;
+  return (section == 0) ? g_settings.cityCount : 0;
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -490,11 +489,11 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   int idx = indexPath.row;
   
-  CX_ASSERT (idx < s_settings.cityCount);
-  CX_ASSERT (s_settings.cityNames);
+  CX_ASSERT (idx < g_settings.cityCount);
+  CX_ASSERT (g_settings.cityNames);
   
-  const char *label = s_settings.cityNames [idx];
-  bool display = s_settings.cityDisplay [idx];
+  const char *label = g_settings.cityNames [idx];
+  bool display = g_settings.cityDisplay [idx];
   
   cell.textLabel.text = [NSString stringWithCString:label encoding:NSUTF8StringEncoding];
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -509,10 +508,10 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
   
   CX_ASSERT (cell);
-  CX_ASSERT (idx < s_settings.cityCount);
+  CX_ASSERT (idx < g_settings.cityCount);
   
-  bool display = !s_settings.cityDisplay [idx];
-  s_settings.cityDisplay [idx] = display;
+  bool display = !g_settings.cityDisplay [idx];
+  g_settings.cityDisplay [idx] = display;
   
   cell.accessoryType = display ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
 }
@@ -537,7 +536,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-  int oldUnit = s_settings.tempUnit;
+  int oldUnit = g_settings.tempUnit;
   int newUnit = indexPath.row;
   
   if (newUnit != oldUnit)
@@ -551,7 +550,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     newCell.accessoryType = UITableViewCellAccessoryCheckmark;
     oldCell.accessoryType = UITableViewCellAccessoryNone;
     
-    s_settings.tempUnit = newUnit;
+    g_settings.tempUnit = newUnit;
   }
 }
 
@@ -574,8 +573,8 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   int idx = indexPath.row;
   
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
-  cell.accessoryType = (s_settings.tempUnit == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:s_tempTableData [idx] encoding:NSUTF8StringEncoding];
+  cell.accessoryType = (g_settings.tempUnit == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+  cell.textLabel.text = [NSString stringWithCString:g_tempTableData [idx] encoding:NSUTF8StringEncoding];
   
   return cell;
 }
@@ -600,7 +599,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-  int oldUnit = s_settings.clockFmt;
+  int oldUnit = g_settings.clockFmt;
   int newUnit = indexPath.row;
   
   if (newUnit != oldUnit)
@@ -614,7 +613,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     newCell.accessoryType = UITableViewCellAccessoryCheckmark;
     oldCell.accessoryType = UITableViewCellAccessoryNone;
     
-    s_settings.clockFmt = newUnit;
+    g_settings.clockFmt = newUnit;
   }
 }
 
@@ -637,8 +636,8 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   int idx = indexPath.row;
   
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
-  cell.accessoryType = (s_settings.clockFmt == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:s_clockTableData [idx] encoding:NSUTF8StringEncoding];
+  cell.accessoryType = (g_settings.clockFmt == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+  cell.textLabel.text = [NSString stringWithCString:g_clockTableData [idx] encoding:NSUTF8StringEncoding];
   
   return cell;
 }
@@ -690,8 +689,8 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (void)switchTouched
 {
-  bool showTime = !s_settings.showTime;
-  s_settings.showTime = showTime;
+  bool showTime = !g_settings.showTime;
+  g_settings.showTime = showTime;
   [_timeSwitch setOn:showTime animated:YES];
 }
 
@@ -785,7 +784,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:s_tempTableData [s_settings.tempUnit] encoding:NSUTF8StringEncoding];
+      cell.detailTextLabel.text = [NSString stringWithCString:g_tempTableData [g_settings.tempUnit] encoding:NSUTF8StringEncoding];
       break;
     }
       
@@ -793,13 +792,13 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:s_clockTableData [s_settings.clockFmt] encoding:NSUTF8StringEncoding];
+      cell.detailTextLabel.text = [NSString stringWithCString:g_clockTableData [g_settings.clockFmt] encoding:NSUTF8StringEncoding];
       break;
     }
       
     case 3: // show time
     {
-      [_timeSwitch setOn:s_settings.showTime];
+      [_timeSwitch setOn:g_settings.showTime];
       
       cell.accessoryView = _timeSwitch;
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -814,7 +813,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     }
   }
   
-  cell.textLabel.text = [NSString stringWithCString:s_rootTableData [idx] encoding:NSUTF8StringEncoding];
+  cell.textLabel.text = [NSString stringWithCString:g_rootTableData [idx] encoding:NSUTF8StringEncoding];
   
 #if 0
   cell.contentView.backgroundColor = [UIColor clearColor];

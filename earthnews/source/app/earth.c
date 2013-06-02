@@ -9,11 +9,19 @@
 #include "earth.h"
 #include "util.h"
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define NEW_EARTH_SHADER (!TARGET_IPHONE_SIMULATOR && 1)
+#if TARGET_IPHONE_SIMULATOR
+#define NEW_EARTH_SHADER 0
+#else
+#define NEW_EARTH_SHADER 1
+#endif
 #define ENABLE_TOPOGRAPHY 1
 #define ENABLE_CLOUDS 1
 #define ENABLE_ATMOSPHERE 1
@@ -771,7 +779,7 @@ void earth_visual_render (const cx_date *date, const cx_vec4 *eye)
   cx_gdi_enable_z_write (true);
   
   // get mesh
-  cx_mesh *mesh = earth->visual->mesh [0];
+  cx_mesh *mesh = g_earth->visual->mesh [0];
   
   // use shader
   cx_shader_begin (mesh->shader);
@@ -781,7 +789,7 @@ void earth_visual_render (const cx_date *date, const cx_vec4 *eye)
   cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_TRANSFORM_N, &normalMatrix);
   
   // night map
-  cx_texture *nightMap = earth->visual->nightMap;
+  cx_texture *nightMap = g_earth->visual->nightMap;
   cx_shader_set_texture (mesh->shader, "u_nightMap", nightMap, 3);
 
   cx_mesh_render (mesh);

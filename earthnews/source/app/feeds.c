@@ -121,7 +121,7 @@ enum weather_image_code
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cx_texture *s_weatherIcons [NUM_WEATHER_CONDITION_CODES];
+static cx_texture *g_weatherIcons [NUM_WEATHER_CONDITION_CODES];
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,9 +154,9 @@ bool feeds_init (void)
     
     const char *f = weatherFilename;
     
-    s_weatherIcons [i] = cx_texture_create_from_file (f);
+    g_weatherIcons [i] = cx_texture_create_from_file (f);
     
-    CX_ASSERT (s_weatherIcons [i]);
+    CX_ASSERT (g_weatherIcons [i]);
   }
   
   return true;
@@ -170,7 +170,7 @@ bool feeds_deinit (void)
 {
   for (unsigned int i = 0; i < NUM_WEATHER_CONDITION_CODES; ++i)
   {
-    cx_texture_destroy (s_weatherIcons [i]);
+    cx_texture_destroy (g_weatherIcons [i]);
   }
   
   return true;
@@ -735,7 +735,7 @@ void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z
   {
     //int temperature = feed->celsius;
     
-    cx_texture *image = s_weatherIcons [feed->conditionCode];
+    cx_texture *image = g_weatherIcons [feed->conditionCode];
     CX_ASSERT (image);
     
     float w = (float) image->width;

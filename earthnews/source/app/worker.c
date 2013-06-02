@@ -28,18 +28,18 @@ typedef struct task_t
 
 #define TASK_MAX_COUNT (16)
 
-static task_t *s_taskPoolArray = NULL;
+static task_t *g_taskPoolArray = NULL;
 
-static task_t *s_taskFreeList = NULL;
-static task_t *s_taskBusyList = NULL;
-static int s_taskFreeListCount = 0;
-static int s_taskBusyListCount = 0;
+static task_t *g_taskFreeList = NULL;
+static task_t *g_taskBusyList = NULL;
+static int g_taskFreeListCount = 0;
+static int g_taskBusyListCount = 0;
 
-static cx_thread *s_thread = NULL;
-static cx_thread_monitor s_threadMonitor;
-static cx_thread_mutex s_sharedDataMutex;
+static cx_thread *g_thread = NULL;
+static cx_thread_monitor g_threadMonitor;
+static cx_thread_mutex g_sharedDataMutex;
 
-static task_id s_taskIdFactory = 0;
+static task_id g_taskIdFactory = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,17 +92,17 @@ static cx_thread_exit_status worker_thread_func (void *data)
   
   while (1)
   {
-    cx_thread_monitor_wait (&s_threadMonitor);
+    cx_thread_monitor_wait (&g_threadMonitor);
     
-    cx_thread_mutex_lock (&s_sharedDataMutex);
+    cx_thread_mutex_lock (&g_sharedDataMutex);
     
     task_t *task = NULL;
     
-    s_taskBusyList = task_list_pop_front (s_taskBusyList, &task, &s_taskBusyListCount);
+    g_taskBusyList = task_list_pop_front (g_taskBusyList, &task, &g_taskBusyListCount);
     
     while (task)
     {
-      cx_thread_mutex_unlock (&s_sharedDataMutex);
+      cx_thread_mutex_unlock (&g_sharedDataMutex);
       
       task->func (task->userdata);
     
@@ -115,13 +115,13 @@ static cx_thread_exit_status worker_thread_func (void *data)
       task->userdata = NULL;
       task->next = NULL;
       
-      cx_thread_mutex_lock (&s_sharedDataMutex);
+      cx_thread_mutex_lock (&g_sharedDataMutex);
       
-      s_taskFreeList = task_list_insert_back (s_taskFreeList, task, &s_taskFreeListCount);
-      s_taskBusyList = task_list_pop_front (s_taskBusyList, &task, &s_taskBusyListCount);
+      g_taskFreeList = task_list_insert_back (g_taskFreeList, task, &g_taskFreeListCount);
+      g_taskBusyList = task_list_pop_front (g_taskBusyList, &task, &g_taskBusyListCount);
     }
     
-    cx_thread_mutex_unlock (&s_sharedDataMutex);
+    cx_thread_mutex_unlock (&g_sharedDataMutex);
   }
   
   return exitStatus;
@@ -133,24 +133,24 @@ static cx_thread_exit_status worker_thread_func (void *data)
 
 void worker_init (void)
 {
-  s_taskPoolArray = (task_t *) cx_malloc (sizeof (task_t) * TASK_MAX_COUNT);
+  g_taskPoolArray = (task_t *) cx_malloc (sizeof (task_t) * TASK_MAX_COUNT);
   
   unsigned int i;
   
   for (i = 0; i < TASK_MAX_COUNT; ++i)
   {
-    task_t *task = &s_taskPoolArray [i];
+    task_t *task = &g_taskPoolArray [i];
     
-    s_taskFreeList = task_list_insert_back (s_taskFreeList, task, &s_taskFreeListCount);
+    g_taskFreeList = task_list_insert_back (g_taskFreeList, task, &g_taskFreeListCount);
   }
   
-  cx_thread_mutex_init (&s_sharedDataMutex);
+  cx_thread_mutex_init (&g_sharedDataMutex);
   
-  cx_thread_monitor_init (&s_threadMonitor);
+  cx_thread_monitor_init (&g_threadMonitor);
   
-  s_thread = cx_thread_create ("earthnews worker thread", CX_THREAD_TYPE_JOINABLE, worker_thread_func, NULL);
+  g_thread = cx_thread_create ("earthnews worker thread", CX_THREAD_TYPE_JOINABLE, worker_thread_func, NULL);
   
-  cx_thread_start (s_thread);
+  cx_thread_start (g_thread);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,15 +159,15 @@ void worker_init (void)
 
 void worker_deinit (void)
 {
-  cx_thread_destroy (s_thread);
+  cx_thread_destroy (g_thread);
   
-  cx_thread_monitor_deinit (&s_threadMonitor);
+  cx_thread_monitor_deinit (&g_threadMonitor);
   
-  cx_thread_mutex_deinit (&s_sharedDataMutex);
+  cx_thread_mutex_deinit (&g_sharedDataMutex);
   
-  cx_free (s_taskPoolArray);
+  cx_free (g_taskPoolArray);
   
-  s_thread = NULL;
+  g_thread = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,16 +176,16 @@ void worker_deinit (void)
 
 void worker_update (void)
 {
-  CX_FATAL_ASSERT (s_thread);
+  CX_FATAL_ASSERT (g_thread);
   
-  cx_thread_mutex_lock (&s_sharedDataMutex);
+  cx_thread_mutex_lock (&g_sharedDataMutex);
   
-  if (s_taskBusyListCount > 0)
+  if (g_taskBusyListCount > 0)
   {
-    cx_thread_monitor_signal (&s_threadMonitor);
+    cx_thread_monitor_signal (&g_threadMonitor);
   }
   
-  cx_thread_mutex_unlock (&s_sharedDataMutex);
+  cx_thread_mutex_unlock (&g_sharedDataMutex);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,16 +194,16 @@ void worker_update (void)
 
 task_id worker_add_task (task_func func, void *userdata, task_status *status)
 {
-  CX_FATAL_ASSERT (s_thread);
+  CX_FATAL_ASSERT (g_thread);
   CX_ASSERT (func);
   
   task_id taskId = TASK_ID_INVALID;
   
   task_t *task = NULL;
   
-  cx_thread_mutex_lock (&s_sharedDataMutex);
+  cx_thread_mutex_lock (&g_sharedDataMutex);
   
-  s_taskFreeList = task_list_pop_front (s_taskFreeList, &task, &s_taskFreeListCount);
+  g_taskFreeList = task_list_pop_front (g_taskFreeList, &task, &g_taskFreeListCount);
   
   if (task)
   {
@@ -212,12 +212,12 @@ task_id worker_add_task (task_func func, void *userdata, task_status *status)
       *status = TASK_STATUS_INPROGRESS;
     }
     
-    task->id = s_taskIdFactory++;
+    task->id = g_taskIdFactory++;
     task->func = func;
     task->userdata = userdata;
     task->status = status;
     
-    s_taskBusyList = task_list_insert_back (s_taskBusyList, task, &s_taskBusyListCount);
+    g_taskBusyList = task_list_insert_back (g_taskBusyList, task, &g_taskBusyListCount);
     
     taskId = task->id;
   }
@@ -229,7 +229,7 @@ task_id worker_add_task (task_func func, void *userdata, task_status *status)
     }
   }
   
-  cx_thread_mutex_unlock (&s_sharedDataMutex);
+  cx_thread_mutex_unlock (&g_sharedDataMutex);
   
   return taskId;
 }

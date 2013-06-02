@@ -15,7 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cx_shader_uniform s_uniformMappings [CX_NUM_MATERIAL_TEXTURES] = 
+static cx_shader_uniform g_uniformMappings [CX_NUM_MATERIAL_TEXTURES] =
 {
   CX_SHADER_UNIFORM_DIFFUSE_MAP,
   CX_SHADER_UNIFORM_SPECULAR_MAP,
@@ -81,7 +81,7 @@ void cx_material_render (const cx_material *material, const cx_shader *shader)
     
     if (texture)
     {
-      uniform = s_uniformMappings [i];
+      uniform = g_uniformMappings [i];
       cx_shader_set_uniform (shader, uniform, texture);
     }
   }

@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cxu8 s_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] = 
+static cxu8 g_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] =
 {
   1, /* CX_TEXTURE_FORMAT_ALPHA */
   1, /* CX_TEXTURE_FORMAT_LUMINANCE */
@@ -94,7 +94,7 @@ cx_texture *cx_texture_create (cxu32 width, cxu32 height, cx_texture_format form
   texture->width      = width;
   texture->height     = height;
   texture->format     = format;
-  texture->dataSize   = width * height * sizeof (cxu8) * s_texture_format_pixel_size [format];
+  texture->dataSize   = width * height * sizeof (cxu8) * g_texture_format_pixel_size [format];
   texture->data       = (cxu8 *) cx_malloc (texture->dataSize);
   texture->compressed = 0;
   texture->npot       = (!cx_util_is_power_of_2 (width)) || (!cx_util_is_power_of_2 (height));

@@ -18,7 +18,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool s_initialised = false;
+static bool g_initialised = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,9 +57,9 @@ bool _cx_system_init (void)
   cx_system_memory_init ();
   cx_system_time_init ();
   
-  s_initialised = true;
+  g_initialised = true;
   
-  return s_initialised;
+  return g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,9 +70,9 @@ bool _cx_system_deinit (void)
 {
   cx_system_memory_deinit ();
   
-  s_initialised = false;
+  g_initialised = false;
   
-  return !s_initialised;
+  return !g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ bool _cx_system_deinit (void)
 
 void *_cx_malloc (size_t size)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   
 #if 0
   
@@ -117,7 +117,7 @@ void *_cx_malloc (size_t size)
 
 void _cx_free (void *data)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   
   CX_ASSERT (data);
   //CX_ASSERT (data != 0xDEADBEEF);
@@ -131,7 +131,7 @@ void _cx_free (void *data)
 
 static void *cx_malloc_memset (void *data, cxu32 fill, cxu32 size)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   
   cxu32 *d32 = data;
   cxu32 cntr = size;

@@ -29,19 +29,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool s_initialised = false;
+static bool g_initialised = false;
 
-static cxi32 s_screenWidth = 0;
-static cxi32 s_screenHeight = 0;
+static cxi32 g_screenWidth = 0;
+static cxi32 g_screenHeight = 0;
 
-static cx_gdi_renderstate s_activeRenderstate = CX_GDI_RENDER_STATE_NONE;
-static GLenum s_openglBlendModes [CX_NUM_GDI_BLEND_MODES] =
+static cx_gdi_renderstate g_activeRenderstate = CX_GDI_RENDER_STATE_NONE;
+static GLenum g_openglBlendModes [CX_NUM_GDI_BLEND_MODES] =
 {
   GL_SRC_ALPHA,
   GL_ONE_MINUS_SRC_ALPHA,
 };
 
-static cx_mat4x4 s_transforms [CX_NUM_GDI_TRANSFORMS];
+static cx_mat4x4 g_transforms [CX_NUM_GDI_TRANSFORMS];
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,21 +49,21 @@ static cx_mat4x4 s_transforms [CX_NUM_GDI_TRANSFORMS];
 
 bool _cx_gdi_init (void *ctx, cxi32 w, cxi32 h)
 {
-  CX_ASSERT (!s_initialised);
+  CX_ASSERT (!g_initialised);
   CX_ASSERT (ctx);
 
   cx_native_eagl_context_init (ctx);
   
-  cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_P]);
-  cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MV]);
-  cx_mat4x4_identity (&s_transforms [CX_GDI_TRANSFORM_MVP]);
+  cx_mat4x4_identity (&g_transforms [CX_GDI_TRANSFORM_P]);
+  cx_mat4x4_identity (&g_transforms [CX_GDI_TRANSFORM_MV]);
+  cx_mat4x4_identity (&g_transforms [CX_GDI_TRANSFORM_MVP]);
   
   cx_gdi_print_info ();
   cx_gdi_set_screen_dimensions (w, h);
 
-  s_initialised = true;
+  g_initialised = true;
   
-  return s_initialised;
+  return g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,14 +72,14 @@ bool _cx_gdi_init (void *ctx, cxi32 w, cxi32 h)
 
 bool _cx_gdi_deinit (void)
 {
-  if (s_initialised)
+  if (g_initialised)
   {
     cx_native_eagl_context_deinit ();
   
-    s_initialised = false;
+    g_initialised = false;
   }
   
-  return !s_initialised;
+  return !g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,10 +106,10 @@ void cx_gdi_shared_context_destroy (void)
 
 cxf32 cx_gdi_get_aspect_ratio (void)
 {
-  CX_ASSERT (s_initialised);
-  CX_ASSERT (s_screenWidth > 0);
+  CX_ASSERT (g_initialised);
+  CX_ASSERT (g_screenWidth > 0);
   
-  cxf32 aspectRatio = (cxf32) s_screenWidth / (cxf32) s_screenHeight;
+  cxf32 aspectRatio = (cxf32) g_screenWidth / (cxf32) g_screenHeight;
   
   return aspectRatio;
 }
@@ -120,8 +120,8 @@ cxf32 cx_gdi_get_aspect_ratio (void)
 
 cxf32 cx_gdi_get_screen_width (void)
 {
-  CX_ASSERT (s_initialised);
-  return (float) s_screenWidth;
+  CX_ASSERT (g_initialised);
+  return (float) g_screenWidth;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,8 +130,8 @@ cxf32 cx_gdi_get_screen_width (void)
 
 cxf32 cx_gdi_get_screen_height (void)
 {
-  CX_ASSERT (s_initialised);
-  return (float) s_screenHeight;
+  CX_ASSERT (g_initialised);
+  return (float) g_screenHeight;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,11 +140,11 @@ cxf32 cx_gdi_get_screen_height (void)
 
 void cx_gdi_set_transform (cx_gdi_transform transform, const cx_mat4x4 *matrix)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   CX_ASSERT ((transform >= 0) && (transform < CX_NUM_GDI_TRANSFORMS));
   CX_ASSERT (matrix);
   
-  s_transforms [transform] = *matrix;
+  g_transforms [transform] = *matrix;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,11 +153,11 @@ void cx_gdi_set_transform (cx_gdi_transform transform, const cx_mat4x4 *matrix)
 
 void cx_gdi_get_transform (cx_gdi_transform transform, cx_mat4x4 *matrix)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   CX_ASSERT ((transform >= 0) && (transform < CX_NUM_GDI_TRANSFORMS));
   CX_ASSERT (matrix);
   
-  *matrix = s_transforms [transform];
+  *matrix = g_transforms [transform];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -168,8 +168,8 @@ void cx_gdi_set_screen_dimensions (cxi32 width, cxi32 height)
 {
   CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi_set_screen_dimensions: width [%d], height [%d]", width, height);
   
-  s_screenWidth = width;
-  s_screenHeight = height;
+  g_screenWidth = width;
+  g_screenHeight = height;
   
   glViewport (0, 0, width, height);
 }
@@ -180,7 +180,7 @@ void cx_gdi_set_screen_dimensions (cxi32 width, cxi32 height)
 
 void cx_gdi_set_viewport (cxi32 width, cxi32 height)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   
   glViewport (0, 0, width, height);
 }
@@ -191,7 +191,7 @@ void cx_gdi_set_viewport (cxi32 width, cxi32 height)
 
 void cx_gdi_clear (const cx_colour *colour)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   CX_ASSERT (colour);
   
   glClearColor (colour->r, colour->g, colour->b, colour->a);
@@ -216,8 +216,8 @@ void cx_gdi_set_blend_mode (cx_gdi_blend_mode src, cx_gdi_blend_mode dest)
   CX_ASSERT ((src > CX_GDI_BLEND_MODE_INVALID) && (src < CX_NUM_GDI_BLEND_MODES));
   CX_ASSERT ((dest > CX_GDI_BLEND_MODE_INVALID) && (dest < CX_NUM_GDI_BLEND_MODES));
   
-  GLenum srcMode = s_openglBlendModes [src];
-  GLenum destMode = s_openglBlendModes [dest];
+  GLenum srcMode = g_openglBlendModes [src];
+  GLenum destMode = g_openglBlendModes [dest];
   
   glBlendFunc (srcMode, destMode);
 }
@@ -230,7 +230,7 @@ void cx_gdi_set_renderstate (cx_gdi_renderstate renderstate)
 {
   //CX_ASSERT (renderstate != CX_GDI_RENDER_STATE_NONE);
   
-  s_activeRenderstate = renderstate;
+  g_activeRenderstate = renderstate;
   
   if (renderstate & CX_GDI_RENDER_STATE_CULL)
   {
@@ -267,7 +267,7 @@ void cx_gdi_set_renderstate (cx_gdi_renderstate renderstate)
 
 void cx_gdi_get_renderstate (cx_gdi_renderstate *renderstate)
 {
-  *renderstate = s_activeRenderstate;
+  *renderstate = g_activeRenderstate;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

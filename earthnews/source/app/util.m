@@ -15,21 +15,24 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cx_font *s_font [NUM_FONT_SIZES];
-static UIActivityIndicatorView *s_activityView = nil;
-static int s_activityCount = 0;
-static screen_fade_type_t s_screenFadeType;
-static float s_screenFadeOpacity = 1.0f;
-static anim_t s_screenFade;
-
-
 #define STATUS_BAR_DISPLAY_TIMER (5.0f)
 
-static status_bar_msg_t s_msg = STATUS_BAR_MSG_NONE;
-static float s_statusTimer = STATUS_BAR_DISPLAY_TIMER;
-static cx_texture *s_status_msg_icon [NUM_STATUS_BAR_MSGS] = { 0 };
-static cx_colour s_status_msg_colour [NUM_STATUS_BAR_MSGS];
-static const char *s_status_msg_text [NUM_STATUS_BAR_MSGS] =
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static cx_font *g_font [NUM_FONT_SIZES];
+static UIActivityIndicatorView *g_activityIndicatorView = nil;
+static int g_activityRefCount = 0;
+static screen_fade_type_t g_screenFadeType;
+static float g_screenFadeOpacity = 1.0f;
+static anim_t g_screenFade;
+
+static status_bar_msg_t g_msg = STATUS_BAR_MSG_NONE;
+static float g_statusTimer = STATUS_BAR_DISPLAY_TIMER;
+static cx_texture *g_statug_msg_icon [NUM_STATUS_BAR_MSGS] = { 0 };
+static cx_colour g_statug_msg_colour [NUM_STATUS_BAR_MSGS];
+static const char *g_statug_msg_text [NUM_STATUS_BAR_MSGS] =
 {
   //"Network Connection Error",
   "No Internet Connection",
@@ -155,7 +158,7 @@ const cx_font *util_get_font (font_size_t size)
 {
   CX_ASSERT ((size > FONT_SIZE_INVALID) && (size < NUM_FONT_SIZES));
   
-  return s_font [size];
+  return g_font [size];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -308,24 +311,24 @@ void util_activity_indicator_set_active (bool active)
 {
   if (active)
   {
-    if (s_activityCount <= 0)
+    if (g_activityRefCount <= 0)
     {
-      [s_activityView startAnimating];
+      [g_activityIndicatorView startAnimating];
     }
     else
     {
-      s_activityCount += 1;
+      g_activityRefCount += 1;
     }
   }
   else
   {
-    if (s_activityCount <= 0)
+    if (g_activityRefCount <= 0)
     {
-      [s_activityView stopAnimating];
+      [g_activityIndicatorView stopAnimating];
     }
     else
     {
-      s_activityCount -= 1;
+      g_activityRefCount -= 1;
     }
   }
 } 
@@ -336,7 +339,7 @@ void util_activity_indicator_set_active (bool active)
 
 bool util_activity_indicator_get_active (void)
 {
-  return [s_activityView isAnimating];
+  return [g_activityIndicatorView isAnimating];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,12 +351,12 @@ void util_status_bar_set_msg (status_bar_msg_t msg)
   CX_ASSERT (msg > STATUS_BAR_MSG_NONE);
   CX_ASSERT (msg < NUM_STATUS_BAR_MSGS);
   
-  if (msg != s_msg)
+  if (msg != g_msg)
   {
-    s_statusTimer = STATUS_BAR_DISPLAY_TIMER;
+    g_statusTimer = STATUS_BAR_DISPLAY_TIMER;
   }
   
-  s_msg = msg;
+  g_msg = msg;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -362,11 +365,11 @@ void util_status_bar_set_msg (status_bar_msg_t msg)
 
 void util_status_bar_render (void)
 {
-  if ((s_msg > STATUS_BAR_MSG_NONE) && (s_msg < NUM_STATUS_BAR_MSGS))
+  if ((g_msg > STATUS_BAR_MSG_NONE) && (g_msg < NUM_STATUS_BAR_MSGS))
   {    
-    cx_texture *icon = s_status_msg_icon [s_msg];
-    const char *text = s_status_msg_text [s_msg];
-    cx_colour *colour = &s_status_msg_colour [s_msg];
+    cx_texture *icon = g_statug_msg_icon [g_msg];
+    const char *text = g_statug_msg_text [g_msg];
+    cx_colour *colour = &g_statug_msg_colour [g_msg];
     
     CX_ASSERT (icon);
     CX_ASSERT (text);
@@ -375,25 +378,25 @@ void util_status_bar_render (void)
     
     float deltaTime = (float) cx_system_time_get_delta_time ();
     
-    s_statusTimer -= deltaTime;
+    g_statusTimer -= deltaTime;
     
-    if (s_statusTimer <= 0.0f)
+    if (g_statusTimer <= 0.0f)
     {
-      s_msg = STATUS_BAR_MSG_NONE;
+      g_msg = STATUS_BAR_MSG_NONE;
       alpha = 0.0f;
     }
     else 
     {
       const float fadeCutoff = STATUS_BAR_DISPLAY_TIMER * 0.1f;
       
-      if (s_statusTimer < fadeCutoff)
+      if (g_statusTimer < fadeCutoff)
       {
-        alpha = s_statusTimer / fadeCutoff;
+        alpha = g_statusTimer / fadeCutoff;
       }
       
-      if (s_statusTimer > (STATUS_BAR_DISPLAY_TIMER - fadeCutoff))
+      if (g_statusTimer > (STATUS_BAR_DISPLAY_TIMER - fadeCutoff))
       {
-        alpha = (STATUS_BAR_DISPLAY_TIMER - s_statusTimer) / fadeCutoff;
+        alpha = (STATUS_BAR_DISPLAY_TIMER - g_statusTimer) / fadeCutoff;
       }
     }
     
@@ -439,11 +442,11 @@ void util_status_bar_render (void)
 
 void util_screen_fade_render (float deltaTime)
 {
-  if (util_anim_update (&s_screenFade, deltaTime))
+  if (util_anim_update (&g_screenFade, deltaTime))
   {
   }
   
-  float opacity = s_screenFadeType ? s_screenFade.t : (1.0f - s_screenFade.t);
+  float opacity = g_screenFadeType ? g_screenFade.t : (1.0f - g_screenFade.t);
   
   if (fabsf (opacity - 0.0f) > CX_EPSILON)
   {
@@ -451,7 +454,7 @@ void util_screen_fade_render (float deltaTime)
     float screenHeight = cx_gdi_get_screen_height ();
     
     cx_colour colour = *cx_colour_black ();
-    colour.a *= (opacity * s_screenFadeOpacity);
+    colour.a *= (opacity * g_screenFadeOpacity);
     
     cx_draw_quad (0.0f, 0.0f, screenWidth, screenHeight, 0.0f, 0.0f, &colour, NULL);
   }
@@ -463,15 +466,15 @@ void util_screen_fade_render (float deltaTime)
 
 bool util_screen_fade_trigger (screen_fade_type_t type, float opacity, float secs, anim_finished_callback fn, void *fndata)
 {
-  if (type != s_screenFadeType)
+  if (type != g_screenFadeType)
   {
-    util_anim_stop (&s_screenFade);
+    util_anim_stop (&g_screenFade);
   }
   
-  if (util_anim_start (&s_screenFade, ANIM_TYPE_LINEAR, secs, fn, fndata))
+  if (util_anim_start (&g_screenFade, ANIM_TYPE_LINEAR, secs, fn, fndata))
   {
-    s_screenFadeType = type;
-    s_screenFadeOpacity = opacity;
+    g_screenFadeType = type;
+    g_screenFadeOpacity = opacity;
     
     return true;
   }
@@ -485,11 +488,11 @@ bool util_screen_fade_trigger (screen_fade_type_t type, float opacity, float sec
 
 static void util_init_status_bar (void)
 {
-  s_status_msg_icon [STATUS_BAR_MSG_CONNECTION_ERROR] = cx_texture_create_from_file ("data/icons/warning-16.png");
-  s_status_msg_icon [STATUS_BAR_MSG_SERVER_ERROR] = cx_texture_create_from_file ("data/icons/warning-16.png");
+  g_statug_msg_icon [STATUS_BAR_MSG_CONNECTION_ERROR] = cx_texture_create_from_file ("data/icons/warning-16.png");
+  g_statug_msg_icon [STATUS_BAR_MSG_SERVER_ERROR] = cx_texture_create_from_file ("data/icons/warning-16.png");
   
-  cx_colour_set (&s_status_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f);
-  cx_colour_set (&s_status_msg_colour [STATUS_BAR_MSG_SERVER_ERROR], 0.9f, 0.9f, 0.2f, 1.0f);
+  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f);
+  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_SERVER_ERROR], 0.9f, 0.9f, 0.2f, 1.0f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -500,7 +503,7 @@ static void util_deinit_status_bar (void)
 {
   for (int i = 0; i < NUM_STATUS_BAR_MSGS; ++i)
   {
-    cx_texture *texture = s_status_msg_icon [i];
+    cx_texture *texture = g_statug_msg_icon [i];
     
     if (texture)
     {
@@ -515,7 +518,7 @@ static void util_deinit_status_bar (void)
 
 static void util_init_screen_fade (void)
 {
-  memset (&s_screenFade, 0, sizeof (s_screenFade));
+  memset (&g_screenFade, 0, sizeof (g_screenFade));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -535,13 +538,13 @@ static void util_init_create_fonts (void)
   //const char *fontname = "data/fonts/verdana.ttf";
   const char *fontname = "data/fonts/tahoma.ttf";
   
-  s_font [FONT_SIZE_10] = cx_font_create (fontname, 10.0f);
-  s_font [FONT_SIZE_12] = cx_font_create (fontname, 12.0f);
-  s_font [FONT_SIZE_14] = cx_font_create (fontname, 14.0f);
-  s_font [FONT_SIZE_16] = cx_font_create (fontname, 16.0f);
-  s_font [FONT_SIZE_18] = cx_font_create (fontname, 18.0f);
-  s_font [FONT_SIZE_20] = cx_font_create (fontname, 20.0f);
-  s_font [FONT_SIZE_24] = cx_font_create (fontname, 24.0f); 
+  g_font [FONT_SIZE_10] = cx_font_create (fontname, 10.0f);
+  g_font [FONT_SIZE_12] = cx_font_create (fontname, 12.0f);
+  g_font [FONT_SIZE_14] = cx_font_create (fontname, 14.0f);
+  g_font [FONT_SIZE_16] = cx_font_create (fontname, 16.0f);
+  g_font [FONT_SIZE_18] = cx_font_create (fontname, 18.0f);
+  g_font [FONT_SIZE_20] = cx_font_create (fontname, 20.0f);
+  g_font [FONT_SIZE_24] = cx_font_create (fontname, 24.0f); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -552,7 +555,7 @@ static void util_deinit_destroy_fonts (void)
 {
   for (unsigned int i = 0; i < NUM_FONT_SIZES; ++i)
   {
-    cx_font_destroy (s_font [i]);
+    cx_font_destroy (g_font [i]);
   }
 }
 
@@ -566,17 +569,17 @@ static bool util_init_activity_indicator (const void *rootvc)
   
   UIViewController *rootViewCtrlr = (UIViewController *) rootvc;
   
-  s_activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+  g_activityIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
   
-  CGRect frame = s_activityView.frame;
+  CGRect frame = g_activityIndicatorView.frame;
   frame.origin.x = 8.0f;
   frame.origin.y = 2.0f;
   
-  [s_activityView setFrame:frame];
+  [g_activityIndicatorView setFrame:frame];
   
-  [rootViewCtrlr.view addSubview:s_activityView];
+  [rootViewCtrlr.view addSubview:g_activityIndicatorView];
   
-  s_activityCount = 0;
+  g_activityRefCount = 0;
   
   return true;
 }
@@ -587,8 +590,8 @@ static bool util_init_activity_indicator (const void *rootvc)
 
 static void util_deinit_activity_indicator (void)
 {
-  [s_activityView removeFromSuperview];
-  [s_activityView release];
+  [g_activityIndicatorView removeFromSuperview];
+  [g_activityIndicatorView release];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

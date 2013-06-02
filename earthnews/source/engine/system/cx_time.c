@@ -32,9 +32,9 @@ struct cx_sys_time
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static struct cx_sys_time s_systemTime;
-static cx_thread_mutex s_criticalSection; // for thread-unsafe and non-reentrant crt time functions
-static mach_timebase_info_data_t s_timebase;
+static struct cx_sys_time g_systemTime;
+static cx_thread_mutex g_criticalSection; // for thread-unsafe and non-reentrant crt time functions
+static mach_timebase_info_data_t g_timebase;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,17 +42,17 @@ static mach_timebase_info_data_t s_timebase;
 
 void cx_system_time_init (void)
 {
-  cx_thread_mutex_init (&s_criticalSection);
+  cx_thread_mutex_init (&g_criticalSection);
   
   //struct timeval t;
   //gettimeofday (&t, NULL);  
-  //s_systemTime.prevTime = ((uint64_t) t.tv_sec * 1000000) + (uint64_t) t.tv_usec; // microseconds
+  //g_systemTime.prevTime = ((uint64_t) t.tv_sec * 1000000) + (uint64_t) t.tv_usec; // microseconds
   
-  mach_timebase_info (&s_timebase);
-  s_systemTime.prevTime = mach_absolute_time ();
-  s_systemTime.deltaTime = 0.0f;
-  s_systemTime.totalTime = 0.0f;
-  s_systemTime.update = true;
+  mach_timebase_info (&g_timebase);
+  g_systemTime.prevTime = mach_absolute_time ();
+  g_systemTime.deltaTime = 0.0f;
+  g_systemTime.totalTime = 0.0f;
+  g_systemTime.update = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,18 +66,18 @@ void cx_system_time_update (void)
   //u_int64_t currentTime = ((uint64_t) t.tv_sec * 1000000) + (uint64_t) t.tv_usec;
   
   u_int64_t currentTime = mach_absolute_time ();
-  u_int64_t deltaTime = currentTime - s_systemTime.prevTime;
-  s_systemTime.prevTime = currentTime;
+  u_int64_t deltaTime = currentTime - g_systemTime.prevTime;
+  g_systemTime.prevTime = currentTime;
   
-  if (s_systemTime.update)
+  if (g_systemTime.update)
   {
     // microseconds to seconds
-    //s_systemTime.deltaTime = (cxf64) deltaTime / (1000000.0f);
-    //s_systemTime.totalTime += s_systemTime.deltaTime;
+    //g_systemTime.deltaTime = (cxf64) deltaTime / (1000000.0f);
+    //g_systemTime.totalTime += g_systemTime.deltaTime;
   
     // nanoseconds to seconds 
-    s_systemTime.deltaTime = (cxf64) deltaTime * (cxf64) s_timebase.numer / (cxf64) s_timebase.denom / 1e9;
-    s_systemTime.totalTime += s_systemTime.deltaTime;
+    g_systemTime.deltaTime = (cxf64) deltaTime * (cxf64) g_timebase.numer / (cxf64) g_timebase.denom / 1e9;
+    g_systemTime.totalTime += g_systemTime.deltaTime;
   }
 }
 
@@ -87,7 +87,7 @@ void cx_system_time_update (void)
 
 void cx_system_time_pause (bool pause)
 {
-  s_systemTime.update = !pause;
+  g_systemTime.update = !pause;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +96,7 @@ void cx_system_time_pause (bool pause)
 
 cxf64 cx_system_time_get_delta_time (void)
 {
-  return s_systemTime.deltaTime;
+  return g_systemTime.deltaTime;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ cxf64 cx_system_time_get_delta_time (void)
 
 cxf64 cx_system_time_get_total_time (void)
 {
-  return s_systemTime.totalTime;
+  return g_systemTime.totalTime;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +120,7 @@ cxi64 cx_time_get_utc_epoch (void)
 {
   cxi64 timestamp = 0;
   
-  cx_thread_mutex_lock (&s_criticalSection);
+  cx_thread_mutex_lock (&g_criticalSection);
   
   time_t rawTime = time (NULL);
   CX_ASSERT (rawTime != -1);
@@ -131,7 +131,7 @@ cxi64 cx_time_get_utc_epoch (void)
   
   timestamp = (cxi64) utcTime;
   
-  cx_thread_mutex_unlock (&s_criticalSection);
+  cx_thread_mutex_unlock (&g_criticalSection);
   
   return timestamp;
 }
@@ -142,7 +142,7 @@ cxi64 cx_time_get_utc_epoch (void)
 
 cxi32 cx_time_get_utc_offset (void)
 {
-  cx_thread_mutex_lock (&s_criticalSection);
+  cx_thread_mutex_lock (&g_criticalSection);
   
   time_t rawTime = time (NULL);
   CX_ASSERT (rawTime != -1);
@@ -162,7 +162,7 @@ cxi32 cx_time_get_utc_offset (void)
   cxi32 offsetHr = (diffSecs / 3600) * 100;
   cxi32 offset = offsetHr + offsetMin;
   
-  cx_thread_mutex_unlock (&s_criticalSection);
+  cx_thread_mutex_unlock (&g_criticalSection);
   
   return offset;
 }
@@ -299,7 +299,7 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
   CX_ASSERT (date);
   CX_ASSERT ((zone > CX_TIME_ZONE_INVALID) && (zone < CX_NUM_TIME_ZONES));
   
-  cx_thread_mutex_lock (&s_criticalSection); // gmtime not reentrant
+  cx_thread_mutex_lock (&g_criticalSection); // gmtime not reentrant
   
   switch (zone) 
   {
@@ -329,7 +329,7 @@ void cx_time_set_date (cx_date *date, cx_time_zone zone)
     }
   }
   
-  cx_thread_mutex_unlock (&s_criticalSection);
+  cx_thread_mutex_unlock (&g_criticalSection);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

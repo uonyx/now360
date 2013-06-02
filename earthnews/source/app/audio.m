@@ -58,25 +58,25 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool s_initialised = false;
-static bool s_pickerActive = false;
-static UIViewController *s_rootViewCtrlr = nil;
-static MPMusicPlayerController *s_musicPlayer = nil;
-static MPMediaPickerController *s_musicPicker = nil;
-static MusicPickerDelegate *s_musicPickerDelegate = nil;
-static MusicNotifcation *s_musicNotification = nil;
-static MPMediaItemCollection *s_currentCollection = nil;
-static audio_music_picked_callback s_pickerCallback = NULL;
-static cx_list2 s_musicNotificationCallbacks;
+static bool g_initialised = false;
+static bool g_pickerActive = false;
+static UIViewController *g_rootViewCtrlr = nil;
+static MPMusicPlayerController *g_musicPlayer = nil;
+static MPMediaPickerController *g_musicPicker = nil;
+static MusicPickerDelegate *g_musicPickerDelegate = nil;
+static MusicNotifcation *g_musicNotification = nil;
+static MPMediaItemCollection *g_currentCollection = nil;
+static audio_music_picked_callback g_pickerCallback = NULL;
+static cx_list2 g_musicNotificationCallbacks;
 #if USE_MUSIC_PICKER_POP_UP
-static UIPopoverController *s_musicPopOver = nil;
+static UIPopoverController *g_musicPopOver = nil;
 #endif
 #if PLAYBACK_STATE_HACK_FIX
-static bool s_musicPlaying = false;
+static bool g_musicPlaying = false;
 #endif
 
-SystemSoundID s_sndfxIds [NUM_AUDIO_SOUNDFX];
-const char *s_sndfxPaths [NUM_AUDIO_SOUNDFX] =
+SystemSoundID g_sndfxIds [NUM_AUDIO_SOUNDFX];
+const char *g_sndfxPaths [NUM_AUDIO_SOUNDFX] =
 {
   "data/soundfx/beep-23.mp3",    // AUDIO_SOUNDFX_CLICK0
   "data/soundfx/button-46.mp3",  // AUDIO_SOUNDFX_CLICK1
@@ -102,18 +102,18 @@ static void audio_music_now_playing_state_changed (void);
 
 bool audio_init (const void *rootvc)
 {
-  CX_ASSERT (!s_initialised);
+  CX_ASSERT (!g_initialised);
   CX_ASSERT (rootvc);
   
-  s_rootViewCtrlr = (UIViewController *) rootvc;
+  g_rootViewCtrlr = (UIViewController *) rootvc;
   
   audio_sndfx_init ();
   
   audio_music_init ();
   
-  s_initialised = true;
+  g_initialised = true;
   
-  return s_initialised;
+  return g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,15 +122,15 @@ bool audio_init (const void *rootvc)
 
 void audio_deinit (void)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   
   audio_sndfx_deinit ();
   
   audio_music_deinit ();
   
-  s_rootViewCtrlr = nil;
+  g_rootViewCtrlr = nil;
   
-  s_initialised = false;
+  g_initialised = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ void audio_soundfx_play (audio_soundfx_t sndfx)
 {
   CX_ASSERT ((sndfx > AUDIO_SOUNDFX_INVALID) && (sndfx < NUM_AUDIO_SOUNDFX));
   
-  SystemSoundID sndId = s_sndfxIds [sndfx];
+  SystemSoundID sndId = g_sndfxIds [sndfx];
   
   AudioServicesPlaySystemSound (sndId);
 }
@@ -153,9 +153,9 @@ void audio_soundfx_play (audio_soundfx_t sndfx)
 void audio_music_notification_register (audio_music_notification_callback fn)
 {
   CX_ASSERT (fn);
-  CX_ASSERT (!cx_list2_exists (&s_musicNotificationCallbacks, fn));
+  CX_ASSERT (!cx_list2_exists (&g_musicNotificationCallbacks, fn));
   
-  cx_list2_insert_back (&s_musicNotificationCallbacks, fn);
+  cx_list2_insert_back (&g_musicNotificationCallbacks, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -173,12 +173,12 @@ void audio_music_pick (audio_music_picked_callback fn)
 
 void audio_music_play (void)
 {
-  CX_ASSERT (s_musicPlayer);
+  CX_ASSERT (g_musicPlayer);
   
-  [s_musicPlayer play];
+  [g_musicPlayer play];
   
 #if PLAYBACK_STATE_HACK_FIX
-  s_musicPlaying = true;
+  g_musicPlaying = true;
 #endif
 }
 
@@ -188,12 +188,12 @@ void audio_music_play (void)
 
 void audio_music_pause (void)
 {
-  CX_ASSERT (s_musicPlayer);
+  CX_ASSERT (g_musicPlayer);
   
-  [s_musicPlayer pause];
+  [g_musicPlayer pause];
   
 #if PLAYBACK_STATE_HACK_FIX
-  s_musicPlaying = false;
+  g_musicPlaying = false;
 #endif
 }
 
@@ -203,9 +203,9 @@ void audio_music_pause (void)
 
 void audio_music_next (void)
 {
-  CX_ASSERT (s_musicPlayer);
+  CX_ASSERT (g_musicPlayer);
   
-  [s_musicPlayer skipToNextItem];
+  [g_musicPlayer skipToNextItem];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,9 +214,9 @@ void audio_music_next (void)
 
 void audio_music_prev (void)
 {
-  CX_ASSERT (s_musicPlayer);
+  CX_ASSERT (g_musicPlayer);
   
-  [s_musicPlayer skipToPreviousItem];
+  [g_musicPlayer skipToPreviousItem];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,17 +225,17 @@ void audio_music_prev (void)
 
 bool audio_music_playing (void)
 {
-  CX_ASSERT (s_musicPlayer);
+  CX_ASSERT (g_musicPlayer);
   
   bool ret = false;
 
-  MPMediaItem *nowPlayingItem = [s_musicPlayer nowPlayingItem];
+  MPMediaItem *nowPlayingItem = [g_musicPlayer nowPlayingItem];
   
 #if PLAYBACK_STATE_HACK_FIX
-  ret = nowPlayingItem && s_musicPlaying;
+  ret = nowPlayingItem && g_musicPlaying;
 #else
 
-  MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
+  MPMusicPlaybackState playbackState = [g_musicPlayer playbackState];
 
   ret = (nowPlayingItem && (playbackState == MPMusicPlaybackStatePlaying))
 #endif
@@ -249,7 +249,7 @@ bool audio_music_playing (void)
 
 bool audio_music_picker_active (void)
 {
-  return s_pickerActive;
+  return g_pickerActive;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,7 +258,7 @@ bool audio_music_picker_active (void)
 
 bool audio_music_queued (void)
 {
-  return s_currentCollection ? true : false;
+  return g_currentCollection ? true : false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -267,13 +267,13 @@ bool audio_music_queued (void)
 
 int audio_music_get_track_id (char *buffer, int bufferlen)
 {
-  CX_ASSERT (s_musicPlayer);
+  CX_ASSERT (g_musicPlayer);
   CX_ASSERT (buffer);
   CX_ASSERT (bufferlen > 0);
   
   int size = 0;
   
-  MPMediaItem *nowPlayingItem = [s_musicPlayer nowPlayingItem];
+  MPMediaItem *nowPlayingItem = [g_musicPlayer nowPlayingItem];
   
   if (nowPlayingItem)
   {
@@ -297,7 +297,7 @@ static void audio_sndfx_init (void)
 {  
   for (int i = 0; i < NUM_AUDIO_SOUNDFX; ++i)
   {
-    const char *path = s_sndfxPaths [i];
+    const char *path = g_sndfxPaths [i];
     NSString *filepath = [NSString stringWithCString:path encoding:NSASCIIStringEncoding];
     
     NSURL *fileURL = [[NSBundle mainBundle] URLForResource:filepath withExtension:nil];
@@ -312,7 +312,7 @@ static void audio_sndfx_init (void)
     CX_ASSERT (error == kAudioServicesNoError);
     CX_REF_UNUSED (error);
     
-    s_sndfxIds [i] = sndId;
+    g_sndfxIds [i] = sndId;
   }
 }
 
@@ -324,7 +324,7 @@ static void audio_sndfx_deinit (void)
 {
   for (int i = 0; i < NUM_AUDIO_SOUNDFX; ++i)
   {
-    SystemSoundID sndId = s_sndfxIds [i];
+    SystemSoundID sndId = g_sndfxIds [i];
     AudioServicesDisposeSystemSoundID (sndId);
   }
 }
@@ -339,59 +339,59 @@ static void audio_music_init (void)
   return;
 #endif
   
-  cx_list2_init (&s_musicNotificationCallbacks);
+  cx_list2_init (&g_musicNotificationCallbacks);
   
-  s_musicPlayer = [MPMusicPlayerController applicationMusicPlayer];
+  g_musicPlayer = [MPMusicPlayerController applicationMusicPlayer];
   
-  s_musicNotification = [[MusicNotifcation alloc] init];
+  g_musicNotification = [[MusicNotifcation alloc] init];
   
-  s_musicPickerDelegate = [[MusicPickerDelegate alloc] init];
+  g_musicPickerDelegate = [[MusicPickerDelegate alloc] init];
   
-  s_musicPicker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
+  g_musicPicker = [[MPMediaPickerController alloc] initWithMediaTypes:MPMediaTypeAnyAudio];
   
 #if USE_MUSIC_PICKER_POP_UP
-  s_musicPopOver = [[UIPopoverController alloc] initWithContentViewController:s_musicPicker];
+  g_musicPopOver = [[UIPopoverController alloc] initWithContentViewController:g_musicPicker];
 #endif
   
-  [s_musicPicker setDelegate:s_musicPickerDelegate];
-  [s_musicPicker setAllowsPickingMultipleItems:YES];
-  [s_musicPicker setTitle:@""];
-  [s_musicPicker setModalInPopover:YES];
+  [g_musicPicker setDelegate:g_musicPickerDelegate];
+  [g_musicPicker setAllowsPickingMultipleItems:YES];
+  [g_musicPicker setTitle:@""];
+  [g_musicPicker setModalInPopover:YES];
   
-  //[s_musicPicker setPrompt:@"Queue songs for playback"];
+  //[g_musicPicker setPrompt:@"Queue songs for playback"];
   
   if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"6.0"))
   {
-    [s_musicPicker setShowsCloudItems:YES];
+    [g_musicPicker setShowsCloudItems:YES];
   }
   
 #if USE_MUSIC_PICKER_POP_UP && 1
   if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"5.0"))
   {
-    [s_musicPopOver setPopoverBackgroundViewClass:[MusicPickerPopoverBackground class]];
+    [g_musicPopOver setPopoverBackgroundViewClass:[MusicPickerPopoverBackground class]];
   }
 #endif
   
   NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
   
-  [notificationCenter addObserver:s_musicNotification 
+  [notificationCenter addObserver:g_musicNotification 
                          selector:@selector (handleNowPlayingItemChanged:) 
                              name:MPMusicPlayerControllerNowPlayingItemDidChangeNotification 
-                           object:s_musicPlayer];
+                           object:g_musicPlayer];
   
-  [notificationCenter addObserver:s_musicNotification 
+  [notificationCenter addObserver:g_musicNotification 
                          selector:@selector (handlePlaybackStateChanged:) 
                              name:MPMusicPlayerControllerPlaybackStateDidChangeNotification 
-                           object:s_musicPlayer];
+                           object:g_musicPlayer];
 
-  [notificationCenter addObserver:s_musicNotification 
+  [notificationCenter addObserver:g_musicNotification 
                          selector:@selector (handleVolumeChanged:) 
                              name:MPMusicPlayerControllerVolumeDidChangeNotification 
-                           object:s_musicPlayer];
+                           object:g_musicPlayer];
   
-  [s_musicPlayer beginGeneratingPlaybackNotifications];
-  [s_musicPlayer setRepeatMode:MPMusicRepeatModeAll];
-  [s_musicPlayer setShuffleMode:MPMusicShuffleModeOff];
+  [g_musicPlayer beginGeneratingPlaybackNotifications];
+  [g_musicPlayer setRepeatMode:MPMusicRepeatModeAll];
+  [g_musicPlayer setShuffleMode:MPMusicShuffleModeOff];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,31 +406,31 @@ static void audio_music_deinit (void)
   
   NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
   
-  [notificationCenter removeObserver:s_musicNotification 
+  [notificationCenter removeObserver:g_musicNotification 
                              name:MPMusicPlayerControllerNowPlayingItemDidChangeNotification 
-                           object:s_musicPlayer];
+                           object:g_musicPlayer];
   
-  [notificationCenter removeObserver:s_musicNotification 
+  [notificationCenter removeObserver:g_musicNotification 
                              name:MPMusicPlayerControllerPlaybackStateDidChangeNotification 
-                           object:s_musicPlayer];
+                           object:g_musicPlayer];
   
-  [notificationCenter removeObserver:s_musicNotification 
+  [notificationCenter removeObserver:g_musicNotification 
                                 name:MPMusicPlayerControllerVolumeDidChangeNotification 
-                              object:s_musicPlayer];
+                              object:g_musicPlayer];
   
-  [s_musicPlayer endGeneratingPlaybackNotifications];
+  [g_musicPlayer endGeneratingPlaybackNotifications];
   
 #if USE_MUSIC_PICKER_POP_UP
-  [s_musicPopOver release];
+  [g_musicPopOver release];
 #endif
   
-  [s_musicPicker release];
+  [g_musicPicker release];
   
-  [s_musicPickerDelegate release];
+  [g_musicPickerDelegate release];
   
-  [s_musicNotification release];
+  [g_musicNotification release];
   
-  cx_list2_deinit (&s_musicNotificationCallbacks);
+  cx_list2_deinit (&g_musicNotificationCallbacks);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -448,22 +448,22 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
     return false;
   }
   
-  if (s_currentCollection)
+  if (g_currentCollection)
   {
-    MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
-    NSTimeInterval currentPlaybackTime = [s_musicPlayer currentPlaybackTime];
-    MPMediaItem *nowPlayingItem = [s_musicPlayer nowPlayingItem];
+    MPMusicPlaybackState playbackState = [g_musicPlayer playbackState];
+    NSTimeInterval currentPlaybackTime = [g_musicPlayer currentPlaybackTime];
+    MPMediaItem *nowPlayingItem = [g_musicPlayer nowPlayingItem];
     
-    NSMutableArray *currentItems = [[s_currentCollection items] mutableCopy];
+    NSMutableArray *currentItems = [[g_currentCollection items] mutableCopy];
     NSArray *newItems = [collection items];
     
     [currentItems addObjectsFromArray:newItems];
     
-    s_currentCollection = [MPMediaItemCollection collectionWithItems:(NSArray *) currentItems];
-    [s_musicPlayer setQueueWithItemCollection:s_currentCollection];
+    g_currentCollection = [MPMediaItemCollection collectionWithItems:(NSArray *) currentItems];
+    [g_musicPlayer setQueueWithItemCollection:g_currentCollection];
     
-    [s_musicPlayer setCurrentPlaybackTime:currentPlaybackTime];
-    [s_musicPlayer setNowPlayingItem:nowPlayingItem];
+    [g_musicPlayer setCurrentPlaybackTime:currentPlaybackTime];
+    [g_musicPlayer setNowPlayingItem:nowPlayingItem];
     
     if (playbackState == MPMusicPlaybackStatePlaying)
     {
@@ -472,9 +472,9 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
   }
   else
   {
-    s_currentCollection = collection;
+    g_currentCollection = collection;
     
-    [s_musicPlayer setQueueWithItemCollection:s_currentCollection];
+    [g_musicPlayer setQueueWithItemCollection:g_currentCollection];
     
     audio_music_play ();
   }
@@ -491,12 +491,13 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
 #if TARGET_IPHONE_SIMULATOR
   return;
 #endif
+  
   if (show)
   {
-    if (!s_pickerActive)
+    if (!g_pickerActive)
     {
 #if USE_MUSIC_PICKER_POP_UP
-      UIView *parentView = s_rootViewCtrlr.view;
+      UIView *parentView = g_rootViewCtrlr.view;
       
       float viewPosX = parentView.bounds.origin.x;
       float viewPosY = parentView.bounds.origin.y;
@@ -508,36 +509,36 @@ static void audio_music_picker (bool show, audio_music_picked_callback fn)
       float posX = viewPosX + ((viewWidth - width) * 0.5f);
       float posY = viewPosY + ((viewHeight - height) * 0.5f);
       
-      [s_musicPopOver setPassthroughViews:[NSArray arrayWithObject:parentView]];
-      [s_musicPopOver presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
+      [g_musicPopOver setPassthroughViews:[NSArray arrayWithObject:parentView]];
+      [g_musicPopOver presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
 #else
-      [s_musicPicker setModalTransitionStyle:UIModalTransitionStyleFlipHorizontal];
-      [s_musicPicker setModalPresentationStyle:UIModalPresentationFormSheet];
-      [s_rootViewCtrlr presentViewController:s_musicPicker animated:YES completion:nil];
+      [g_musicPicker setModalTransitionStyle:UIModalTransitionStyleFlipHorizontal];
+      [g_musicPicker setModalPresentationStyle:UIModalPresentationFormSheet];
+      [g_rootViewCtrlr presentViewController:g_musicPicker animated:YES completion:nil];
 #endif
       
-      s_pickerActive = true;
-      s_pickerCallback = fn;
+      g_pickerActive = true;
+      g_pickerCallback = fn;
       
       util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
     }
   }
   else
   {
-    if (s_pickerActive)
+    if (g_pickerActive)
     {
 #if USE_MUSIC_PICKER_POP_UP
-      [s_musicPopOver dismissPopoverAnimated:YES];
+      [g_musicPopOver dismissPopoverAnimated:YES];
 #else
-      [s_rootViewCtrlr dismissViewControllerAnimated:YES completion:nil];
+      [g_rootViewCtrlr dismissViewControllerAnimated:YES completion:nil];
 #endif
       
-      s_pickerActive = false;
+      g_pickerActive = false;
       
-      if (s_pickerCallback)
+      if (g_pickerCallback)
       {
-        s_pickerCallback ();
-        s_pickerCallback = NULL;
+        g_pickerCallback ();
+        g_pickerCallback = NULL;
       }
       
       util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
@@ -553,7 +554,7 @@ static void audio_music_playback_state_changed (void)
 {
   audio_music_notification_t notification = AUDIO_MUSIC_NOTIFICATION_UNKNOWN;
   
-  MPMusicPlaybackState playbackState = [s_musicPlayer playbackState];
+  MPMusicPlaybackState playbackState = [g_musicPlayer playbackState];
   
   switch (playbackState) 
   {
@@ -570,7 +571,7 @@ static void audio_music_playback_state_changed (void)
       notification = AUDIO_MUSIC_NOTIFICATION_STOPPED;
       
 #if PLAYBACK_STATE_HACK_FIX
-      s_musicPlaying = false;
+      g_musicPlaying = false;
 #endif
       break; 
     }
@@ -581,7 +582,7 @@ static void audio_music_playback_state_changed (void)
       notification = AUDIO_MUSIC_NOTIFICATION_INTERRUPTED;
       
 #if PLAYBACK_STATE_HACK_FIX
-      s_musicPlaying = false;
+      g_musicPlaying = false;
 #endif
       
       break; 
@@ -594,7 +595,7 @@ static void audio_music_playback_state_changed (void)
     default: { break; }
   }
   
-  cx_list2_node *node = s_musicNotificationCallbacks.head;
+  cx_list2_node *node = g_musicNotificationCallbacks.head;
   
   while (node)
   {

@@ -49,11 +49,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool s_initialised = false;
-static bool s_active = false;
-static UIViewController *s_rootViewCtrlr = nil;
-static UIPopoverController *s_popover = nil;
-static CXWebViewController *s_cxWebViewCtrlr = nil;
+static bool g_initialised = false;
+static bool g_active = false;
+static UIViewController *g_rootViewCtrlr = nil;
+static UIPopoverController *g_popover = nil;
+static CXWebViewController *g_webviewCtrlr = nil;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,18 +61,18 @@ static CXWebViewController *s_cxWebViewCtrlr = nil;
 
 bool webview_init (const void *rootvc)
 {
-  CX_ASSERT (!s_initialised);
+  CX_ASSERT (!g_initialised);
   CX_ASSERT (rootvc);
   
-  s_rootViewCtrlr = (UIViewController *) rootvc;
+  g_rootViewCtrlr = (UIViewController *) rootvc;
   
-  s_cxWebViewCtrlr = [[CXWebViewController alloc] initWithAddress:@"" title:nil];
+  g_webviewCtrlr = [[CXWebViewController alloc] initWithAddress:@"" title:nil];
   
-  s_popover = [[UIPopoverController alloc] initWithContentViewController:[s_cxWebViewCtrlr navigationController]];
+  g_popover = [[UIPopoverController alloc] initWithContentViewController:[g_webviewCtrlr navigationController]];
 
-  [s_popover setPopoverBackgroundViewClass:[CXWebViewPopoverBackground class]];
+  [g_popover setPopoverBackgroundViewClass:[CXWebViewPopoverBackground class]];
   
-  return s_initialised;
+  return g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,15 +81,15 @@ bool webview_init (const void *rootvc)
 
 void webview_deinit (void)
 {
-  CX_ASSERT (s_initialised);
+  CX_ASSERT (g_initialised);
   
-  [s_cxWebViewCtrlr release];
+  [g_webviewCtrlr release];
 
-  [s_popover release];
+  [g_popover release];
 
-  s_rootViewCtrlr = nil;
+  g_rootViewCtrlr = nil;
   
-  s_initialised = false;
+  g_initialised = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,9 +98,9 @@ void webview_deinit (void)
 
 void webview_show (const char *url, const char *title)
 {
-  if (!s_active)
+  if (!g_active)
   {
-    UIView *parentView = s_rootViewCtrlr.view;
+    UIView *parentView = g_rootViewCtrlr.view;
 
     float viewPosX = parentView.bounds.origin.x;
     float viewPosY = parentView.bounds.origin.y;
@@ -112,26 +112,26 @@ void webview_show (const char *url, const char *title)
     float posX = viewPosX + ((viewWidth - width) * 0.5f);
     float posY = viewPosY + ((viewHeight - height) * 0.5f);
 
-    if (s_cxWebViewCtrlr)
+    if (g_webviewCtrlr)
     {
-      [s_cxWebViewCtrlr release];
-      s_cxWebViewCtrlr = nil;
+      [g_webviewCtrlr release];
+      g_webviewCtrlr = nil;
     }
     
     NSString *objcURL = [NSString stringWithCString:url encoding:NSASCIIStringEncoding];
     NSString *objcTitle = title ? [NSString stringWithCString:title encoding:NSASCIIStringEncoding] : nil;
     
-    s_cxWebViewCtrlr = [[CXWebViewController alloc] initWithAddress:objcURL title:objcTitle];
-    [s_cxWebViewCtrlr setContentSizeForViewInPopover:CGSizeMake (width, height)];
+    g_webviewCtrlr = [[CXWebViewController alloc] initWithAddress:objcURL title:objcTitle];
+    [g_webviewCtrlr setContentSizeForViewInPopover:CGSizeMake (width, height)];
     
-    [s_popover setContentViewController:[s_cxWebViewCtrlr navigationController]];
-    [s_popover setPopoverContentSize:CGSizeMake(width, height)];
-    [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
-    [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
+    [g_popover setContentViewController:[g_webviewCtrlr navigationController]];
+    [g_popover setPopoverContentSize:CGSizeMake(width, height)];
+    [g_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
+    [g_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
     
     util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, WEBVIEW_SCREEN_FADE_OPACITY, WEBVIEW_SCREEN_FADE_DURATION, NULL, NULL);
     
-    s_active = true;
+    g_active = true;
   }
 }
 
@@ -141,13 +141,13 @@ void webview_show (const char *url, const char *title)
     
 void webview_hide (void)
 {
-  if (s_active)
+  if (g_active)
   {
-    [s_popover dismissPopoverAnimated:YES];
+    [g_popover dismissPopoverAnimated:YES];
     
     util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, WEBVIEW_SCREEN_FADE_OPACITY, WEBVIEW_SCREEN_FADE_DURATION, NULL, NULL);
     
-    s_active = false;
+    g_active = false;
   }
 }
 
@@ -157,7 +157,7 @@ void webview_hide (void)
 
 bool webview_active (void)
 {
-  return s_active;
+  return g_active;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

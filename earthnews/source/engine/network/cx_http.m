@@ -57,10 +57,10 @@ typedef struct cx_http_request
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool s_initialised = false;
-static unsigned int s_requesrIdFactory = 0;
-static NSMutableArray *s_nsconnFreeList = nil;
-static NSMutableArray *s_nsconnBusyList = nil;
+static bool g_initialised = false;
+static unsigned int g_requesrIdFactory = 0;
+static NSMutableArray *g_nsconnFreeList = nil;
+static NSMutableArray *g_nsconnBusyList = nil;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,17 +68,17 @@ static NSMutableArray *s_nsconnBusyList = nil;
 
 bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache)
 {
-  CX_ASSERT (!s_initialised);
+  CX_ASSERT (!g_initialised);
   
-  s_requesrIdFactory = 0;
+  g_requesrIdFactory = 0;
   
-  s_nsconnFreeList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
-  s_nsconnBusyList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
+  g_nsconnFreeList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
+  g_nsconnBusyList = [[NSMutableArray alloc] initWithCapacity:CX_HTTP_MAX_NUM_NSCONN];
   
   for (cxu32 i = 0; i < CX_HTTP_MAX_NUM_NSCONN; ++i)
   {
     CXNSURLConnection *nsconn = [[CXNSURLConnection alloc] init];
-    [s_nsconnFreeList addObject:nsconn];
+    [g_nsconnFreeList addObject:nsconn];
   }
   
 #if CX_HTTP_CACHE_CUSTOM
@@ -114,9 +114,9 @@ bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache
     [[NSURLCache sharedURLCache] removeAllCachedResponses];
   }
   
-  s_initialised = true;
+  g_initialised = true;
   
-  return s_initialised;
+  return g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,34 +125,34 @@ bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache
 
 bool _cx_http_deinit (void)
 {
-  if (s_initialised)
+  if (g_initialised)
   {
 #if CX_HTTP_CACHE_CUSTOM
     NSURLCache *sharedCache = [NSURLCache sharedURLCache];
     [sharedCache release];
 #endif
   
-    for (cxu32 i = 0; i < [s_nsconnFreeList count]; ++i)
+    for (cxu32 i = 0; i < [g_nsconnFreeList count]; ++i)
     {
-      CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:i];
-      [s_nsconnFreeList removeObject:nsconn];
+      CXNSURLConnection *nsconn = [g_nsconnFreeList objectAtIndex:i];
+      [g_nsconnFreeList removeObject:nsconn];
       [nsconn release];
     }
     
-    for (cxu32 i = 0; i < [s_nsconnBusyList count]; ++i)
+    for (cxu32 i = 0; i < [g_nsconnBusyList count]; ++i)
     {
-      CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
-      [s_nsconnBusyList removeObject:nsconn];
+      CXNSURLConnection *nsconn = [g_nsconnBusyList objectAtIndex:i];
+      [g_nsconnBusyList removeObject:nsconn];
       [nsconn release];
     }
     
-    [s_nsconnFreeList release];
-    [s_nsconnBusyList release];
+    [g_nsconnFreeList release];
+    [g_nsconnBusyList release];
     
-    s_initialised = false;
+    g_initialised = false;
   }
   
-  return !s_initialised;
+  return !g_initialised;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,11 +162,11 @@ bool _cx_http_deinit (void)
 cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers, int headerCount, int timeout, 
                                 cx_http_response_callback callback, void *userdata)
 {
-  CX_ASSERT (s_nsconnFreeList);
-  CX_ASSERT (s_nsconnBusyList);
+  CX_ASSERT (g_nsconnFreeList);
+  CX_ASSERT (g_nsconnBusyList);
   CX_ASSERT (url);
   
-  cx_http_request_id rId = s_requesrIdFactory++;
+  cx_http_request_id rId = g_requesrIdFactory++;
   
   NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url encoding:NSASCIIStringEncoding]];
   NSMutableURLRequest *nsrequest = [NSMutableURLRequest requestWithURL:nsurl 
@@ -185,15 +185,15 @@ cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers,
     }
   }
   
-  CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:0];
+  CXNSURLConnection *nsconn = [g_nsconnFreeList objectAtIndex:0];
   CX_ASSERT (nsconn);
   
   [nsconn setRId:rId];
   [nsconn setCallback:callback];
   [nsconn setCallbackUserdata:userdata];
   
-  [s_nsconnFreeList removeObject:nsconn];
-  [s_nsconnBusyList addObject:nsconn];
+  [g_nsconnFreeList removeObject:nsconn];
+  [g_nsconnBusyList addObject:nsconn];
   
   NSURLConnection *conn = [NSURLConnection connectionWithRequest:nsrequest delegate:nsconn];
   
@@ -209,10 +209,10 @@ cx_http_request_id cx_http_get (const char *url, cx_http_request_field *headers,
 cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 postdataSize, cx_http_request_field *headers, 
                                cxi32 headerCount, cxi32 timeout, cx_http_response_callback callback, void *userdata)
 {
-  CX_ASSERT (s_nsconnFreeList);
-  CX_ASSERT (s_nsconnBusyList);
+  CX_ASSERT (g_nsconnFreeList);
+  CX_ASSERT (g_nsconnBusyList);
   
-  cx_http_request_id rId = s_requesrIdFactory++;
+  cx_http_request_id rId = g_requesrIdFactory++;
   
   NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url encoding:NSASCIIStringEncoding]];
   NSMutableURLRequest *nsrequest = [NSMutableURLRequest requestWithURL:nsurl 
@@ -245,15 +245,15 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
     }
   }
   
-  CXNSURLConnection *nsconn = [s_nsconnFreeList objectAtIndex:0];
+  CXNSURLConnection *nsconn = [g_nsconnFreeList objectAtIndex:0];
   CX_ASSERT (nsconn);
   
   [nsconn setRId:rId];
   [nsconn setCallback:callback];
   [nsconn setCallbackUserdata:userdata];
   
-  [s_nsconnFreeList removeObject:nsconn];
-  [s_nsconnBusyList addObject:nsconn];
+  [g_nsconnFreeList removeObject:nsconn];
+  [g_nsconnBusyList addObject:nsconn];
   
   NSURLConnection *conn = [NSURLConnection connectionWithRequest:nsrequest delegate:nsconn];
   
@@ -270,16 +270,16 @@ void cx_http_cancel (cx_http_request_id requestId)
 {
   CX_ASSERT (requestId > CX_HTTP_REQUEST_ID_INVALID);
   
-  for (cxu32 i = 0, c = [s_nsconnBusyList count]; i < c; ++i)
+  for (cxu32 i = 0, c = [g_nsconnBusyList count]; i < c; ++i)
   {
-    CXNSURLConnection *nsconn = [s_nsconnBusyList objectAtIndex:i];
+    CXNSURLConnection *nsconn = [g_nsconnBusyList objectAtIndex:i];
     
     if (nsconn.rId == requestId)
     {
       [nsconn.conn cancel];
       
-      [s_nsconnBusyList removeObject:nsconn];
-      [s_nsconnFreeList addObject:nsconn];
+      [g_nsconnBusyList removeObject:nsconn];
+      [g_nsconnFreeList addObject:nsconn];
       
       break;
     }
@@ -386,8 +386,8 @@ void cx_http_clear_cache (void)
   [self setCallback:NULL];
   [self setCallbackUserdata:NULL];
   
-  [s_nsconnBusyList removeObject:self];
-  [s_nsconnFreeList addObject:self];
+  [g_nsconnBusyList removeObject:self];
+  [g_nsconnFreeList addObject:self];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -415,8 +415,8 @@ void cx_http_clear_cache (void)
   [self setCallback:NULL];
   [self setCallbackUserdata:NULL];
   
-  [s_nsconnBusyList removeObject:self];
-  [s_nsconnFreeList addObject:self];
+  [g_nsconnBusyList removeObject:self];
+  [g_nsconnFreeList addObject:self];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
