@@ -13,6 +13,71 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define NEW_EARTH_SHADER (!TARGET_IPHONE_SIMULATOR && 1)
+#define ENABLE_TOPOGRAPHY 1
+#define ENABLE_CLOUDS 1
+#define ENABLE_ATMOSPHERE 1
+#define BUMP_MAPPED_CLOUDS 0
+#define FAST_LIGHT_ORBIT 0
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define OPTIMIZED_WEATHER_DATA 1
+#define WEATHER_ID_MAX_LEN 16
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct earth_visual_t
+{
+  float radius;
+  int slices;
+  int parallels;
+  
+  cx_mesh *mesh [3];
+  cx_texture *nightMap;
+};
+
+struct earth_data_t
+{
+  const char **names;
+  const char **newsFeeds;
+  
+#if OPTIMIZED_WEATHER_DATA
+  char *weatherId;
+#else
+  const char **weatherId;
+#endif
+  
+  cx_vec4 *location;
+  cx_vec4 *normal;
+  int *utcOffset;
+  int *dstOffset;
+  const char **tznames;
+  int count;
+};
+
+struct earth_t
+{
+  struct earth_data_t *data;
+  struct earth_visual_t *visual;
+};
+
+typedef struct earth_t earth_t;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static earth_t *g_earth = NULL;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float longitude, float radius, int slices, int parallels, cx_vec4 *n)
 {
   // convert lat/long to texture paramter-space (uv coords)
@@ -79,8 +144,8 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
       earthdata->normal = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
       earthdata->names = (const char **) cx_malloc (sizeof (char *) * count);
       earthdata->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
-#if DEBUG_WEATHER_ID
-      earthdata->weatherId = (char *) cx_malloc (sizeof (char) * 16 * count);
+#if OPTIMIZED_WEATHER_DATA
+      earthdata->weatherId = (char *) cx_malloc (sizeof (char) * WEATHER_ID_MAX_LEN * count);
 #else
       earthdata->weatherId = (const char **) cx_malloc (sizeof (char *) * count);
 #endif
@@ -93,8 +158,8 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
       memset (earthdata->normal, 0, (sizeof (cx_vec4) * count));
       memset (earthdata->names, 0, (sizeof (char *) * count));
       memset (earthdata->newsFeeds, 0, (sizeof (char *) * count));
-#if DEBUG_WEATHER_ID
-      memset (earthdata->weatherId, 0, sizeof (char) * 16 * count);
+#if OPTIMIZED_WEATHER_DATA
+      memset (earthdata->weatherId, 0, sizeof (char) * WEATHER_ID_MAX_LEN * count);
 #else
       memset (earthdata->weatherId, 0, (sizeof (char *) * count));
 #endif
@@ -127,14 +192,14 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
           {
             const char *str = cx_json_value_string (p);
             
-#if DEBUG_WEATHER_ID
-            int loc = i * 16;
+#if OPTIMIZED_WEATHER_DATA
+            int loc = i * WEATHER_ID_MAX_LEN;
             
             char *d = &earthdata->weatherId [loc];
             
-            cx_strcpy (d, 16, str);
+            cx_strcpy (d, WEATHER_ID_MAX_LEN, str);
 #else
-            earthdata->weatherId [i] = cx_strdup (str, 16);
+            earthdata->weatherId [i] = cx_strdup (str, WEATHER_ID_MAX_LEN);
 #endif
           }
           else if (strcmp (pk, "timezone") == 0)
@@ -151,7 +216,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
             }
             else
             {
-              earthdata->tznames [i] = cx_strdup ("", 16);
+              earthdata->tznames [i] = cx_strdup ("", WEATHER_ID_MAX_LEN);
             }
             
             int utcOffsetSecs = cx_json_value_int (utcNode);
@@ -197,13 +262,6 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define NEW_EARTH_SHADER 1
-#define ENABLE_TOPOGRAPHY 1
-#define ENABLE_CLOUDS 1
-#define ENABLE_ATMOSPHERE 1
-#define BUMP_MAPPED_CLOUDS 0
-#define FAST_LIGHT_ORBIT 0
-
 static struct earth_visual_t *earth_visual_create (float radius, int slices, int parallels)
 {
   CX_ASSERT (radius > 0.0f);
@@ -238,7 +296,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   cx_shader *shader     = cx_shader_create ("mesh", "data/shaders");
   cx_material *material = cx_material_create ("earth");
 
-  cx_texture *texture   = cx_texture_create_from_file ("data/textures/earthmap1k.png");
+  cx_texture *texture   = cx_texture_create_from_file ("data/maps/earthmap1k.png");
   //cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
   
   cx_material_set_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
@@ -294,7 +352,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-earth_t *earth_create (const char *filename)
+static earth_t *earth_create (const char *filename)
 {
   earth_t *earth = (earth_t *) cx_malloc (sizeof (earth_t));
   
@@ -323,7 +381,7 @@ earth_t *earth_create (const char *filename)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void earth_destroy (earth_t *earth)
+static void earth_destroy (earth_t *earth)
 {
   CX_ASSERT (earth);
   
@@ -337,17 +395,164 @@ void earth_destroy (earth_t *earth)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void earth_data_update_dst_offsets (earth_t *earth)
+bool earth_init (const char *filename)
 {
-  CX_ASSERT (earth);
+  g_earth = earth_create (filename);
   
-  for (int i = 0, c = earth->data->count; i < c; ++i)
+  return g_earth ? true : false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void earth_deinit (void)
+{
+  earth_destroy (g_earth);
+  
+  g_earth = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int earth_data_get_count (void)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  
+  int c = g_earth->data->count;
+  
+  return c;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char **earth_data_get_names (void)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  
+  const char **n = g_earth->data->names;
+  
+  return n;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char *earth_data_get_weather (int index)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  CX_ASSERT (earth_data_validate_index (index));
+  
+#if OPTIMIZED_WEATHER_DATA
+  const char *w = &g_earth->data->weatherId [index * WEATHER_ID_MAX_LEN];
+#else
+  const char *w = g_earth->data->weatherId [index];
+#endif
+  
+  return w;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char *earth_data_get_city (int index)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  CX_ASSERT (earth_data_validate_index (index));
+  
+  const char *c = g_earth->data->names [index];
+  
+  return c;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char *earth_data_get_feed_query (int index)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  CX_ASSERT (earth_data_validate_index (index));
+  
+  const char *q = g_earth->data->newsFeeds [index];
+  
+  return q;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const cx_vec4 *earth_data_get_position (int index)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  CX_ASSERT (earth_data_validate_index (index));
+  
+  const cx_vec4 *p = &g_earth->data->location [index];
+  
+  return p;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const cx_vec4 *earth_data_get_normal (int index)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  CX_ASSERT (earth_data_validate_index (index));
+  
+  const cx_vec4 *n = &g_earth->data->normal [index];
+  
+  return n;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int earth_data_get_tz_offset (int index)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  CX_ASSERT (earth_data_validate_index (index));
+  
+  int u = g_earth->data->utcOffset [index];
+  int d = g_earth->data->dstOffset [index];
+  int o = u + d;
+  
+  return o;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void earth_data_update_dst_offsets (void)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  
+  for (int i = 0, c = g_earth->data->count; i < c; ++i)
   {
-    const char *tzn = earth->data->tznames [i];
+    const char *tzn = g_earth->data->tznames [i];
   
     int dstOffsetSecs = util_get_dst_offset_secs (tzn);
     
-    earth->data->dstOffset [i] = dstOffsetSecs;
+    g_earth->data->dstOffset [i] = dstOffsetSecs;
   }
 }
 
@@ -355,9 +560,21 @@ void earth_data_update_dst_offsets (earth_t *earth)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void earth_visual_render (const earth_t *earth, const cx_date *date, const cx_vec4 *eye)
+bool earth_data_validate_index (int index)
 {
-  CX_ASSERT (earth);
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  
+  return (index > -1) && (index < g_earth->data->count);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void earth_visual_render (const cx_date *date, const cx_vec4 *eye)
+{
+  CX_ASSERT (g_earth);
   CX_ASSERT (date);
   CX_ASSERT (eye);
   
@@ -369,10 +586,10 @@ void earth_visual_render (const earth_t *earth, const cx_date *date, const cx_ve
   cx_colour ambient, diffuse, specular;
   float shininess = 0.0f;
   
-  CX_REFERENCE_UNUSED_VARIABLE (ambient);
-  CX_REFERENCE_UNUSED_VARIABLE (diffuse);
-  CX_REFERENCE_UNUSED_VARIABLE (specular);
-  CX_REFERENCE_UNUSED_VARIABLE (shininess);
+  CX_REF_UNUSED (ambient);
+  CX_REF_UNUSED (diffuse);
+  CX_REF_UNUSED (specular);
+  CX_REF_UNUSED (shininess);
   
   /////////////////////////////
   // mvp matrix
@@ -439,7 +656,7 @@ void earth_visual_render (const earth_t *earth, const cx_date *date, const cx_ve
     cx_gdi_enable_z_write (true);
     
     // get mesh
-    cx_mesh *mesh = earth->visual->mesh [0];
+    cx_mesh *mesh = g_earth->visual->mesh [0];
     
     // use shader
     cx_shader_begin (mesh->shader);
@@ -449,7 +666,7 @@ void earth_visual_render (const earth_t *earth, const cx_date *date, const cx_ve
     
     // night map
     
-    cx_texture *nightMap = earth->visual->nightMap;
+    cx_texture *nightMap = g_earth->visual->nightMap;
     cx_shader_set_texture (mesh->shader, "u_nightMap", nightMap, 3);
     
     cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_EYE_POSITION, &eyePos);
@@ -485,7 +702,7 @@ void earth_visual_render (const earth_t *earth, const cx_date *date, const cx_ve
     cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
     cx_gdi_enable_z_write (false);
     
-    cx_mesh *mesh1 = earth->visual->mesh [1];
+    cx_mesh *mesh1 = g_earth->visual->mesh [1];
     
     cx_shader_begin (mesh1->shader);
     
@@ -526,7 +743,7 @@ void earth_visual_render (const earth_t *earth, const cx_date *date, const cx_ve
     cx_gdi_set_blend_mode (CX_GDI_BLEND_MODE_SRC_ALPHA, CX_GDI_BLEND_MODE_ONE_MINUS_SRC_ALPHA);
     cx_gdi_enable_z_write (false);
     
-    cx_mesh *mesh2 = earth->visual->mesh [2];
+    cx_mesh *mesh2 = g_earth->visual->mesh [2];
     
     cx_shader_begin (mesh2->shader);
     

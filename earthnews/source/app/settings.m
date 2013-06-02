@@ -21,7 +21,7 @@
 #define SETTINGS_CLOCK_TABLE_DATA_ROWS  (2)
 #define SCREEN_FADE_OPACITY             (0.6f)
 #define SCREEN_FADE_DURATION            (0.5f)
-#define SETTINGS_UI_SIZE_WIDTH          (300.0f)
+#define SETTINGS_UI_SIZE_WIDTH          (320.0f)
 #define SETTINGS_UI_SIZE_HEIGHT         (400.0f)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,6 +104,15 @@ static settings_t s_settings;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+@interface PopoverBackground : UIPopoverBackgroundView
+@property (nonatomic, readwrite) UIPopoverArrowDirection arrowDirection;
+@property (nonatomic, readwrite) CGFloat arrowOffset;
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static bool s_initialised = false;
 static bool s_uiActive = false;
 static UIViewController *s_rootViewCtrlr = nil;
@@ -179,7 +188,7 @@ void settings_data_save (void)
   
   CX_ASSERT (saved);
   
-  CX_REFERENCE_UNUSED_VARIABLE (saved);
+  CX_REF_UNUSED (saved);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,6 +303,8 @@ static void settings_init_view_create (void)
   s_rootTableViewCtrlr = [[RootTableViewController alloc] initWithStyle:UITableViewStyleGrouped];
   
   s_popover = [[UIPopoverController alloc] initWithContentViewController:[s_rootTableViewCtrlr navigationController]];
+  
+  [s_popover setPopoverBackgroundViewClass:[PopoverBackground class]];
   
   [s_rootTableViewCtrlr setTitle:@"Settings"];
 }
@@ -485,7 +496,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   const char *label = s_settings.cityNames [idx];
   bool display = s_settings.cityDisplay [idx];
   
-  cell.textLabel.text = [NSString stringWithCString:label encoding:NSASCIIStringEncoding];
+  cell.textLabel.text = [NSString stringWithCString:label encoding:NSUTF8StringEncoding];
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
   cell.accessoryType = display ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
   
@@ -564,7 +575,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
   cell.accessoryType = (s_settings.tempUnit == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:s_tempTableData [idx] encoding:NSASCIIStringEncoding];
+  cell.textLabel.text = [NSString stringWithCString:s_tempTableData [idx] encoding:NSUTF8StringEncoding];
   
   return cell;
 }
@@ -627,7 +638,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
   cell.accessoryType = (s_settings.clockFmt == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:s_clockTableData [idx] encoding:NSASCIIStringEncoding];
+  cell.textLabel.text = [NSString stringWithCString:s_clockTableData [idx] encoding:NSUTF8StringEncoding];
   
   return cell;
 }
@@ -656,8 +667,10 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
                                                                 target:self
                                                                 action:@selector(doneButtonClicked:)];
     
-    self.navigationItem.rightBarButtonItem = _doneButton;
+    //self.navigationItem.rightBarButtonItem = _doneButton;
     [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
+    
+    _navCtrlr.navigationBar.tintColor = [UIColor blackColor];
   }
   
   return self;
@@ -772,7 +785,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:s_tempTableData [s_settings.tempUnit] encoding:NSASCIIStringEncoding];
+      cell.detailTextLabel.text = [NSString stringWithCString:s_tempTableData [s_settings.tempUnit] encoding:NSUTF8StringEncoding];
       break;
     }
       
@@ -780,7 +793,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:s_clockTableData [s_settings.clockFmt] encoding:NSASCIIStringEncoding];
+      cell.detailTextLabel.text = [NSString stringWithCString:s_clockTableData [s_settings.clockFmt] encoding:NSUTF8StringEncoding];
       break;
     }
       
@@ -801,7 +814,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     }
   }
   
-  cell.textLabel.text = [NSString stringWithCString:s_rootTableData [idx] encoding:NSASCIIStringEncoding];
+  cell.textLabel.text = [NSString stringWithCString:s_rootTableData [idx] encoding:NSUTF8StringEncoding];
   
 #if 0
   cell.contentView.backgroundColor = [UIColor clearColor];
@@ -813,6 +826,43 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 #endif
   
   return cell;
+}
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation PopoverBackground
+
+@synthesize arrowOffset;
+@synthesize arrowDirection;
+
+- (id)initWithFrame:(CGRect)frame
+{
+  if (self = [super initWithFrame:frame])
+  {
+    self.backgroundColor = [UIColor colorWithWhite:0.2f alpha:0.7f];
+    self.arrowDirection = 0;
+    self.arrowOffset = 0.0f;
+  }
+  return self;
+}
+
++ (UIEdgeInsets)contentViewInsets
+{
+  return UIEdgeInsetsMake (10.0f, 2.0f, 1.0f, 2.0f);
+}
+
++ (CGFloat)arrowHeight
+{
+  return 0.0f;
+}
+
++ (CGFloat)arrowBase
+{
+  return 0.0f;
 }
 
 @end

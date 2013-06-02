@@ -3,4 +3,6 @@
 "TXT_OPEN_CHROME" = "Åbn i Chrome";
 "TXT_COPY_LINK" = "Kopier Link";
 "TXT_MAIL_LINK" = "Mail Link til denne side";
+"TXT_POST_TWITTER" = "Post to Twitter";
+"TXT_POST_FACEBOOK" = "Post to Facebook";
 "TXT_CANCEL" = "Cancel";

@@ -203,7 +203,7 @@ bool cx_file_storage_load_contents (cxu8 **buffer, cxu32 *size, const char *file
     cxu32 read = cx_file_read (&file, buf, sizeof (cxu8), sz);
     
     CX_ASSERT (read == sz);
-    CX_REFERENCE_UNUSED_VARIABLE (read);
+    CX_REF_UNUSED (read);
     
     buf [sz] = 0;
   
@@ -240,7 +240,7 @@ bool cx_file_storage_save_contents (const cxu8 *buffer, cxu32 size, const char *
     cxu32 written = cx_file_write (&file, buffer, sizeof (cxu8), size);
     
     CX_ASSERT (written == size);
-    CX_REFERENCE_UNUSED_VARIABLE (written);
+    CX_REF_UNUSED (written);
     
     cx_file_close (&file);
     

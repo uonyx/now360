@@ -51,7 +51,7 @@ void cx_util_world_space_to_screen_space (cxf32 width, cxf32 height, const cx_ma
   // clip.z should be in the range (-1, 1). if so, rescale to the range (0, 1) for depth value.
   
   *depth = (clip.z + 1.0f) * 0.5f;
-  CX_REFERENCE_UNUSED_VARIABLE (depth);
+  CX_REF_UNUSED (depth);
   
 #if 0
   CX_DEBUGLOG_CONSOLE (1, "-----");

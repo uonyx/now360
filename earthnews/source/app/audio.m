@@ -49,14 +49,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@interface MusicPickerPopupBackground : UIPopoverBackgroundView
-
+@interface MusicPickerPopoverBackground : UIPopoverBackgroundView
 @property (nonatomic, readwrite) UIPopoverArrowDirection arrowDirection;
 @property (nonatomic, readwrite) CGFloat arrowOffset;
-
-+(UIEdgeInsets)contentViewInsets;
-+(CGFloat)arrowHeight;
-+(CGFloat)arrowBase;
 @end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -285,8 +280,8 @@ int audio_music_get_track_id (char *buffer, int bufferlen)
     NSString *artist = [nowPlayingItem valueForProperty:MPMediaItemPropertyArtist];
     NSString *title = [nowPlayingItem valueForProperty:MPMediaItemPropertyTitle];
     
-    const char *a = [artist cStringUsingEncoding:NSASCIIStringEncoding];
-    const char *t = [title cStringUsingEncoding:NSASCIIStringEncoding];
+    const char *a = [artist cStringUsingEncoding:NSUTF8StringEncoding];
+    const char *t = [title cStringUsingEncoding:NSUTF8StringEncoding];
     
     size = cx_sprintf (buffer, bufferlen, "%s - %s", a, t);
   }
@@ -315,7 +310,7 @@ static void audio_sndfx_init (void)
     OSStatus error = AudioServicesCreateSystemSoundID ((CFURLRef) fileURL, &sndId);    
 #endif
     CX_ASSERT (error == kAudioServicesNoError);
-    CX_REFERENCE_UNUSED_VARIABLE (error);
+    CX_REF_UNUSED (error);
     
     s_sndfxIds [i] = sndId;
   }
@@ -340,6 +335,10 @@ static void audio_sndfx_deinit (void)
 
 static void audio_music_init (void)
 {
+#if TARGET_IPHONE_SIMULATOR
+  return;
+#endif
+  
   cx_list2_init (&s_musicNotificationCallbacks);
   
   s_musicPlayer = [MPMusicPlayerController applicationMusicPlayer];
@@ -366,10 +365,10 @@ static void audio_music_init (void)
     [s_musicPicker setShowsCloudItems:YES];
   }
   
-#if USE_MUSIC_PICKER_POP_UP && 0
+#if USE_MUSIC_PICKER_POP_UP && 1
   if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"5.0"))
   {
-    [s_musicPopOver setPopoverBackgroundViewClass:[MusicPickerPopupBackground class]];
+    [s_musicPopOver setPopoverBackgroundViewClass:[MusicPickerPopoverBackground class]];
   }
 #endif
   
@@ -401,6 +400,10 @@ static void audio_music_init (void)
 
 static void audio_music_deinit (void)
 {
+#if TARGET_IPHONE_SIMULATOR
+  return;
+#endif
+  
   NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
   
   [notificationCenter removeObserver:s_musicNotification 
@@ -435,7 +438,11 @@ static void audio_music_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static bool audio_music_update_queue (MPMediaItemCollection *collection)
-{  
+{
+#if TARGET_IPHONE_SIMULATOR
+  return false;
+#endif
+  
   if (!collection)
   {
     return false;
@@ -451,6 +458,7 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
     NSArray *newItems = [collection items];
     
     [currentItems addObjectsFromArray:newItems];
+    
     s_currentCollection = [MPMediaItemCollection collectionWithItems:(NSArray *) currentItems];
     [s_musicPlayer setQueueWithItemCollection:s_currentCollection];
     
@@ -480,6 +488,9 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
 
 static void audio_music_picker (bool show, audio_music_picked_callback fn)
 {
+#if TARGET_IPHONE_SIMULATOR
+  return;
+#endif
   if (show)
   {
     if (!s_pickerActive)
@@ -656,7 +667,7 @@ static void audio_music_now_playing_state_changed (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation MusicPickerPopupBackground
+@implementation MusicPickerPopoverBackground
 
 @synthesize arrowOffset, arrowDirection;
 
@@ -664,7 +675,7 @@ static void audio_music_now_playing_state_changed (void)
 {
   if (self = [super initWithFrame:frame])
   {
-    self.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.9f];
+    self.backgroundColor = [UIColor colorWithWhite:0.2f alpha:0.7f];
     self.arrowDirection = 0;
     self.arrowOffset = 0.0f;
   }
@@ -674,17 +685,17 @@ static void audio_music_now_playing_state_changed (void)
 
 + (UIEdgeInsets)contentViewInsets
 {
-  return UIEdgeInsetsMake (10.0f, 10.0f, 10.0f, 10.0f);
+  return UIEdgeInsetsMake (0.0f, 0.0f, 1.0f, 0.0f);
 }
 
 + (CGFloat)arrowHeight
 {
-  return 30.0f;
+  return 0.0f;
 }
 
 + (CGFloat)arrowBase
 {
-  return 30.0f;
+  return 0.0f;
 }
 
 @end

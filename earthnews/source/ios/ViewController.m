@@ -98,13 +98,31 @@
   
   //[[UINavigationBar appearance] setTranslucent:YES];
   
-  [[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
+  //[[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
   
   //[[UITableViewCell appearanceWhenContainedIn:[UITableView class], [UIViewController class], [UIPopoverController class], nil] setBackgroundColor:[UIColor colorWithWhite:0.0f alpha:0.4f]];
   
   //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundView:nil];
   
   //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setAlpha:0.3f];
+  
+  /*
+  UIImage *navBarImage = [[UIImage imageNamed:@"data/images/ui/system/navbar.png"]
+                          resizableImageWithCapInsets:UIEdgeInsetsMake(0, 0, 0, 0)];
+  
+  [[UINavigationBar appearance] setBackgroundImage:navBarImage forBarMetrics:UIBarMetricsDefault];
+  */
+  
+  //[[UIBarButtonItem appearance] setTintColor:[UIColor blackColor]];
+  
+  //[[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
+  
+  //[[UINavigationBar appearance] setTintColor:[UIColor redColor]];
+  
+  //[[UINavigationBar appearance] setTranslucent:YES];
+  
+  //[[UINavigationBar appearance] setAlpha:0.7f];
+  
   
 #if 0
   AppDelegate* appDelegate = (((AppDelegate*) [UIApplication sharedApplication].delegate));

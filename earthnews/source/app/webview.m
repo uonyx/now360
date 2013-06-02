@@ -14,31 +14,19 @@
 #import "util.h"
 #import <UIKit/UIKit.h>
 #import <MessageUI/MessageUI.h>
-#import "SVModalWebViewController.h"
+#import <Social/Social.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define WEBVIEW_DEBUG_CX_VIEWCTRL       1
 #define WEBVIEW_DEBUG_LOG_ENABLED       1
 #define WEBVIEW_UI_SIZE_WIDTH          (778.0f)
 #define WEBVIEW_UI_SIZE_HEIGHT         (620.0f)
 #define WEBVIEW_SCREEN_FADE_OPACITY    (0.6f)
 #define WEBVIEW_SCREEN_FADE_DURATION   (0.5f)
 #define WEBVIEW_TEXT_LABEL_WIDTH       (490.0f)
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-@interface WebViewControllerDelegate : NSObject<SVModalWebViewControllerDelegate>
-@end
-
-#if 0
-@interface PopOverControllerDelegate : NSObject<UIPopoverControllerDelegate>
-@end
-#endif
+#define WEBVIEW_USE_ACTION_SHEET        0
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,16 +40,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+@interface CXWebViewPopoverBackground : UIPopoverBackgroundView
+@property (nonatomic, readwrite) UIPopoverArrowDirection arrowDirection;
+@property (nonatomic, readwrite) CGFloat arrowOffset;
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static bool s_initialised = false;
 static bool s_active = false;
 static UIViewController *s_rootViewCtrlr = nil;
 static UIPopoverController *s_popover = nil;
-#if WEBVIEW_DEBUG_CX_VIEWCTRL
 static CXWebViewController *s_cxWebViewCtrlr = nil;
-#else
-static SVModalWebViewController *s_webViewCtrlr = nil;
-static WebViewControllerDelegate *s_webViewDelegate = nil;
-#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,17 +66,11 @@ bool webview_init (const void *rootvc)
   
   s_rootViewCtrlr = (UIViewController *) rootvc;
   
-#if WEBVIEW_DEBUG_CX_VIEWCTRL
   s_cxWebViewCtrlr = [[CXWebViewController alloc] initWithAddress:@"" title:nil];
   
   s_popover = [[UIPopoverController alloc] initWithContentViewController:[s_cxWebViewCtrlr navigationController]];
-#else
-  s_webViewDelegate = [[WebViewControllerDelegate alloc] init];
-  
-  s_webViewCtrlr = [[SVModalWebViewController alloc] initWithAddress:@""];
-  
-  s_popover = [[UIPopoverController alloc] initWithContentViewController:s_webViewCtrlr];
-#endif
+
+  [s_popover setPopoverBackgroundViewClass:[CXWebViewPopoverBackground class]];
   
   return s_initialised;
 }
@@ -96,14 +83,10 @@ void webview_deinit (void)
 {
   CX_ASSERT (s_initialised);
   
-  [s_popover release];
-  
-#if WEBVIEW_DEBUG_CX_VIEWCTRL
   [s_cxWebViewCtrlr release];
-#else
-  [s_webViewDelegate release];
-  [s_webViewCtrlr release];
-#endif
+
+  [s_popover release];
+
   s_rootViewCtrlr = nil;
   
   s_initialised = false;
@@ -129,7 +112,6 @@ void webview_show (const char *url, const char *title)
     float posX = viewPosX + ((viewWidth - width) * 0.5f);
     float posY = viewPosY + ((viewHeight - height) * 0.5f);
 
-#if WEBVIEW_DEBUG_CX_VIEWCTRL
     if (s_cxWebViewCtrlr)
     {
       [s_cxWebViewCtrlr release];
@@ -146,28 +128,7 @@ void webview_show (const char *url, const char *title)
     [s_popover setPopoverContentSize:CGSizeMake(width, height)];
     [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
     [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
-#else
-    if (s_webViewCtrlr)
-    {
-      [s_webViewCtrlr release];
-      s_webViewCtrlr = nil;
-    }
-
-    NSString *objcURL = [NSString stringWithCString:url encoding:NSASCIIStringEncoding];
-    NSString *objcTitle = title ? [NSString stringWithCString:title encoding:NSASCIIStringEncoding] : nil;
     
-    s_webViewCtrlr = [[SVModalWebViewController alloc] initWithAddress:objcURL title:objcTitle];
-    [s_webViewCtrlr setSvdelegate:s_webViewDelegate];
-    [s_webViewCtrlr setContentSizeForViewInPopover:CGSizeMake (width, height)];
-    [s_webViewCtrlr setAvailableActions:(SVWebViewControllerAvailableActionsOpenInSafari |
-                                         SVWebViewControllerAvailableActionsCopyLink |
-                                         SVWebViewControllerAvailableActionsMailLink)];
-
-    [s_popover setContentViewController:s_webViewCtrlr];
-    [s_popover setPopoverContentSize:CGSizeMake(width, height)];
-    [s_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
-    [s_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];
-#endif
     util_screen_fade_trigger (SCREEN_FADE_TYPE_OUT, WEBVIEW_SCREEN_FADE_OPACITY, WEBVIEW_SCREEN_FADE_DURATION, NULL, NULL);
     
     s_active = true;
@@ -202,33 +163,72 @@ bool webview_active (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Webview Implementation
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation WebViewControllerDelegate
-
-- (void) doneButtonClicked:(SVModalWebViewController *)webViewController
+#if WEBVIEW_USE_ACTION_SHEET
+typedef enum
 {
-  webview_hide ();
-}
-
-@end
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 0
-@implementation PopOverControllerDelegate
-
-- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
-{
-  if (s_webViewCtrlr)
-  {
-    [s_webViewCtrlr release];
-    s_webViewCtrlr = nil;
-  }
-}
-
-@end
+  CX_WEBVIEW_ACTION_ITEM_INVALID = -1,
+  CX_WEBVIEW_ACTION_ITEM_COPY_LINK,
+  CX_WEBVIEW_ACTION_ITEM_MAIL_LINK,
+  CX_WEBVIEW_ACTION_ITEM_OPEN_SAFARI,
+  CX_WEBVIEW_ACTION_ITEM_OPEN_CHROME,
+  CX_WEBVIEW_ACTION_ITEM_POST_TWITTER,
+  CX_WEBVIEW_ACTION_ITEM_POST_FACEBOOK,
+  CX_WEBVIEW_ACTION_ITEM_CANCEL,
+  CX_WEBVIEW_NUM_ACTION_ITEMS
+} CXWebViewActionItem;
 #endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@interface CXWebViewActivityItemText : UIActivityItemProvider
+{
+}
+@property (copy) NSString *strTwitter;
+@end
+
+
+@implementation CXWebViewActivityItemText
+
+@synthesize strTwitter;
+
+- (id)initWithStrings:(NSString *)defaultText twitterText:(NSString *)twitterText
+{
+  self = [super init];
+  
+  if (self)
+  {
+    [self initWithPlaceholderItem:defaultText];
+    
+    [self setStrTwitter:twitterText];
+  }
+  
+  return self;
+}
+
+- (id)item
+{
+  CX_ASSERT ([self.placeholderItem isKindOfClass:[NSString class]]);
+  
+  if ([self.activityType isEqualToString:UIActivityTypePostToTwitter])
+  {
+    return strTwitter;
+  }
+  else if ([self.activityType isEqualToString:UIActivityTypeCopyToPasteboard])
+  {
+    return nil;
+  }
+
+  return self.placeholderItem;
+}
+@end
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,8 +247,11 @@ bool webview_active (void)
   UIBarButtonItem *_fixedSpace60;
   UIBarButtonItem *_fixedSpace5;
   UILabel *_titleLabel;
+  
+#if WEBVIEW_USE_ACTION_SHEET
   UIActionSheet *_actionSheet;
-  BOOL _browserIsChrome;
+  int _actionItemIndices [CX_WEBVIEW_NUM_ACTION_ITEMS];
+#endif
 }
 @end
 
@@ -273,6 +276,10 @@ bool webview_active (void)
     _url = [NSURL URLWithString:urlString];
     
     _navCtrlr = [[UINavigationController alloc] initWithRootViewController:self];
+    
+    //_navCtrlr.navigationBar.tintColor = [UIColor redColor];
+    //_navCtrlr.navigationBar.translucent = YES;
+    //_navCtrlr.navigationBar.barStyle = UIBarStyleBlackTranslucent;
   
     _doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
                                                                 target:self
@@ -321,32 +328,54 @@ bool webview_active (void)
     _titleLabel.textAlignment = UITextAlignmentLeft;
     [self setTitleLabelText:title]; //_titleLabel.text = title;
     
+#if WEBVIEW_USE_ACTION_SHEET
     _actionSheet = [[UIActionSheet alloc] initWithTitle:_url.absoluteString
                                                delegate:self
                                       cancelButtonTitle:nil
                                  destructiveButtonTitle:nil
                                       otherButtonTitles:nil];
     
+    memset (_actionItemIndices, -1, sizeof (_actionItemIndices));
+    
+    int currIndex = 0;
+    
     [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_COPY_LINK", nil)];
+    _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_COPY_LINK] = currIndex++;
     
     if ([MFMailComposeViewController canSendMail])
     {
       [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_MAIL_LINK", nil)];
+      _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_MAIL_LINK] = currIndex++;
     }
 
     if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"googlechrome://"]])
     {
       [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_OPEN_CHROME", nil)];
-      _browserIsChrome = TRUE;
+      _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_OPEN_CHROME] = currIndex++;
     }
     else
     {
       [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_OPEN_SAFARI", nil)];
+      _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_OPEN_SAFARI] = currIndex++;
+    }
+    
+    if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeTwitter])
+    {
+      [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_POST_TWITTER", nil)];
+      _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_POST_TWITTER] = currIndex++;
+    }
+
+    if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeFacebook])
+    {
+      [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_POST_FACEBOOK", nil)];
+      _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_POST_FACEBOOK] = currIndex++;
     }
     
     [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_CANCEL", nil)];
+    _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_CANCEL] = currIndex++;
     
-    [_actionSheet setCancelButtonIndex:[_actionSheet numberOfButtons] - 1];
+    [_actionSheet setCancelButtonIndex:_actionItemIndices [CX_WEBVIEW_ACTION_ITEM_CANCEL]];
+#endif
     
     self.navigationItem.titleView = _titleLabel;
     self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:
@@ -378,7 +407,9 @@ bool webview_active (void)
   [_fixedSpace5 release];
   [_fixedSpace60 release];
   [_titleLabel release];
+#if WEBVIEW_USE_ACTION_SHEET
   [_actionSheet release];
+#endif
   [_navCtrlr release];
   [_webView release];
   
@@ -410,10 +441,6 @@ bool webview_active (void)
 {
   [super viewDidLoad];
   // set up view
-  
-  //self.navigationController.navigationBar.tintColor = [UIColor blackColor];
-  //self.navigationController.navigationBar.translucent = YES;
-  //self.navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -536,6 +563,13 @@ bool webview_active (void)
   
   [self updateButtons];
   
+  NSString *docTitle = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+  
+  if (docTitle && docTitle.length > 0)
+  {
+    [_actionButton setEnabled:YES];
+  }
+  
   util_activity_indicator_set_active (false); 
 }
 
@@ -552,10 +586,66 @@ bool webview_active (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)actionButtonClicked:(id)sender
+-(void)actionButtonClicked:(id)sender
 {
+#if WEBVIEW_USE_ACTION_SHEET
+  
   [_actionButton setTitle:_webView.request.URL.absoluteString];
   [_actionSheet showFromBarButtonItem:_actionButton animated:YES];
+  
+#else
+  
+  NSURL *link = _webView.request.URL;
+  NSString *title = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+  NSString *sigDefault = @"(via uonyechi.com/now360)";
+  NSString *sigTwitter = @"(via @now360_app)";
+  
+  NSString *postDefault = [NSString stringWithFormat:@"%@\n", title];
+  NSString *postDefaultSig = [NSString stringWithFormat:@"\n %@", sigDefault];
+  NSString *postTwitter = [NSString stringWithFormat:@"%@ %@", title, sigTwitter];
+  NSString *postTwitterSig = nil;
+  
+#if WEBVIEW_DEBUG_LOG_ENABLED
+  NSLog (@"body: %d", [postTwitter length]);
+  NSLog (@"link: %d", [[link absoluteString] length]);
+#endif
+  
+  if ([title length] > 140)
+  {
+    postTwitter = sigTwitter;
+  }
+  
+  if ([postTwitter length] > 140)
+  {
+    postTwitter = title;
+  }
+  
+  CXWebViewActivityItemText *postMsg = [[CXWebViewActivityItemText alloc] initWithStrings:postDefault
+                                                                              twitterText:postTwitter];
+  
+  CXWebViewActivityItemText *postSig = [[CXWebViewActivityItemText alloc] initWithStrings:postDefaultSig
+                                                                              twitterText:postTwitterSig];
+  
+  NSArray *activityItems = @[postMsg, link, postSig];
+  
+  UIActivityViewController *activityViewCtrlr = [[UIActivityViewController alloc] initWithActivityItems:activityItems
+                                                                                  applicationActivities:nil];
+  
+  activityViewCtrlr.completionHandler = ^(NSString *activityType, BOOL completed)
+  {
+#if WEBVIEW_DEBUG_LOG_ENABLED
+    NSLog (@" activityType: %@", activityType);
+    NSLog (@" completed: %i", completed);
+#endif
+    
+    [postMsg release];
+    [postSig release];
+    [activityViewCtrlr release];
+  };
+  
+  [self presentViewController:activityViewCtrlr animated:YES completion:nil];
+  
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -622,7 +712,7 @@ bool webview_active (void)
     }
   }
   
-#if 0
+#if (WEBVIEW_DEBUG_LOG_ENABLED && 0)
   NSString *hostname = [[request URL] host];
   NSLog (@"Webview: Hostname: %@", hostname);
   NSLog (@"Webview: request: %@", request);
@@ -643,7 +733,7 @@ bool webview_active (void)
 
 - (void) webViewDidStartLoad:(UIWebView *)webView
 {
-  util_activity_indicator_set_active (true); //[[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
+  util_activity_indicator_set_active (true);
   
   [self updateButtons];
 }
@@ -661,7 +751,7 @@ bool webview_active (void)
     [self setTitleLabelText:docTitle];
   }
   
-  util_activity_indicator_set_active (false); //[[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+  util_activity_indicator_set_active (false);
   
   [self updateButtons];
 }
@@ -672,7 +762,7 @@ bool webview_active (void)
 
 - (void) webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
-#if BROWSER_DEBUG_LOG_ENABLED
+#if WEBVIEW_DEBUG_LOG_ENABLED
   NSLog (@"Webview: Error: [%d] %@", [error code], [error description]);
 #endif
 }
@@ -681,23 +771,30 @@ bool webview_active (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if WEBVIEW_USE_ACTION_SHEET
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-  const int ACTION_ITEM_INDEX_COPY_LINK = 0;
-  const int ACTION_ITEM_INDEX_MAIL_LINK = 1;
-  const int ACTION_ITEM_INDEX_OPEN_BROWSER = 2;
-  const int ACTION_ITEM_INDEX_CANCEL = 3;
+  CXWebViewActionItem actionItem = CX_WEBVIEW_ACTION_ITEM_INVALID;
   
-  switch (buttonIndex)
+  for (int i = 0; i < CX_WEBVIEW_NUM_ACTION_ITEMS; ++i)
   {
-    case ACTION_ITEM_INDEX_COPY_LINK:
+    if (_actionItemIndices [i] == buttonIndex)
+    {
+      actionItem = i;
+      break;
+    }
+  }
+  
+  switch (actionItem)
+  {
+    case CX_WEBVIEW_ACTION_ITEM_COPY_LINK:
     {
       UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
       pasteboard.string = _webView.request.URL.absoluteString;
       break;
     }
       
-    case ACTION_ITEM_INDEX_MAIL_LINK:
+    case CX_WEBVIEW_ACTION_ITEM_MAIL_LINK:
     {
       MFMailComposeViewController *mailViewController = [[MFMailComposeViewController alloc] init];
       
@@ -710,41 +807,79 @@ bool webview_active (void)
       break;
     }
       
-    case ACTION_ITEM_INDEX_OPEN_BROWSER:
+    case CX_WEBVIEW_ACTION_ITEM_OPEN_CHROME:
     {
-      if (_browserIsChrome)
-      {
-        NSURL *inputURL = _webView.request.URL;
-        
-        NSString *chromeScheme = [inputURL.scheme isEqualToString:@"https"] ? @"googlechromes" : @"googlechrome";
-        NSString *absoluteString = [inputURL absoluteString];
-        
-        NSRange rangeForScheme = [absoluteString rangeOfString:@":"];
-        NSString *urlNoScheme = [absoluteString substringFromIndex:rangeForScheme.location];
-        
-        NSString *chromeURLString = [chromeScheme stringByAppendingString:urlNoScheme];
-        
-        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:chromeURLString]];
-      }
-      else
-      {
-        [[UIApplication sharedApplication] openURL:_webView.request.URL];
-      }
+      NSURL *inputURL = _webView.request.URL;
+      
+      NSString *chromeScheme = [inputURL.scheme isEqualToString:@"https"] ? @"googlechromes" : @"googlechrome";
+      NSString *absoluteString = [inputURL absoluteString];
+      
+      NSRange rangeForScheme = [absoluteString rangeOfString:@":"];
+      NSString *urlNoScheme = [absoluteString substringFromIndex:rangeForScheme.location];
+      
+      NSString *chromeURLString = [chromeScheme stringByAppendingString:urlNoScheme];
+      
+      [[UIApplication sharedApplication] openURL:[NSURL URLWithString:chromeURLString]];
       
       break;
     }
       
-    case ACTION_ITEM_INDEX_CANCEL:
+    case CX_WEBVIEW_ACTION_ITEM_OPEN_SAFARI:
+    {
+      [[UIApplication sharedApplication] openURL:_webView.request.URL];
+      
+      break;
+    }
+      
+    case CX_WEBVIEW_ACTION_ITEM_POST_TWITTER:
+    {
+      SLComposeViewController *tweetSheet = [SLComposeViewController
+                                             composeViewControllerForServiceType:SLServiceTypeTwitter];
+      
+      
+      NSURL *link = _webView.request.URL;
+      NSString *title = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+      NSString *sigTwitter = @"(via @now360_app)";
+      
+      NSString *postTwitter = [NSString stringWithFormat:@"%@ %@", title, sigTwitter];
+      
+      if ([title length] > 140)
+      {
+        postTwitter = sigTwitter;
+      }
+      
+      if ([postTwitter length] > 140)
+      {
+        postTwitter = title;
+      }
+      
+      [tweetSheet setInitialText:postTwitter];
+      [tweetSheet addURL:link];
+      
+      [self presentViewController:tweetSheet animated:YES completion:nil];
+      
+      break;
+    }
+      
+    case CX_WEBVIEW_ACTION_ITEM_POST_FACEBOOK:
+    {
+      break;
+    }
+      
+    case CX_WEBVIEW_ACTION_ITEM_CANCEL:
     {
       break;
     }
       
     default:
     {
+      CX_FATAL_ERROR ("CX_WEBVIEW_ACTION_ITEM_INVALID");
+      
       break;
     }
   }
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -755,6 +890,68 @@ bool webview_active (void)
                         error:(NSError *)error
 {
   [self dismissViewControllerAnimated:YES completion:NULL];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+@implementation CXWebViewPopoverBackground
+
+@synthesize arrowOffset;
+@synthesize arrowDirection;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (id)initWithFrame:(CGRect)frame
+{
+  if (self = [super initWithFrame:frame])
+  {
+    self.backgroundColor = [UIColor colorWithWhite:0.2f alpha:0.7f];
+    self.arrowDirection = 0;
+    self.arrowOffset = 0.0f;
+
+  }
+  return self;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
++ (UIEdgeInsets)contentViewInsets
+{
+  return UIEdgeInsetsMake (10.0f, 0.0f, 1.0f, 0.0f);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
++ (CGFloat)arrowHeight
+{
+  return 0.0f;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
++ (CGFloat)arrowBase
+{
+  return 0.0f;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

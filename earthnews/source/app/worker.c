@@ -102,6 +102,8 @@ static cx_thread_exit_status worker_thread_func (void *data)
     
     while (task)
     {
+      cx_thread_mutex_unlock (&s_sharedDataMutex);
+      
       task->func (task->userdata);
     
       if (task->status)
@@ -112,6 +114,8 @@ static cx_thread_exit_status worker_thread_func (void *data)
       task->func = NULL;
       task->userdata = NULL;
       task->next = NULL;
+      
+      cx_thread_mutex_lock (&s_sharedDataMutex);
       
       s_taskFreeList = task_list_insert_back (s_taskFreeList, task, &s_taskFreeListCount);
       s_taskBusyList = task_list_pop_front (s_taskBusyList, &task, &s_taskBusyListCount);

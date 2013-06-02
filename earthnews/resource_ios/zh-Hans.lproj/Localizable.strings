@@ -4,3 +4,5 @@
 "TXT_COPY_LINK" = "复制网页连结";
 "TXT_MAIL_LINK" = "以电邮传送此页连结";
 "TXT_CANCEL" = "取消";
+"TXT_POST_TWITTER" = "Post to Twitter";
+"TXT_POST_FACEBOOK" = "Post to Facebook";

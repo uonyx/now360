@@ -2,5 +2,7 @@
 "TXT_OPEN_SAFARI" = "Open in Safari";
 "TXT_OPEN_CHROME" = "Open in Chrome";
 "TXT_COPY_LINK" = "Copy Link";
-"TXT_MAIL_LINK" = "Mail Link to this Page";
+"TXT_MAIL_LINK" = "Email Link";
+"TXT_POST_TWITTER" = "Post to Twitter";
+"TXT_POST_FACEBOOK" = "Post to Facebook";
 "TXT_CANCEL" = "Cancel";

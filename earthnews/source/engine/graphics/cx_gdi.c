@@ -342,7 +342,7 @@ void cx_gdi_print_info (void)
     glGetIntegerv (type, &val);
    
     CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s: %d", str, val);
-    CX_REFERENCE_UNUSED_VARIABLE (str);
+    CX_REF_UNUSED (str);
   }
   
   // compressed texture support
@@ -373,7 +373,7 @@ void cx_gdi_print_info (void)
       }
                                                     
       CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", formatStr);
-      CX_REFERENCE_UNUSED_VARIABLE (formatStr);
+      CX_REF_UNUSED (formatStr);
     }
     
     cx_free (compressedFormats);
@@ -383,7 +383,7 @@ void cx_gdi_print_info (void)
   
   const char *supportedExtensions = (const char *) glGetString (GL_EXTENSIONS);
   CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", supportedExtensions);
-  CX_REFERENCE_UNUSED_VARIABLE (supportedExtensions);
+  CX_REF_UNUSED (supportedExtensions);
 #endif
 }
 

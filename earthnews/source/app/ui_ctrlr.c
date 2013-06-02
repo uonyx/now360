@@ -781,7 +781,7 @@ static void ui_ctrlr_twitter_create (void)
 {  
   memset (&s_uitwitter, 0, sizeof (s_uitwitter));
   
-  s_uitwitter.birdicon = cx_texture_create_from_file ("data/icons/twbird-16z.png");
+  s_uitwitter.birdicon = cx_texture_create_from_file ("data/images/ui/twbird-16z.png");
   
   ui_custom_callbacks_t twViewCallbacks, twToggleCallbacks;
   
@@ -1162,7 +1162,8 @@ static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 
     if ((touchX > x1) && (touchX < x2))
     {
       const char *url = s_visLinks [i].url;
-      webview_show (url, NULL);
+      
+      webview_show (url, url);
       
       audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
     }
@@ -1276,11 +1277,11 @@ static void ui_ctrlr_music_create (void)
 {
   memset (&s_uimusic, 0, sizeof (s_uimusic));
     
-  s_uimusic.iconNote = cx_texture_create_from_file ("data/icons/mnote-16z.png");
-  s_uimusic.iconPlay = cx_texture_create_from_file ("data/icons/play-12z.png");
-  s_uimusic.iconPause = cx_texture_create_from_file ("data/icons/pause-12z.png");
-  s_uimusic.iconPrev = cx_texture_create_from_file ("data/icons/prev-12z.png");
-  s_uimusic.iconQueue = cx_texture_create_from_file ("data/icons/eject-12z.png");
+  s_uimusic.iconNote = cx_texture_create_from_file ("data/images/ui/mnote-16z.png");
+  s_uimusic.iconPlay = cx_texture_create_from_file ("data/images/ui/play-12z.png");
+  s_uimusic.iconPause = cx_texture_create_from_file ("data/images/ui/pause-12z.png");
+  s_uimusic.iconPrev = cx_texture_create_from_file ("data/images/ui/prev-12z.png");
+  s_uimusic.iconQueue = cx_texture_create_from_file ("data/images/ui/eject-12z.png");
   
   audio_music_notification_register (ui_ctrlr_music_notification_callback);
   
@@ -1771,7 +1772,7 @@ static void ui_ctrlr_settings_create (void)
   
   s_uisettings.button = custom;
   s_uisettings.button->userdata = (void *) 0xffff;
-  s_uisettings.icon = cx_texture_create_from_file ("data/icons/gears-18.png");
+  s_uisettings.icon = cx_texture_create_from_file ("data/images/ui/gears-18.png");
   
   ui_ctrlr_settings_position_setup ();
 }

@@ -114,7 +114,7 @@ void cx_thread_join (cx_thread *thread, cx_thread_exit_status *exitStatus)
   
   int rc = pthread_join (thread->id, &status);
   
-  CX_REFERENCE_UNUSED_VARIABLE (rc);
+  CX_REF_UNUSED (rc);
   
   if (exitStatus)
   {
@@ -132,7 +132,7 @@ void cx_thread_detach (cx_thread *thread)
   
   int rc = pthread_detach (thread->id); 
   
-  CX_REFERENCE_UNUSED_VARIABLE (rc);
+  CX_REF_UNUSED (rc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,7 +180,7 @@ void cx_thread_mutex_lock (cx_thread_mutex *mutex)
   
   int rc = pthread_mutex_lock (mutex);
   
-  CX_REFERENCE_UNUSED_VARIABLE (rc);
+  CX_REF_UNUSED (rc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +193,7 @@ void cx_thread_mutex_unlock (cx_thread_mutex *mutex)
   
   int rc = pthread_mutex_unlock (mutex);
   
-  CX_REFERENCE_UNUSED_VARIABLE (rc);
+  CX_REF_UNUSED (rc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

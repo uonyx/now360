@@ -138,7 +138,7 @@ cxu32 cx_str_percent_encode (char *dst, cxu32 dstSize, const char *src)
         dst [len++] = enc [i];
       }
 #else
-      CX_ASSERT ((len + encSize) < dstSize); CX_REFERENCE_UNUSED_VARIABLE (encSize);
+      CX_ASSERT ((len + encSize) < dstSize); CX_REF_UNUSED (encSize);
       dst [len++] = enc [0];
       dst [len++] = enc [1];
       dst [len++] = enc [2];

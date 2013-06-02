@@ -19,6 +19,10 @@
   // Override point for customization after application launch.
   //self.window.backgroundColor = [UIColor whiteColor];
   //[self.window makeKeyAndVisible];
+
+  [[UIBarButtonItem appearance] setTintColor:[UIColor blackColor]];
+  [[UINavigationBar appearance] setTintColor:[UIColor blackColor]];
+  [[UINavigationBar appearanceWhenContainedIn:[UIViewController class], [UIPopoverController class], nil] setTintColor:[UIColor blackColor]];
   
   return YES;
 }

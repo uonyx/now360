@@ -768,7 +768,7 @@ void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_
     {
       cx_shader_uniform uniform = (cx_shader_uniform) i;
       CX_ASSERT (sampler != cx_shader_get_uniform_sampler (uniform));
-      CX_REFERENCE_UNUSED_VARIABLE (uniform);
+      CX_REF_UNUSED (uniform);
     }
   }
 #endif

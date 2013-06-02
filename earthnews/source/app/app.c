@@ -72,7 +72,6 @@ typedef struct
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static earth_t *s_earth = NULL;
 static camera_t *s_camera = NULL;
 static render2d_t s_render2dInfo;
 
@@ -122,7 +121,6 @@ static cx_texture *s_glowTex = NULL;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static float app_get_zoom_opacity (void);
-static bool app_get_city_index_valid (int index);
 static int app_get_clock_str (const cx_date *date, int offset, char *dst, int dstSize);
 
 //static int  app_get_selected_city (void);
@@ -190,19 +188,22 @@ static cx_thread_exit_status app_init_load (void *userdata)
   // earth data
   //
   
-  s_earth = earth_create ("data/earth_data.json");
+  bool success = earth_init ("data/earth.json");
   
-  settings_set_city_names (s_earth->data->names, s_earth->data->count);
+  CX_FATAL_ASSERT (success); CX_REF_UNUSED (success);
   
-  s_glowTex = cx_texture_create_from_file ("data/textures/glowcircle.gb32-16.png");
+  const char **cityNames = earth_data_get_names ();
+  int cityCount = earth_data_get_count ();
+  
+  settings_set_city_names (cityNames, cityCount);
+  
+  s_glowTex = cx_texture_create_from_file ("data/images/glowcircle.gb32-16.png");
   
   //
   // feeds
   //
   
   feeds_init ();
-  
-  int cityCount = s_earth->data->count;
   
   s_twitterFeeds = cx_malloc (sizeof (feed_twitter_t) * cityCount);
   memset (s_twitterFeeds, 0, sizeof (feed_twitter_t) * cityCount);
@@ -316,10 +317,10 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   // loading screen
   //
   
-  s_logoTex = cx_texture_create_from_file ("data/loading/now360-500px.png");
-  s_ldImages [0] = cx_texture_create_from_file ("data/loading/uonyechi.com.png");
-  s_ldImages [1] = cx_texture_create_from_file ("data/loading/nasacredit.png");
-  s_ldImages [2] = cx_texture_create_from_file ("data/loading/gear.png");
+  s_logoTex = cx_texture_create_from_file ("data/images/loading/now360-500px.png");
+  s_ldImages [0] = cx_texture_create_from_file ("data/images/loading/uonyechi.com.png");
+  s_ldImages [1] = cx_texture_create_from_file ("data/images/loading/nasacredit.png");
+  s_ldImages [2] = cx_texture_create_from_file ("data/images/loading/gear.png");
   
   //
   // loading thread
@@ -462,18 +463,6 @@ static float app_get_zoom_opacity (void)
   float opacity = 1.0f - cx_smoothstep (CAMERA_START_FOV, CAMERA_START_FOV + 10.0f, fov);
   
   return opacity;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static bool app_get_city_index_valid (int index)
-{
-  CX_ASSERT (s_earth);
-  CX_ASSERT (s_earth->data);
-  
-  return (index > CITY_INDEX_INVALID) && (index < s_earth->data->count);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -715,13 +704,13 @@ static void app_update_camera (void)
   deltaTime = cx_min (deltaTime, (1.0f / 60.0f));
   
   float aspectRatio = cx_gdi_get_aspect_ratio ();
-  CX_REFERENCE_UNUSED_VARIABLE (aspectRatio);
+  CX_REF_UNUSED (aspectRatio);
   
   float sw = cx_gdi_get_screen_width ();
   float sh = cx_gdi_get_screen_height ();
   
-  CX_REFERENCE_UNUSED_VARIABLE (sw);
-  CX_REFERENCE_UNUSED_VARIABLE (sh);
+  CX_REF_UNUSED (sw);
+  CX_REF_UNUSED (sh);
   
 #if NEW_ROTATION
   
@@ -973,10 +962,10 @@ static void app_update_earth (void)
   cx_vec4_sub (&look, &s_camera->position, &s_camera->target); // use inverse direction vector for dot product calcuation
   cx_vec4_normalize (&look);
   
-  for (i = 0, c = s_earth->data->count; i < c; ++i)
+  for (i = 0, c = earth_data_get_count (); i < c; ++i)
   {
-    const cx_vec4 *pos = &s_earth->data->location [i];
-    const cx_vec4 *nor = &s_earth->data->normal [i];
+    const cx_vec4 *pos = earth_data_get_position (i);
+    const cx_vec4 *nor = earth_data_get_normal (i);
     
     cx_util_world_space_to_screen_space (screenWidth, screenHeight, &proj, &view, pos, &screen, &depth, &scale);
     
@@ -1014,7 +1003,7 @@ static void app_update_feeds (void)
 
 static void app_update_feeds_news (void)
 {
-  if (app_get_city_index_valid (s_selectedCity))
+  if (earth_data_validate_index (s_selectedCity))
   {
     feed_news_t *feed = &s_newsFeeds [s_selectedCity];
     CX_ASSERT (feed);
@@ -1066,7 +1055,7 @@ static void app_update_feeds_news (void)
 
 static void app_update_feeds_twitter (void)
 {
-  if (app_get_city_index_valid (s_selectedCity))
+  if (earth_data_validate_index (s_selectedCity))
   {
     feed_twitter_t *feed = &s_twitterFeeds [s_selectedCity];
     CX_ASSERT (feed);
@@ -1125,7 +1114,7 @@ static void app_update_feeds_weather (void)
     
     // if not already updating
     
-    if (!app_get_city_index_valid (s_currentWeatherCity))
+    if (!earth_data_validate_index (s_currentWeatherCity))
     {
       s_currentWeatherCity = 0;
       util_activity_indicator_set_active (true);
@@ -1136,7 +1125,7 @@ static void app_update_feeds_weather (void)
   static int success = 0;
 #endif
   
-  if (app_get_city_index_valid (s_currentWeatherCity)) // is updating
+  if (earth_data_validate_index (s_currentWeatherCity)) // is updating
   {
     feed_weather_t *feed = &s_weatherFeeds [s_currentWeatherCity];
     
@@ -1144,13 +1133,7 @@ static void app_update_feeds_weather (void)
     {
       case FEED_REQ_STATUS_INVALID:
       {
-#if DEBUG_WEATHER_ID
-        int loc = s_currentWeatherCity * 16;
-        const char *wId = &s_earth->data->weatherId [loc];
-#else
-        const char *wId = s_earth->data->weatherId [s_currentWeatherCity];
-        
-#endif
+        const char *wId = earth_data_get_weather (s_currentWeatherCity);
         feeds_weather_search (feed, wId);
         break;
       }
@@ -1188,7 +1171,9 @@ static void app_update_feeds_weather (void)
       }
     }
     
-    if (s_currentWeatherCity >= s_earth->data->count)
+    int cityCount = earth_data_get_count ();
+    
+    if (s_currentWeatherCity >= cityCount)
     {
       util_activity_indicator_set_active (false);
 #if 0
@@ -1280,7 +1265,7 @@ static void app_render_3d (void)
 static void app_render_3d_earth (void)
 {
   // earth
-  earth_visual_render (s_earth, &s_dateUTC, &s_camera->position);
+  earth_visual_render (&s_dateUTC, &s_camera->position);
 
   // points
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
@@ -1296,18 +1281,21 @@ static void app_render_3d_earth (void)
   // gather points
 #if 1
   int displayCount = 0;
-  cx_vec4 loc [256];
+  int cityCount = earth_data_get_count ();
   
-  CX_ASSERT (s_earth->data->count < 256);
+  cx_vec4 loc [256];
+  CX_ASSERT (cityCount < 256);
+  
   memset (loc, 0, sizeof (loc));
   
-  for (int i = 0, c = s_earth->data->count; i < c; ++i)
+  for (int i = 0; i < cityCount; ++i)
   {
     bool display = settings_get_city_display (i);
     
     if (display && (s_selectedCity != i))
     {
-      cx_vec4 *pos = &s_earth->data->location [i];
+      const cx_vec4 *pos = earth_data_get_position (i);
+      
       float a = s_render2dInfo.opacity [i].y;
       
       loc [displayCount] = *pos;
@@ -1331,7 +1319,7 @@ static void app_render_3d_earth (void)
   cx_draw_points (s_earth->data->count, s_earth->data->location, &white, s_glowTex);
 #endif
   
-  if (app_get_city_index_valid (s_selectedCity))
+  if (earth_data_validate_index (s_selectedCity))
   {
     cx_colour yellow = *cx_colour_yellow ();
     yellow.a = opacity;
@@ -1342,7 +1330,8 @@ static void app_render_3d_earth (void)
     float t = (cx_sin (time) + 1.0f) * 0.5f;
     cx_vec4_mul (&yellow, t, &yellow);
     
-    cx_vec4 pos = s_earth->data->location [s_selectedCity];
+    cx_vec4 pos = *earth_data_get_position (s_selectedCity);
+    
     pos.a = s_render2dInfo.opacity [s_selectedCity].y;
     cx_draw_points (1, &pos, &yellow, s_glowTex);
     
@@ -1660,18 +1649,18 @@ static void app_render_2d_earth (void)
   char timeStr [32];
   char text2 [64];
   
-  for (int i = 0, c = s_earth->data->count; i < c; ++i)
+  for (int i = 0, c = earth_data_get_count (); i < c; ++i)
   {
     if (settings_get_city_display (i))
     {
-      const char *cityStr = s_earth->data->names [i];
-      int utcOffset = s_earth->data->utcOffset [i];
-      int dstOffset = s_earth->data->dstOffset [i];
+      const char *cityStr = earth_data_get_city (i);
+      int tzOffset = earth_data_get_tz_offset (i);
+      
       const feed_weather_t *feed = &s_weatherFeeds [i];
       const cx_vec4 *pos = &s_render2dInfo.renderPos [i];
       float opacityText = s_render2dInfo.opacity [i].x;
       
-      app_get_clock_str (date, utcOffset + dstOffset, timeStr, 32);
+      app_get_clock_str (date, tzOffset, timeStr, 32);
       
       cx_colour colour = (i == s_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
       colour.a = opacityText;
@@ -1811,7 +1800,7 @@ static void app_input_touch_began (float x, float y)
   int oldSelectedCity = s_selectedCity;
   int newSelectedCity = app_input_touch_earth (touchX, touchY, sw, sh);
   
-  if (app_get_city_index_valid (newSelectedCity))
+  if (earth_data_validate_index (newSelectedCity))
   {
     if (newSelectedCity != oldSelectedCity)
     {
@@ -1830,7 +1819,7 @@ static void app_input_touch_began (float x, float y)
         util_activity_indicator_set_active (false);
       }
       
-      const char *query = s_earth->data->newsFeeds [newSelectedCity];
+      const char *query = earth_data_get_feed_query (newSelectedCity);
       
       feed_news_t *newFeedNews = &s_newsFeeds [newSelectedCity];
       feed_twitter_t *newFeedTwitter = &s_twitterFeeds [newSelectedCity];
@@ -2011,7 +2000,7 @@ static int app_input_touch_earth (float screenX, float screenY, float screenWidt
   int cityIndex = CITY_INDEX_INVALID;
   
   int i, c;
-  for (i = 0, c = s_earth->data->count; i < c; ++i)
+  for (i = 0, c = earth_data_get_count (); i < c; ++i)
   {
     bool display = settings_get_city_display (i);
     
@@ -2019,16 +2008,16 @@ static int app_input_touch_earth (float screenX, float screenY, float screenWidt
       //if (s_earth->data->display [i])
     {
 #if CX_DEBUG
-      const char *city = s_earth->data->names [i];
-      CX_REFERENCE_UNUSED_VARIABLE (city);
+      const char *city = earth_data_get_city (i);
+      CX_REF_UNUSED (city);
 #endif
     
       float opacityPoint = s_render2dInfo.opacity [i].y;
       
       if (opacityPoint > 0.1f)
       {
-        normal = s_earth->data->normal [i];
-        position = s_earth->data->location [i];
+        normal = *earth_data_get_normal (i);
+        position = *earth_data_get_position (i);
         
         float dotp = cx_vec4_dot (&normal, &rayDir);
         
@@ -2090,9 +2079,9 @@ void app_on_foreground (void)
   s_refreshWeather = true;
   
   // refresh selected city
-  if (app_get_city_index_valid (s_selectedCity))
+  if (earth_data_validate_index (s_selectedCity))
   {
-    const char *query = s_earth->data->newsFeeds [s_selectedCity];    
+    const char *query = earth_data_get_feed_query (s_selectedCity);
     feed_news_t *feedNews = &s_newsFeeds [s_selectedCity];
     feed_twitter_t *feedTwitter = &s_twitterFeeds [s_selectedCity];
     
@@ -2109,7 +2098,7 @@ void app_on_foreground (void)
     }
   }
   
-  earth_data_update_dst_offsets (s_earth);
+  earth_data_update_dst_offsets ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

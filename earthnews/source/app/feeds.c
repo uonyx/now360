@@ -150,7 +150,7 @@ bool feeds_init (void)
   
   for (int i = 0; i < NUM_WEATHER_CONDITION_CODES; ++i)
   {
-    cx_sprintf (weatherFilename, 512, "data/weather_icons/a%d.png", i);
+    cx_sprintf (weatherFilename, 512, "data/images/weather/a%d.png", i);
     
     const char *f = weatherFilename;
     
