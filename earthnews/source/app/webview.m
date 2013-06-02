@@ -26,7 +26,7 @@
 #define WEBVIEW_SCREEN_FADE_OPACITY    (0.6f)
 #define WEBVIEW_SCREEN_FADE_DURATION   (0.5f)
 #define WEBVIEW_TEXT_LABEL_WIDTH       (490.0f)
-#define WEBVIEW_USE_ACTION_SHEET        0
+#define WEBVIEW_USE_ACTION_SHEET        10
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -606,18 +606,37 @@ typedef enum
   NSString *postTwitterSig = nil;
   
 #if WEBVIEW_DEBUG_LOG_ENABLED
-  NSLog (@"body: %d", [postTwitter length]);
+  NSLog (@"post: %d", [postTwitter length]);
+  NSLog (@"titl: %d", [title length]);
   NSLog (@"link: %d", [[link absoluteString] length]);
 #endif
   
-  if ([title length] > 140)
-  {
-    postTwitter = sigTwitter;
-  }
+  const int twitterMaxTextLen = 140;
   
-  if ([postTwitter length] > 140)
+  if (postTwitter.length > twitterMaxTextLen)
   {
-    postTwitter = title;
+    if (title.length > twitterMaxTextLen)
+    {
+      if (link.absoluteString.length > twitterMaxTextLen)
+      {
+        postTwitter = sigTwitter;
+      }
+      else
+      {
+        if ((link.absoluteString.length + sigTwitter.length + 1) > twitterMaxTextLen)
+        {
+          postTwitter = [NSString stringWithFormat:@"%@ %@", link.absoluteString, sigTwitter];
+        }
+        else
+        {
+          postTwitter = link.absoluteString;
+        }
+      }
+    }
+    else
+    {
+      postTwitter = title;
+    }
   }
   
   CXWebViewActivityItemText *postMsg = [[CXWebViewActivityItemText alloc] initWithStrings:postDefault
@@ -809,16 +828,15 @@ typedef enum
       
     case CX_WEBVIEW_ACTION_ITEM_OPEN_CHROME:
     {
-      NSURL *inputURL = _webView.request.URL;
+      NSURL *link = _webView.request.URL;
       
-      NSString *chromeScheme = [inputURL.scheme isEqualToString:@"https"] ? @"googlechromes" : @"googlechrome";
-      NSString *absoluteString = [inputURL absoluteString];
+      NSString *chromeScheme = [link.scheme isEqualToString:@"https"] ? @"googlechromes" : @"googlechrome";
+      NSString *absoluteString = [link absoluteString];
       
       NSRange rangeForScheme = [absoluteString rangeOfString:@":"];
       NSString *urlNoScheme = [absoluteString substringFromIndex:rangeForScheme.location];
       
       NSString *chromeURLString = [chromeScheme stringByAppendingString:urlNoScheme];
-      
       [[UIApplication sharedApplication] openURL:[NSURL URLWithString:chromeURLString]];
       
       break;
@@ -833,27 +851,42 @@ typedef enum
       
     case CX_WEBVIEW_ACTION_ITEM_POST_TWITTER:
     {
-      SLComposeViewController *tweetSheet = [SLComposeViewController
-                                             composeViewControllerForServiceType:SLServiceTypeTwitter];
-      
-      
       NSURL *link = _webView.request.URL;
       NSString *title = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
-      NSString *sigTwitter = @"(via @now360_app)";
+      NSString *sig = @"(via @now360_app)";
+      NSString *post = [NSString stringWithFormat:@"%@ %@", title, sig];
       
-      NSString *postTwitter = [NSString stringWithFormat:@"%@ %@", title, sigTwitter];
+      const int twitterMaxTextLen = 140;
       
-      if ([title length] > 140)
+      if (post.length > twitterMaxTextLen)
       {
-        postTwitter = sigTwitter;
+        if (title.length > twitterMaxTextLen)
+        {
+          if (link.absoluteString.length > twitterMaxTextLen)
+          {
+            post = sig;
+          }
+          else
+          {
+            if ((link.absoluteString.length + sig.length + 1) > twitterMaxTextLen)
+            {
+              post = [NSString stringWithFormat:@"%@ %@", link.absoluteString, sig];
+            }
+            else
+            {
+              post = link.absoluteString;
+            }
+          }
+        }
+        else
+        {
+          post = title;
+        }
       }
       
-      if ([postTwitter length] > 140)
-      {
-        postTwitter = title;
-      }
+      SLComposeViewController *tweetSheet = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter];
       
-      [tweetSheet setInitialText:postTwitter];
+      [tweetSheet setInitialText:post];
       [tweetSheet addURL:link];
       
       [self presentViewController:tweetSheet animated:YES completion:nil];
@@ -863,6 +896,18 @@ typedef enum
       
     case CX_WEBVIEW_ACTION_ITEM_POST_FACEBOOK:
     {
+      NSURL *link = _webView.request.URL;
+      NSString *title = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+      NSString *sig = @"(via uonyechi.com/now360)";
+      NSString *post = [NSString stringWithFormat:@"%@\n %@", title, sig];
+
+      SLComposeViewController *fbPostSheet = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeFacebook];
+      
+      [fbPostSheet setInitialText:post];
+      [fbPostSheet addURL:link];
+      
+      [self presentViewController:fbPostSheet animated:YES completion:nil];
+      
       break;
     }
       
