@@ -7,7 +7,7 @@
 //
 
 #import "AppDelegate.h"
-#import "../app/app.h"
+#import "../app.h"
 
 @implementation AppDelegate
 

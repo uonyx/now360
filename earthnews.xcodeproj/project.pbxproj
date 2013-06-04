@@ -40,14 +40,16 @@
 		315EC7C416E258CC0019E160 /* cx_json.c in Sources */ = {isa = PBXBuildFile; fileRef = 315EC7C316E258CA0019E160 /* cx_json.c */; };
 		3163730816F62AAA0018D64C /* util.m in Sources */ = {isa = PBXBuildFile; fileRef = 3163730716F62AAA0018D64C /* util.m */; };
 		3166F8871759ED6A000D1147 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3166F8861759ED6A000D1147 /* Social.framework */; };
+		3166F88E175EA426000D1147 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F88A175EA426000D1147 /* AppDelegate.m */; };
+		3166F88F175EA426000D1147 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F88B175EA426000D1147 /* main.m */; };
+		3166F890175EA426000D1147 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F88D175EA426000D1147 /* ViewController.m */; };
+		3166F898175EA99D000D1147 /* cx_analytics.c in Sources */ = {isa = PBXBuildFile; fileRef = 3166F896175EA99D000D1147 /* cx_analytics.c */; };
+		3166F89C175EA9E3000D1147 /* libFlurry.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3166F89B175EA9E3000D1147 /* libFlurry.a */; };
 		316846BE165B041500B80A66 /* cx_vertex_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846BD165B041400B80A66 /* cx_vertex_data.c */; };
 		316846C61660F97D00B80A66 /* cx_varmod.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846C41660F97D00B80A66 /* cx_varmod.c */; };
 		3169B0F616BF1AB2000D7AC9 /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3169B0F516BF1AB2000D7AC9 /* libpthread.dylib */; };
 		316FAA691517C01900CC39F2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA651517C01900CC39F2 /* InfoPlist.strings */; };
 		316FAA6A1517C01900CC39F2 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */; };
-		316FAA711517C06400CC39F2 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA6D1517C06400CC39F2 /* AppDelegate.m */; };
-		316FAA721517C06400CC39F2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA6E1517C06400CC39F2 /* main.m */; };
-		316FAA731517C06400CC39F2 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 316FAA701517C06400CC39F2 /* ViewController.m */; };
 		316FAA8D1517C49A00CC39F2 /* data in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA8C1517C49A00CC39F2 /* data */; };
 		3179D04917049D4F00F623AF /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3179D04817049D4E00F623AF /* AudioToolbox.framework */; };
 		317FFA0E16BB29EB00154541 /* stb_image.c in Sources */ = {isa = PBXBuildFile; fileRef = 317FFA0C16BB29EB00154541 /* stb_image.c */; };
@@ -203,6 +205,15 @@
 		3163730616F62AAA0018D64C /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
 		3163730716F62AAA0018D64C /* util.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = util.m; sourceTree = "<group>"; };
 		3166F8861759ED6A000D1147 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
+		3166F889175EA426000D1147 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		3166F88A175EA426000D1147 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		3166F88B175EA426000D1147 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		3166F88C175EA426000D1147 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		3166F88D175EA426000D1147 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		3166F896175EA99D000D1147 /* cx_analytics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_analytics.c; sourceTree = "<group>"; };
+		3166F897175EA99D000D1147 /* cx_analytics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_analytics.h; sourceTree = "<group>"; };
+		3166F89A175EA9E3000D1147 /* Flurry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Flurry.h; sourceTree = "<group>"; };
+		3166F89B175EA9E3000D1147 /* libFlurry.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libFlurry.a; sourceTree = "<group>"; };
 		316846BB165B03F000B80A66 /* cx_vertex_data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_vertex_data.h; sourceTree = "<group>"; };
 		316846BD165B041400B80A66 /* cx_vertex_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_vertex_data.c; sourceTree = "<group>"; };
 		316846C41660F97D00B80A66 /* cx_varmod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_varmod.c; sourceTree = "<group>"; };
@@ -212,11 +223,6 @@
 		316FAA641517C01900CC39F2 /* earthnews-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "earthnews-Prefix.pch"; sourceTree = "<group>"; };
 		316FAA661517C01900CC39F2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MainStoryboard.storyboard; sourceTree = "<group>"; };
-		316FAA6C1517C06400CC39F2 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		316FAA6D1517C06400CC39F2 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		316FAA6E1517C06400CC39F2 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		316FAA6F1517C06400CC39F2 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		316FAA701517C06400CC39F2 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		316FAA8C1517C49A00CC39F2 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; path = data; sourceTree = "<group>"; };
 		3179D04817049D4E00F623AF /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		317EC94C1533508C0092AFCB /* cx_engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_engine.h; sourceTree = "<group>"; };
@@ -461,6 +467,7 @@
 				3182B99C14B0B6680097A87E /* UIKit.framework in Frameworks */,
 				3182B99E14B0B6680097A87E /* Foundation.framework in Frameworks */,
 				3182B9A014B0B6680097A87E /* CoreGraphics.framework in Frameworks */,
+				3166F89C175EA9E3000D1147 /* libFlurry.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -470,6 +477,7 @@
 		3127E2A815D38FDC00793C60 /* app */ = {
 			isa = PBXGroup;
 			children = (
+				3166F888175EA426000D1147 /* startup */,
 				3163730616F62AAA0018D64C /* util.h */,
 				3163730716F62AAA0018D64C /* util.m */,
 				3127E2A915D38FDC00793C60 /* app.c */,
@@ -536,6 +544,7 @@
 		3127E2E115DAFE1F00793C60 /* 3rdparty */ = {
 			isa = PBXGroup;
 			children = (
+				3166F899175EA9E3000D1147 /* flurry */,
 				317FFA0B16BB29EB00154541 /* stb */,
 				3127E2E215DAFE2000793C60 /* json-parser */,
 			);
@@ -584,9 +593,32 @@
 			path = graphics;
 			sourceTree = "<group>";
 		};
+		3166F888175EA426000D1147 /* startup */ = {
+			isa = PBXGroup;
+			children = (
+				3166F889175EA426000D1147 /* AppDelegate.h */,
+				3166F88A175EA426000D1147 /* AppDelegate.m */,
+				3166F88B175EA426000D1147 /* main.m */,
+				3166F88C175EA426000D1147 /* ViewController.h */,
+				3166F88D175EA426000D1147 /* ViewController.m */,
+			);
+			path = startup;
+			sourceTree = "<group>";
+		};
+		3166F899175EA9E3000D1147 /* flurry */ = {
+			isa = PBXGroup;
+			children = (
+				3166F89A175EA9E3000D1147 /* Flurry.h */,
+				3166F89B175EA9E3000D1147 /* libFlurry.a */,
+			);
+			path = flurry;
+			sourceTree = "<group>";
+		};
 		316846C31660F97D00B80A66 /* utility */ = {
 			isa = PBXGroup;
 			children = (
+				3166F896175EA99D000D1147 /* cx_analytics.c */,
+				3166F897175EA99D000D1147 /* cx_analytics.h */,
 				316846C41660F97D00B80A66 /* cx_varmod.c */,
 				316846C51660F97D00B80A66 /* cx_varmod.h */,
 			);
@@ -597,7 +629,6 @@
 			isa = PBXGroup;
 			children = (
 				3127E2A815D38FDC00793C60 /* app */,
-				316FAA6B1517C06400CC39F2 /* ios */,
 				316FA9F71517BB4D00CC39F2 /* engine */,
 			);
 			path = source;
@@ -627,18 +658,6 @@
 				31117DF31752C9E2000BB062 /* Localizable.strings */,
 			);
 			path = resource_ios;
-			sourceTree = "<group>";
-		};
-		316FAA6B1517C06400CC39F2 /* ios */ = {
-			isa = PBXGroup;
-			children = (
-				316FAA6C1517C06400CC39F2 /* AppDelegate.h */,
-				316FAA6D1517C06400CC39F2 /* AppDelegate.m */,
-				316FAA6E1517C06400CC39F2 /* main.m */,
-				316FAA6F1517C06400CC39F2 /* ViewController.h */,
-				316FAA701517C06400CC39F2 /* ViewController.m */,
-			);
-			path = ios;
 			sourceTree = "<group>";
 		};
 		317FFA0B16BB29EB00154541 /* stb */ = {
@@ -1098,9 +1117,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				316FAA711517C06400CC39F2 /* AppDelegate.m in Sources */,
-				316FAA721517C06400CC39F2 /* main.m in Sources */,
-				316FAA731517C06400CC39F2 /* ViewController.m in Sources */,
 				31BCBFA9151E8B9A001A01D5 /* basepic.c in Sources */,
 				31BCBFAA151E8B9A001A01D5 /* ftadvanc.c in Sources */,
 				31BCBFAB151E8B9A001A01D5 /* ftapi.c in Sources */,
@@ -1205,6 +1221,10 @@
 				315EC7C416E258CC0019E160 /* cx_json.c in Sources */,
 				3163730816F62AAA0018D64C /* util.m in Sources */,
 				31117DDB17070480000BB062 /* webview.m in Sources */,
+				3166F88E175EA426000D1147 /* AppDelegate.m in Sources */,
+				3166F88F175EA426000D1147 /* main.m in Sources */,
+				3166F890175EA426000D1147 /* ViewController.m in Sources */,
+				3166F898175EA99D000D1147 /* cx_analytics.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1308,6 +1328,11 @@
 				);
 				INFOPLIST_FILE = "earthnews/resource_ios/earthnews-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/earthnews/source/app/flurry\"",
+					"\"$(SRCROOT)/earthnews/source/engine/3rdparty/flurry\"",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = 2;
 				WARNING_CFLAGS = (
@@ -1337,6 +1362,11 @@
 				);
 				INFOPLIST_FILE = "earthnews/resource_ios/earthnews-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/earthnews/source/app/flurry\"",
+					"\"$(SRCROOT)/earthnews/source/engine/3rdparty/flurry\"",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = 2;
 				WARNING_CFLAGS = (

@@ -796,11 +796,14 @@ static void ui_ctrlr_twitter_create (void)
   g_uitwitter.toggle = ui_custom_create (g_uicontext, UI_ID_TWITTER_TOGGLE);
   ui_custom_set_callbacks (g_uitwitter.toggle, &twToggleCallbacks);
   
-  cx_colour darkgrey;
-  cx_colour_set (&darkgrey, 0.2f, 0.2f, 0.2f, 1.0f);
+  cx_colour darkGrey;
+  cx_colour_set (&darkGrey, 0.2f, 0.2f, 0.2f, 0.7f);
   
-  ui_widget_set_colour (g_uitwitter.toggle, UI_WIDGET_STATE_NORMAL, cx_colour_black ());
-  ui_widget_set_colour (g_uitwitter.toggle, UI_WIDGET_STATE_HOVER, &darkgrey);
+  cx_colour black;
+  cx_colour_set (&black, 0.0f, 0.0f, 0.0f, 0.8f);
+  
+  ui_widget_set_colour (g_uitwitter.toggle, UI_WIDGET_STATE_NORMAL, &black);
+  ui_widget_set_colour (g_uitwitter.toggle, UI_WIDGET_STATE_HOVER, &darkGrey);
   ui_widget_set_colour (g_uitwitter.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
   
   cx_colour viewCol;
@@ -1319,12 +1322,15 @@ static void ui_ctrlr_music_create (void)
   g_uimusic.next = ui_custom_create (g_uicontext, UI_ID_MUSIC_NEXT);
   g_uimusic.view = ui_custom_create (g_uicontext, UI_ID_MUSIC_VIEW);
   
-  cx_colour darkgrey;
-  cx_colour_set (&darkgrey, 0.2f, 0.2f, 0.2f, 1.0f);
+  cx_colour darkGrey;
+  cx_colour_set (&darkGrey, 0.2f, 0.2f, 0.2f, 0.6f);
+  
+  cx_colour black;
+  cx_colour_set (&black, 0.0f, 0.0f, 0.0f, 0.4f);
   
   ui_custom_set_callbacks (g_uimusic.toggle, &cbtoggle);
-  ui_widget_set_colour (g_uimusic.toggle, UI_WIDGET_STATE_NORMAL, cx_colour_black ());
-  ui_widget_set_colour (g_uimusic.toggle, UI_WIDGET_STATE_HOVER, &darkgrey);
+  ui_widget_set_colour (g_uimusic.toggle, UI_WIDGET_STATE_NORMAL, &black);
+  ui_widget_set_colour (g_uimusic.toggle, UI_WIDGET_STATE_HOVER, &darkGrey);
   ui_widget_set_colour (g_uimusic.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
   ui_widget_set_visible (g_uimusic.toggle, true);
   g_uimusic.toggle->userdata = (void *) 0xffff; // using userdata as toggle switch -_-
@@ -1763,11 +1769,14 @@ static void ui_ctrlr_settings_create (void)
   callbacks.renderFn = ui_ctrlr_settings_button_render;
   ui_custom_set_callbacks (custom, &callbacks);
   
-  cx_colour darkgrey;
-  cx_colour_set (&darkgrey, 0.2f, 0.2f, 0.2f, 1.0f);
+  cx_colour darkGrey;
+  cx_colour_set (&darkGrey, 0.2f, 0.2f, 0.2f, 0.6f);
   
-  ui_widget_set_colour (custom, UI_WIDGET_STATE_NORMAL, cx_colour_black ());
-  ui_widget_set_colour (custom, UI_WIDGET_STATE_HOVER, &darkgrey);
+  cx_colour black;
+  cx_colour_set (&black, 0.0f, 0.0f, 0.0f, 0.4f);
+  
+  ui_widget_set_colour (custom, UI_WIDGET_STATE_NORMAL, &black);
+  ui_widget_set_colour (custom, UI_WIDGET_STATE_HOVER, &darkGrey);
   ui_widget_set_colour (custom, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
   
   g_uisettings.button = custom;

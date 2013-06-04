@@ -26,7 +26,7 @@
 #define WEBVIEW_SCREEN_FADE_OPACITY    (0.6f)
 #define WEBVIEW_SCREEN_FADE_DURATION   (0.5f)
 #define WEBVIEW_TEXT_LABEL_WIDTH       (490.0f)
-#define WEBVIEW_USE_ACTION_SHEET        10
+#define WEBVIEW_USE_ACTION_SHEET        0
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,7 +195,6 @@ typedef enum
 
 
 @implementation CXWebViewActivityItemText
-
 @synthesize strTwitter;
 
 - (id)initWithStrings:(NSString *)defaultText twitterText:(NSString *)twitterText
