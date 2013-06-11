@@ -11,6 +11,7 @@
 #include "webview.h"
 #include "audio.h"
 #include "settings.h"
+#include "metrics.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -688,8 +689,11 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   float y1 = custom->intr.position.y;
 
   ui_widget_state_t wstate = ui_widget_get_state (g_uicontext, custom);
-  cx_colour colour = *cx_colour_white (); //custom->intr.colour [wstate];
-  colour.a *= opacity;
+  //cx_colour colour = *cx_colour_white (); //custom->intr.colour [wstate];
+  //colour.a *= opacity;
+  
+  cx_colour colour;
+  cx_colour_set (&colour, 1.0f, 0.8f, 0.55f, opacity);
   
 #if UI_CTRLR_DEBUG
   float x2 = x1 + custom->intr.dimension.x;
@@ -761,6 +765,8 @@ static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *po
   audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
   
   ui_clear_focus (g_uicontext);
+  
+  metrics_event_log (METRICS_EVENT_CLICK_NEWS, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -781,7 +787,7 @@ static void ui_ctrlr_twitter_create (void)
 {  
   memset (&g_uitwitter, 0, sizeof (g_uitwitter));
   
-  g_uitwitter.birdicon = cx_texture_create_from_file ("data/images/ui/twbird-16z.png");
+  g_uitwitter.birdicon = cx_texture_create_from_file ("data/images/ui/twbird-16z.png", CX_FILE_STORAGE_BASE_RESOURCE);
   
   ui_custom_callbacks_t twViewCallbacks, twToggleCallbacks;
   
@@ -1014,8 +1020,8 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
 {
   CX_ASSERT (custom);
 
+  g_visLinkCount = 0;
   memset (g_visLinks, 0, sizeof (g_visLinks));
-  g_visLinkCount = 0;  
   
   ticker_t *ticker = &g_uitwitter.ticker;
   
@@ -1028,14 +1034,14 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     float opacity = ui_widget_get_opacity (custom);
     
     cx_colour colbg = *colour;
-    cx_colour colname = *cx_colour_grey ();
+    cx_colour colname = *cx_colour_cyan ();
+    cx_colour_set (&colname, 0.0f, 0.6745f, 0.9294f, opacity);
     cx_colour coltweet = *cx_colour_white ();
-    cx_colour collink = *cx_colour_cyan ();
+    cx_colour collink;
+    cx_colour_set (&collink, 1.0f, 0.8f, 0.55f, opacity);
     
     colbg.a *= opacity;
-    colname.a *= opacity;
     coltweet.a *= opacity;
-    collink.a *= opacity;
     
     float x1 = pos->x;
     float y1 = pos->y;
@@ -1074,7 +1080,7 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
         ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, unescapedText);
         
         char username [32];
-        cx_sprintf (username, 32, "@%s: ", tweet->username);
+        cx_sprintf (username, 32, " @%s: ", tweet->username);
         cx_font_render (font, username, ix, iy, 0.0f, 0, &colname);
         
         float rx = ix + cx_font_get_text_width (font, username);
@@ -1169,6 +1175,8 @@ static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 
       webview_show (url, url);
       
       audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+      
+      metrics_event_log (METRICS_EVENT_OPEN_TWITTER_LINK, NULL);
     }
   }
   
@@ -1181,7 +1189,8 @@ static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 
 
 static void ui_ctrlr_twitter_button_render (ui_custom_t *custom)
 {
-  cx_colour col1 = *cx_colour_white ();
+  cx_colour col1;
+  cx_colour_set (&col1, 0.0f, 0.6745f, 0.9294f, 1.0f);
   cx_colour col2 = *cx_colour_grey ();
   cx_texture *image = g_uitwitter.birdicon;
   
@@ -1280,11 +1289,11 @@ static void ui_ctrlr_music_create (void)
 {
   memset (&g_uimusic, 0, sizeof (g_uimusic));
     
-  g_uimusic.iconNote = cx_texture_create_from_file ("data/images/ui/mnote-16z.png");
-  g_uimusic.iconPlay = cx_texture_create_from_file ("data/images/ui/play-12z.png");
-  g_uimusic.iconPause = cx_texture_create_from_file ("data/images/ui/pause-12z.png");
-  g_uimusic.iconPrev = cx_texture_create_from_file ("data/images/ui/prev-12z.png");
-  g_uimusic.iconQueue = cx_texture_create_from_file ("data/images/ui/eject-12z.png");
+  g_uimusic.iconNote = cx_texture_create_from_file ("data/images/ui/mnote-16z.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_uimusic.iconPlay = cx_texture_create_from_file ("data/images/ui/play-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_uimusic.iconPause = cx_texture_create_from_file ("data/images/ui/pause-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_uimusic.iconPrev = cx_texture_create_from_file ("data/images/ui/prev-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_uimusic.iconQueue = cx_texture_create_from_file ("data/images/ui/eject-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
   
   audio_music_notification_register (ui_ctrlr_music_notification_callback);
   
@@ -1446,6 +1455,8 @@ static void ui_ctrlr_music_toggle_pressed (ui_custom_t *custom, const cx_vec2 *p
     audio_music_pick (ui_ctrlr_music_picked_callback);
     custom->userdata = NULL;
     audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+    
+    metrics_event_log (METRICS_EVENT_MUSIC_QUEUE_1, NULL);
   }
   else
   {
@@ -1547,6 +1558,8 @@ static void ui_ctrlr_music_queue_pressed (ui_custom_t *custom, const cx_vec2 *po
   ui_clear_focus (g_uicontext);
   
   audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+
+  metrics_event_log (METRICS_EVENT_MUSIC_QUEUE_2, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1781,7 +1794,7 @@ static void ui_ctrlr_settings_create (void)
   
   g_uisettings.button = custom;
   g_uisettings.button->userdata = (void *) 0xffff;
-  g_uisettings.icon = cx_texture_create_from_file ("data/images/ui/gears-18.png");
+  g_uisettings.icon = cx_texture_create_from_file ("data/images/ui/gears-18.png", CX_FILE_STORAGE_BASE_RESOURCE);
   
   ui_ctrlr_settings_position_setup ();
 }

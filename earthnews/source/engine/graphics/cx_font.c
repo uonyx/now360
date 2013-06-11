@@ -94,10 +94,10 @@ void cx_font_destroy (cx_font *font)
   CX_ASSERT (font);
   CX_ASSERT (font->fontdata);
   
-  cx_font_impl *font_impl = (cx_font_impl *) font->fontdata;
+  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   
-  cx_texture_destroy (font_impl->texture);
-  cx_free (font_impl->ttfCharData);
+  cx_texture_destroy (fontImpl->texture);
+  cx_free (fontImpl->ttfCharData);
   cx_free (font->fontdata);
   cx_free (font);
 }

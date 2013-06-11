@@ -333,7 +333,7 @@ void cx_gdi_print_info (void)
   
   int numInfo = sizeof (info) / sizeof (struct graphics_info);
   
-  for (int i = 0; i < numInfo; i++)
+  for (int i = 0; i < numInfo; ++i)
   {
     const char *str = info [i].name;
     GLenum type = info [i].type;

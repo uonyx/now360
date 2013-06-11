@@ -488,8 +488,11 @@ bool util_screen_fade_trigger (screen_fade_type_t type, float opacity, float sec
 
 static void util_init_status_bar (void)
 {
-  g_statug_msg_icon [STATUS_BAR_MSG_CONNECTION_ERROR] = cx_texture_create_from_file ("data/icons/warning-16.png");
-  g_statug_msg_icon [STATUS_BAR_MSG_SERVER_ERROR] = cx_texture_create_from_file ("data/icons/warning-16.png");
+  g_statug_msg_icon [STATUS_BAR_MSG_CONNECTION_ERROR] = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_statug_msg_icon [STATUS_BAR_MSG_SERVER_ERROR] = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  
+  CX_ASSERT (g_statug_msg_icon [STATUS_BAR_MSG_CONNECTION_ERROR]);
+  CX_ASSERT (g_statug_msg_icon [STATUS_BAR_MSG_SERVER_ERROR]);
   
   cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f);
   cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_SERVER_ERROR], 0.9f, 0.9f, 0.2f, 1.0f);

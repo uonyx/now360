@@ -47,9 +47,9 @@ void cx_vertex_data_create_sphere_aos (cxf32 radius, cxu16 numSlices, cxu16 numP
   vertexData->vertices = (cx_vertex *) cx_malloc (sizeof (cx_vertex) * numVertices);
   
   // Generate vertex data
-  for (i = 0; i < (numParallels + 1); i++)
+  for (i = 0; i < (numParallels + 1); ++i)
   {
-    for (j = 0; j < (numSlices + 1); j++)
+    for (j = 0; j < (numSlices + 1); ++j)
     {
       cxf32 a0 = cx_sin (angleStep * (cxf32) i) * cx_sin (angleStep * (cxf32) j);
       cxf32 a1 = cx_cos (angleStep * (cxf32) i);
@@ -75,9 +75,9 @@ void cx_vertex_data_create_sphere_aos (cxf32 radius, cxu16 numSlices, cxu16 numP
   // Generate the indices
   cxu16 *indexBuf = vertexData->indices;
   
-  for (i = 0; i < numParallels ; i++) 
+  for (i = 0; i < numParallels; ++i)
   {
-    for (j = 0; j < numSlices; j++)
+    for (j = 0; j < numSlices; ++j)
     {
       *indexBuf++ = i * (numSlices + 1) + j;
       *indexBuf++ = (i + 1) * (numSlices + 1) + j;
@@ -269,9 +269,9 @@ void cx_vertex_data_create_sphere_soa (cxf32 radius, cxu16 numSlices, cxu16 numP
   vertexData->indices = cx_malloc (sizeof (cxu16) * numIndices);
   
   // Generate vertex data
-  for (i = 0; i < numParallels + 1; i++)
+  for (i = 0; i < numParallels + 1; ++i)
   {
-    for (j = 0; j < numSlices + 1; j++)
+    for (j = 0; j < numSlices + 1; ++j)
     {
       cxf32 a0 = cx_sin (angleStep * (cxf32) i) * cx_sin (angleStep * (cxf32) j);
       cxf32 a1 = cx_cos (angleStep * (cxf32) i);
@@ -299,9 +299,9 @@ void cx_vertex_data_create_sphere_soa (cxf32 radius, cxu16 numSlices, cxu16 numP
   // Generate the indices
   cxu16 *indexBuf = vertexData->indices;
   
-  for (i = 0; i < numParallels ; i++) 
+  for (i = 0; i < numParallels; ++i)
   {
-    for (j = 0; j < numSlices; j++)
+    for (j = 0; j < numSlices; ++j)
     {
       *indexBuf++ = i * (numSlices + 1) + j;
       *indexBuf++ = (i + 1) * (numSlices + 1) + j;

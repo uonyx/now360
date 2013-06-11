@@ -12,6 +12,7 @@
 
 #import "webview.h"
 #import "util.h"
+#import "metrics.h"
 #import <UIKit/UIKit.h>
 #import <MessageUI/MessageUI.h>
 #import <Social/Social.h>
@@ -358,13 +359,15 @@ typedef enum
       _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_OPEN_SAFARI] = currIndex++;
     }
     
-    if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeTwitter])
+    if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"twitter://"]])
+      //if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeTwitter])
     {
       [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_POST_TWITTER", nil)];
       _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_POST_TWITTER] = currIndex++;
     }
 
-    if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeFacebook])
+    if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"fb://profile"]])
+      //if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeFacebook])
     {
       [_actionSheet addButtonWithTitle:NSLocalizedString (@"TXT_POST_FACEBOOK", nil)];
       _actionItemIndices [CX_WEBVIEW_ACTION_ITEM_POST_FACEBOOK] = currIndex++;
@@ -589,7 +592,7 @@ typedef enum
 {
 #if WEBVIEW_USE_ACTION_SHEET
   
-  [_actionButton setTitle:_webView.request.URL.absoluteString];
+  //[_actionButton setTitle:_webView.request.URL.absoluteString];
   [_actionSheet showFromBarButtonItem:_actionButton animated:YES];
   
 #else
@@ -807,35 +810,42 @@ typedef enum
   {
     case CX_WEBVIEW_ACTION_ITEM_COPY_LINK:
     {
+      metrics_event_log (METRICS_EVENT_LINK_SHARE, "copy");
+      
       UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
       pasteboard.string = _webView.request.URL.absoluteString;
+      
       break;
     }
       
     case CX_WEBVIEW_ACTION_ITEM_MAIL_LINK:
     {
+      metrics_event_log (METRICS_EVENT_LINK_SHARE, "email");
+      
       MFMailComposeViewController *mailViewController = [[MFMailComposeViewController alloc] init];
       
-      mailViewController.mailComposeDelegate = self;
+      [mailViewController setMailComposeDelegate:self];
       [mailViewController setSubject:[_webView stringByEvaluatingJavaScriptFromString:@"document.title"]];
       [mailViewController setMessageBody:_webView.request.URL.absoluteString isHTML:NO];
-      mailViewController.modalPresentationStyle = UIModalPresentationFormSheet;
+      [mailViewController setModalPresentationStyle:UIModalPresentationFormSheet];
       
       [self presentViewController:mailViewController animated:YES completion:NULL];
+      
       break;
     }
       
     case CX_WEBVIEW_ACTION_ITEM_OPEN_CHROME:
     {
+      metrics_event_log (METRICS_EVENT_LINK_SHARE, "chrome");
+      
       NSURL *link = _webView.request.URL;
       
       NSString *chromeScheme = [link.scheme isEqualToString:@"https"] ? @"googlechromes" : @"googlechrome";
       NSString *absoluteString = [link absoluteString];
-      
       NSRange rangeForScheme = [absoluteString rangeOfString:@":"];
       NSString *urlNoScheme = [absoluteString substringFromIndex:rangeForScheme.location];
-      
       NSString *chromeURLString = [chromeScheme stringByAppendingString:urlNoScheme];
+      
       [[UIApplication sharedApplication] openURL:[NSURL URLWithString:chromeURLString]];
       
       break;
@@ -843,6 +853,8 @@ typedef enum
       
     case CX_WEBVIEW_ACTION_ITEM_OPEN_SAFARI:
     {
+      metrics_event_log (METRICS_EVENT_LINK_SHARE, "safari");
+      
       [[UIApplication sharedApplication] openURL:_webView.request.URL];
       
       break;
@@ -850,6 +862,8 @@ typedef enum
       
     case CX_WEBVIEW_ACTION_ITEM_POST_TWITTER:
     {
+      metrics_event_log (METRICS_EVENT_LINK_SHARE, "twitter");
+      
       NSURL *link = _webView.request.URL;
       NSString *title = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
       NSString *sig = @"(via @now360_app)";
@@ -895,6 +909,8 @@ typedef enum
       
     case CX_WEBVIEW_ACTION_ITEM_POST_FACEBOOK:
     {
+      metrics_event_log (METRICS_EVENT_LINK_SHARE, "facebook");
+      
       NSURL *link = _webView.request.URL;
       NSString *title = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
       NSString *sig = @"(via uonyechi.com/now360)";

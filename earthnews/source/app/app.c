@@ -16,6 +16,7 @@
 #include "audio.h"
 #include "settings.h"
 #include "webview.h"
+#include "metrics.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +198,7 @@ static cx_thread_exit_status app_init_load (void *userdata)
   
   settings_set_city_names (cityNames, cityCount);
   
-  g_glowTex = cx_texture_create_from_file ("data/images/glowcircle.gb32-16.png");
+  g_glowTex = cx_texture_create_from_file ("data/images/glowcircle.gb32-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
   
   //
   // feeds
@@ -276,6 +277,14 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
   //
+  // metrics
+  //
+  
+  metrics_init ();
+  
+  metrics_event_log (METRICS_EVENT_LOAD_BEGIN, NULL);
+  
+  //
   // settings
   //
   
@@ -317,10 +326,10 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   // loading screen
   //
   
-  g_logoTex = cx_texture_create_from_file ("data/images/loading/now360-500px.png");
-  g_ldImages [0] = cx_texture_create_from_file ("data/images/loading/uonyechi.com.png");
-  g_ldImages [1] = cx_texture_create_from_file ("data/images/loading/nasacredit.png");
-  g_ldImages [2] = cx_texture_create_from_file ("data/images/loading/gear.png");
+  g_logoTex = cx_texture_create_from_file ("data/images/loading/now360-500px.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_ldImages [0] = cx_texture_create_from_file ("data/images/loading/uonyechi.com.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_ldImages [1] = cx_texture_create_from_file ("data/images/loading/nasacredit.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_ldImages [2] = cx_texture_create_from_file ("data/images/loading/gear.png", CX_FILE_STORAGE_BASE_RESOURCE);
   
   //
   // loading thread
@@ -333,6 +342,10 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   cx_thread_monitor_init (&g_ldThreadMonitor);
   
   cx_thread_start (g_ldThread);
+  
+  //
+  // metrics
+  //
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -346,6 +359,8 @@ void app_deinit (void)
   input_deinit ();
   
   util_deinit ();
+  
+  metrics_deinit ();
   
   cx_engine_deinit ();
 }
@@ -389,6 +404,8 @@ void app_update (void)
         input_register_touch_event_callback (INPUT_TOUCH_TYPE_END, app_input_handle_touch_event);
         input_register_touch_event_callback (INPUT_TOUCH_TYPE_MOVE, app_input_handle_touch_event);
         input_register_gesture_event_callback (INPUT_GESTURE_TYPE_PINCH, app_input_handle_gesture_event);
+        
+        metrics_event_log (METRICS_EVENT_LOAD_END, NULL);
         
         g_appState = APP_STATE_UPDATE;
       }
@@ -491,14 +508,31 @@ static int app_get_clock_str (const cx_date *date, int offset, char *dst, int ds
   int hr = date->calendar.tm_hour;
   int mn = date->calendar.tm_min;
   
-  int hour = (hr + offsetHr) % 24;
-  int min = (mn + offsetMin);
+  int hour = (hr + offsetHr);
+  hour = (hour < 0) ? (hour + 24) : (hour % 24);
   
+  int min = (mn + offsetMin);
   if (min > 60)
   {
     hour = hour + 1;
     min = min % 60;
   }
+  
+#if 1
+  int sc = date->calendar.tm_sec;
+  int tsecs = (hr * 3600) + (mn * 60) + sc;
+  int secs = tsecs + offsetSecs;
+  int nmin = (secs / 60) % 60;
+  int nhr = (secs / 3600);
+  
+  nhr = (nhr < 0) ? (nhr + 24) : (nhr % 24);
+  
+  CX_REF_UNUSED (nmin);
+  CX_REF_UNUSED (nhr);
+#endif
+  
+  CX_ASSERT (hour >= 0);
+  CX_ASSERT (min >= 0);
   
   int displayFmt = settings_get_clock_display_format ();
   
@@ -967,6 +1001,17 @@ static void app_update_earth (void)
     const cx_vec4 *pos = earth_data_get_position (i);
     const cx_vec4 *nor = earth_data_get_normal (i);
     
+    cx_vec4 spos;
+    
+    if (i == g_selectedCity)
+    {
+      cx_vec4 snor;
+      cx_vec4_mul (&snor, 0.035f, nor);
+      cx_vec4_add (&spos, pos, &snor);
+    
+      pos = &spos;
+    }
+    
     cx_util_world_space_to_screen_space (screenWidth, screenHeight, &proj, &view, pos, &screen, &depth, &scale);
     
     float clipz = (2.0f * depth) - 1.0f;
@@ -981,7 +1026,7 @@ static void app_update_earth (void)
     float alphaText = cx_smoothstep (0.95f, 1.0f, dotp);
     float alphaPoint = cx_smoothstep (0.80f, 1.0f, dotp);
     
-    g_render2dInfo.opacity [i].x = opacity * alphaText;
+    g_render2dInfo.opacity [i].x = (i == g_selectedCity) ? (opacity * alphaPoint) : (opacity * alphaText);
     g_render2dInfo.opacity [i].y = opacity * alphaPoint;
   }
 }
@@ -1321,17 +1366,15 @@ static void app_render_3d_earth (void)
   
   if (earth_data_validate_index (g_selectedCity))
   {
-    cx_colour yellow = *cx_colour_yellow ();
-    yellow.a = opacity;
+    cx_colour yellow;
+    cx_colour_set (&yellow, 1.0f, 1.0f, 0.2f, opacity);
     
-    // pulse colour
-    
-    float time = (float) cx_system_time_get_total_time () * 10.0f;
+    const float pulseSpeed = 15.0f;
+    float time = (float) cx_system_time_get_total_time () * pulseSpeed;
     float t = (cx_sin (time) + 1.0f) * 0.5f;
     cx_vec4_mul (&yellow, t, &yellow);
     
     cx_vec4 pos = *earth_data_get_position (g_selectedCity);
-    
     pos.a = g_render2dInfo.opacity [g_selectedCity].y;
     cx_draw_points (1, &pos, &yellow, g_glowTex);
     
@@ -1427,7 +1470,6 @@ static void app_render_3d_earth (void)
     cx_draw_lines (vertexData->numVertices, bitangentLines, cx_colour_red (), 1.0f);
   }
 #endif
-  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1632,6 +1674,8 @@ static void app_render_2d_logo_fade_out (void *data)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define DEBUG_DRAW_SELECTED_LAST 0
+
 static void app_render_2d_earth (void)
 {
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
@@ -1642,7 +1686,8 @@ static void app_render_2d_earth (void)
   char tempUnit [3] = { 176, unit [unitType], 0 };
   const cx_date *date = &g_dateUTC;
   
-  const cx_font *font = util_get_font (FONT_SIZE_14);
+  const cx_font *font0 = util_get_font (FONT_SIZE_16);
+  const cx_font *font1 = util_get_font (FONT_SIZE_14);
   const cx_font *font2 = util_get_font (FONT_SIZE_12);
   
   char tempStr [32];
@@ -1651,7 +1696,11 @@ static void app_render_2d_earth (void)
   
   for (int i = 0, c = earth_data_get_count (); i < c; ++i)
   {
+#if DEBUG_DRAW_SELECTED_LAST
+    if (settings_get_city_display (i) && (i != g_selectedCity))
+#else
     if (settings_get_city_display (i))
+#endif
     {
       const char *cityStr = earth_data_get_city (i);
       int tzOffset = earth_data_get_tz_offset (i);
@@ -1662,9 +1711,36 @@ static void app_render_2d_earth (void)
       
       app_get_clock_str (date, tzOffset, timeStr, 32);
       
-      cx_colour colour = (i == g_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
-      colour.a = opacityText;
-  
+#if DEBUG_DRAW_SELECTED_LAST
+      cx_colour colour;
+      cx_colour_set (&colour, 0.9f, 0.9f, 0.9f, opacityText * 0.95f);
+      
+      const cx_font *lfont = font1;
+      const cx_font *sfont = font2;
+      
+      CX_ASSERT (lfont);
+      CX_ASSERT (sfont);
+#else
+      cx_colour colour;
+      const cx_font *lfont = NULL;
+      const cx_font *sfont = NULL;
+      
+      if (i == g_selectedCity)
+      {
+        lfont = font0;
+        sfont = font1;
+        
+        cx_colour_set (&colour, 1.0f, 1.0f, 1.0f, opacityText);
+      }
+      else
+      {
+        lfont = font1;
+        sfont = font2;
+        
+        cx_colour_set (&colour, 0.9f, 0.9f, 0.9f, opacityText * 0.95f);
+      }
+#endif
+      
       if (feed->dataReady)
       {
         int tempFarenHeit = (cx_roundupInt ((float) feed->celsius * 1.8f)) + 32;
@@ -1681,13 +1757,13 @@ static void app_render_2d_earth (void)
           //////////////////
           
           // (icon width / 2) + margin offset
-          cx_font_render (font, cityStr, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
+          cx_font_render (lfont, cityStr, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
           
           ////////////////////////
           // temperature / time
           ///////////////////////
           
-          cx_font_render (font2, text2, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
+          cx_font_render (sfont, text2, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
           
           //////////////////
           // weather icon
@@ -1701,13 +1777,13 @@ static void app_render_2d_earth (void)
           // city
           //////////////////
           
-          cx_font_render (font, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
+          cx_font_render (lfont, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
           
           ////////////////////////
           // temperature / time
           ///////////////////////
           
-          cx_font_render (font2, text2, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
+          cx_font_render (sfont, text2, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
         }
       }
       else
@@ -1716,16 +1792,104 @@ static void app_render_2d_earth (void)
         // city
         //////////////////
         
-        cx_font_render (font, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
+        cx_font_render (lfont, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
         
         //////////////////
         // time
         //////////////////
         
-        cx_font_render (font2, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
+        cx_font_render (sfont, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
       }
     }
   }
+  
+#if DEBUG_DRAW_SELECTED_LAST
+  if (earth_data_validate_index (g_selectedCity))
+  {
+    int i = g_selectedCity;
+    CX_ASSERT (settings_get_city_display (i));
+    
+    const char *cityStr = earth_data_get_city (i);
+    int tzOffset = earth_data_get_tz_offset (i);
+    
+    const feed_weather_t *feed = &g_feedsWeather [i];
+    const cx_vec4 *pos = &g_render2dInfo.renderPos [i];
+    float opacityText = g_render2dInfo.opacity [i].x;
+    
+    app_get_clock_str (date, tzOffset, timeStr, 32);
+    
+    //cx_colour colour = (i == g_selectedCity) ? *cx_colour_yellow () : *cx_colour_white ();
+    //colour.a = opacityText;
+    
+    cx_colour colour;
+    const cx_font *lfont = font0;
+    const cx_font *sfont = font1;
+    cx_colour_set (&colour, 1.0f, 1.0f, 1.0f, opacityText);
+    
+    CX_ASSERT (lfont);
+    CX_ASSERT (sfont);
+    
+    if (feed->dataReady)
+    {
+      int tempFarenHeit = (cx_roundupInt ((float) feed->celsius * 1.8f)) + 32;
+      int tempValue = (unitType == SETTINGS_TEMPERATURE_UNIT_C) ? feed->celsius : tempFarenHeit;
+      
+      cx_sprintf (tempStr, 32, "%d", tempValue);
+      cx_strcat (tempStr, 32, tempUnit);
+      cx_sprintf (text2, 64, "%s / %s", tempStr, timeStr);
+      
+      if (feeds_weather_data_cc_valid (feed))
+      {
+        //////////////////
+        // city
+        //////////////////
+        
+        // (icon width / 2) + margin offset
+        cx_font_render (lfont, cityStr, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
+        
+        ////////////////////////
+        // temperature / time
+        ///////////////////////
+        
+        cx_font_render (sfont, text2, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
+        
+        //////////////////
+        // weather icon
+        //////////////////
+        
+        feeds_weather_render (feed, pos->x + 24.0f, pos->y, pos->z, opacityText);
+      }
+      else
+      {
+        //////////////////
+        // city
+        //////////////////
+        
+        cx_font_render (lfont, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
+        
+        ////////////////////////
+        // temperature / time
+        ///////////////////////
+        
+        cx_font_render (sfont, text2, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
+      }
+    }
+    else
+    {
+      //////////////////
+      // city
+      //////////////////
+      
+      cx_font_render (lfont, cityStr, pos->x + 12.0f, pos->y - 14.0f, pos->z, 0, &colour);
+      
+      //////////////////
+      // time
+      //////////////////
+      
+      cx_font_render (sfont, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
+    }
+  }
+#endif
   
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND);
   cx_gdi_enable_z_write (false);
@@ -1835,6 +1999,12 @@ static void app_input_touch_began (float x, float y)
         feeds_news_search (newFeedNews, query);
         util_activity_indicator_set_active (true);
       }
+    }
+    
+    if (g_selectedCity == CITY_INDEX_INVALID)
+    {
+      const char *city = earth_data_get_city (newSelectedCity);
+      metrics_event_log (METRICS_EVENT_FIRST_CITY, (void *) city);
     }
     
     g_selectedCity = newSelectedCity;
@@ -2065,6 +2235,8 @@ void app_on_background (void)
   settings_data_save ();
   
   util_activity_indicator_set_active (false);
+  
+  metrics_event_log (METRICS_EVENT_APP_BG, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2073,7 +2245,7 @@ void app_on_background (void)
 
 void app_on_foreground (void)
 {
-  // load settings?
+  metrics_event_log (METRICS_EVENT_APP_FG, NULL);
   
   // trigger weather update
   g_weatherRefresh = true;

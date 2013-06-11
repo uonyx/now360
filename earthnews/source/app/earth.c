@@ -17,11 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if TARGET_IPHONE_SIMULATOR
-#define NEW_EARTH_SHADER 0
-#else
-#define NEW_EARTH_SHADER 1
-#endif
+#define NEW_EARTH_SHADER (!TARGET_IPHONE_SIMULATOR && 1)
 #define ENABLE_TOPOGRAPHY 1
 #define ENABLE_CLOUDS 1
 #define ENABLE_ATMOSPHERE 1
@@ -242,7 +238,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
             float lat = cx_json_value_float (latNode);
             float lon = cx_json_value_float (lonNode);
             
-            float r = radius + (radius * 0.015f); // slightly extend radius (for point sprite rendering)
+            float r = radius + (radius * 0.025f); // slightly extend radius (for point sprite rendering)
             
             earth_convert_dd_to_world (&earthdata->location [i], lat, lon, r, slices, parallels, &earthdata->normal [i]);
           }
@@ -285,10 +281,10 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   
   cx_material *material = cx_material_create ("earth");
   
-  cx_texture *specTexture = cx_texture_create_from_file ("data/maps/2048-spec.png");
-  cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal.png");
+  cx_texture *specTexture = cx_texture_create_from_file ("data/maps/2048-spec.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal.png", CX_FILE_STORAGE_BASE_RESOURCE);
   //cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/4096-normal-30.png");
-  cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
+  cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096-2.png", CX_FILE_STORAGE_BASE_RESOURCE);
   //cx_texture *texture   = cx_texture_create_from_file ("data/textures/earthmap1k.png");
   //cx_texture *texture   = cx_texture_create_from_file ("data/maps/4096-clean.png");
   //cx_texture *texture   = cx_texture_create_from_file ("data/maps/4096-diff.png");
@@ -298,13 +294,13 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   cx_material_set_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
   
   //visual->nightMap = cx_texture_create_from_file ("data/maps/2048-night.png");
-  visual->nightMap = cx_texture_create_from_file ("data/maps/4096-night2.png");
+  visual->nightMap = cx_texture_create_from_file ("data/maps/4096-night2.png", CX_FILE_STORAGE_BASE_RESOURCE);
   
 #else
   cx_shader *shader     = cx_shader_create ("mesh", "data/shaders");
   cx_material *material = cx_material_create ("earth");
 
-  cx_texture *texture   = cx_texture_create_from_file ("data/maps/earthmap1k.png");
+  cx_texture *texture   = cx_texture_create_from_file ("data/maps/earthmap1k.png", CX_FILE_STORAGE_BASE_RESOURCE);
   //cx_texture *texture     = cx_texture_create_from_file ("data/maps/monthly/07-4096.png");
   
   cx_material_set_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
@@ -323,11 +319,11 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   cx_shader *shader1     = cx_shader_create ("clouds", "data/shaders");
   cx_material *material1 = cx_material_create ("clouds");
   
-  cx_texture *cloudImage = cx_texture_create_from_file ("data/maps/2048-clouds.png");
+  cx_texture *cloudImage = cx_texture_create_from_file ("data/maps/2048-clouds.png", CX_FILE_STORAGE_BASE_RESOURCE);
   cx_material_set_texture (material1, cloudImage, CX_MATERIAL_TEXTURE_DIFFUSE);
   
 #if BUMP_MAPPED_CLOUDS
-  cx_texture *cloudBump = cx_texture_create_from_file ("data/maps/2048-normal-clouds.png");
+  cx_texture *cloudBump = cx_texture_create_from_file ("data/maps/2048-normal-clouds.png", CX_FILE_STORAGE_BASE_RESOURCE);
   cx_material_set_texture (material1, cloudBump, CX_MATERIAL_TEXTURE_BUMP);
 #endif
   
@@ -353,6 +349,7 @@ static struct earth_visual_t *earth_visual_create (float radius, int slices, int
   
   visual->mesh [2] = cx_mesh_create (sphere2, shader2, material2);
 #endif
+  
   return visual;
 }
 

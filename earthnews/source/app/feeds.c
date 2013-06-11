@@ -7,6 +7,7 @@
 //
 
 #include "feeds.h"
+#include "metrics.h"
 #include "worker.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +155,7 @@ bool feeds_init (void)
     
     const char *f = weatherFilename;
     
-    g_weatherIcons [i] = cx_texture_create_from_file (f);
+    g_weatherIcons [i] = cx_texture_create_from_file (f, CX_FILE_STORAGE_BASE_RESOURCE);
     
     CX_ASSERT (g_weatherIcons [i]);
   }
@@ -537,6 +538,32 @@ static void http_callback_twitter (cx_http_request_id tId, const cx_http_respons
       }
         
       case 403:
+      {
+        metrics_event_log (METRICS_EVENT_TWITTER_API_ERROR_403, NULL);
+        
+        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+        
+        break;
+      }
+
+      case 406:
+      {
+        metrics_event_log (METRICS_EVENT_TWITTER_API_ERROR_406, NULL);
+        
+        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+        
+        break;
+      }
+        
+      case 410:
+      {
+        metrics_event_log (METRICS_EVENT_TWITTER_API_ERROR_410, NULL);
+        
+        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+        
+        break;
+      }
+        
       case 420:
       default:
       {
@@ -913,7 +940,7 @@ static bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dat
         int tempCelsius = 0;
         int conditionCode = WEATHER_CONDITION_CODE_INVALID;
         
-        if (conditionCode)
+        if (conditionNode)
         {
           char *temp = cx_xml_node_attr (conditionNode, "temp");
           char *code = cx_xml_node_attr (conditionNode, "code");
