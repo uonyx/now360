@@ -15,7 +15,6 @@
 		3127E2B915D38FDC00793C60 /* app.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2A915D38FDC00793C60 /* app.c */; };
 		3127E2BA15D38FDC00793C60 /* camera.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2AB15D38FDC00793C60 /* camera.c */; };
 		3127E2BB15D38FDC00793C60 /* earth.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2AD15D38FDC00793C60 /* earth.c */; };
-		3127E2BC15D38FDC00793C60 /* feeds.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2AF15D38FDC00793C60 /* feeds.c */; };
 		3127E2D815DAFD7E00793C60 /* cx_debug.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2C215DAFD7E00793C60 /* cx_debug.c */; };
 		3127E2D915DAFD7E00793C60 /* cx_file.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2C515DAFD7E00793C60 /* cx_file.c */; };
 		3127E2DA15DAFD7E00793C60 /* cx_native_ios.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2CA15DAFD7E00793C60 /* cx_native_ios.m */; };
@@ -47,6 +46,8 @@
 		3166F89E17638D9B000D1147 /* cx_analytics.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F89D17638D9B000D1147 /* cx_analytics.m */; };
 		3166F8A4176395FC000D1147 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3166F8A3176395FC000D1147 /* SystemConfiguration.framework */; };
 		3166F8A71763A8DB000D1147 /* metrics.c in Sources */ = {isa = PBXBuildFile; fileRef = 3166F8A61763A8DA000D1147 /* metrics.c */; };
+		3166F8A9176937CF000D1147 /* Accounts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3166F8A8176937CC000D1147 /* Accounts.framework */; };
+		3166F8AB176A8277000D1147 /* feeds.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F8AA176A8274000D1147 /* feeds.m */; };
 		316846BE165B041500B80A66 /* cx_vertex_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846BD165B041400B80A66 /* cx_vertex_data.c */; };
 		316846C61660F97D00B80A66 /* cx_varmod.c in Sources */ = {isa = PBXBuildFile; fileRef = 316846C41660F97D00B80A66 /* cx_varmod.c */; };
 		3169B0F616BF1AB2000D7AC9 /* libpthread.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3169B0F516BF1AB2000D7AC9 /* libpthread.dylib */; };
@@ -153,7 +154,6 @@
 		3127E2AC15D38FDC00793C60 /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = camera.h; sourceTree = "<group>"; };
 		3127E2AD15D38FDC00793C60 /* earth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = earth.c; sourceTree = "<group>"; };
 		3127E2AE15D38FDC00793C60 /* earth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = earth.h; sourceTree = "<group>"; };
-		3127E2AF15D38FDC00793C60 /* feeds.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = feeds.c; sourceTree = "<group>"; };
 		3127E2B015D38FDC00793C60 /* feeds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = feeds.h; sourceTree = "<group>"; };
 		3127E2C215DAFD7E00793C60 /* cx_debug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_debug.c; sourceTree = "<group>"; };
 		3127E2C315DAFD7E00793C60 /* cx_debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_debug.h; sourceTree = "<group>"; };
@@ -221,6 +221,8 @@
 		3166F8A3176395FC000D1147 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		3166F8A51763A7DA000D1147 /* metrics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = metrics.h; sourceTree = "<group>"; };
 		3166F8A61763A8DA000D1147 /* metrics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = metrics.c; sourceTree = "<group>"; };
+		3166F8A8176937CC000D1147 /* Accounts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accounts.framework; path = System/Library/Frameworks/Accounts.framework; sourceTree = SDKROOT; };
+		3166F8AA176A8274000D1147 /* feeds.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = feeds.m; sourceTree = "<group>"; };
 		316846BB165B03F000B80A66 /* cx_vertex_data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_vertex_data.h; sourceTree = "<group>"; };
 		316846BD165B041400B80A66 /* cx_vertex_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_vertex_data.c; sourceTree = "<group>"; };
 		316846C41660F97D00B80A66 /* cx_varmod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_varmod.c; sourceTree = "<group>"; };
@@ -463,6 +465,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3166F8A9176937CF000D1147 /* Accounts.framework in Frameworks */,
 				3166F8A4176395FC000D1147 /* SystemConfiguration.framework in Frameworks */,
 				3166F8871759ED6A000D1147 /* Social.framework in Frameworks */,
 				31117DEE1708AAD8000BB062 /* MessageUI.framework in Frameworks */,
@@ -494,7 +497,7 @@
 				3127E2AC15D38FDC00793C60 /* camera.h */,
 				3127E2AD15D38FDC00793C60 /* earth.c */,
 				3127E2AE15D38FDC00793C60 /* earth.h */,
-				3127E2AF15D38FDC00793C60 /* feeds.c */,
+				3166F8AA176A8274000D1147 /* feeds.m */,
 				3127E2B015D38FDC00793C60 /* feeds.h */,
 				3127E30715E00F5800793C60 /* worker.h */,
 				3127E30915E00F6D00793C60 /* worker.c */,
@@ -683,6 +686,7 @@
 		3182B98C14B0B6680097A87E = {
 			isa = PBXGroup;
 			children = (
+				3166F8A8176937CC000D1147 /* Accounts.framework */,
 				3166F8A3176395FC000D1147 /* SystemConfiguration.framework */,
 				3166F8A11763952C000D1147 /* libsystem_network.dylib */,
 				3166F89F176394F2000D1147 /* CFNetwork.framework */,
@@ -1202,7 +1206,6 @@
 				3127E2B915D38FDC00793C60 /* app.c in Sources */,
 				3127E2BA15D38FDC00793C60 /* camera.c in Sources */,
 				3127E2BB15D38FDC00793C60 /* earth.c in Sources */,
-				3127E2BC15D38FDC00793C60 /* feeds.c in Sources */,
 				3127E2D815DAFD7E00793C60 /* cx_debug.c in Sources */,
 				3127E2D915DAFD7E00793C60 /* cx_file.c in Sources */,
 				3127E2DA15DAFD7E00793C60 /* cx_native_ios.m in Sources */,
@@ -1239,6 +1242,7 @@
 				3166F890175EA426000D1147 /* ViewController.m in Sources */,
 				3166F89E17638D9B000D1147 /* cx_analytics.m in Sources */,
 				3166F8A71763A8DB000D1147 /* metrics.c in Sources */,
+				3166F8AB176A8277000D1147 /* feeds.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

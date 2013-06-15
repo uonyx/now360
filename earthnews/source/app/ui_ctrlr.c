@@ -949,6 +949,7 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
       i = i -1;
     }
 
+    CX_ASSERT (i < TWITTER_TICKER_TWEET_MAX_ENTRIES);
     dest->elems [i].loc = p0;
     dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_LINK;
     
@@ -961,6 +962,7 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
       {
         cxu32 p = t - start;
         
+        CX_ASSERT (i < TWITTER_TICKER_TWEET_MAX_ENTRIES);
         dest->elems [i].loc = p;
         dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_TEXT;
         
@@ -986,6 +988,8 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
   }
   
   dest->elemCount = i;
+  
+  CX_ASSERT (dest->elemCount <= TWITTER_TICKER_TWEET_MAX_ENTRIES);
 
   for (cxu32 j = 0; j < dest->elemCount; ++j)
   {

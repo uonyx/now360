@@ -1065,7 +1065,7 @@ static void app_update_feeds_news (void)
         
       case FEED_REQ_STATUS_FAILURE:
       {
-        util_status_bar_set_msg (STATUS_BAR_MSG_SERVER_ERROR);
+        util_status_bar_set_msg (STATUS_BAR_MSG_NEWS_COMMS_ERROR);
         util_activity_indicator_set_active (false);
         feed->reqStatus = FEED_REQ_STATUS_INVALID;
 
@@ -1117,8 +1117,9 @@ static void app_update_feeds_twitter (void)
         
       case FEED_REQ_STATUS_FAILURE:
       {
-        util_status_bar_set_msg (STATUS_BAR_MSG_SERVER_ERROR);
+        util_status_bar_set_msg (STATUS_BAR_MSG_TWITTER_COMMS_ERROR);
         util_activity_indicator_set_active (false);
+        ui_ctrlr_set_twitter_feed (feed);
         feed->reqStatus = FEED_REQ_STATUS_INVALID;
         break;
       }
@@ -1197,7 +1198,7 @@ static void app_update_feeds_weather (void)
       {
         feed->reqStatus = FEED_REQ_STATUS_INVALID;
         g_weatherUpdateCity++;
-        util_status_bar_set_msg (STATUS_BAR_MSG_SERVER_ERROR);
+        util_status_bar_set_msg (STATUS_BAR_MSG_WEATHER_COMMS_ERROR);
         break;
       }
         

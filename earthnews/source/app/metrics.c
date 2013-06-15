@@ -183,12 +183,12 @@ void metrics_event_log (metrics_event_type_t eventType, void *data)
         break;
       }
        
-      case METRICS_EVENT_TWITTER_API_ERROR_403:
+      case METRICS_EVENT_TWITTER_API_ERROR:
       {
         const char *error = data ? (const char *) data : "";
         
-        const char *e = "twt_api_403";
-        const char *pn [2] = { "timestamp", "error" };
+        const char *e = "twitter_api_error";
+        const char *pn [2] = { "timestamp", "errorCode" };
         const char *pv [2] = { timstamp, error };
         
         cx_analytics_log_event (e, pn, pv, 2);
@@ -196,25 +196,25 @@ void metrics_event_log (metrics_event_type_t eventType, void *data)
         break;
       }
         
-      case METRICS_EVENT_TWITTER_API_ERROR_406:
+      case METRICS_EVENT_WEATHER_API_ERROR:
       {
         const char *error = data ? (const char *) data : "";
         
-        const char *e = "twt_api_406";
-        const char *pn [2] = { "timestamp", "error" };
+        const char *e = "weather_api_error";
+        const char *pn [2] = { "timestamp", "errorCode" };
         const char *pv [2] = { timstamp, error };
         
         cx_analytics_log_event (e, pn, pv, 2);
         
         break;
       }
-        
-      case METRICS_EVENT_TWITTER_API_ERROR_410:
+
+      case METRICS_EVENT_NEWS_API_ERROR:
       {
         const char *error = data ? (const char *) data : "";
         
-        const char *e = "twt_api_410";
-        const char *pn [2] = { "timestamp", "error" };
+        const char *e = "news_api_error";
+        const char *pn [2] = { "timestamp", "errorCode" };
         const char *pv [2] = { timstamp, error };
         
         cx_analytics_log_event (e, pn, pv, 2);

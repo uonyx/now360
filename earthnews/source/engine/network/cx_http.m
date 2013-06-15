@@ -266,20 +266,25 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_http_cancel (cx_http_request_id requestId)
+void cx_http_cancel (cx_http_request_id *requestId)
 {
-  CX_ASSERT (requestId > CX_HTTP_REQUEST_ID_INVALID);
+  CX_ASSERT (*requestId);
+  CX_ASSERT (*requestId > CX_HTTP_REQUEST_ID_INVALID);
+  
+  cx_http_request_id rId = *requestId;
   
   for (cxu32 i = 0, c = [g_nsconnBusyList count]; i < c; ++i)
   {
     CXNSURLConnection *nsconn = [g_nsconnBusyList objectAtIndex:i];
     
-    if (nsconn.rId == requestId)
+    if (nsconn.rId == rId)
     {
       [nsconn.conn cancel];
       
       [g_nsconnBusyList removeObject:nsconn];
       [g_nsconnFreeList addObject:nsconn];
+      
+      *requestId = CX_HTTP_REQUEST_ID_INVALID;
       
       break;
     }

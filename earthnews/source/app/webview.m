@@ -27,7 +27,7 @@
 #define WEBVIEW_SCREEN_FADE_OPACITY    (0.6f)
 #define WEBVIEW_SCREEN_FADE_DURATION   (0.5f)
 #define WEBVIEW_TEXT_LABEL_WIDTH       (490.0f)
-#define WEBVIEW_USE_ACTION_SHEET        0
+#define WEBVIEW_USE_ACTION_SHEET        1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -903,6 +903,8 @@ typedef enum
       [tweetSheet addURL:link];
       
       [self presentViewController:tweetSheet animated:YES completion:nil];
+      
+      [tweetSheet.view endEditing:YES];
       
       break;
     }

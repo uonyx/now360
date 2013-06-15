@@ -1,37 +1,40 @@
 //
-//  feeds.c
+//  feeds.m
 //  earthnews
 //
 //  Created by Ubaka Onyechi on 14/07/2012.
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.
 //
 
-#include "feeds.h"
-#include "metrics.h"
-#include "worker.h"
+#import "feeds.h"
+#import "metrics.h"
+#import "worker.h"
+#import <Accounts/Accounts.h>
+#import <Social/Social.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define WEATHER_YAHOO 1
+#define NEWS_SEARCH_API_URL           "https://news.google.com/news/feeds"
+#define NEWS_HTTP_REQUEST_TIMEOUT     (30)
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const int NEWS_HTTP_REQUEST_TIMEOUT     = 30;
-const int TWITTER_HTTP_REQUEST_TIMEOUT  = 10;
-const int WEATHER_HTTP_REQUEST_TIMEOUT  = 30;
-const int TWITTER_API_SEARCH_RPP        = 15;
-
-const char *NEWS_SEARCH_API_URL         = "https://news.google.com/news/feeds";
-const char *TWITTER_SEARCH_API_URL      = "http://search.twitter.com/search.json";
-#if WEATHER_YAHOO
-const char *WEATHER_SEARCH_API_URL      = "http://weather.yahooapis.com/forecastrss";
+#if FEEDS_TWITTER_API_1_0
+#define TWITTER_SEARCH_API_URL        "http://search.twitter.com/search.json"
 #else
-const char *WEATHER_SEARCH_API_URL      = "http://rss.weather.com/weather/local";
+#define TWITTER_SEARCH_API_URL        "https://api.twitter.com/1.1/search/tweets.json"
+#define TWITTER_TTL                   (9)
+
 #endif
+#define TWITTER_SEARCH_API_RPP        "32"
+#define TWITTER_HTTP_REQUEST_TIMEOUT  (10)
+
+#if FEEDS_WEATHER_API_YAHOO
+#define WEATHER_SEARCH_API_URL        "http://weather.yahooapis.com/forecastrss"
+#else
+#define WEATHER_SEARCH_API_URL        "http://rss.weather.com/weather/local"
+#endif
+#define WEATHER_HTTP_REQUEST_TIMEOUT  (30)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,6 +127,8 @@ enum weather_image_code
 
 static cx_texture *g_weatherIcons [NUM_WEATHER_CONDITION_CODES];
 
+static ACAccountStore *g_accountStore = nil;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,21 +136,21 @@ static cx_texture *g_weatherIcons [NUM_WEATHER_CONDITION_CODES];
 static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize);
 static void feeds_news_clear (feed_news_t *feed);
 
-static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize);
-static void feeds_twitter_clear (feed_twitter_t *feed);
-
 static bool feeds_weather_parse (feed_weather_t *feed, const char *data, int dataSize);
 static void feeds_weather_clear (feed_weather_t *feed);
 
+static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dataSize);
+static void feeds_twitter_clear (feed_twitter_t *feed);
+static void feeds_twitter_error (feed_twitter_t *feed, const char *error);
+
 static void http_callback_news (cx_http_request_id tId, const cx_http_response *response, void *userdata);
-static void http_callback_twitter (cx_http_request_id tId, const cx_http_response *response, void *userdata);
 static void http_callback_weather (cx_http_request_id tId, const cx_http_response *response, void *userdata);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_init (void)
+void feeds_init (void)
 {
   char weatherFilename [512];
   
@@ -160,21 +165,27 @@ bool feeds_init (void)
     CX_ASSERT (g_weatherIcons [i]);
   }
   
-  return true;
+  CX_ASSERT (!g_accountStore);
+  
+  g_accountStore = [[ACAccountStore alloc] init];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool feeds_deinit (void)
+void feeds_deinit (void)
 {
+  CX_ASSERT (g_accountStore);
+  
+  [g_accountStore release];
+  
+  g_accountStore = nil;
+  
   for (unsigned int i = 0; i < NUM_WEATHER_CONDITION_CODES; ++i)
   {
     cx_texture_destroy (g_weatherIcons [i]);
   }
-  
-  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,41 +208,28 @@ static void http_callback_news (cx_http_request_id tId, const cx_http_response *
   }
   else
   {
-    switch (response->statusCode)
+    if (response->statusCode == 200)
     {
-      case 200:
-      {      
-        if (response->dataSize > 0)
-        {
-          // send xmldata to new thread to parse
-          feeds_news_clear (feed);
-          
-          bool parsed = feeds_news_parse (feed, (const char *) response->data, response->dataSize);
-          
-          if (parsed)
-          {
-            feed->lastUpdate = cx_time_get_utc_epoch ();
-            feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
-          }
-          else
-          {
-            CX_DEBUGLOG_CONSOLE (1, "http_callback_news: Warning: Parse failed for query: %s", feed->query);
-            feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-          }
-        }
-        else 
-        {
-          feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-        }
-        
-        break;
-      }
-        
-      default:
+      feeds_news_clear (feed);
+      if (feeds_news_parse (feed, (const char *) response->data, response->dataSize))
       {
-        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-        break;
+        feed->lastUpdate = cx_time_get_utc_epoch ();
+        feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
       }
+      else
+      {
+        CX_DEBUGLOG_CONSOLE (1, "http_callback_news: Warning: Parse failed for query: %s", feed->query);
+        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+      }
+    }
+    else
+    {
+      feeds_news_clear (feed);
+      feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+      
+      char errorCode [32];
+      cx_sprintf (errorCode, 32, "%d", response->statusCode);
+      metrics_event_log (METRICS_EVENT_NEWS_API_ERROR, errorCode);
     }
   }
   
@@ -316,10 +314,9 @@ void feeds_news_cancel_search (feed_news_t *feed)
 {
   CX_ASSERT (feed);
   
-  cx_http_cancel (feed->httpReqId);
+  cx_http_cancel (&feed->httpReqId);
   
   feed->reqStatus = FEED_REQ_STATUS_INVALID;
-  feed->httpReqId = CX_HTTP_REQUEST_ID_INVALID;
   feed->query = NULL;
 }
 
@@ -482,101 +479,6 @@ static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void http_callback_twitter (cx_http_request_id tId, const cx_http_response *response, void *userdata)
-{
-  CX_ASSERT (response);
-  CX_ASSERT (userdata);
-
-  feed_twitter_t *feed = (feed_twitter_t *) userdata;
-  
-  if (response->error == CX_HTTP_CONNECTION_ERROR)
-  {
-    // no internet connection ?
-    CX_DEBUGLOG_CONSOLE (1, "http_callback_twitter: Warning: no internet connection");
-    
-    feed->reqStatus = FEED_REQ_STATUS_ERROR;
-  }
-  else
-  {
-    switch (response->statusCode) 
-    {
-      case 200:
-      {
-        if (response->dataSize > 0)
-        {
-#if 0
-          // memcpy data and dispatch to async task thread
-          int jsondataSize = response->dataSize;
-          char *jsondata = cx_malloc (sizeof (char) * (jsondataSize + 1));
-          memcpy (jsondata, response->data, jsondataSize);
-          jsondata [jsondataSize] = 0;          
-          CX_DEBUGLOG_CONSOLE (1, jsondata);
-          //cx_free (jsondata);
-#endif
-          feeds_twitter_clear (feed);
-          
-          bool parsed = feeds_twitter_parse (feed, (const char *) response->data, response->dataSize);
-          
-          if (parsed)
-          {
-            feed->lastUpdate = cx_time_get_utc_epoch ();
-            feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
-          }
-          else
-          {
-            CX_DEBUGLOG_CONSOLE (1, "http_callback_twitter: Warning: Parse failed for query: %s", feed->query);
-            feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-          }
-        }
-        else
-        {
-          CX_DEBUGLOG_CONSOLE (1, "http_callback_twitter: Warning: JSON data size < 0 [%d]", response->dataSize);
-          feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-        }
-        
-        break;
-      }
-        
-      case 403:
-      {
-        metrics_event_log (METRICS_EVENT_TWITTER_API_ERROR_403, NULL);
-        
-        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-        
-        break;
-      }
-
-      case 406:
-      {
-        metrics_event_log (METRICS_EVENT_TWITTER_API_ERROR_406, NULL);
-        
-        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-        
-        break;
-      }
-        
-      case 410:
-      {
-        metrics_event_log (METRICS_EVENT_TWITTER_API_ERROR_410, NULL);
-        
-        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-        
-        break;
-      }
-        
-      case 420:
-      default:
-      {
-        feed->reqStatus = FEED_REQ_STATUS_FAILURE;
-        break;
-      }
-    }
-  }
-  
-  feed->httpReqId = CX_HTTP_REQUEST_ID_INVALID;
-  feed->query = NULL;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -586,7 +488,8 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
   CX_ASSERT (feed);
   CX_ASSERT (query);
   CX_ASSERT (feed->reqStatus == FEED_REQ_STATUS_INVALID);
-  
+ 
+#if FEEDS_TWITTER_API_1_0
   feed->reqStatus = FEED_REQ_STATUS_IN_PROGRESS;
   
   // url
@@ -611,6 +514,114 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
   feed->httpReqId = cx_http_get (request, NULL, 0, TWITTER_HTTP_REQUEST_TIMEOUT, http_callback_twitter, feed);
   
   feed->query = query;
+  
+#else
+
+  CX_ASSERT (g_accountStore);
+  
+  time_t currentTime = cx_time_get_utc_epoch ();
+  
+  if ((currentTime - feed->lastUpdate) > TWITTER_TTL)
+  {
+    feed->reqStatus = FEED_REQ_STATUS_IN_PROGRESS;
+    
+    ACAccountType *accountType = [g_accountStore accountTypeWithAccountTypeIdentifier:ACAccountTypeIdentifierTwitter];
+    
+    [g_accountStore requestAccessToAccountsWithType:accountType options:nil completion:^(BOOL granted, NSError *error)
+     {
+       const char *errorNoTwitter = "There are no Twitter accounts configured. To receive live tweets, "
+                                    "you can add or create a Twitter account in \"Settings\".";
+       
+       const char *errorConnection = "There seems to be a connection error with the Twitter service "
+                                     "at the moment";
+       if (granted)
+       {
+         NSArray *accounts = [g_accountStore accountsWithAccountType:accountType];
+         
+         if ([accounts count] > 0)
+         {
+           NSURL *url = [NSURL URLWithString:@TWITTER_SEARCH_API_URL];
+           
+           NSString *nsquery = [NSString stringWithUTF8String:query];
+           NSString *nsSinceId = [NSString stringWithUTF8String:feed->maxIdStr];
+           
+           NSDictionary *params = @{ @"q" : nsquery,
+                                     @"result_type" : @"mixed",
+                                     @"include_entities" : @"1",
+                                     @"count": @TWITTER_SEARCH_API_RPP,
+                                     @"since_id" : nsSinceId };
+           
+           SLRequest *request = [SLRequest requestForServiceType:SLServiceTypeTwitter
+                                                   requestMethod:SLRequestMethodGET
+                                                             URL:url
+                                                      parameters:params];
+           
+           [request setAccount:[accounts lastObject]];
+           
+           [request performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *response, NSError *error)
+            {
+              if (responseData && (responseData.length > 0))
+              {
+                int statusCode = response.statusCode;
+                int response_dataSize = responseData.length;
+                char *response_data = (char *) responseData.bytes;
+              
+                if (statusCode == 200)
+                {
+                  feeds_twitter_clear (feed);
+                  if (feeds_twitter_parse (feed, (const char *) response_data, response_dataSize))
+                  {
+                    feed->lastUpdate = cx_time_get_utc_epoch ();
+                    feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
+                  }
+                  else
+                  {
+                    CX_DEBUGLOG_CONSOLE (1, "http_callback_twitter: Warning: Parse failed for query: %s", feed->query);
+                    feeds_twitter_clear (feed);
+                    feeds_twitter_error (feed, errorConnection);
+                    feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+                  }
+                }
+                else
+                {
+                  feeds_twitter_clear (feed);
+                  feeds_twitter_error (feed, errorConnection);
+                  feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+                
+                  char errorCode [32];
+                  cx_sprintf (errorCode, 32, "%d", statusCode);
+                  metrics_event_log (METRICS_EVENT_TWITTER_API_ERROR, errorCode);
+                }
+              }
+              else // no response data - offline?
+              {
+                feed->reqStatus = FEED_REQ_STATUS_ERROR;
+              }
+            }
+          ];
+         }
+         else // no twitter accounts
+         {
+           feeds_twitter_clear (feed);
+           feeds_twitter_error (feed, errorNoTwitter);
+           feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+         }
+       }
+       else // no twitter access
+       {
+         feeds_twitter_clear (feed);
+         feeds_twitter_error (feed, errorNoTwitter);
+         feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+       }
+     }
+    ];
+  }
+  else
+  {
+    feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
+  }
+
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -621,10 +632,9 @@ void feeds_twitter_cancel_search (feed_twitter_t *feed)
 {
   CX_ASSERT (feed);
   
-  cx_http_cancel (feed->httpReqId);
+  cx_http_cancel (&feed->httpReqId);
   
   feed->reqStatus = FEED_REQ_STATUS_INVALID;
-  feed->httpReqId = CX_HTTP_REQUEST_ID_INVALID;
   feed->query = NULL;
 }
 
@@ -649,6 +659,32 @@ static void feeds_twitter_clear (feed_twitter_t *feed)
   }
   
   feed->items = NULL;
+  feed->lastUpdate = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void feeds_twitter_error (feed_twitter_t *feed, const char *error)
+{
+  CX_ASSERT (feed);
+  CX_ASSERT (error);
+  
+  const char *text = error;
+  const char *username = "now30_app";
+  
+  if (text && username)
+  {
+    feed_twitter_tweet_t *tweetItem = (feed_twitter_tweet_t *) cx_malloc (sizeof (feed_twitter_tweet_t));
+    memset (tweetItem, 0, sizeof (feed_twitter_tweet_t));
+    
+    cx_strcpy (tweetItem->text, FEED_TWITTER_TWEET_MESSAGE_MAX_LEN, text);
+    cx_strcpy (tweetItem->username, FEED_TWITTER_TWEET_USERNAME_MAX_LEN, username);
+    
+    tweetItem->next = feed->items;
+    feed->items = tweetItem;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -660,6 +696,8 @@ static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dat
   CX_ASSERT (feed);
   CX_ASSERT (data);
   
+  // parsing could be moved to seperate thread
+  
   bool success = false;
   
   cx_json_tree jsonTree = cx_json_tree_create (data, dataSize);
@@ -667,71 +705,68 @@ static bool feeds_twitter_parse (feed_twitter_t *feed, const char *data, int dat
   if (jsonTree)
   {
     cx_json_node rootNode = cx_json_tree_root_node (jsonTree);
-  
-    for (unsigned int i = 0, c = cx_json_object_length (rootNode); i < c; ++i)
+
+    
+    bool error = false;
+    
+    cx_json_node metadataNode = cx_json_object_child (rootNode, "search_metadata");
+    
+    if (metadataNode)
     {
-      const char *name = cx_json_object_child_key (rootNode, i);
-      cx_json_node node = cx_json_object_child_node (rootNode, i);
+      cx_json_node maxIdNode = cx_json_object_child (metadataNode, "max_id_str");
       
-      if (strcmp (name, "max_id") == 0)
-      {
-        feed->maxId = cx_json_value_int (node);
-      }
-      else if (strcmp (name, "results") == 0)
-      {
-        unsigned int resultsLength = cx_json_array_size (node);
+      const char *max_id_str = maxIdNode ? cx_json_value_string (maxIdNode) : "";
+      
+      cx_strcpy (feed->maxIdStr, 32, max_id_str);
+    }
+    
+    cx_json_node statusesNode = cx_json_object_child (rootNode, "statuses");
+    
+    if (statusesNode)
+    {
+      for (unsigned int i = 0, c = cx_json_array_size (statusesNode); (i < c) && !error; ++i)
+      {        
+        const char *text = NULL;
+        const char *username = NULL;
         
-        for (unsigned int j = 0; j < resultsLength; ++j)
+        cx_json_node arrayNode = cx_json_array_member (statusesNode, i);
+        
+        if (arrayNode)
         {
-          cx_json_node resulstNode = cx_json_array_member (node, j);
+          cx_json_node textNode = cx_json_object_child (arrayNode, "text");
           
-          //
-          // for memory optimisation, do a pre-pass for one-time malloc of stringdatabuffer for all strings for tweet_item/all tweets
-          //
+          if (textNode)
+          {
+            text = cx_json_value_string (textNode);
+          }
           
+          cx_json_node userNode = cx_json_object_child (arrayNode, "user");
+          
+          if (userNode)
+          {
+            cx_json_node screennameNode = cx_json_object_child (userNode, "screen_name");
+            
+            if (screennameNode)
+            {
+              username = cx_json_value_string (screennameNode);
+            }
+          }
+        }
+        
+        if (text && username)
+        {
           feed_twitter_tweet_t *tweetItem = (feed_twitter_tweet_t *) cx_malloc (sizeof (feed_twitter_tweet_t));
           memset (tweetItem, 0, sizeof (feed_twitter_tweet_t));
           
-          int done = 0;
-          for (unsigned int k = 0, n = cx_json_object_length (resulstNode); (k < n) && (done < 3); ++k)
-          {
-            const char *pname = cx_json_object_child_key (resulstNode, k);
-            cx_json_node pnode = cx_json_object_child_node (resulstNode, k);
-            
-            if (strcmp (pname, "from_user") == 0)
-            {
-              const char *str = cx_json_value_string (pnode);
-              cx_strcpy (tweetItem->username, FEED_TWITTER_TWEET_USERNAME_MAX_LEN, str);
-              done++;
-            }
-            else if (strcmp (pname, "from_user_name") == 0)
-            {
-              const char *str = cx_json_value_string (pnode);
-              cx_strcpy (tweetItem->realname, FEED_TWITTER_TWEET_REALNAME_MAX_LEN, str);
-              done++;
-            }
-            else if (strcmp (pname, "text") == 0)
-            {
-              const char *str = cx_json_value_string (pnode);
-              cx_strcpy (tweetItem->text, FEED_TWITTER_TWEET_MESSAGE_MAX_LEN, str);
-              done++;
-            }
-#if 0
-            else if (strcmp (pname, "created_at") == 0)
-            {
-              const char *str = cx_json_value_string (pnode);
-              (void) str;
-              done++;
-            }
-#endif
-          }
+          cx_strcpy (tweetItem->text, FEED_TWITTER_TWEET_MESSAGE_MAX_LEN, text);
+          cx_strcpy (tweetItem->username, FEED_TWITTER_TWEET_USERNAME_MAX_LEN, username);
           
           tweetItem->next = feed->items;
           feed->items = tweetItem;
         }
       }
     }
-  
+
     cx_json_tree_destroy (jsonTree);
     
     success = true;
@@ -760,8 +795,6 @@ void feeds_weather_render (const feed_weather_t *feed, float x, float y, float z
       (feed->conditionCode > WEATHER_CONDITION_CODE_INVALID) && 
       (feed->conditionCode < NUM_WEATHER_CONDITION_CODES))
   {
-    //int temperature = feed->celsius;
-    
     cx_texture *image = g_weatherIcons [feed->conditionCode];
     CX_ASSERT (image);
     
@@ -811,24 +844,19 @@ static void http_callback_weather (cx_http_request_id tId, const cx_http_respons
   }
   else
   {
-    if ((response->statusCode == 200) && response->data && (response->dataSize > 0))
+    if ((response->statusCode == 200))
     {
       feeds_weather_clear (feed);
       
-      bool parsed = feeds_weather_parse (feed, (const char *) response->data, response->dataSize);
+      bool valid =  response->data && (response->dataSize > 0);
+      
+      bool parsed = valid && feeds_weather_parse (feed, (const char *) response->data, response->dataSize);
       
       if (parsed)
       {
         feed->dataReady = true;
         feed->lastUpdate = cx_time_get_utc_epoch ();
         feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
-#if 0
-        struct temp t;
-        t.data = xmldata;
-        t.dataSize = xmldataSize;
-        t.feed = feed;
-        worker_add_task (async_task, (void*) &t, NULL);
-#endif
       }
       else
       {
@@ -837,7 +865,12 @@ static void http_callback_weather (cx_http_request_id tId, const cx_http_respons
     }
     else
     {
+      feeds_weather_clear (feed);
       feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+      
+      char errorCode [32];
+      cx_sprintf (errorCode, 32, "%d", response->statusCode);
+      metrics_event_log (METRICS_EVENT_WEATHER_API_ERROR, errorCode);
     }
   }
 }
@@ -868,7 +901,7 @@ bool feeds_weather_search (feed_weather_t *feed, const char *query)
     
     char request [512];
     
-  #if WEATHER_YAHOO
+  #if FEEDS_WEATHER_API_YAHOO
     cx_sprintf (request, 512, "%s?w=%s&u=c", url, query);
   #else
     cx_sprintf (request, 512, "%s/%s?cm_ven=LWO&cm_cat=rss&par=LWO_rss", url, query);
@@ -883,6 +916,7 @@ bool feeds_weather_search (feed_weather_t *feed, const char *query)
   else
   {
     feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+    
     return false;
   }
 }

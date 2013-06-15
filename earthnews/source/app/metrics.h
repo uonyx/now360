@@ -31,9 +31,9 @@ typedef enum
   METRICS_EVENT_LINK_SHARE,
   METRICS_EVENT_APP_BG,
   METRICS_EVENT_APP_FG,
-  METRICS_EVENT_TWITTER_API_ERROR_403,
-  METRICS_EVENT_TWITTER_API_ERROR_406,
-  METRICS_EVENT_TWITTER_API_ERROR_410,
+  METRICS_EVENT_TWITTER_API_ERROR,
+  METRICS_EVENT_WEATHER_API_ERROR,
+  METRICS_EVENT_NEWS_API_ERROR,
 } metrics_event_type_t;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

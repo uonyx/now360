@@ -27,6 +27,8 @@ static cxu8 g_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] =
   2, /* CX_TEXTURE_FORMAT_LUMINANCE_ALPHA */
   3, /* CX_TEXTURE_FORMAT_RGB */
   4, /* CX_TEXTURE_FORMAT_RGBA */
+  4, /* CX_TEXTURE_FORMAT_RGBA_PVR_4BPP */
+  2, /* CX_TEXTURE_FORMAT_RGBA_PVR_2BPP */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +100,6 @@ static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storag
 {
   cx_texture *texture = NULL;
 
-#if 1
   cxu8 *data = NULL;
   cxu32 dataSize = 0;
   
@@ -213,7 +214,7 @@ static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storag
       cx_free (data);
     }
   }
-#endif
+
   return texture;
 }
 

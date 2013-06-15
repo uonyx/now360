@@ -67,7 +67,7 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
                                  cx_http_request_field *headers, cxi32 headerCount, cxi32 timeout, 
                                  cx_http_response_callback callback, void *userdata);
 
-void               cx_http_cancel (cx_http_request_id requestId);
+void               cx_http_cancel (cx_http_request_id *requestId);
 
 void               cx_http_clear_cache (void);
 
