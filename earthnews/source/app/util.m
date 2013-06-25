@@ -29,7 +29,7 @@ static anim_t g_screenFade;
 
 static status_bar_msg_t g_msg = STATUS_BAR_MSG_NONE;
 static float g_statusTimer = STATUS_BAR_DISPLAY_TIMER;
-static cx_texture *g_statug_msg_icon [NUM_STATUS_BAR_MSGS] = { 0 };
+static cx_texture *g_statug_msg_icon = NULL;
 static cx_colour g_statug_msg_colour [NUM_STATUS_BAR_MSGS];
 static const char *g_statug_msg_text [NUM_STATUS_BAR_MSGS] =
 {
@@ -89,7 +89,7 @@ void util_deinit (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int util_get_dst_offset_secs (const char *tzname)
+int util_get_dst_offset_secs (const char *tzn)
 {
 #if 0
   NSLog(@"%@", [NSTimeZone knownTimeZoneNames]);
@@ -144,7 +144,7 @@ int util_get_dst_offset_secs (const char *tzname)
     CX_DEBUG_BREAKABLE_EXPR;
   }
   
-  NSTimeZone *tz = [NSTimeZone timeZoneWithName:[NSString stringWithCString:tzname encoding:NSASCIIStringEncoding]];
+  NSTimeZone *tz = [NSTimeZone timeZoneWithName:[NSString stringWithCString:tzn encoding:NSASCIIStringEncoding]];
   
   int dstOffsetSecs = (tz == nil) ? 0 : (int) [tz daylightSavingTimeOffset];
   
@@ -295,13 +295,9 @@ bool util_anim_update (anim_t *anim, float deltaTime)
       
       anim->on = false;
     }
-    
-    return true;
   }
-  else
-  {
-    return false;
-  }
+  
+  return anim->on;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +364,7 @@ void util_status_bar_render (void)
 {
   if ((g_msg > STATUS_BAR_MSG_NONE) && (g_msg < NUM_STATUS_BAR_MSGS))
   {    
-    cx_texture *icon = g_statug_msg_icon [g_msg];
+    cx_texture *icon = g_statug_msg_icon;
     const char *text = g_statug_msg_text [g_msg];
     cx_colour *colour = &g_statug_msg_colour [g_msg];
     
@@ -489,15 +485,8 @@ bool util_screen_fade_trigger (screen_fade_type_t type, float opacity, float sec
 
 static void util_init_status_bar (void)
 {
-  g_statug_msg_icon [STATUS_BAR_MSG_CONNECTION_ERROR] = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_statug_msg_icon [STATUS_BAR_MSG_NEWS_COMMS_ERROR] = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_statug_msg_icon [STATUS_BAR_MSG_WEATHER_COMMS_ERROR] = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_statug_msg_icon [STATUS_BAR_MSG_TWITTER_COMMS_ERROR] = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  
-  CX_ASSERT (g_statug_msg_icon [STATUS_BAR_MSG_CONNECTION_ERROR]);
-  CX_ASSERT (g_statug_msg_icon [STATUS_BAR_MSG_NEWS_COMMS_ERROR]);
-  CX_ASSERT (g_statug_msg_icon [STATUS_BAR_MSG_WEATHER_COMMS_ERROR]);
-  CX_ASSERT (g_statug_msg_icon [STATUS_BAR_MSG_TWITTER_COMMS_ERROR]);
+  g_statug_msg_icon = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  CX_ASSERT (g_statug_msg_icon);
   
   cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f);
   cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_TWITTER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f);
@@ -509,15 +498,7 @@ static void util_init_status_bar (void)
 
 static void util_deinit_status_bar (void)
 {
-  for (int i = 0; i < NUM_STATUS_BAR_MSGS; ++i)
-  {
-    cx_texture *texture = g_statug_msg_icon [i];
-    
-    if (texture)
-    {
-      cx_texture_destroy (texture);
-    }
-  }
+  cx_texture_destroy (g_statug_msg_icon);
 }
   
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

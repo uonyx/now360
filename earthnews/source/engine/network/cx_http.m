@@ -87,9 +87,9 @@ bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache
     cxu32 cacheMemory  = 1024 * 1024 * cacheMemSizeMb;
     cxu32 cacheStorage = 1024 * 1024 * cacheDiskSizeMb;
     
-    [NSURLCache setSharedURLCache:[[NSURLCache alloc] initWithMemoryCapacity:cacheMemory
+    [NSURLCache setSharedURLCache:[[[NSURLCache alloc] initWithMemoryCapacity:cacheMemory
                                                                 diskCapacity:cacheStorage
-                                                                    diskPath:@"cx_http"]];
+                                                                    diskPath:@"cx_http"] autorelease]];
   }
   else
   {
@@ -129,21 +129,19 @@ bool _cx_http_deinit (void)
   {
 #if CX_HTTP_CACHE_CUSTOM
     NSURLCache *sharedCache = [NSURLCache sharedURLCache];
-    [sharedCache release];
+    CX_REF_UNUSED (sharedCache);
 #endif
   
     for (cxu32 i = 0; i < [g_nsconnFreeList count]; ++i)
     {
       CXNSURLConnection *nsconn = [g_nsconnFreeList objectAtIndex:i];
       [g_nsconnFreeList removeObject:nsconn];
-      [nsconn release];
     }
     
     for (cxu32 i = 0; i < [g_nsconnBusyList count]; ++i)
     {
       CXNSURLConnection *nsconn = [g_nsconnBusyList objectAtIndex:i];
       [g_nsconnBusyList removeObject:nsconn];
-      [nsconn release];
     }
     
     [g_nsconnFreeList release];
@@ -268,10 +266,11 @@ cx_http_request_id cx_http_post (const char *url, const void *postdata, cxi32 po
 
 void cx_http_cancel (cx_http_request_id *requestId)
 {
-  CX_ASSERT (*requestId);
-  CX_ASSERT (*requestId > CX_HTTP_REQUEST_ID_INVALID);
+  CX_ASSERT (requestId);
   
   cx_http_request_id rId = *requestId;
+  
+  CX_ASSERT (rId > CX_HTTP_REQUEST_ID_INVALID);
   
   for (cxu32 i = 0, c = [g_nsconnBusyList count]; i < c; ++i)
   {

@@ -460,10 +460,12 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
     [currentItems addObjectsFromArray:newItems];
     
     g_currentCollection = [MPMediaItemCollection collectionWithItems:(NSArray *) currentItems];
-    [g_musicPlayer setQueueWithItemCollection:g_currentCollection];
     
+    [g_musicPlayer setQueueWithItemCollection:g_currentCollection];
     [g_musicPlayer setCurrentPlaybackTime:currentPlaybackTime];
     [g_musicPlayer setNowPlayingItem:nowPlayingItem];
+    
+    [currentItems release];
     
     if (playbackState == MPMusicPlaybackStatePlaying)
     {
@@ -603,7 +605,10 @@ static void audio_music_playback_state_changed (void)
     
     CX_ASSERT (fn);
    
-    fn (notification);
+    if (fn)
+    {
+      fn (notification);
+    }
     
     node = node->next;
   }

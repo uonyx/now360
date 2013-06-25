@@ -105,11 +105,12 @@ void cx_native_eagl_context_add (void)
 {
   CX_ASSERT (g_eaglContext);
   
-  EAGLContext *newContext = [[EAGLContext alloc] initWithAPI:[g_eaglContext API] sharegroup:[g_eaglContext sharegroup]];
-  
+  EAGLContext *newContext = [[[EAGLContext alloc] initWithAPI:[g_eaglContext API]
+                                                   sharegroup:[g_eaglContext sharegroup]] autorelease];
+#if CX_DEBUG
   EAGLContext *curContext = [EAGLContext currentContext];
-  
-  (void) curContext;
+  CX_REF_UNUSED (curContext);
+#endif
   
   [EAGLContext setCurrentContext:newContext];
 }
@@ -120,11 +121,12 @@ void cx_native_eagl_context_add (void)
 
 void cx_native_eagl_context_remove (void)
 {
+#if CX_DEBUG
   EAGLContext *curContext = [EAGLContext currentContext];
+  CX_REF_UNUSED (curContext);
+#endif
  
   [EAGLContext setCurrentContext:nil];
-  
-  [curContext release];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

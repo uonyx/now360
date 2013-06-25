@@ -163,8 +163,6 @@
     [EAGLContext setCurrentContext:nil];
   }
   
-  [self.context release];
-  
   self.context = nil;
 }
 

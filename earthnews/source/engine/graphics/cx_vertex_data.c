@@ -338,19 +338,18 @@ void cx_vertex_data_destroy_soa (struct cx_vertex_data_soa *vertexData)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 #endif
 
-cx_vertex_data *cx_vertex_data_create_sphere (cxf32 radius, cxu16 numSlices, cxu16 numParallels, cx_vertex_format format)
+cx_vertex_data *cx_vertex_data_create_sphere (cxf32 radius, cxu16 slices, cx_vertex_format format)
 {
   cx_vertex_data *vertexData = cx_malloc (sizeof (cx_vertex_data));
   
   vertexData->format = format;
   
 #if CX_VERTEX_DATA_AOS
-  cx_vertex_data_create_sphere_aos (radius, numSlices, numParallels, vertexData);
+  cx_vertex_data_create_sphere_aos (radius, slices, (slices >> 1), vertexData);
 #else
-  cx_vertex_data_create_sphere_soa (radius, numSlices, numParallels, vertexData);
+  cx_vertex_data_create_sphere_soa (radius, slices, (slices >> 1), vertexData);
 #endif
   
   return vertexData;

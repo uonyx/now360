@@ -106,11 +106,11 @@ static app_state_t        g_appState = APP_STATE_INVALID;
 static app_load_stage_t   g_loadStage = APP_LOAD_STAGE_1_BEGIN;
 static cx_thread         *g_ldThread = NULL;
 static cx_thread_monitor  g_ldThreadMonitor;
-static cx_texture        *g_ldImages [3];
+static bool               g_ldThreadInProgress = false;
+static cx_texture        *g_ldImages [2];
 
 static cx_texture        *g_logoTex = NULL;
 static anim_t             g_logoFade;
-static bool               g_logoRender = false;
 
 static cx_date            g_dateUTC;
 static cx_date            g_dateLocal;
@@ -143,6 +143,8 @@ static int  app_input_touch_earth (float screenX, float screenY, float screenWid
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void app_load_init (void);
+static void app_load_deinit (void);
 static void app_load_stage_transition (void *userdata);
 static void app_load_stage_update (void);
 static void app_load_stage_render (void);
@@ -169,6 +171,7 @@ static void app_render_2d_local_clock (void);
 static void app_render_2d_screen_fade (void);
 static void app_render_2d_logo (void);
 static void app_render_2d_logo_fade_out (void *data);
+static void app_render_2d_logo_fade_end (void *data);
 static void app_render_load (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,11 +188,14 @@ static cx_thread_exit_status app_init_load (void *userdata)
 {
   cx_gdi_shared_context_create ();
   
+  cx_time_set_date (&g_dateUTC, CX_TIME_ZONE_UTC);
+  cx_time_set_date (&g_dateLocal, CX_TIME_ZONE_LOCAL);
+  
   //
   // earth data
   //
   
-  bool success = earth_init ("data/earth.json");
+  bool success = earth_init ("data/earth.json", &g_dateUTC);
   
   CX_FATAL_ASSERT (success); CX_REF_UNUSED (success);
   
@@ -198,7 +204,7 @@ static cx_thread_exit_status app_init_load (void *userdata)
   
   settings_set_city_names (cityNames, cityCount);
   
-  g_glowTex = cx_texture_create_from_file ("data/images/glowcircle.gb32-16.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_glowTex = cx_texture_create_from_file ("data/images/earth/glowcircle.gb25-16.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   
   //
   // feeds
@@ -228,6 +234,7 @@ static cx_thread_exit_status app_init_load (void *userdata)
   //
   // other
   //
+  
 #if NEW_ROTATION
   memset (&g_rotAngle, 0, sizeof (g_rotAngle));
   memset (&g_rotTarget, 0, sizeof (g_rotTarget));
@@ -326,16 +333,15 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   // loading screen
   //
   
-  g_logoTex = cx_texture_create_from_file ("data/images/loading/now360-500px.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_ldImages [0] = cx_texture_create_from_file ("data/images/loading/uonyechi.com.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_ldImages [1] = cx_texture_create_from_file ("data/images/loading/nasacredit.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_ldImages [2] = cx_texture_create_from_file ("data/images/loading/gear.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  app_load_init ();
   
   //
   // loading thread
   //
   
   g_appState = APP_STATE_INIT;
+  
+  g_ldThreadInProgress = true;
   
   g_ldThread = cx_thread_create ("init_load", CX_THREAD_TYPE_JOINABLE, app_init_load, NULL);
   
@@ -392,9 +398,6 @@ void app_update (void)
     {
       if (cx_thread_monitor_wait_timed (&g_ldThreadMonitor, 0))
       {
-        // fade screen in
-        util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 3.0f, app_render_2d_logo_fade_out, NULL);
-        
         //
         // input
         //
@@ -407,7 +410,9 @@ void app_update (void)
         
         metrics_event_log (METRICS_EVENT_LOAD_END, NULL);
         
-        g_appState = APP_STATE_UPDATE;
+        // wait for load state
+       
+        g_ldThreadInProgress = false;
       }
       
       break; 
@@ -477,7 +482,7 @@ static float app_get_zoom_opacity (void)
   float fov = g_camera->fov;
   
   //float opacity = 1.0f - cx_smoothstep (CAMERA_MIN_FOV, 56.0f, fov);
-  float opacity = 1.0f - cx_smoothstep (CAMERA_START_FOV, CAMERA_START_FOV + 10.0f, fov);
+  float opacity = 1.0f - cx_smoothstep (CAMERA_START_FOV, CAMERA_START_FOV + 6.0f, fov);
   
   return opacity;
 }
@@ -554,6 +559,35 @@ static int app_get_clock_str (const cx_date *date, int offset, char *dst, int ds
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void app_load_init (void)
+{
+  cx_file_storage_base b = CX_FILE_STORAGE_BASE_RESOURCE;
+  
+  g_logoTex = cx_texture_create_from_file ("data/images/loading/now360-500px.png", b, false);
+  g_ldImages [0] = cx_texture_create_from_file ("data/images/loading/uonyechi.com.png", b, false);
+  g_ldImages [1] = cx_texture_create_from_file ("data/images/loading/credits.png", b, false);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_load_deinit (void)
+{
+  cx_texture_destroy (g_logoTex);
+  g_logoTex = NULL;
+  
+  for (int i = 0; i < 2; ++i)
+  {
+    cx_texture_destroy (g_ldImages [i]);
+    g_ldImages [i] = NULL;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void app_load_stage_transition (void *userdata)
 {
   CX_ASSERT (userdata);
@@ -581,7 +615,7 @@ static void app_load_stage_update (void)
       
     case APP_LOAD_STAGE_1:
     {
-      static float timer = 3.0f;
+      static float timer = 1.5f;
       timer -= deltaTime;
       
       if (timer <= 0.0f)
@@ -606,7 +640,7 @@ static void app_load_stage_update (void)
       
     case APP_LOAD_STAGE_2:
     {
-      static float timer = 3.0f;
+      static float timer = 3.5f;
       timer -= deltaTime;
       
       if (timer <= 0.0f)
@@ -625,13 +659,33 @@ static void app_load_stage_update (void)
       
     case APP_LOAD_STAGE_3_BEGIN:
     {
-      util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_3);
-      g_logoRender = true;
+      if (util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_3))
+      {
+        util_activity_indicator_set_active (true);
+      }
+      
       break;
     }
       
     case APP_LOAD_STAGE_3:
     {
+      if (!g_ldThreadInProgress)
+      {
+        g_loadStage = APP_LOAD_STAGE_3_END;
+      }
+      
+      break;
+    }
+      
+    case APP_LOAD_STAGE_3_END:
+    {
+      if (util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 3.0f, app_render_2d_logo_fade_out, NULL))
+      {
+        util_activity_indicator_set_active (false);
+        
+        g_appState = APP_STATE_UPDATE;
+      }
+      
       break;
     }
       
@@ -648,7 +702,6 @@ static void app_load_stage_update (void)
 
 static void app_load_stage_render (void)
 {
-  const float deltaTime = (float) cx_system_time_get_delta_time ();
   const float screenWidth = cx_gdi_get_screen_width ();
   const float screenHeight = cx_gdi_get_screen_height ();
   
@@ -662,7 +715,7 @@ static void app_load_stage_render (void)
     case APP_LOAD_STAGE_1:
     case APP_LOAD_STAGE_1_END:
     {
-      cx_texture *tex = g_ldImages [0];
+      cx_texture *tex = g_ldImages [0]; //uonyechi.com
       CX_ASSERT (tex);
       
       float tw = (float) tex->width;
@@ -672,6 +725,8 @@ static void app_load_stage_render (void)
       
       cx_colour col = *cx_colour_white ();
       cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, 0.0f, &col, tex);
+      
+      app_render_2d_screen_fade ();
       
       break;
     }
@@ -680,7 +735,7 @@ static void app_load_stage_render (void)
     case APP_LOAD_STAGE_2:
     case APP_LOAD_STAGE_2_END:
     {
-      cx_texture *tex = g_ldImages [1];
+      cx_texture *tex = g_ldImages [1]; // credits
       CX_ASSERT (tex);
       
       float tw = (float) tex->width;
@@ -691,36 +746,34 @@ static void app_load_stage_render (void)
       cx_colour col = *cx_colour_white ();
       cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, 0.0f, &col, tex);
       
+      app_render_2d_screen_fade ();
+      
       break;
     }
       
     case APP_LOAD_STAGE_3_BEGIN:
     case APP_LOAD_STAGE_3:
+    {      
+      app_render_2d_logo ();
+      
+      app_render_2d_screen_fade ();
+      
+      break;
+    }
+
     case APP_LOAD_STAGE_3_END:
     {
-      static float rot = 0.0f;
-      const float mx = 24.0f;
-      const float my = 24.0f;
+      app_render_2d_screen_fade ();
       
-      cx_texture *tex = g_ldImages [2];
-      CX_ASSERT (tex);
-      
-      float tw = (float) tex->width;
-      float th = (float) tex->height;
-      float tx = (screenWidth - tw - mx);
-      float ty = (screenHeight - th - my);
-      
-      cx_colour col = *cx_colour_white ();
-      cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, rot, &col, tex);
-      
-      rot += deltaTime * 6.0f;
-      rot = fmodf (rot, 360.0f);
+      app_render_2d_logo ();
       
       break;
     }
       
     default:
     {
+      app_render_2d_screen_fade ();
+      
       break;
     }
   }
@@ -950,7 +1003,7 @@ static void app_update_camera (void)
 
 static void app_update_clocks (void)
 {
-  static float updateTimer = 0.0f;
+  static float updateTimer = CLOCK_UPDATE_INTERVAL_SECONDS;
   
   float deltaTime = (float) cx_system_time_get_delta_time ();
 
@@ -1276,9 +1329,6 @@ static void app_render_load (void)
   
   app_load_stage_update ();
   app_load_stage_render ();
-
-  app_render_2d_screen_fade ();
-  app_render_2d_logo ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1311,7 +1361,7 @@ static void app_render_3d (void)
 static void app_render_3d_earth (void)
 {
   // earth
-  earth_visual_render (&g_dateUTC, &g_camera->position);
+  earth_render (&g_camera->position, &g_dateUTC);
 
   // points
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_CULL | CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
@@ -1523,7 +1573,7 @@ static void app_render_2d (void)
   // render fade
   app_render_2d_screen_fade ();
   
-  // intro logo
+  //
   app_render_2d_logo ();
   
   //////////////
@@ -1629,8 +1679,8 @@ static void app_render_2d_screen_fade (void)
 
 static void app_render_2d_logo (void)
 {
-  if (g_logoRender && g_logoTex)
-  {  
+  if (g_logoTex) // deleted after loading is complete
+  {
     float deltaTime = (float) cx_system_time_get_delta_time ();
     
     float opacity = 1.0f;
@@ -1640,24 +1690,19 @@ static void app_render_2d_logo (void)
       opacity = 1.0f - g_logoFade.t;
     }
     
-    float screenWidth = cx_gdi_get_screen_width ();
-    float screenHeight = cx_gdi_get_screen_height ();
-    
-    float tw = (float) g_logoTex->width;
-    float th = (float) g_logoTex->height;
-    float tx = 0.0f + (screenWidth - tw) * 0.5f;
-    float ty = 0.0f + (screenHeight - th) * 0.5f;
-    
-    cx_colour col = *cx_colour_white ();
-    col.a *= opacity;
-    cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, 0.0f, &col, g_logoTex);
-    
-    if (opacity <= CX_EPSILON)
+    if (g_logoTex) // may be deleted after loading is complete in callback in util_anim_update *nasty*
     {
-      // free texture
-      cx_texture_destroy (g_logoTex);
-      g_logoTex = NULL;
-      g_logoRender = false;
+      float screenWidth = cx_gdi_get_screen_width ();
+      float screenHeight = cx_gdi_get_screen_height ();
+      
+      float tw = (float) g_logoTex->width;
+      float th = (float) g_logoTex->height;
+      float tx = 0.0f + (screenWidth - tw) * 0.5f;
+      float ty = 0.0f + (screenHeight - th) * 0.5f;
+      
+      cx_colour col = *cx_colour_white ();
+      col.a *= opacity;
+      cx_draw_quad (tx, ty, (tx + tw), (ty + th), 0.0f, 0.0f, &col, g_logoTex);
     }
   }
 }
@@ -1668,7 +1713,16 @@ static void app_render_2d_logo (void)
 
 static void app_render_2d_logo_fade_out (void *data)
 {
-  util_anim_start (&g_logoFade, ANIM_TYPE_LINEAR, 1.0f, NULL, NULL);
+  util_anim_start (&g_logoFade, ANIM_TYPE_LINEAR, 1.0f, app_render_2d_logo_fade_end, NULL);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_render_2d_logo_fade_end (void *data)
+{
+  app_load_deinit ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -34,7 +34,10 @@ cxu32 cx_str_explode (char **dst, cxu32 dstSize, const char *src, char delimiter
   
   CX_ASSERT (count < dstSize);
   
-  dst [count++] = cx_strdup (start, strlen (start));
+  if (*start != '\0')
+  {
+    dst [count++] = cx_strdup (start, strlen (start));
+  }
   
   return count;
 }

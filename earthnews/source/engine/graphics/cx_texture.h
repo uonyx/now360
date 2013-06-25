@@ -54,6 +54,8 @@ typedef enum cx_texture_format
   CX_TEXTURE_FORMAT_LUMINANCE_ALPHA,
   CX_TEXTURE_FORMAT_RGB,
   CX_TEXTURE_FORMAT_RGBA,
+  CX_TEXTURE_FORMAT_RGB_PVR_4BPP,
+  CX_TEXTURE_FORMAT_RGB_PVR_2BPP,
   CX_TEXTURE_FORMAT_RGBA_PVR_4BPP,
   CX_TEXTURE_FORMAT_RGBA_PVR_2BPP,
   CX_TEXTURE_NUM_FORMATS
@@ -90,13 +92,13 @@ typedef struct cx_texture
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cx_texture *cx_texture_create (cxu32 width, cxu32 height, cx_texture_format format);
-cx_texture *cx_texture_create_from_file (const char *filename, cx_file_storage_base storage);
+cx_texture *cx_texture_create_from_file (const char *filename, cx_file_storage_base storage, bool genMipmaps);
 
 void cx_texture_destroy (cx_texture *texture);
 void cx_texture_data_destroy (cx_texture *texture);
 void cx_texture_set_wrap_mode (cx_texture *texture, cx_texture_wrap_mode mode);
 
-void cx_texture_gpu_init (cx_texture *texture);
+void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps);
 void cx_texture_gpu_deinit (cx_texture *texture);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

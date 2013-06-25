@@ -484,7 +484,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   if (cell == nil)
   {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+    cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier] autorelease];
   }
   
   int idx = indexPath.row;
@@ -567,7 +567,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   if (cell == nil)
   {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+    cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier] autorelease];
   }
   
   int idx = indexPath.row;
@@ -630,7 +630,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   if (cell == nil)
   {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+    cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier] autorelease];
   }
   
   int idx = indexPath.row;
@@ -766,7 +766,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   if (cell == nil)
   {
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+    cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier] autorelease];
   }
   
   int idx = indexPath.row;

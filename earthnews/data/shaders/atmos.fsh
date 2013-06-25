@@ -27,7 +27,7 @@ void main (void)
 
   float dotp = dot (nVec, vVec); // view dot
 
-  #if 1
+#if 1
   
   float rim = c_one - max (dotp, c_zero);
   
@@ -41,7 +41,7 @@ void main (void)
   colour.rgb *= dif;
   //colour.a = rim;
   
-  #else
+#else
   
   vec4 colour = vec4 (c_zero);
   
@@ -58,7 +58,7 @@ void main (void)
     colour.a = rim;
   }
   
-  #endif
+#endif
   
   gl_FragColor = colour;
 }

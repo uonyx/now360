@@ -48,10 +48,11 @@ static ui_context_t *g_uicontext = NULL;
 #define NEWS_LIST_HEIGHT  120.0f
 #define NEWS_LIST_XOFFSET 36.0f //12.0f
 
+#if 0
 const float height = 180.0f;
 const float posX = 12.0f;
 const float posY = 582.0f;
-
+#endif
 typedef struct ui_news_t
 {
   ui_custom_t *buttons [NEWS_MAX_ENTRIES];
@@ -787,7 +788,7 @@ static void ui_ctrlr_twitter_create (void)
 {  
   memset (&g_uitwitter, 0, sizeof (g_uitwitter));
   
-  g_uitwitter.birdicon = cx_texture_create_from_file ("data/images/ui/twbird-16z.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_uitwitter.birdicon = cx_texture_create_from_file ("data/images/ui/twbird-16z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   
   ui_custom_callbacks_t twViewCallbacks, twToggleCallbacks;
   
@@ -1054,9 +1055,16 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     
     cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colbg, NULL);
     
-    const cx_font *font = util_get_font (FONT_SIZE_16);
-    float scrollx = 60.0f * (float) cx_system_time_get_delta_time ();
     char unescapedText [256] = {0};
+    const cx_font *font = util_get_font (FONT_SIZE_16);
+#if 0
+    float deltaTime = (1.0f / 30.0f);
+    float scrollx = 60.0f * deltaTime;
+#else
+    float deltaTime = (float) cx_system_time_get_delta_time ();
+    float scrollx = 60.0f * deltaTime;
+    scrollx = (float) cx_roundupInt (scrollx);
+#endif
     
     for (int i = 0, c = ticker->itemCount; i < c; ++i)
     {
@@ -1075,37 +1083,34 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
       if (!outOfBounds)
       {
 #if UI_CTRLR_DEBUG_NEW_TICKER
-      if (tweet->username && tweet->text)
-      {
-        ticker_tweet_t tickerTweet;
-        memset (&tickerTweet, 0, sizeof (ticker_tweet_t));
-        
-        cx_str_html_unescape (unescapedText, 256, tweet->text);
-        ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, unescapedText);
-        
-        char username [32];
-        cx_sprintf (username, 32, " @%s: ", tweet->username);
-        cx_font_render (font, username, ix, iy, 0.0f, 0, &colname);
-        
-        float rx = ix + cx_font_get_text_width (font, username);
-        
-        char tickerTweetText [256];
-        for (cxu32 j = 0; j < tickerTweet.elemCount; ++j)
+        if (tweet->username && tweet->text)
         {
-          cxu32 loc = tickerTweet.elems [j].loc;
-          const char *s = &tickerTweet.buffer [loc];
-          cx_sprintf (tickerTweetText, 256, "%s ", s);
+          ticker_tweet_t tickerTweet;
+          memset (&tickerTweet, 0, sizeof (ticker_tweet_t));
           
-          bool isLink = (tickerTweet.elems [j].type == TWITTER_TICKER_TWEET_ELEM_TYPE_LINK);
-      
-          const cx_colour *col = isLink ? &collink : &coltweet;
+          cx_str_html_unescape (unescapedText, 256, tweet->text);
+          ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, unescapedText);
           
-          cx_font_render (font, tickerTweetText, rx, iy, 0.0f, 0, col);
+          char username [32];
+          cx_sprintf (username, 32, " @%s: ", tweet->username);
+          cx_font_render (font, username, ix, iy, 0.0f, 0, &colname);
           
-          // collect visible link elems for ui input check - funky hack works!
-          if (isLink && (g_visLinkCount < TWITTER_TWEET_VIS_LINK_MAX_COUNT))
+          float rx = ix + cx_font_get_text_width (font, username);
+          
+          char tickerTweetText [256];
+          for (cxu32 j = 0; j < tickerTweet.elemCount; ++j)
           {
-            //if ((rx >= 0.0f) && (rx <= g_uicontext->canvasWidth))
+            cxu32 loc = tickerTweet.elems [j].loc;
+            const char *s = &tickerTweet.buffer [loc];
+            cx_sprintf (tickerTweetText, 256, "%s ", s);
+            
+            bool isLink = (tickerTweet.elems [j].type == TWITTER_TICKER_TWEET_ELEM_TYPE_LINK);
+            const cx_colour *col = isLink ? &collink : &coltweet;
+            
+            cx_font_render (font, tickerTweetText, rx, iy, 0.0f, 0, col);
+            
+            // collect visible link elems for ui input check - funky hack works just ok!
+            if (isLink && (g_visLinkCount < TWITTER_TWEET_VIS_LINK_MAX_COUNT))
             {
               unsigned int idx = g_visLinkCount++;
               CX_ASSERT (idx < TWITTER_TWEET_VIS_LINK_MAX_COUNT);
@@ -1114,24 +1119,23 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
               g_visLinks [idx].w = cx_font_get_text_width (font, s);
               cx_strcpy (g_visLinks [idx].url, TWITTER_TWEET_VIS_LINK_URL_BUF_SIZE, s);
             }
+            
+            rx = rx + cx_font_get_text_width (font, tickerTweetText);
           }
-          
-          rx = rx + cx_font_get_text_width (font, tickerTweetText);
         }
-      }
 #else
-      if (tweet->username && tweet->text)
-      {
-        char namehandle [32];
-        cx_sprintf (namehandle, 32, "@%s: ", tweet->username);
-        cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
-        
-        float x2 = x + cx_font_get_text_width (font, namehandle);
-        
-        char tweetText [256] = {0};
-        cx_str_html_unescape (tweetText, 256, tweet->text);
-        cx_font_render (font, tweetText, x2, y, 0.0f, 0, &coltweet);
-      }
+        if (tweet->username && tweet->text)
+        {
+          char namehandle [32];
+          cx_sprintf (namehandle, 32, "@%s: ", tweet->username);
+          cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
+          
+          float x2 = x + cx_font_get_text_width (font, namehandle);
+          
+          char tweetText [256] = {0};
+          cx_str_html_unescape (tweetText, 256, tweet->text);
+          cx_font_render (font, tweetText, x2, y, 0.0f, 0, &coltweet);
+        }
 #endif
       }
       
@@ -1293,11 +1297,11 @@ static void ui_ctrlr_music_create (void)
 {
   memset (&g_uimusic, 0, sizeof (g_uimusic));
     
-  g_uimusic.iconNote = cx_texture_create_from_file ("data/images/ui/mnote-16z.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_uimusic.iconPlay = cx_texture_create_from_file ("data/images/ui/play-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_uimusic.iconPause = cx_texture_create_from_file ("data/images/ui/pause-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_uimusic.iconPrev = cx_texture_create_from_file ("data/images/ui/prev-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
-  g_uimusic.iconQueue = cx_texture_create_from_file ("data/images/ui/eject-12z.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_uimusic.iconNote = cx_texture_create_from_file ("data/images/ui/mnote-16z.pvr", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  g_uimusic.iconPlay = cx_texture_create_from_file ("data/images/ui/play-12z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  g_uimusic.iconPause = cx_texture_create_from_file ("data/images/ui/pause-12z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  g_uimusic.iconPrev = cx_texture_create_from_file ("data/images/ui/prev-12z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  g_uimusic.iconQueue = cx_texture_create_from_file ("data/images/ui/eject-12z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   
   audio_music_notification_register (ui_ctrlr_music_notification_callback);
   
@@ -1798,7 +1802,7 @@ static void ui_ctrlr_settings_create (void)
   
   g_uisettings.button = custom;
   g_uisettings.button->userdata = (void *) 0xffff;
-  g_uisettings.icon = cx_texture_create_from_file ("data/images/ui/gears-18.png", CX_FILE_STORAGE_BASE_RESOURCE);
+  g_uisettings.icon = cx_texture_create_from_file ("data/images/ui/gears-18.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   
   ui_ctrlr_settings_position_setup ();
 }

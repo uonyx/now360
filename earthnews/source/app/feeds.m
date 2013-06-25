@@ -156,11 +156,15 @@ void feeds_init (void)
   
   for (int i = 0; i < NUM_WEATHER_CONDITION_CODES; ++i)
   {
+#if 1 // use png textures
     cx_sprintf (weatherFilename, 512, "data/images/weather/a%d.png", i);
+#else
+    cx_sprintf (weatherFilename, 512, "data/images/weather/a%d.pvr", i);
+#endif
     
     const char *f = weatherFilename;
     
-    g_weatherIcons [i] = cx_texture_create_from_file (f, CX_FILE_STORAGE_BASE_RESOURCE);
+    g_weatherIcons [i] = cx_texture_create_from_file (f, CX_FILE_STORAGE_BASE_RESOURCE, false);
     
     CX_ASSERT (g_weatherIcons [i]);
   }
@@ -558,7 +562,7 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
            
            [request setAccount:[accounts lastObject]];
            
-           [request performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *response, NSError *error)
+           [request performRequestWithHandler:^(NSData *responseData, NSHTTPURLResponse *response, NSError *err)
             {
               if (responseData && (responseData.length > 0))
               {

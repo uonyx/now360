@@ -73,7 +73,7 @@ cx_font *cx_font_create (const char *filename, cxf32 fontSize)
                           CX_FONT_MAX_NUM_FONT_CHARS, 
                           fontImpl->ttfCharData);
     
-    cx_texture_gpu_init (fontImpl->texture);
+    cx_texture_gpu_init (fontImpl->texture, true);
     cx_texture_data_destroy (fontImpl->texture);
 
     font = (cx_font *) cx_malloc (sizeof (cx_font));

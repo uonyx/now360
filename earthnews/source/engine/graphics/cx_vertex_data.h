@@ -88,7 +88,7 @@ typedef struct cx_vertex_data_soa cx_vertex_data;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_vertex_data *cx_vertex_data_create_sphere (cxf32 radius, cxu16 numSlices, cxu16 numParallels, cx_vertex_format format);
+cx_vertex_data *cx_vertex_data_create_sphere (cxf32 radius, cxu16 slices, cx_vertex_format format);
 
 void cx_vertex_data_destroy (cx_vertex_data *vertexData);
 

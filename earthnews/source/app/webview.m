@@ -67,11 +67,7 @@ bool webview_init (const void *rootvc)
   
   g_rootViewCtrlr = (UIViewController *) rootvc;
   
-  g_webviewCtrlr = [[CXWebViewController alloc] initWithAddress:@"" title:nil];
-  
-  g_popover = [[UIPopoverController alloc] initWithContentViewController:[g_webviewCtrlr navigationController]];
-
-  [g_popover setPopoverBackgroundViewClass:[CXWebViewPopoverBackground class]];
+  //g_webviewCtrlr = [[CXWebViewController alloc] initWithAddress:@"" title:nil];
   
   return g_initialised;
 }
@@ -125,7 +121,17 @@ void webview_show (const char *url, const char *title)
     g_webviewCtrlr = [[CXWebViewController alloc] initWithAddress:objcURL title:objcTitle];
     [g_webviewCtrlr setContentSizeForViewInPopover:CGSizeMake (width, height)];
     
-    [g_popover setContentViewController:[g_webviewCtrlr navigationController]];
+    if (!g_popover)
+    {
+      g_popover = [[UIPopoverController alloc] initWithContentViewController:[g_webviewCtrlr navigationController]];
+      
+      [g_popover setPopoverBackgroundViewClass:[CXWebViewPopoverBackground class]];
+    }
+    else
+    {
+      [g_popover setContentViewController:[g_webviewCtrlr navigationController]];
+    }
+    
     [g_popover setPopoverContentSize:CGSizeMake(width, height)];
     [g_popover setPassthroughViews:[NSArray arrayWithObject:parentView]];
     [g_popover presentPopoverFromRect:CGRectMake(posX, posY, width, height) inView:parentView permittedArrowDirections:0 animated:YES];

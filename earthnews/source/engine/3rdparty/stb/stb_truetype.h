@@ -838,13 +838,13 @@ int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codepoint)
       // now decrement to bias correctly to find smallest
       search -= 2;
       while (entrySelector) {
-         stbtt_uint16 start, end;
+         stbtt_uint16 start1, end1;
          searchRange >>= 1;
-         start = ttUSHORT(data + search + 2 + segcount*2 + 2);
-         end = ttUSHORT(data + search + 2);
-         start = ttUSHORT(data + search + searchRange*2 + segcount*2 + 2);
-         end = ttUSHORT(data + search + searchRange*2);
-         if (unicode_codepoint > end)
+         start1 = ttUSHORT(data + search + 2 + segcount*2 + 2);
+         end1 = ttUSHORT(data + search + 2);
+         start1 = ttUSHORT(data + search + searchRange*2 + segcount*2 + 2);
+         end1 = ttUSHORT(data + search + searchRange*2);
+         if (unicode_codepoint > end1)
             search += searchRange*2;
          --entrySelector;
       }
@@ -1899,17 +1899,20 @@ static int stbtt__matchpair(stbtt_uint8 *fc, stbtt_uint32 nm, stbtt_uint8 *name,
             stbtt_int32 matchlen = stbtt__CompareUTF8toUTF16_bigendian_prefix(name, nlen, fc+stringOffset+off,slen);
             if (matchlen >= 0) {
                // check for target_id+1 immediately following, with same encoding & language
-               if (i+1 < count && ttUSHORT(fc+loc+12+6) == next_id && ttUSHORT(fc+loc+12) == platform && ttUSHORT(fc+loc+12+2) == encoding && ttUSHORT(fc+loc+12+4) == language) {
-                  stbtt_int32 slen = ttUSHORT(fc+loc+12+8), off = ttUSHORT(fc+loc+12+10);
-                  if (slen == 0) {
+               if (i+1 < count && ttUSHORT(fc+loc+12+6) == next_id && ttUSHORT(fc+loc+12) == platform && ttUSHORT(fc+loc+12+2) == encoding && ttUSHORT(fc+loc+12+4) == language)
+               {
+                  stbtt_int32 slen1 = ttUSHORT(fc+loc+12+8), off1 = ttUSHORT(fc+loc+12+10);
+                  if (slen1 == 0) {
                      if (matchlen == nlen)
                         return 1;
                   } else if (matchlen < nlen && name[matchlen] == ' ') {
                      ++matchlen;
-                     if (stbtt_CompareUTF8toUTF16_bigendian((char*) (name+matchlen), nlen-matchlen, (char*)(fc+stringOffset+off),slen))
+                     if (stbtt_CompareUTF8toUTF16_bigendian((char*) (name+matchlen), nlen-matchlen, (char*)(fc+stringOffset+off1),slen1))
                         return 1;
                   }
-               } else {
+               }
+               else
+               {
                   // if nothing immediately following
                   if (matchlen == nlen)
                      return 1;

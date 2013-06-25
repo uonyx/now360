@@ -29,6 +29,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+typedef struct cx_gdi_extension_info
+{
+  const char *name;
+  bool supported;
+} cx_gdi_extension_info;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static bool g_initialised = false;
 
 static cxi32 g_screenWidth = 0;
@@ -42,6 +52,17 @@ static GLenum g_openglBlendModes [CX_NUM_GDI_BLEND_MODES] =
 };
 
 static cx_mat4x4 g_transforms [CX_NUM_GDI_TRANSFORMS];
+static cx_gdi_extension_info g_extensionInfoArray [CX_NUM_GDI_EXTENSIONS] =
+{
+  { "GL_IMG_texture_compression_pvrtc", false }, //CX_GDI_EXTENSION_PVRTC,
+  { "GL_ARB_texture_non_power_of_two", false }   //CX_GDI_EXTENSION_NPOT,
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void cx_gdi_init_extensions (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,8 +78,8 @@ bool _cx_gdi_init (void *ctx, cxi32 w, cxi32 h)
   cx_mat4x4_identity (&g_transforms [CX_GDI_TRANSFORM_P]);
   cx_mat4x4_identity (&g_transforms [CX_GDI_TRANSFORM_MV]);
   cx_mat4x4_identity (&g_transforms [CX_GDI_TRANSFORM_MVP]);
-  
-  cx_gdi_print_info ();
+
+  cx_gdi_init_extensions ();
   cx_gdi_set_screen_dimensions (w, h);
 
   g_initialised = true;
@@ -88,6 +109,8 @@ bool _cx_gdi_deinit (void)
 
 void cx_gdi_shared_context_create (void)
 {
+  CX_ASSERT (g_initialised);
+  
   cx_native_eagl_context_add ();
 }
 
@@ -97,7 +120,23 @@ void cx_gdi_shared_context_create (void)
 
 void cx_gdi_shared_context_destroy (void)
 {
+  CX_ASSERT (g_initialised);
+  
   cx_native_eagl_context_remove ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool cx_gdi_get_extension_supported (cx_gdi_extension extension)
+{
+  CX_ASSERT (g_initialised);
+  CX_ASSERT ((extension > CX_GDI_EXTENSION_INVALID) && (extension < CX_NUM_GDI_EXTENSIONS));
+  
+  bool supported = g_extensionInfoArray [extension].supported;
+  
+  return supported;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -308,7 +347,7 @@ void _cx_gdi_assert_no_errors (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_gdi_print_info (void)
+static void cx_gdi_init_extensions (void)
 {
 #if CX_GDI_DEBUG_LOG_ENABLED
   struct graphics_info
@@ -355,7 +394,7 @@ void cx_gdi_print_info (void)
     GLint *compressedFormats = (GLint *) cx_malloc (sizeof (GLint) * numCompressedTextures);
     glGetIntegerv (GL_COMPRESSED_TEXTURE_FORMATS, compressedFormats);
     
-    CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "Supported compressed texture formats:");
+    CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi: Supported compressed texture formats:");
     
     for (int j = 0; j < numCompressedTextures; ++j)
     {
@@ -365,11 +404,11 @@ void cx_gdi_print_info (void)
       
       switch (format)
       {
-        case GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:  { formatStr = "GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG"; break; }
-        case GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:  { formatStr = "GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG"; break; }
-        case GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG: { formatStr = "GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG"; break; }
-        case GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG: { formatStr = "GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG"; break; }
-        default:                                  { formatStr = "GL_COMPRESSED_FORMAT_UNKNOWN!"; break; }
+        case GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:  { formatStr = "cx_gdi: GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG"; break; }
+        case GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:  { formatStr = "cx_gdi: GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG"; break; }
+        case GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG: { formatStr = "cx_gdi: GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG"; break; }
+        case GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG: { formatStr = "cx_gdi: GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG"; break; }
+        default:                                  { formatStr = "cx_gdi: GL_COMPRESSED_FORMAT_UNKNOWN!"; break; }
       }
                                                     
       CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", formatStr);
@@ -378,13 +417,48 @@ void cx_gdi_print_info (void)
     
     cx_free (compressedFormats);
   }
+#endif
+  
   
   // supported extensions
   
   const char *supportedExtensions = (const char *) glGetString (GL_EXTENSIONS);
   CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", supportedExtensions);
   CX_REF_UNUSED (supportedExtensions);
-#endif
+  
+  char *extensionsArray [512];
+  
+  cxu32 numExtensions = cx_str_explode (extensionsArray, 512, supportedExtensions, ' ');
+  
+  if (numExtensions > 0)
+  {
+    cxu32 queryCount = sizeof (g_extensionInfoArray) / sizeof (cx_gdi_extension_info);
+    
+    for (cxu32 q = 0; q < queryCount; ++q)
+    {
+      const char *qry = g_extensionInfoArray [q].name;
+      CX_ASSERT (qry);
+      
+      for (cxu32 e = 0; e < numExtensions; ++e)
+      {
+        const char *ext = extensionsArray [e];
+        CX_ASSERT (ext);
+      
+        CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi: supported extension: %s", ext);
+        
+        if (strcmp (ext, qry) == 0)
+        {
+          g_extensionInfoArray [q].supported = true;
+        }
+      }
+    }
+    
+    
+    for (cxu32 e = 0; e < numExtensions; ++e)
+    {
+      cx_free (extensionsArray [e]);
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

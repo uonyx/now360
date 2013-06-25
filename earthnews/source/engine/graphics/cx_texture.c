@@ -20,6 +20,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define CX_PVRTC_LEGACY 0
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static cxu8 g_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] =
 {
   1, /* CX_TEXTURE_FORMAT_ALPHA */
@@ -27,6 +33,8 @@ static cxu8 g_texture_format_pixel_size [CX_TEXTURE_NUM_FORMATS] =
   2, /* CX_TEXTURE_FORMAT_LUMINANCE_ALPHA */
   3, /* CX_TEXTURE_FORMAT_RGB */
   4, /* CX_TEXTURE_FORMAT_RGBA */
+  4, /* CX_TEXTURE_FORMAT_RGB_PVR_4BPP */
+  2, /* CX_TEXTURE_FORMAT_RGB_PVR_2BPP */
   4, /* CX_TEXTURE_FORMAT_RGBA_PVR_4BPP */
   2, /* CX_TEXTURE_FORMAT_RGBA_PVR_2BPP */
 };
@@ -86,6 +94,7 @@ static cx_texture *cx_texture_load_img_xxx (const char *filename, cx_file_storag
     
     texture->imageData [0] = texture->data;
     texture->imageDataSize [0] = texture->dataSize;
+    texture->mipmapCount = 1;
   }
   
   return texture;
@@ -95,56 +104,60 @@ static cx_texture *cx_texture_load_img_xxx (const char *filename, cx_file_storag
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if CX_PVRTC_LEGACY
+
 #define PVR_TEXTURE_FLAG_TYPE_MASK  0xff
 static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storage_base storage)
 {
+  CX_ASSERT (filename);
+  
   cx_texture *texture = NULL;
-
+  
   cxu8 *data = NULL;
   cxu32 dataSize = 0;
   
   if (cx_file_storage_load_contents (&data, &dataSize, filename, storage))
-  {    
+  {
     enum
     {
       kPVRTextureFlagTypePVRTC_2 = 24,
       kPVRTextureFlagTypePVRTC_4
     };
     
-    typedef struct _PVRTexHeader
+    typedef struct pvr_header_v2_t
     {
-      uint32_t headerLength;
-      uint32_t height;
-      uint32_t width;
-      uint32_t numMipmaps;
-      uint32_t flags;
-      uint32_t dataLength;
-      uint32_t bpp;
-      uint32_t bitmaskRed;
-      uint32_t bitmaskGreen;
-      uint32_t bitmaskBlue;
-      uint32_t bitmaskAlpha;
-      uint32_t pvrTag;
-      uint32_t numSurfs;
-    } PVRTexHeader;
+      cxu32 headerLength;
+      cxu32 height;
+      cxu32 width;
+      cxu32 numMipmaps;
+      cxu32 flags;
+      cxu32 dataLength;
+      cxu32 bpp;
+      cxu32 bitmaskRed;
+      cxu32 bitmaskGreen;
+      cxu32 bitmaskBlue;
+      cxu32 bitmaskAlpha;
+      cxu32 pvrTag;
+      cxu32 numSurfs;
+    } pvr_header_v2_t;
     
     char PVRTexIdentifier [4] = "PVR!";
     
-    PVRTexHeader *header = (PVRTexHeader *) data;
+    pvr_header_v2_t *pvrHeader = (pvr_header_v2_t *) data;
     
     bool validPVR = true;
     
-    if (PVRTexIdentifier[0] != (((header->pvrTag) >>  0) & 0xff) ||
-        PVRTexIdentifier[1] != (((header->pvrTag) >>  8) & 0xff) ||
-        PVRTexIdentifier[2] != (((header->pvrTag) >> 16) & 0xff) ||
-        PVRTexIdentifier[3] != (((header->pvrTag) >> 24) & 0xff))
+    if (PVRTexIdentifier[0] != (((pvrHeader->pvrTag) >>  0) & 0xff) ||
+        PVRTexIdentifier[1] != (((pvrHeader->pvrTag) >>  8) & 0xff) ||
+        PVRTexIdentifier[2] != (((pvrHeader->pvrTag) >> 16) & 0xff) ||
+        PVRTexIdentifier[3] != (((pvrHeader->pvrTag) >> 24) & 0xff))
     {
       validPVR = false;
     }
     
     if (validPVR)
     {
-      cxu32 formatFlags = (header->flags) & PVR_TEXTURE_FLAG_TYPE_MASK;
+      cxu32 formatFlags = (pvrHeader->flags) & PVR_TEXTURE_FLAG_TYPE_MASK;
       CX_REF_UNUSED (formatFlags);
       CX_ASSERT ((formatFlags == kPVRTextureFlagTypePVRTC_4 || formatFlags == kPVRTextureFlagTypePVRTC_2));
       
@@ -154,69 +167,315 @@ static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storag
       texture->data       = data;
       texture->dataSize   = dataSize;
       texture->compressed = 1;
-      texture->mipmapCount = (header->numMipmaps);
-      texture->width = (header->width);
-      texture->height = (header->height);
+      texture->mipmapCount = (pvrHeader->numMipmaps) + 1; // plus base
+      texture->width = (pvrHeader->width);
+      texture->height = (pvrHeader->height);
       texture->npot = (!cx_util_is_power_of_2 (texture->width)) || (!cx_util_is_power_of_2 (texture->height));
       texture->format = (formatFlags == kPVRTextureFlagTypePVRTC_4) ? CX_TEXTURE_FORMAT_RGBA_PVR_4BPP : CX_TEXTURE_FORMAT_RGBA_PVR_2BPP;
       
-      bool hasAlpha = (header->bitmaskAlpha) > 0;
+      bool hasAlpha = (pvrHeader->bitmaskAlpha) > 0;
       CX_REF_UNUSED (hasAlpha);
       
-      cxu8 *bytes = texture->data + sizeof (PVRTexHeader);
+      cxu8 *bytes = texture->data + sizeof (pvr_header_v2_t);
       
-      cxu32 c = 0;
+      cxu32 mc = 0;
       cxu32 w = texture->width;
       cxu32 h = texture->height;
-
-      cxu32 bpp = 4;
-      cxu32 dataLength = 0, dataOffset = 0, dataSize = 0;
-      cxu32 blockSize = 0, widthBlocks = 0, heightBlocks = 0;
       
-      dataLength = (header->dataLength);
+      cxu32 dataOffset = 0;
+      cxu32 dataLength = (pvrHeader->dataLength);
       
       // Calculate the data size for each texture level and respect the minimum number of blocks
       while (dataOffset < dataLength)
       {
+        cxu32 bpp = 4;
+        cxu32 blockSize = 0, widthBlocks = 0, heightBlocks = 0;
+        
         if (formatFlags == kPVRTextureFlagTypePVRTC_4)
         {
           blockSize = 4 * 4; // Pixel by pixel block size for 4bpp
-          widthBlocks = texture->width / 4;
-          heightBlocks = texture->height / 4;
+          widthBlocks = w / 4;
+          heightBlocks = h / 4;
           bpp = 4;
         }
         else
         {
           blockSize = 8 * 4; // Pixel by pixel block size for 2bpp
-          widthBlocks = texture->width / 8;
-          heightBlocks = texture->height / 4;
+          widthBlocks = w / 8;
+          heightBlocks = h / 4;
           bpp = 2;
         }
         
         widthBlocks = cx_max (widthBlocks, 2);
         heightBlocks = cx_max (heightBlocks, 2);
         
-        dataSize = widthBlocks * heightBlocks * ((blockSize  * bpp) / 8);
-      
-        texture->imageData [c] = bytes + dataOffset;
-        texture->imageDataSize [c++] = dataSize;
+        cxu32 msize = widthBlocks * heightBlocks * ((blockSize  * bpp) / 8);
         
-        dataOffset += dataSize;
+        texture->imageData [mc] = bytes + dataOffset;
+        texture->imageDataSize [mc++] = msize;
+        
+        dataOffset += msize;
         
         w = cx_max (w >> 1, 1);
         h = cx_max (h >> 1, 1);
       }
       
-      CX_ASSERT (texture->mipmapCount == (c - 1));
+      CX_ASSERT (texture->mipmapCount == mc);
     }
     else
     {
       cx_free (data);
     }
   }
-
+  
   return texture;
 }
+
+#else
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define PVRT_IDENTIFIER       0x50565203
+#define PVRT_IDENTIFIER_REV   0x03525650
+static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storage_base storage)
+{
+  CX_ASSERT (filename);
+  
+  cx_texture *texture = NULL;
+  
+  cxu8 *data = NULL;
+  cxu32 dataSize = 0;
+  
+  if (cx_file_storage_load_contents (&data, &dataSize, filename, storage))
+  {
+    typedef struct pvr_header_v3_t
+    {
+      cxu32 version;
+      cxu32 flags;
+      cxu64 pixelFormat;
+      cxu32 colourSpace;
+      cxu32 channelType;
+      cxu32 height;
+      cxu32 width;
+      cxu32 depth;
+      cxu32 numSurfaces;
+      cxu32 numFaces;
+      cxu32 mipmapCount;
+      cxu32 metadataSize;
+    } pvr_header_t;
+    
+    typedef enum pvr_header_v3_channel_type_t
+    {
+      PVR_CHANNEL_TYPE_UNSIGNED_BYTE_NORM,
+      PVR_CHANNEL_TYPE_SIGNED_BYTE_NORM,
+      PVR_CHANNEL_TYPE_UNSIGNED_BYTE,
+      PVR_CHANNEL_TYPE_SIGNED_BYTE,
+      PVR_CHANNEL_TYPE_UNSIGNED_SHORT_NORM,
+      PVR_CHANNEL_TYPE_SIGNED_SHORT_NORM,
+      PVR_CHANNEL_TYPE_UNSIGNED_SHORT,
+      PVR_CHANNEL_TYPE_SIGNED_SHORT,
+      PVR_CHANNEL_TYPE_UNSIGNED_INT_NORM,
+      PVR_CHANNEL_TYPE_SIGNED_INT_NORM,
+      PVR_CHANNEL_TYPE_UNSIGNED_INT,
+      PVR_CHANNEL_TYPE_SIGNED_INT,
+      PVR_CHANNEL_TYPE_FLOAT,
+    } pvr_header_v3_channel_type_t;
+    
+    typedef enum pvr_header_v3_pixel_format_type_t
+    {
+      PVR_PIXEL_FORMAT_PVRTC_2BPP_RGB,
+      PVR_PIXEL_FORMAT_PVRTC_2BPP_RGBA,
+      PVR_PIXEL_FORMAT_PVRTC_4BPP_RGB,
+      PVR_PIXEL_FORMAT_PVRTC_4BPP_RGBA,
+      PVR_PIXEL_FORMAT_PVRTC_II_2BPP,
+      PVR_PIXEL_FORMAT_PVRTC_II_4BPP,
+      PVR_PIXEL_FORMAT_ETC1,
+    } pvr_header_v3_pixel_format_type_t;
+    
+    pvr_header_t *pvrHeader = (pvr_header_t *) data;
+    
+    if ((pvrHeader->version == PVRT_IDENTIFIER) || (pvrHeader->version == PVRT_IDENTIFIER_REV))
+    {
+      bool pvrtcHardwareSupport = cx_gdi_get_extension_supported (CX_GDI_EXTENSION_PVRTC);
+      CX_FATAL_ASSERT (pvrtcHardwareSupport);
+      CX_REF_UNUSED (pvrtcHardwareSupport);
+      
+      cxu32 headerSize = sizeof (pvr_header_t) + pvrHeader->metadataSize;
+      cxu32 textureDataSize = dataSize - headerSize;
+      cxu8 *textureData = data + headerSize;
+      
+      bool byteswap = !(pvrHeader->version == PVRT_IDENTIFIER_REV);
+    
+      if (byteswap)
+      {
+        pvrHeader->version      = cx_util_byte_swap_u32 (pvrHeader->version);
+        pvrHeader->flags        = cx_util_byte_swap_u32 (pvrHeader->flags);
+        pvrHeader->pixelFormat  = cx_util_byte_swap_u64 (pvrHeader->pixelFormat);
+        pvrHeader->colourSpace  = cx_util_byte_swap_u32 (pvrHeader->colourSpace);
+        pvrHeader->channelType  = cx_util_byte_swap_u32 (pvrHeader->channelType);
+        pvrHeader->height       = cx_util_byte_swap_u32 (pvrHeader->height);
+        pvrHeader->width        = cx_util_byte_swap_u32 (pvrHeader->width);
+        pvrHeader->depth        = cx_util_byte_swap_u32 (pvrHeader->depth);
+        pvrHeader->numSurfaces  = cx_util_byte_swap_u32 (pvrHeader->numSurfaces);
+        pvrHeader->numFaces     = cx_util_byte_swap_u32 (pvrHeader->numFaces);
+        pvrHeader->mipmapCount  = cx_util_byte_swap_u32 (pvrHeader->mipmapCount);
+        pvrHeader->metadataSize = cx_util_byte_swap_u32 (pvrHeader->metadataSize);
+
+        cxu32 channelblockSize = 0;
+        
+        switch (pvrHeader->channelType)
+        {
+          case PVR_CHANNEL_TYPE_UNSIGNED_BYTE_NORM:
+          case PVR_CHANNEL_TYPE_SIGNED_BYTE_NORM:
+          case PVR_CHANNEL_TYPE_UNSIGNED_BYTE:
+          case PVR_CHANNEL_TYPE_SIGNED_BYTE:
+          {
+            channelblockSize = 1;
+            break;
+          }
+            
+          case PVR_CHANNEL_TYPE_UNSIGNED_SHORT_NORM:
+          case PVR_CHANNEL_TYPE_SIGNED_SHORT_NORM:
+          case PVR_CHANNEL_TYPE_UNSIGNED_SHORT:
+          case PVR_CHANNEL_TYPE_SIGNED_SHORT:
+          {
+            channelblockSize = 2;
+            break;
+          }
+            
+          case PVR_CHANNEL_TYPE_UNSIGNED_INT_NORM:
+          case PVR_CHANNEL_TYPE_SIGNED_INT_NORM:
+          case PVR_CHANNEL_TYPE_UNSIGNED_INT:
+          case PVR_CHANNEL_TYPE_SIGNED_INT:
+          case PVR_CHANNEL_TYPE_FLOAT:
+          {
+            channelblockSize = 4;
+            break;
+          }
+            
+          default:
+          {
+            CX_FATAL_ERROR ("Unsupported channelType");
+            break;
+          }
+        }
+        
+        if (channelblockSize > 1)
+        {
+          for (cxu32 i = 0; i < textureDataSize; i += channelblockSize)
+          {
+            cx_util_byte_swap (textureData + i, channelblockSize);
+          }
+        }
+      }
+    
+      CX_ASSERT (pvrHeader->numSurfaces <= 1);
+      CX_ASSERT (pvrHeader->numFaces <= 1);
+
+      cxu32 bpp = 0;
+      cxu32 minw = 0, minh = 0, mind = 0;
+      
+      switch (pvrHeader->pixelFormat)
+      {
+        case PVR_PIXEL_FORMAT_PVRTC_2BPP_RGB:
+        case PVR_PIXEL_FORMAT_PVRTC_2BPP_RGBA:
+        {
+          bpp = 2;
+          minw = 16; minh = 8; mind = 1;
+          break;
+        }
+          
+        case PVR_PIXEL_FORMAT_PVRTC_4BPP_RGB:
+        case PVR_PIXEL_FORMAT_PVRTC_4BPP_RGBA:
+        {
+          bpp = 4;
+          minw = 8; minh = 8; mind = 1;
+          break;
+        }
+          
+        case PVR_PIXEL_FORMAT_PVRTC_II_2BPP:
+        {
+          bpp = 2;
+          minw = 8; minh = 4; mind = 1;
+          break;
+        }
+          
+        case PVR_PIXEL_FORMAT_PVRTC_II_4BPP:
+        {
+          bpp = 4;
+          minw = 4; minh = 4; mind = 1;
+          break;
+        }
+          
+        default:
+        {
+          CX_FATAL_ERROR ("Unsupported pixelFormat");
+          break;
+        }
+      }
+      
+      texture = (cx_texture *) cx_malloc (sizeof (cx_texture));
+      memset (texture, 0, sizeof (cx_texture));
+      
+      cxu32 totalImageDataSize = 0;
+      
+      for (cxu32 m = 0, mc = pvrHeader->mipmapCount; m < mc; ++m)
+      {
+        cxu32 mw = cx_max (1, pvrHeader->width >> m);
+        cxu32 mh = cx_max (1, pvrHeader->height >> m);
+        cxu32 md = cx_max (1, pvrHeader->depth >> m);
+        
+#if 0
+        mw = mw + (minw - (mw % minw));
+        mh = mh + (minh - (mh % minh));
+        md = md + (mind - (md % mind));
+#else
+        mw = mw + (-mw % minw);
+        mh = mh + (-mh % minh);
+        md = md + (-md % mind);
+#endif
+        cxu32 msize = bpp * mw * mh * md;
+        
+        msize = (msize / 8) * pvrHeader->numSurfaces * pvrHeader->numFaces;
+  
+        texture->imageData [m] = textureData + totalImageDataSize;
+        texture->imageDataSize [m] = msize;
+        
+        totalImageDataSize += msize;
+      }
+      
+      CX_ASSERT (totalImageDataSize == textureDataSize);
+      
+      texture->data         = data;
+      texture->dataSize     = dataSize;
+      texture->compressed   = 1;
+      texture->mipmapCount  = pvrHeader->mipmapCount;
+      texture->width        = pvrHeader->width;
+      texture->height       = pvrHeader->height;
+      texture->npot         = (!cx_util_is_power_of_2 (texture->width)) || (!cx_util_is_power_of_2 (texture->height));
+      
+      switch (pvrHeader->pixelFormat)
+      {
+        case PVR_PIXEL_FORMAT_PVRTC_2BPP_RGB:   { texture->format  = CX_TEXTURE_FORMAT_RGB_PVR_2BPP; break; }
+        case PVR_PIXEL_FORMAT_PVRTC_2BPP_RGBA:  { texture->format  = CX_TEXTURE_FORMAT_RGBA_PVR_2BPP; break; }
+        case PVR_PIXEL_FORMAT_PVRTC_4BPP_RGB:   { texture->format  = CX_TEXTURE_FORMAT_RGB_PVR_2BPP; break; }
+        case PVR_PIXEL_FORMAT_PVRTC_4BPP_RGBA:  { texture->format  = CX_TEXTURE_FORMAT_RGBA_PVR_4BPP; break; }
+        case PVR_PIXEL_FORMAT_PVRTC_II_2BPP:    { texture->format  = CX_TEXTURE_FORMAT_RGB_PVR_2BPP; break; }
+        case PVR_PIXEL_FORMAT_PVRTC_II_4BPP:    { texture->format  = CX_TEXTURE_FORMAT_RGB_PVR_4BPP; break; }
+        default:                                { CX_FATAL_ERROR ("Unsupported pixelFormat"); break; }
+      }      
+    }
+    else
+    {
+      cx_free (data);
+    }
+  }
+  
+  return texture;
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,6 +497,7 @@ cx_texture *cx_texture_create (cxu32 width, cxu32 height, cx_texture_format form
   texture->data              = (cxu8 *) cx_malloc (texture->dataSize);
   texture->imageData [0]     = texture->data;
   texture->imageDataSize [0] = texture->dataSize;
+  texture->mipmapCount       = 1;
   texture->npot              = (!cx_util_is_power_of_2 (width)) || (!cx_util_is_power_of_2 (height));
   
   return texture;
@@ -247,7 +507,7 @@ cx_texture *cx_texture_create (cxu32 width, cxu32 height, cx_texture_format form
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_texture *cx_texture_create_from_file (const char *filename, cx_file_storage_base storage)
+cx_texture *cx_texture_create_from_file (const char *filename, cx_file_storage_base storage, bool genMipmaps)
 {
   CX_ASSERT (filename);
   
@@ -260,7 +520,7 @@ cx_texture *cx_texture_create_from_file (const char *filename, cx_file_storage_b
   
   if (texture)
   {
-    cx_texture_gpu_init (texture);
+    cx_texture_gpu_init (texture, genMipmaps);
     cx_texture_data_destroy (texture);
   }
 
@@ -302,18 +562,24 @@ void cx_texture_destroy (cx_texture *texture)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_texture_gpu_init (cx_texture *texture)
+void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps)
 {
   CX_ASSERT (texture);
   CX_ASSERT (texture->data);
   CX_ASSERT (texture->id == 0);
   CX_ASSERT (texture->width > 0);
   CX_ASSERT (texture->height > 0);
+  CX_ASSERT (texture->mipmapCount <= CX_TEXTURE_MAX_MIPMAP_COUNT);
   
   CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->width  [%d]", texture->width);
   CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->height [%d]", texture->height);
   CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->format [%d]", texture->format);
   CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->compressed [%s]", texture->compressed ? "true" : "false");
+  
+  if (texture->compressed)
+  {
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+  }
   
   glGenTextures (1, &texture->id);
   cx_gdi_assert_no_errors ();
@@ -321,16 +587,19 @@ void cx_texture_gpu_init (cx_texture *texture)
   glBindTexture (GL_TEXTURE_2D, texture->id);
   cx_gdi_assert_no_errors ();
 
-  cxu32 imageCount = texture->mipmapCount + 1;
-  CX_ASSERT (imageCount <= CX_TEXTURE_MAX_MIPMAP_COUNT);
+  if (!genMipmaps)
+  {
+    // override mipmap count
+    texture->mipmapCount = 1;
+  }
   
-  cxu32 w = texture->width;
-  cxu32 h = texture->height;
-  
-  for (cxu32 i = 0; i < imageCount; ++i)
+  for (cxu32 i = 0, c = texture->mipmapCount; i < c; ++i)
   {
     cxu8 *imageData = texture->imageData [i];
     cxu32 imageDataSize = texture->imageDataSize [i];
+    
+    cxu32 w = cx_max (1, texture->width >> i);
+    cxu32 h = cx_max (1, texture->height >> i);
     
     CX_ASSERT (imageData);
     CX_ASSERT (imageDataSize > 0);
@@ -348,6 +617,18 @@ void cx_texture_gpu_init (cx_texture *texture)
         case CX_TEXTURE_FORMAT_RGBA_PVR_2BPP:
         {
           glCompressedTexImage2D (GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG, w, h, 0, imageDataSize, imageData);
+          break;
+        }
+          
+        case CX_TEXTURE_FORMAT_RGB_PVR_4BPP:
+        {
+          glCompressedTexImage2D (GL_TEXTURE_2D, i, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG, w, h, 0, imageDataSize, imageData);
+          break;
+        }
+          
+        case CX_TEXTURE_FORMAT_RGB_PVR_2BPP:
+        {
+          glCompressedTexImage2D (GL_TEXTURE_2D, i, GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG, w, h, 0, imageDataSize, imageData);
           break;
         }
           
@@ -399,28 +680,14 @@ void cx_texture_gpu_init (cx_texture *texture)
         }
       }
     }
-    cx_gdi_assert_no_errors ();
     
-    w = cx_max (w >> 1, 1);
-    h = cx_max (h >> 1, 1);
+    cx_gdi_assert_no_errors ();
   }
   
-  bool npotExtensionSupported = false; // may be supported via gl extensions
-  
-  if (!npotExtensionSupported && texture->npot)
+  if (texture->mipmapCount > 1)
   {
-    // set up filters
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    cx_gdi_assert_no_errors ();
+    CX_ASSERT (!texture->npot);
     
-    // set up coordinate wrapping
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    cx_gdi_assert_no_errors ();
-  }
-  else if (texture->mipmapCount > 0)
-  {
     // set up filters
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -429,23 +696,56 @@ void cx_texture_gpu_init (cx_texture *texture)
     // set up coordinate wrapping
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    cx_gdi_assert_no_errors ();
   }
-  else
+  else // mipmapCount == 1
   {
-    // auto-generate mipmaps
-    glGenerateMipmap (GL_TEXTURE_2D);
-    cx_gdi_assert_no_errors ();
+    CX_ASSERT (texture->mipmapCount == 1);
     
-    // set up filters
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    cx_gdi_assert_no_errors ();
+    bool npotExtensionSupported = cx_gdi_get_extension_supported (CX_GDI_EXTENSION_NPOT);
     
-    // set up coordinate wrapping
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    cx_gdi_assert_no_errors ();
+    if (texture->npot && !npotExtensionSupported)
+    {
+      // set up filters
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      cx_gdi_assert_no_errors ();
+      
+      // set up coordinate wrapping
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      cx_gdi_assert_no_errors ();
+    }
+    else
+    {
+      if (genMipmaps)
+      {
+        // auto-generate mipmaps
+        glGenerateMipmap (GL_TEXTURE_2D);
+        cx_gdi_assert_no_errors ();
+      
+        // set up filters
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //, GL_LINEAR);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        cx_gdi_assert_no_errors ();
+        
+        // set up coordinate wrapping
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        cx_gdi_assert_no_errors ();
+      }
+      else
+      {
+        // set up filters
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        cx_gdi_assert_no_errors ();
+        
+        // set up coordinate wrapping
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        cx_gdi_assert_no_errors ();
+      }
+    }
   }
 }
 
