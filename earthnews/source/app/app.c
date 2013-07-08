@@ -109,13 +109,13 @@ static cx_thread_monitor  g_ldThreadMonitor;
 static bool               g_ldThreadInProgress = false;
 static cx_texture        *g_ldImages [2];
 
-static cx_texture        *g_logoTex = NULL;
 static anim_t             g_logoFade;
+static cx_texture        *g_logoTex = NULL;
+static cx_texture        *g_glowTex = NULL;
 
 static cx_date            g_dateUTC;
 static cx_date            g_dateLocal;
-
-static cx_texture        *g_glowTex = NULL;
+static float              g_dateUpdateTimer = 0.0f;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -514,14 +514,20 @@ static int app_get_clock_str (const cx_date *date, int offset, char *dst, int ds
   int mn = date->calendar.tm_min;
   
   int hour = (hr + offsetHr);
-  hour = (hour < 0) ? (hour + 24) : (hour % 24);
-  
   int min = (mn + offsetMin);
+  
   if (min > 60)
   {
     hour = hour + 1;
     min = min % 60;
   }
+  else if (min < 0)
+  {
+    hour = hour - 1;
+    min = 60 - min;
+  }
+  
+  hour = (hour < 0) ? (hour + 24) : (hour % 24);
   
 #if 1
   int sc = date->calendar.tm_sec;
@@ -536,6 +542,7 @@ static int app_get_clock_str (const cx_date *date, int offset, char *dst, int ds
   CX_REF_UNUSED (nhr);
 #endif
   
+
   CX_ASSERT (hour >= 0);
   CX_ASSERT (min >= 0);
   
@@ -565,7 +572,7 @@ static void app_load_init (void)
   
   g_logoTex = cx_texture_create_from_file ("data/images/loading/now360-500px.png", b, false);
   g_ldImages [0] = cx_texture_create_from_file ("data/images/loading/uonyechi.com.png", b, false);
-  g_ldImages [1] = cx_texture_create_from_file ("data/images/loading/credits.png", b, false);
+  g_ldImages [1] = cx_texture_create_from_file ("data/images/loading/credits-amble20vx.png", b, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -897,12 +904,8 @@ static void app_update_camera (void)
   float rotx = fmodf (g_rotAngle.x, 360.0f);
   float roty = cx_clamp (g_rotAngle.y, -89.9f, 89.9f);
   
-  //g_rotAngle.x = fmodf (g_rotAngle.x, 360.0f);
-  //g_rotAngle.y = cx_clamp (g_rotAngle.y, -89.9f, 89.9f);
 #endif
   
-  //float rotx = g_rotAngle.x;
-  //float roty = g_rotAngle.y;
   
 #else // OLD_ROTATION
   
@@ -937,8 +940,6 @@ static void app_update_camera (void)
   
 #endif // END_ROTATION
   
-#if 1
-  
   cx_vec4_set (&g_camera->position, 0.0f, 0.0f, -2.0f, 1.0f);
   cx_vec4_set (&g_camera->target, 0.0f, 0.0f, 0.0f, 1.0f);
   
@@ -968,33 +969,6 @@ static void app_update_camera (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_P, &projmatrix);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &viewmatrix);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
-  
-#else
-  
-  cx_mat4x4 proj;
-  cx_mat4x4_perspective (&proj, cx_rad (65.0f), aspectRatio, CAMERA_PROJECTION_PERSPECTIVE_NEAR, CAMERA_PROJECTION_PERSPECTIVE_FAR);
-  
-  cx_mat4x4 translation;
-  cx_mat4x4_translation (&translation, 0.0f, 0.0f, -5.0f);
-  
-  cx_mat4x4 rotation;
-  cx_mat4x4 rotx, roty;
-  cx_mat4x4_rotation_axis_x (&rotx, cx_rad (g_rotationAngleX));
-  cx_mat4x4_rotation_axis_y (&roty, cx_rad (g_rotationAngleY));
-  cx_mat4x4_mul (&rotation, &rotx, &roty);
-
-  cx_mat4x4 transformation;
-  cx_mat4x4_mul (&transformation, &translation, &rotation);
-  
-  cx_mat4x4 mvpMatrix;
-  cx_mat4x4_mul (&mvpMatrix, &proj, &transformation);
-  
-  cx_gdi_set_transform (CX_GDI_TRANSFORM_P, &proj);
-  cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &transformation);
-  cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &mvpMatrix);
-  
-#endif
-  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1003,18 +977,16 @@ static void app_update_camera (void)
 
 static void app_update_clocks (void)
 {
-  static float updateTimer = CLOCK_UPDATE_INTERVAL_SECONDS;
-  
   float deltaTime = (float) cx_system_time_get_delta_time ();
 
-  updateTimer -= deltaTime;
+  g_dateUpdateTimer -= deltaTime;
   
-  if (updateTimer <= 0.0f)
+  if (g_dateUpdateTimer <= 0.0f)
   {
     cx_time_set_date (&g_dateUTC, CX_TIME_ZONE_UTC);
     cx_time_set_date (&g_dateLocal, CX_TIME_ZONE_LOCAL);
     
-    updateTimer = CLOCK_UPDATE_INTERVAL_SECONDS;
+    g_dateUpdateTimer = CLOCK_UPDATE_INTERVAL_SECONDS;
   }
 }
 
@@ -1551,10 +1523,6 @@ static void app_render_2d (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &view);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
-#if 0
-  util_render_fps ();
-#endif
-  
   util_status_bar_render ();
   
   //////////////
@@ -1736,8 +1704,10 @@ static void app_render_2d_earth (void)
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_enable_z_write (true);
   
-  const char unit [2] = {'C', 'F'};
+  bool drawClock = settings_get_show_clock ();
   int unitType = settings_get_temperature_unit ();
+  
+  const char unit [2] = {'C', 'F'};
   char tempUnit [3] = { 176, unit [unitType], 0 };
   const cx_date *date = &g_dateUTC;
   
@@ -1803,7 +1773,15 @@ static void app_render_2d_earth (void)
         
         cx_sprintf (tempStr, 32, "%d", tempValue);
         cx_strcat (tempStr, 32, tempUnit);
-        cx_sprintf (text2, 64, "%s / %s", tempStr, timeStr);
+        
+        if (drawClock)
+        {
+          cx_sprintf (text2, 64, "%s / %s", tempStr, timeStr);
+        }
+        else
+        {
+          cx_sprintf (text2, 64, "%s", tempStr);
+        }
         
         if (feeds_weather_data_cc_valid (feed))
         {
@@ -1853,7 +1831,10 @@ static void app_render_2d_earth (void)
         // time
         //////////////////
         
-        cx_font_render (sfont, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
+        if (drawClock)
+        {
+          cx_font_render (sfont, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
+        }
       }
     }
   }
@@ -2112,13 +2093,6 @@ static void app_input_touch_began (float x, float y)
     g_rotTouchEnd.y = y * sh * 0.25f;
 #endif
   }
-
-  /*
-  g_rotTouchBegin.x = x * sw * 0.25f;
-  g_rotTouchBegin.y = y * sh * 0.25f;
-  g_rotTouchEnd.x = x * sw * 0.25f;
-  g_rotTouchEnd.y = y * sh * 0.25f;
-  */
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2143,8 +2117,6 @@ static void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
   float rotAddy = diffy * 90.0f;
   
 #if 1
-  //g_rotTarget.x = g_rotAngle.x + rotAddx;
-  //g_rotTarget.y = g_rotAngle.y + rotAddy;
   g_rotTarget.x += rotAddx;
   g_rotTarget.y += rotAddy;
 #else
@@ -2169,9 +2141,6 @@ static void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
 static void app_input_touch_ended (float x, float y)
 {
 #if NEW_ROTATION
-  
-  CX_DEBUGLOG_CONSOLE (1, "ex = %.4f, ey = %.4f", x, y);
-  CX_DEBUGLOG_CONSOLE (1, "END-AFEQRTEY4534545RGDFGQ34TQQ4545411");
   
 #else
   //g_rotTouchEnd.x = x * sw * 0.25f;
@@ -2230,7 +2199,6 @@ static int app_input_touch_earth (float screenX, float screenY, float screenWidt
     bool display = settings_get_city_display (i);
     
     if (display)
-      //if (s_earth->data->display [i])
     {
 #if CX_DEBUG
       const char *city = earth_data_get_city (i);
@@ -2301,6 +2269,9 @@ void app_on_background (void)
 void app_on_foreground (void)
 {
   metrics_event_log (METRICS_EVENT_APP_FG, NULL);
+  
+  // update clocks
+  g_dateUpdateTimer = 0.0f;
   
   // trigger weather update
   g_weatherRefresh = true;

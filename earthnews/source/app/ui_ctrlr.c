@@ -678,7 +678,6 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   else
   {
     feed_news_item_t *entry = (feed_news_item_t *) custom->userdata;
-    
     title = entry ? entry->title : NULL;
   }
 
@@ -694,7 +693,8 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   //colour.a *= opacity;
   
   cx_colour colour;
-  cx_colour_set (&colour, 1.0f, 0.8f, 0.55f, opacity);
+  //cx_colour_set (&colour, 1.0f, 0.8f, 0.55f, opacity);
+  cx_colour_set (&colour, 1.0f, 0.83f, 0.0f, opacity); // cyber yellow
   
 #if UI_CTRLR_DEBUG
   float x2 = x1 + custom->intr.dimension.x;
@@ -747,7 +747,7 @@ static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *po
   
   if (moreNewsButton == custom)
   {
-    title = "More news...";
+    title = "More news";
     link = (const char *) custom->userdata;
   }
   else
@@ -814,7 +814,7 @@ static void ui_ctrlr_twitter_create (void)
   ui_widget_set_colour (g_uitwitter.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
   
   cx_colour viewCol;
-  cx_colour_set (&viewCol, 0.3f, 0.3f, 0.3f, 0.4f);
+  cx_colour_set (&viewCol, 0.2f, 0.2f, 0.2f, 0.4f);
   
   g_uitwitter.view = ui_custom_create (g_uicontext, UI_ID_TWITTER_VIEW);
   ui_custom_set_callbacks (g_uitwitter.view, &twViewCallbacks);
@@ -925,7 +925,6 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
   const char *start = dest->buffer;
   const char *curr = dest->buffer;
   
-
   cxu32 i = 0;
   cxu32 currLoc = 0;
   
@@ -1043,7 +1042,8 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     cx_colour_set (&colname, 0.0f, 0.6745f, 0.9294f, opacity);
     cx_colour coltweet = *cx_colour_white ();
     cx_colour collink;
-    cx_colour_set (&collink, 1.0f, 0.8f, 0.55f, opacity);
+    //cx_colour_set (&collink, 1.0f, 0.8f, 0.55f, opacity);
+    cx_colour_set (&collink, 1.0f, 0.83f, 0.0f, opacity); // cyber yellow
     
     colbg.a *= opacity;
     coltweet.a *= opacity;
@@ -1353,7 +1353,7 @@ static void ui_ctrlr_music_create (void)
   g_uimusic.toggle->userdata = (void *) 0xffff; // using userdata as toggle switch -_-
   
   cx_colour viewCol;
-  cx_colour_set (&viewCol, 0.3f, 0.3f, 0.3f, 0.4f);
+  cx_colour_set (&viewCol, 0.2f, 0.2f, 0.2f, 0.4f);
   
   ui_custom_set_callbacks (g_uimusic.view, &cbview);
   ui_widget_set_colour (g_uimusic.view, UI_WIDGET_STATE_NORMAL, &viewCol);

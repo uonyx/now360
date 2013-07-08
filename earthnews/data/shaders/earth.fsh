@@ -41,7 +41,7 @@ void main (void)
 {
   vec4 nightMat = texture2D (u_nightMap, v_texcoord) * 0.5;
   vec4 diffuseMat = texture2D (u_diffuseMap, v_texcoord);
-  //vec4 specularMat = texture2D (u_glossMap, v_texcoord);
+  vec4 specularMat = texture2D (u_glossMap, v_texcoord);
   
   // get tangent space normal from normal maps
   vec3 nVec = texture2D (u_normalMap, v_texcoord).xyz;
@@ -71,7 +71,7 @@ void main (void)
   //vec4 diffuse = (d * u_diffuseLight * diffuseMat) + (n * u_diffuseLight * nightMat);
   vec4 diffuse = ((d * diffuseMat) + (n * nightMat)) * u_diffuseLight;
   
-#if 0 // specular
+#if 1 // specular
   // phong model
   vec3 r = (c_two * dotp * nVec) - lVec;
   float s = pow (max (dot (vVec, r), c_zero), u_shininess);

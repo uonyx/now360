@@ -1,743 +1,1068 @@
-[
-    {
-        "name": "Abidjan",
-        "news": "Ivory Coast",
-        "weather": "1339615",
-        "timezone": {
-            "utcoffset": 0,
-            "name": "Africa/Abidjan"
-        },
-        "location": {
-            "latitude": 5.3363889,
-            "longitude": -4.0266667
-        }
-    },
-    {
-        "name": "Accra",
-        "news": "Ghana",
-        "weather": "1326075",
-        "timezone": {
-            "utcoffset": 0,
-            "name": "Africa/Accra"
-        },
-        "location": {
-            "latitude": 5.555717,
-            "longitude": -0.196306
-        }
-    },
-    {
-        "name": "Algiers",
-        "news": "Algeria",
-        "weather": "1253079",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Africa/Algiers"
-        },
-        "location": {
-            "latitude": 36.752887,
-            "longitude": 3.042048
-        }
-    },
-    {
-        "name": "Amsterdam",
-        "news": "Netherlands",
-        "weather": "727232",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Amsterdam"
-        },
-        "location": {
-            "latitude": 52.3738007,
-            "longitude": 4.8909347
-        }
-    },
-    {
-        "name": "Athens",
-        "news": "Greece",
-        "weather": "946738",
-        "timezone": {
-            "utcoffset": 7200,
-            "name": "Europe/Athens"
-        },
-        "location": {
-            "latitude": 37.97918,
-            "longitude": 23.716647
-        }
-    },
-    {
-        "name": "Auckland",
-        "news": "New Zealand",
-        "weather": "2348079",
-        "timezone": {
-            "utcoffset": 43200,
-            "name": "Pacific/Auckland"
-        },
-        "location": {
-            "latitude": -36.8512004,
-            "longitude": 174.7662164
-        }
-    },
-    {
-        "name": "Bangkok",
-        "news": "Thailand",
-        "weather": "1225448",
-        "timezone": {
-            "utcoffset": 25200,
-            "name": "Asia/Bangkok"
-        },
-        "location": {
-            "latitude": 13.7505633,
-            "longitude": 100.5030358
-        }
-    },
-    {
-        "name": "Beijing",
-        "news": "Beijing",
-        "weather": "2151330",
-        "timezone": {
-            "utcoffset": 28800,
-            "name": ""
-        },
-        "location": {
-            "latitude": 39.904667,
-            "longitude": 116.408198
-        }
-    },
-    {
-        "name": "Belgrade",
-        "news": "Serbia",
-        "weather": "532697",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Belgrade"
-        },
-        "location": {
-            "latitude": 44.802416,
-            "longitude": 20.465601
-        }
-    },
-    {
-        "name": "Berlin",
-        "news": "Germany",
-        "weather": "638242",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Berlin"
-        },
-        "location": {
-            "latitude": 52.5234051,
-            "longitude": 13.4113999
-        }
-    },
-    {
-        "name": "Bucharest",
-        "news": "Romania",
-        "weather": "868274",
-        "timezone": {
-            "utcoffset": 7200,
-            "name": "Europe/Bucharest"
-        },
-        "location": {
-            "latitude": 44.430481,
-            "longitude": 26.12298
-        }
-    },
-    {
-        "name": "Budapest",
-        "news": "Hungary",
-        "weather": "804365",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Budapest"
-        },
-        "location": {
-            "latitude": 47.4984056,
-            "longitude": 19.0407578
-        }
-    },
-    {
-        "name": "Buenos Aires",
-        "news": "Argentina",
-        "weather": "468739",
-        "timezone": {
-            "utcoffset": -10800,
-            "name": "America/Argentina/Buenos_Aires"
-        },
-        "location": {
-            "latitude": -34.6084175,
-            "longitude": -58.3731613
-        }
-    },
-    {
-        "name": "Cairo",
-        "news": "Egypt",
-        "weather": "1521894",
-        "timezone": {
-            "utcoffset": 7200,
-            "name": "Africa/Cairo"
-        },
-        "location": {
-            "latitude": 30.064742,
-            "longitude": 31.249509
-        }
-    },
-    {
-        "name": "Chicago",
-        "news": "Chicago",
-        "weather": "2379574",
-        "timezone": {
-            "utcoffset": -21600,
-            "name": "America/Chicago"
-        },
-        "location": {
-            "latitude": 41.859218,
-            "longitude": -87.638099
-        }
-    },
-    {
-        "name": "Copenhagen",
-        "news": "Denmark",
-        "weather": "554890",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Copenhagen"
-        },
-        "location": {
-            "latitude": 55.6762944,
-            "longitude": 12.5681157
-        }
-    },
-    {
-        "name": "Dakar",
-        "news": "Senegal",
-        "weather": "1411986",
-        "timezone": {
-            "utcoffset": 0,
-            "name": "Africa/Dakar"
-        },
-        "location": {
-            "latitude": 14.75,
-            "longitude": -17.3333333
-        }
-    },
-    {
-        "name": "Denver",
-        "news": "Denver, Colorado",
-        "weather": "2391279",
-        "timezone": {
-            "utcoffset": -25200,
-            "name": "America/Denver"
-        },
-        "location": {
-            "latitude": 39.7392,
-            "longitude": -104.9842
-        }
-    },
-    {
-        "name": "Detroit",
-        "news": "Detroit",
-        "weather": "2391585",
-        "timezone": {
-            "utcoffset": -18000,
-            "name": "America/Detroit"
-        },
-        "location": {
-            "latitude": 42.3314,
-            "longitude": -83.0458
-        }
-    },
-    {
-        "name": "Dhaka",
-        "news": "Bangladesh",
-        "weather": "1915035",
-        "timezone": {
-            "utcoffset": 21600,
-            "name": "Asia/Dhaka"
-        },
-        "location": {
-            "latitude": 23.709921,
-            "longitude": 90.407143
-        }
-    },
-    {
-        "name": "Dubai",
-        "news": "United Arab Emirates",
-        "weather": "1940345",
-        "timezone": {
-            "utcoffset": 14400,
-            "name": "Asia/Dubai"
-        },
-        "location": {
-            "latitude": 25.2722929,
-            "longitude": 55.316197
-        }
-    },
-    {
-        "name": "Dublin",
-        "news": "Ireland",
-        "weather": "560743",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Dublin"
-        },
-        "location": {
-            "latitude": 53.344104,
-            "longitude": -6.2674937
-        }
-    },
-    {
-        "name": "Helsinki",
-        "news": "Finland",
-        "weather": "565346",
-        "timezone": {
-            "utcoffset": 7200,
-            "name": "Europe/Helsinki"
-        },
-        "location": {
-            "latitude": 60.1690059,
-            "longitude": 24.9606128
-        }
-    },
-    {
-        "name": "Hong Kong",
-        "news": "Hong Kong",
-        "weather": "2165352",
-        "timezone": {
-            "utcoffset": 28800,
-            "name": ""
-        },
-        "location": {
-            "latitude": 22.3,
-            "longitude": 114.166667
-        }
-    },
-    {
-        "name": "Indianapolis",
-        "news": "Indianapolis",
-        "weather": "2427032",
-        "timezone": {
-            "utcoffset": -18000,
-            "name": "America/Indiana/Indianapolis"
-        },
-        "location": {
-            "latitude": 39.7683,
-            "longitude": -86.1581
-        }
-    },
-    {
-        "name": "Istanbul",
-        "news": "Turkey",
-        "weather": "2344116",
-        "timezone": {
-            "utcoffset": 7200,
-            "name": "Europe/Istanbul"
-        },
-        "location": {
-            "latitude": 41.012379,
-            "longitude": 28.975926
-        }
-    },
-    {
-        "name": "Jakarta",
-        "news": "Indonesia",
-        "weather": "1047378",
-        "timezone": {
-            "utcoffset": 25200,
-            "name": "Asia/Jakarta"
-        },
-        "location": {
-            "latitude": -6.211544,
-            "longitude": 106.845172
-        }
-    },
-    {
-        "name": "Jerusalem",
-        "news": "Israel",
-        "weather": "1968222",
-        "timezone": {
-            "utcoffset": 7200,
-            "name": "Asia/Jerusalem"
-        },
-        "location": {
-            "latitude": 31.7833,
-            "longitude": 35.2167
-        }
-    },
-    {
-        "name": "Johannesburg",
-        "news": "South Africa",
-        "weather": "1582504",
-        "timezone": {
-            "utcoffset": 7200,
-            "name": "Africa/Johannesburg"
-        },
-        "location": {
-            "latitude": -26.201452,
-            "longitude": 28.045488
-        }
-    },
-    {
-        "name": "Karachi",
-        "news": "Pakistan",
-        "weather": "2211096",
-        "timezone": {
-            "utcoffset": 18000,
-            "name": "Asia/Karachi"
-        },
-        "location": {
-            "latitude": 24.893379,
-            "longitude": 67.028061
-        }
-    },
-    {
-        "name": "Kinshasa",
-        "news": "DR Congo",
-        "weather": "1290062",
-        "timezone": {
-            "utcoffset": 0,
-            "name": "Africa/Kinshasa"
-        },
-        "location": {
-            "latitude": -4.320836,
-            "longitude": 15.29866
-        }
-    },
-    {
-        "name": "Kuala Lumpur",
-        "news": "Malaysia",
-        "weather": "1154781",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Asia/Kuala_Lumpur"
-        },
-        "location": {
-            "latitude": 3.1268661,
-            "longitude": 101.6879791
-        }
-    },
-    {
-        "name": "Lagos",
-        "news": "Nigeria",
-        "weather": "1398823",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Africa/Lagos"
-        },
-        "location": {
-            "latitude": 6.441158,
-            "longitude": 3.417877
-        }
-    },
-    {
-        "name": "Lima",
-        "news": "Peru",
-        "weather": "418440",
-        "timezone": {
-            "utcoffset": -18000,
-            "name": "America/Lima"
-        },
-        "location": {
-            "latitude": -12.093084,
-            "longitude": -77.046491
-        }
-    },
-    {
-        "name": "London",
-        "news": "England",
-        "weather": "44418",
-        "timezone": {
-            "utcoffset": 0,
-            "name": "Europe/London"
-        },
-        "location": {
-            "latitude": 51.5001524,
-            "longitude": -0.1262362
-        }
-    },
-    {
-        "name": "Los Angeles",
-        "news": "Los Angeles",
-        "weather": "2442047",
-        "timezone": {
-            "utcoffset": -28800,
-            "name": "America/Los_Angeles"
-        },
-        "location": {
-            "latitude": 34.0522342,
-            "longitude": -118.2436849
-        }
-    },
-    {
-        "name": "Madrid",
-        "news": "Spain",
-        "weather": "766273",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Madrid"
-        },
-        "location": {
-            "latitude": 40.4166909,
-            "longitude": -3.7003454
-        }
-    },
-    {
-        "name": "Manila",
-        "news": "Philippines",
-        "weather": "1199477",
-        "timezone": {
-            "utcoffset": 28800,
-            "name": "Asia/Manila"
-        },
-        "location": {
-            "latitude": 14.6010326,
-            "longitude": 120.9761599
-        }
-    },
-    {
-        "name": "Mexico City",
-        "news": "Mexico",
-        "weather": "116545",
-        "timezone": {
-            "utcoffset": -21600,
-            "name": "America/Mexico_City"
-        },
-        "location": {
-            "latitude": 19.4270499,
-            "longitude": -99.1275711
-        }
-    },
- {
- "name": "Montevideo",
- "news": "Uruguay",
- "weather": "468052",
- "timezone": {
- "utcoffset": -10800,
- "name": "America/Montevideo"
- },
- "location": {
- "latitude": -34.8667,
- "longitude": -56.1667
- }
- },
-    {
-        "name": "Montreal",
-        "news": "Montreal",
-        "weather": "3534",
-        "timezone": {
-            "utcoffset": -18000,
-            "name": "America/Montreal"
-        },
-        "location": {
-            "latitude": 45.545447,
-            "longitude": -73.639076
-        }
-    },
-    {
-        "name": "Moscow",
-        "news": "Moscow",
-        "weather": "2122265",
-        "timezone": {
-            "utcoffset": 14400,
-            "name": "Europe/Moscow"
-        },
-        "location": {
-            "latitude": 55.755786,
-            "longitude": 37.617633
-        }
-    },
-    {
-        "name": "Mumbai",
-        "news": "India",
-        "weather": "2295411",
-        "timezone": {
-            "utcoffset": 19800,
-            "name": ""
-        },
-        "location": {
-            "latitude": 19.0177319,
-            "longitude": 72.8560135
-        }
-    },
-    {
-        "name": "Nairobi",
-        "news": "Kenya",
-        "weather": "1528488",
-        "timezone": {
-            "utcoffset": 10800,
-            "name": "Africa/Nairobi"
-        },
-        "location": {
-            "latitude": -1.274359,
-            "longitude": 36.813106
-        }
-    },
-    {
-        "name": "New York",
-        "news": "New york",
-        "weather": "2459115",
-        "timezone": {
-            "utcoffset": -18000,
-            "name": "America/New_York"
-        },
-        "location": {
-            "latitude": 40.7142691,
-            "longitude": -74.0059729
-        }
-    },
-    {
-        "name": "Paris",
-        "news": "France",
-        "weather": "615702",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Paris"
-        },
-        "location": {
-            "latitude": 48.8566667,
-            "longitude": 2.3509871
-        }
-    },
-    {
-        "name": "Rome",
-        "news": "Italy",
-        "weather": "721943",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Rome"
-        },
-        "location": {
-            "latitude": 41.8954656,
-            "longitude": 12.4823243
-        }
-    },
-    {
-        "name": "Seoul",
-        "news": "South Korea",
-        "weather": "1132599",
-        "timezone": {
-            "utcoffset": 32400,
-            "name": "Asia/Seoul"
-        },
-        "location": {
-            "latitude": 37.566535,
-            "longitude": 126.9779692
-        }
-    },
-    {
-        "name": "Sao Paulo",
-        "news": "Brazil",
-        "weather": "455827",
-        "timezone": {
-            "utcoffset": -10800,
-            "name": "America/Sao_Paulo"
-        },
-        "location": {
-            "latitude": -23.5436876,
-            "longitude": -46.636948
-        }
-    },
- {
- "name": "San Jose",
- "news": "Costa Rica",
- "weather": "26809193",
- "timezone": {
- "utcoffset": -21600,
- "name": "America/Costa_Rica"
- },
- "location": {
- "latitude": 9.9247,
- "longitude": -84.0781
- }
- },
-    {
-        "name": "Shanghai",
-        "news": "Shanghai",
-        "weather": "2151849",
-        "timezone": {
-            "utcoffset": 28800,
-            "name": "Asia/Shanghai"
-        },
-        "location": {
-            "latitude": 31.231717,
-            "longitude": 121.475911
-        }
-    },
-    {
-        "name": "Singapore",
-        "news": "Singapore",
-        "weather": "1062617",
-        "timezone": {
-            "utcoffset": 28800,
-            "name": "Asia/Singapore"
-        },
-        "location": {
-            "latitude": 1.355274,
-            "longitude": 103.823154
-        }
-    },
-    {
-        "name": "Stockholm",
-        "news": "Sweden",
-        "weather": "906057",
-        "timezone": {
-            "utcoffset": 3600,
-            "name": "Europe/Stockholm"
-        },
-        "location": {
-            "latitude": 59.3329676,
-            "longitude": 18.0644475
-        }
-    },
-    {
-        "name": "Suva",
-        "news": "Fiji",
-        "weather": "1064103",
-        "timezone": {
-            "utcoffset": 43200,
-            "name": "Pacific/Fiji"
-        },
-        "location": {
-            "latitude": -18.141674,
-            "longitude": 178.441839
-        }
-    },
-    {
-        "name": "Sydney",
-        "news": "Australia",
-        "weather": "1105779",
-        "timezone": {
-            "utcoffset": 36000,
-            "name": "Australia/Sydney"
-        },
-        "location": {
-            "latitude": -33.8775536,
-            "longitude": 151.2159773
-        }
-    },
-    {
-        "name": "Tehran",
-        "news": "Iran",
-        "weather": "2251945",
-        "timezone": {
-            "utcoffset": 12600,
-            "name": "Asia/Tehran"
-        },
-        "location": {
-            "latitude": 35.696216,
-            "longitude": 51.422945
-        }
-    },
-    {
-        "name": "Tokyo",
-        "news": "Japan",
-        "weather": "1118370",
-        "timezone": {
-            "utcoffset": 32400,
-            "name": "Asia/Tokyo"
-        },
-        "location": {
-            "latitude": 35.6894875,
-            "longitude": 139.6917064
-        }
-    }
-]
+ [
+  {
+  "name": "Abidjan",
+  "news": "Abidjan, Ivory Coast",
+  "weather": "1339615",
+  "timezone": {
+  "utcoffset": 0,
+  "name": "Africa/Abidjan"
+  },
+  "location": {
+  "latitude": 5.3363889,
+  "longitude": -4.0266667
+  }
+  },
+  {
+  "name": "Accra",
+  "news": "Accra, Ghana",
+  "weather": "1326075",
+  "timezone": {
+  "utcoffset": 0,
+  "name": "Africa/Accra"
+  },
+  "location": {
+  "latitude": 5.555717,
+  "longitude": -0.196306
+  }
+  },
+  {
+  "name": "Addis Ababa",
+  "news": "Addis Ababa, Ethiopia",
+  "weather": "1313090",
+  "timezone": {
+  "utcoffset": 10800,
+  "name": "Africa/Addis_Ababa"
+  },
+  "location": {
+  "latitude": 9.029464,
+  "longitude": 38.736196
+  }
+  },
+  {
+  "name": "Algiers",
+  "news": "Algiers, Algeria",
+  "weather": "1253079",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Africa/Algiers"
+  },
+  "location": {
+  "latitude": 36.752887,
+  "longitude": 3.042048
+  }
+  },
+  {
+  "name": "Amsterdam",
+  "news": "Amsterdam, Netherlands",
+  "weather": "727232",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Amsterdam"
+  },
+  "location": {
+  "latitude": 52.3738007,
+  "longitude": 4.8909347
+  }
+  },
+  {
+  "name": "Anchorage",
+  "news": "Anchorage, Alaska",
+  "weather": "2354490",
+  "timezone": {
+  "utcoffset": -32400,
+  "name": "America/Anchorage"
+  },
+  "location": {
+  "latitude": 61.1919,
+  "longitude": -149.7621
+  }
+  },
+  {
+  "name": "Antananarivo",
+  "news": "Madagascar",
+  "weather": "1358594",
+  "timezone": {
+  "utcoffset": 10800,
+  "name": "Indian/Antananarivo"
+  },
+  "location": {
+  "latitude": -18.9386,
+  "longitude": 47.5214
+  }
+  },
+  {
+  "name": "Asuncion",
+  "news": "Asuncion, Paraguay",
+  "weather": "379176",
+  "timezone": {
+  "utcoffset": -14400,
+  "name": "America/Asuncion"
+  },
+  "location": {
+  "latitude": -25.2667,
+  "longitude": -57.6667
+  }
+  },
+  {
+  "name": "Athens",
+  "news": "Athens, Greece",
+  "weather": "946738",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Europe/Athens"
+  },
+  "location": {
+  "latitude": 37.97918,
+  "longitude": 23.716647
+  }
+  },
+  {
+  "name": "Auckland",
+  "news": "New Zealand",
+  "weather": "2348079",
+  "timezone": {
+  "utcoffset": 43200,
+  "name": "Pacific/Auckland"
+  },
+  "location": {
+  "latitude": -36.8512004,
+  "longitude": 174.7662164
+  }
+  },
+  {
+  "name": "Baghdad",
+  "news": "Baghdad, Iraq",
+  "weather": "1979455",
+  "timezone": {
+  "utcoffset": 10800,
+  "name": "Asia/Baghdad"
+  },
+  "location": {
+  "latitude": 33.3191,
+  "longitude": 44.392
+  }
+  },
+  {
+  "name": "Bamako",
+  "news": "Bamako, Mali",
+  "weather": "1369729",
+  "timezone": {
+  "utcoffset": 0,
+  "name": "Africa/Bamako"
+  },
+  "location": {
+  "latitude": 12.6458,
+  "longitude": -7.9922
+  }
+  },
+  {
+  "name": "Bangkok",
+  "news": "Bangkok, Thailand",
+  "weather": "1225448",
+  "timezone": {
+  "utcoffset": 25200,
+  "name": "Asia/Bangkok"
+  },
+  "location": {
+  "latitude": 13.7505633,
+  "longitude": 100.5030358
+  }
+  },
+  {
+  "name": "Beijing",
+  "news": "Beijing, China",
+  "weather": "2151330",
+  "timezone": {
+  "utcoffset": 28800,
+  "name": ""
+  },
+  "location": {
+  "latitude": 39.904667,
+  "longitude": 116.408198
+  }
+  },
+  {
+  "name": "Beirut",
+  "news": "Beirut, Lebanon",
+  "weather": "1960307",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Asia/Beirut"
+  },
+  "location": {
+  "latitude": 33.8833,
+  "longitude": 35.5
+  }
+  },
+  {
+  "name": "Belgrade",
+  "news": "Belgrade, Serbia",
+  "weather": "532697",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Belgrade"
+  },
+  "location": {
+  "latitude": 44.802416,
+  "longitude": 20.465601
+  }
+  },
+  {
+  "name": "Berlin",
+  "news": "Berlin, Germany",
+  "weather": "638242",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Berlin"
+  },
+  "location": {
+  "latitude": 52.5234051,
+  "longitude": 13.4113999
+  }
+  },
+  {
+  "name": "Bogota",
+  "news": "Bogota, Colombia",
+  "weather": "368148",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Bogota"
+  },
+  "location": {
+  "latitude": 4.5981,
+  "longitude": -74.0758
+  }
+  },
+  {
+  "name": "Bucharest",
+  "news": "Bucharest, Romania",
+  "weather": "868274",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Europe/Bucharest"
+  },
+  "location": {
+  "latitude": 44.430481,
+  "longitude": 26.12298
+  }
+  },
+  {
+  "name": "Budapest",
+  "news": "Budapest, Hungary",
+  "weather": "804365",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Budapest"
+  },
+  "location": {
+  "latitude": 47.4984056,
+  "longitude": 19.0407578
+  }
+  },
+  {
+  "name": "Buenos Aires",
+  "news": "Buenos Aires, Argentina",
+  "weather": "468739",
+  "timezone": {
+  "utcoffset": -10800,
+  "name": "America/Argentina/Buenos_Aires"
+  },
+  "location": {
+  "latitude": -34.6084175,
+  "longitude": -58.3731613
+  }
+  },
+  {
+  "name": "Cairo",
+  "news": "Cairo, Egypt",
+  "weather": "1521894",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Africa/Cairo"
+  },
+  "location": {
+  "latitude": 30.064742,
+  "longitude": 31.249509
+  }
+  },
+  {
+  "name": "Caracas",
+  "news": "Caracas, Venezuela",
+  "weather": "395269",
+  "timezone": {
+  "utcoffset": -16200,
+  "name": "America/Caracas"
+  },
+  "location": {
+  "latitude": 10.5,
+  "longitude": -66.8992
+  }
+  },
+  {
+  "name": "Casablanca",
+  "news": "Casablanca, Morocco",
+  "weather": "1532755",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Africa/Casablanca"
+  },
+  "location": {
+  "latitude": 33.5992,
+  "longitude": -7.62
+  }
+  },
+  {
+  "name": "Chicago",
+  "news": "Chicago, Illinois",
+  "weather": "2379574",
+  "timezone": {
+  "utcoffset": -21600,
+  "name": "America/Chicago"
+  },
+  "location": {
+  "latitude": 41.859218,
+  "longitude": -87.638099
+  }
+  },
+  {
+  "name": "Copenhagen",
+  "news": "Copenhagen, Denmark",
+  "weather": "554890",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Copenhagen"
+  },
+  "location": {
+  "latitude": 55.6762944,
+  "longitude": 12.5681157
+  }
+  },
+  {
+  "name": "Dakar",
+  "news": "Dakar, Senegal",
+  "weather": "1411986",
+  "timezone": {
+  "utcoffset": 0,
+  "name": "Africa/Dakar"
+  },
+  "location": {
+  "latitude": 14.75,
+  "longitude": -17.3333333
+  }
+  },
+  {
+  "name": "Dar es Salaam",
+  "news": "Dar es Salaam, Tanzania",
+  "weather": "1443415",
+  "timezone": {
+  "utcoffset": 10800,
+  "name": "Africa/Dar_es_Salaam"
+  },
+  "location": {
+  "latitude": -6.8167,
+  "longitude": 39.2839
+  }
+  },
+  {
+  "name": "Denver",
+  "news": "Denver, Colorado",
+  "weather": "2391279",
+  "timezone": {
+  "utcoffset": -25200,
+  "name": "America/Denver"
+  },
+  "location": {
+  "latitude": 39.7392,
+  "longitude": -104.9842
+  }
+  },
+  {
+  "name": "Detroit",
+  "news": "Detroit, Michigan",
+  "weather": "2391585",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Detroit"
+  },
+  "location": {
+  "latitude": 42.3314,
+  "longitude": -83.0458
+  }
+  },
+  {
+  "name": "Dhaka",
+  "news": "Dhaka, Bangladesh",
+  "weather": "1915035",
+  "timezone": {
+  "utcoffset": 21600,
+  "name": "Asia/Dhaka"
+  },
+  "location": {
+  "latitude": 23.709921,
+  "longitude": 90.407143
+  }
+  },
+  {
+  "name": "Dubai",
+  "news": "Dubai, United Arab Emirates",
+  "weather": "1940345",
+  "timezone": {
+  "utcoffset": 14400,
+  "name": "Asia/Dubai"
+  },
+  "location": {
+  "latitude": 25.2722929,
+  "longitude": 55.316197
+  }
+  },
+  {
+  "name": "Dublin",
+  "news": "Dublin, Ireland",
+  "weather": "560743",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Dublin"
+  },
+  "location": {
+  "latitude": 53.344104,
+  "longitude": -6.2674937
+  }
+  },
+  {
+  "name": "Havana",
+  "news": "Havana, Cuba",
+  "weather": "63817",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Havana"
+  },
+  "location": {
+  "latitude": 23.1225,
+  "longitude": -82.3864
+  }
+  },
+  {
+  "name": "Helsinki",
+  "news": "Helsinki, Finland",
+  "weather": "565346",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Europe/Helsinki"
+  },
+  "location": {
+  "latitude": 60.1690059,
+  "longitude": 24.9606128
+  }
+  },
+  {
+  "name": "Hong Kong",
+  "news": "Hong Kong",
+  "weather": "2165352",
+  "timezone": {
+  "utcoffset": 28800,
+  "name": ""
+  },
+  "location": {
+  "latitude": 22.3,
+  "longitude": 114.166667
+  }
+  },
+  {
+  "name": "Indianapolis",
+  "news": "Indianapolis",
+  "weather": "2427032",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Indiana/Indianapolis"
+  },
+  "location": {
+  "latitude": 39.7683,
+  "longitude": -86.1581
+  }
+  },
+  {
+  "name": "Istanbul",
+  "news": "Istanbul, Turkey",
+  "weather": "2344116",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Europe/Istanbul"
+  },
+  "location": {
+  "latitude": 41.012379,
+  "longitude": 28.975926
+  }
+  },
+  {
+  "name": "Jakarta",
+  "news": "Jakarta, Indonesia",
+  "weather": "1047378",
+  "timezone": {
+  "utcoffset": 25200,
+  "name": "Asia/Jakarta"
+  },
+  "location": {
+  "latitude": -6.211544,
+  "longitude": 106.845172
+  }
+  },
+  {
+  "name": "Jerusalem",
+  "news": "Jerusalem, Israel",
+  "weather": "1968222",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Asia/Jerusalem"
+  },
+  "location": {
+  "latitude": 31.7833,
+  "longitude": 35.2167
+  }
+  },
+  {
+  "name": "Johannesburg",
+  "news": "Johannesburg, South Africa",
+  "weather": "1582504",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Africa/Johannesburg"
+  },
+  "location": {
+  "latitude": -26.201452,
+  "longitude": 28.045488
+  }
+  },
+  {
+  "name": "Karachi",
+  "news": "Karachi, Pakistan",
+  "weather": "2211096",
+  "timezone": {
+  "utcoffset": 18000,
+  "name": "Asia/Karachi"
+  },
+  "location": {
+  "latitude": 24.893379,
+  "longitude": 67.028061
+  }
+  },
+  {
+  "name": "Kathmandu",
+  "news": "Nepal",
+  "weather": "2269179",
+  "timezone": {
+  "utcoffset": 20700,
+  "name": "Asia/Kathmandu"
+  },
+  "location": {
+  "latitude": 27.7167,
+  "longitude": 85.3667
+  }
+  },
+  {
+  "name": "Kingston",
+  "news": "Kingston, Jamaica",
+  "weather": "109251",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Jamaica"
+  },
+  "location": {
+  "latitude": 17.9911,
+  "longitude": -76.8036
+  }
+  },
+  {
+  "name": "Kinshasa",
+  "news": "Kinshasa, DR Congo",
+  "weather": "1290062",
+  "timezone": {
+  "utcoffset": 0,
+  "name": "Africa/Kinshasa"
+  },
+  "location": {
+  "latitude": -4.320836,
+  "longitude": 15.29866
+  }
+  },
+  {
+  "name": "Kuala Lumpur",
+  "news": "Kuala Lumpur, Malaysia",
+  "weather": "1154781",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Asia/Kuala_Lumpur"
+  },
+  "location": {
+  "latitude": 3.1268661,
+  "longitude": 101.6879791
+  }
+  },
+  {
+  "name": "Lagos",
+  "news": "Lagos, Nigeria",
+  "weather": "1398823",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Africa/Lagos"
+  },
+  "location": {
+  "latitude": 6.441158,
+  "longitude": 3.417877
+  }
+  },
+  {
+  "name": "Lima",
+  "news": "Lima, Peru",
+  "weather": "418440",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Lima"
+  },
+  "location": {
+  "latitude": -12.093084,
+  "longitude": -77.046491
+  }
+  },
+  {
+  "name": "London",
+  "news": "London, England",
+  "weather": "44418",
+  "timezone": {
+  "utcoffset": 0,
+  "name": "Europe/London"
+  },
+  "location": {
+  "latitude": 51.5001524,
+  "longitude": -0.1262362
+  }
+  },
+  {
+  "name": "Los Angeles",
+  "news": "Los Angeles, California",
+  "weather": "2442047",
+  "timezone": {
+  "utcoffset": -28800,
+  "name": "America/Los_Angeles"
+  },
+  "location": {
+  "latitude": 34.0522342,
+  "longitude": -118.2436849
+  }
+  },
+  {
+  "name": "Louisville",
+  "news": "Louisville, Kentucky",
+  "weather": "2442327",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Kentucky/Louisville"
+  },
+  "location": {
+  "latitude": 38.2542,
+  "longitude": -85.7594
+  }
+  },
+  {
+  "name": "Lusaka",
+  "news": "Lusaka, Zambia",
+  "weather": "1569006",
+  "timezone": {
+  "utcoffset": 7200,
+  "name": "Africa/Lusaka"
+  },
+  "location": {
+  "latitude": -15.4167,
+  "longitude": 28.2833
+  }
+  },
+  {
+  "name": "Madrid",
+  "news": "Madrid, Spain",
+  "weather": "766273",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Madrid"
+  },
+  "location": {
+  "latitude": 40.4166909,
+  "longitude": -3.7003454
+  }
+  },
+  {
+  "name": "Manila",
+  "news": "Manila, Philippines",
+  "weather": "1199477",
+  "timezone": {
+  "utcoffset": 28800,
+  "name": "Asia/Manila"
+  },
+  "location": {
+  "latitude": 14.6010326,
+  "longitude": 120.9761599
+  }
+  },
+  {
+  "name": "Mexico City",
+  "news": "Mexico City, Mexico",
+  "weather": "116545",
+  "timezone": {
+  "utcoffset": -21600,
+  "name": "America/Mexico_City"
+  },
+  "location": {
+  "latitude": 19.4270499,
+  "longitude": -99.1275711
+  }
+  },
+  {
+  "name": "Montevideo",
+  "news": "Montevideo, Uruguay",
+  "weather": "468052",
+  "timezone": {
+  "utcoffset": -10800,
+  "name": "America/Montevideo"
+  },
+  "location": {
+  "latitude": -34.8667,
+  "longitude": -56.1667
+  }
+  },
+  {
+  "name": "Montreal",
+  "news": "Montreal, Canada",
+  "weather": "3534",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/Montreal"
+  },
+  "location": {
+  "latitude": 45.545447,
+  "longitude": -73.639076
+  }
+  },
+  {
+  "name": "Moscow",
+  "news": "Moscow, Russia",
+  "weather": "2122265",
+  "timezone": {
+  "utcoffset": 14400,
+  "name": "Europe/Moscow"
+  },
+  "location": {
+  "latitude": 55.755786,
+  "longitude": 37.617633
+  }
+  },
+  {
+  "name": "Mumbai",
+  "news": "Mumbai, India",
+  "weather": "2295411",
+  "timezone": {
+  "utcoffset": 19800,
+  "name": ""
+  },
+  "location": {
+  "latitude": 19.0177319,
+  "longitude": 72.8560135
+  }
+  },
+  {
+  "name": "Nairobi",
+  "news": "Nairobi, Kenya",
+  "weather": "1528488",
+  "timezone": {
+  "utcoffset": 10800,
+  "name": "Africa/Nairobi"
+  },
+  "location": {
+  "latitude": -1.274359,
+  "longitude": 36.813106
+  }
+  },
+  {
+  "name": "New York",
+  "news": "New York",
+  "weather": "2459115",
+  "timezone": {
+  "utcoffset": -18000,
+  "name": "America/New_York"
+  },
+  "location": {
+  "latitude": 40.7142691,
+  "longitude": -74.0059729
+  }
+  },
+  {
+  "name": "Paramaribo",
+  "news": "Paramaribo, Suriname",
+  "weather": "377227",
+  "timezone": {
+  "utcoffset": -10800,
+  "name": "America/Paramaribo"
+  },
+  "location": {
+  "latitude": 5.8667,
+  "longitude": -55.1667
+  }
+  },
+  {
+  "name": "Paris",
+  "news": "Paris, France",
+  "weather": "615702",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Paris"
+  },
+  "location": {
+  "latitude": 48.8566667,
+  "longitude": 2.3509871
+  }
+  },
+  {
+  "name": "Perth",
+  "news": "Perth, Australia",
+  "weather": "1104983",
+  "timezone": {
+  "utcoffset": 28800,
+  "name": "Australia/Perth"
+  },
+  "location": {
+  "latitude": -31.9554,
+  "longitude": 115.8585
+  }
+  },
+  {
+  "name": "Puerto Rico",
+  "news": "Puerto Rico",
+  "weather": "161685",
+  "timezone": {
+  "utcoffset": -14400,
+  "name": "America/Puerto_Rico"
+  },
+  "location": {
+  "latitude": 18.4517,
+  "longitude": -66.0689
+  }
+  },
+  {
+  "name": "Phoenix",
+  "news": "Phoenix, Arizona",
+  "weather": "2471390",
+  "timezone": {
+  "utcoffset": -25200,
+  "name": "America/Phoenix"
+  },
+  "location": {
+  "latitude": 33.4510979,
+  "longitude": -112.094434
+  }
+  },
+  {
+  "name": "Recife",
+  "news": "Recife, Brazil",
+  "weather": "455824",
+  "timezone": {
+  "utcoffset": -10800,
+  "name": "America/Recife"
+  },
+  "location": {
+  "latitude": -8.0556,
+  "longitude": -34.8911
+  }
+  },
+  {
+  "name": "Rome",
+  "news": "Rome, Italy",
+  "weather": "721943",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Rome"
+  },
+  "location": {
+  "latitude": 41.8954656,
+  "longitude": 12.4823243
+  }
+  },
+  {
+  "name": "Seoul",
+  "news": "Seoul, South Korea",
+  "weather": "1132599",
+  "timezone": {
+  "utcoffset": 32400,
+  "name": "Asia/Seoul"
+  },
+  "location": {
+  "latitude": 37.566535,
+  "longitude": 126.9779692
+  }
+  },
+  {
+  "name": "Sao Paulo",
+  "news": "Sao Paulo, Brazil",
+  "weather": "455827",
+  "timezone": {
+  "utcoffset": -10800,
+  "name": "America/Sao_Paulo"
+  },
+  "location": {
+  "latitude": -23.5436876,
+  "longitude": -46.636948
+  }
+  },
+  {
+  "name": "San Jose",
+  "news": "Costa Rica",
+  "weather": "26809193",
+  "timezone": {
+  "utcoffset": -21600,
+  "name": "America/Costa_Rica"
+  },
+  "location": {
+  "latitude": 9.9247,
+  "longitude": -84.0781
+  }
+  },
+  {
+  "name": "Santiago",
+  "news": "Santiago, Chile",
+  "weather": "349859",
+  "timezone": {
+  "utcoffset": -14400,
+  "name": "America/Santiago"
+  },
+  "location": {
+  "latitude": -33.45,
+  "longitude": -70.6667
+  }
+  },
+  {
+  "name": "Shanghai",
+  "news": "Shanghai, China",
+  "weather": "2151849",
+  "timezone": {
+  "utcoffset": 28800,
+  "name": "Asia/Shanghai"
+  },
+  "location": {
+  "latitude": 31.231717,
+  "longitude": 121.475911
+  }
+  },
+  {
+  "name": "Singapore",
+  "news": "Singapore",
+  "weather": "1062617",
+  "timezone": {
+  "utcoffset": 28800,
+  "name": "Asia/Singapore"
+  },
+  "location": {
+  "latitude": 1.355274,
+  "longitude": 103.823154
+  }
+  },
+  {
+  "name": "Stockholm",
+  "news": "Stockholm, Sweden",
+  "weather": "906057",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Europe/Stockholm"
+  },
+  "location": {
+  "latitude": 59.3329676,
+  "longitude": 18.0644475
+  }
+  },
+  {
+  "name": "Suva",
+  "news": "Fiji",
+  "weather": "1064103",
+  "timezone": {
+  "utcoffset": 43200,
+  "name": "Pacific/Fiji"
+  },
+  "location": {
+  "latitude": -18.141674,
+  "longitude": 178.441839
+  }
+  },
+  {
+  "name": "Sydney",
+  "news": "Sydney, Australia",
+  "weather": "1105779",
+  "timezone": {
+  "utcoffset": 36000,
+  "name": "Australia/Sydney"
+  },
+  "location": {
+  "latitude": -33.8775536,
+  "longitude": 151.2159773
+  }
+  },
+  {
+  "name": "Tehran",
+  "news": "Tehran, Iran",
+  "weather": "2251945",
+  "timezone": {
+  "utcoffset": 12600,
+  "name": "Asia/Tehran"
+  },
+  "location": {
+  "latitude": 35.696216,
+  "longitude": 51.422945
+  }
+  },
+  {
+  "name": "Tripoli",
+  "news": "Tripoli, Libya",
+  "weather": "1353281",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Africa/Tripoli"
+  },
+  "location": {
+  "latitude": 32.9022,
+  "longitude": 13.1858
+  }
+  },
+  {
+  "name": "Tokyo",
+  "news": "Tokyo, Japan",
+  "weather": "1118370",
+  "timezone": {
+  "utcoffset": 32400,
+  "name": "Asia/Tokyo"
+  },
+  "location": {
+  "latitude": 35.6894875,
+  "longitude": 139.6917064
+  }
+  },
+  {
+  "name": "Vancouver",
+  "news": "Vancouver, Canada",
+  "weather": "9807",
+  "timezone": {
+  "utcoffset": -28800,
+  "name": "America/Vancouver"
+  },
+  "location": {
+  "latitude": 49.2505,
+  "longitude": -123.1119
+  }
+  },
+  {
+  "name": "Windhoek",
+  "news": "Windhoek, Namibia",
+  "weather": "1466719",
+  "timezone": {
+  "utcoffset": 3600,
+  "name": "Africa/Windhoek"
+  },
+  "location": {
+  "latitude": -22.57,
+  "longitude": 17.0836
+  }
+  }
+  ]

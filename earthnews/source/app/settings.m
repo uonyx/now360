@@ -154,6 +154,7 @@ bool settings_init (const void *rootvc, const char *filename)
   }
   
   CX_DEBUGLOG_CONSOLE (1 && !init, "settings_init: failed");
+  CX_ASSERT (init);
   
   g_initialised = init;
   
@@ -420,6 +421,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
         
         cityDisplay [i] = on;
       }
+      
       if (g_settings.cityDisplay)
       {
         cx_free (g_settings.cityDisplay);
@@ -714,6 +716,8 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 - (void)viewWillAppear:(BOOL)animated
 {
   [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
+  
+  [self.tableView reloadData];
 }
 
 - (NSInteger) supportedInterfaceOrientations
@@ -814,15 +818,6 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   }
   
   cell.textLabel.text = [NSString stringWithCString:g_rootTableData [idx] encoding:NSUTF8StringEncoding];
-  
-#if 0
-  cell.contentView.backgroundColor = [UIColor clearColor];
-  cell.backgroundColor = [UIColor clearColor];
-  UIView *bgView = [[UIView alloc] init];
-  [[bgView layer] setCornerRadius:10.0f];
-  [bgView setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.25f]];
-  cell.backgroundView = bgView;
-#endif
   
   return cell;
 }

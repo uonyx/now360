@@ -22,6 +22,7 @@
 #define ENABLE_CLOUDS 1
 #define ENABLE_ATMOSPHERE 1
 #define BUMP_MAPPED_CLOUDS 0
+#define DEBUG_EQUINOX_LIGHT 0
 #define DEBUG_FAST_LIGHT_ORBIT (CX_DEBUG && 0)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,7 +40,9 @@ struct earth_visual_t
 {
   float radius;
   int slices;
-  int parallels;
+  
+  bool animClouds;
+  bool highSpec;
   
   cx_mesh *mesh [3];
   cx_texture *nightMap;
@@ -82,7 +85,7 @@ static earth_t *g_earth = NULL;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float longitude, float radius, int slices, int parallels, cx_vec4 *n)
+static void earth_convert_dd_to_world (cx_vec4 *world, cx_vec4 *n, float latitude, float longitude, float radius, int slices)
 {
   // convert lat/long to texture paramter-space (uv coords)
   
@@ -91,7 +94,7 @@ static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float lon
   
   // convert texture coords to sphere slices/parallels coords
   
-  float i = ty * (float) parallels;
+  float i = ty * (float) (slices >> 1); // parallels
   float j = tx * (float) slices;
   
   // convert slices/parallels to world coords
@@ -118,6 +121,20 @@ static void earth_convert_dd_to_world (cx_vec4 *world, float latitude, float lon
     
     cx_vec4_normalize (n);
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static float earth_visual_dump_multiples (float mul, float div)
+{
+  cxf32 val = mul;
+  
+  val -= div * (int) (val / div);
+  val += (val < 0.0f) ? div : 0.0f;
+  
+  return val;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,7 +257,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
             
             float r = radius + (radius * 0.025f); // slightly extend radius (for point sprite rendering)
             
-            earth_convert_dd_to_world (&earthdata->location [i], lat, lon, r, slices, (slices >> 1), &earthdata->normal [i]);
+            earth_convert_dd_to_world (&earthdata->location [i], &earthdata->normal [i], lat, lon, r, slices);
           }
         }
       }
@@ -271,26 +288,97 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   CX_ASSERT (radius > 0.0f);
   CX_ASSERT (slices > 0);
   CX_ASSERT (slices <= ((1 << 16) - 1));
+
+  int month = date->calendar.tm_mon + 1;
   
-  int month = date->calendar.tm_mon + 1;  
-  char diffmap [128];
-  cx_sprintf (diffmap, 128, "data/images/maps/diff-%02d-4096.%s", month, "png");
+  char diffTexPath [64];
+  const char *earthShader = NULL;
+  const char *cloudShader = NULL;
+  const char *specTexPath = NULL;
+  const char *bumpTexPath = NULL;
+  const char *cloudTexPath = NULL;
+  const char *nightTexPath = NULL;
+  
+  bool highSpec = false;
+  bool animClouds = false;
+
+  device_type_t devType = util_get_device_type ();
+  CX_REF_UNUSED (devType);
+
+  switch (devType)
+  {
+    case DEVICE_TYPE_UNKNOWN:
+    case DEVICE_TYPE_IPAD2:
+    {
+      earthShader   = "earth-hi";     highSpec = true;
+      cloudShader   = "clouds-anim";  animClouds = true;
+      specTexPath   = "data/images/earth/maps/spec1-2048.png";
+      bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-4096.png";
+      cloudTexPath  = "data/images/earth/maps/clouds-4096.png";
+      nightTexPath  = "data/images/earth/maps/night1-4096.png";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
+      break;
+    }
+  
+    case DEVICE_TYPE_IPAD3:
+    {
+      earthShader   = "earth-hi";     highSpec = true;
+      cloudShader   = "clouds-anim";  animClouds = true;
+      specTexPath   = "data/images/earth/maps/spec1-2048.png";
+      bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
+      cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
+      nightTexPath  = "data/images/earth/maps/night1-4096.png";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
+      break;
+    }
+      
+    case DEVICE_TYPE_IPAD1:
+    default:
+    {
+      earthShader   = "earth-lo"; highSpec = false;
+      cloudShader   = "clouds";   animClouds = false;
+      specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
+      bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
+      cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
+      nightTexPath  = "data/images/earth/maps/night1-4096.png";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
+      break;
+    }
+  }
+  
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   struct earth_visual_t *visual = (struct earth_visual_t *) cx_malloc (sizeof (struct earth_visual_t));
   
+  visual->slices = slices;
+  visual->radius = radius;
+  visual->animClouds = animClouds;
+  visual->highSpec = highSpec;
+  
 #if NEW_EARTH_SHADER
-  cx_shader *shader       = cx_shader_create ("earth", "data/shaders");
-  cx_material *material   = cx_material_create ("earth");
   
-  cx_texture *specTexture = cx_texture_create_from_file ("data/maps/2048-spec.png", CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_texture *bumpTexture = cx_texture_create_from_file ("data/maps/2048-normal.png", CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_texture *texture     = cx_texture_create_from_file ("data/images/maps/diff-01-4096b.png", CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_shader *shader         = cx_shader_create (earthShader, "data/shaders");
+  cx_material *material     = cx_material_create (earthShader);
   
-  cx_material_set_texture (material, texture, CX_MATERIAL_TEXTURE_DIFFUSE);
+  cx_texture *specTexture   = cx_texture_create_from_file (specTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *cloudTexture  = cx_texture_create_from_file (cloudTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *nightTexture  = cx_texture_create_from_file (nightTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *diffTexture   = cx_texture_create_from_file (diffTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *bumpTexture   = cx_texture_create_from_file (bumpTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  
+  CX_ASSERT (specTexture);
+  CX_ASSERT (bumpTexture);
+  CX_ASSERT (cloudTexture);
+  CX_ASSERT (nightTexture);
+  CX_ASSERT (diffTexture);
+  
+  cx_material_set_texture (material, diffTexture, CX_MATERIAL_TEXTURE_DIFFUSE);
   cx_material_set_texture (material, specTexture, CX_MATERIAL_TEXTURE_SPECULAR);
   cx_material_set_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
   
-  visual->nightMap = cx_texture_create_from_file ("data/images/maps/nightm-01-4096.png", CX_FILE_STORAGE_BASE_RESOURCE, true);
+  visual->nightMap = nightTexture;
+  
+  CX_REF_UNUSED (cloudTexture);
   
 #else
   cx_shader *shader     = cx_shader_create ("mesh", "data/shaders");
@@ -308,31 +396,35 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
   //cx_vertex_data_destroy (sphere);
   //////////////////////////////////////////////////////////////////////////////////////////
-#if ENABLE_CLOUDS
-  cx_shader *shader1     = cx_shader_create ("clouds", "data/shaders");
-  cx_material *material1 = cx_material_create ("clouds");
   
-  cx_texture *cloudImage = cx_texture_create_from_file ("data/maps/2048-clouds.png", CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_material_set_texture (material1, cloudImage, CX_MATERIAL_TEXTURE_DIFFUSE);
+#if NEW_EARTH_SHADER && ENABLE_CLOUDS
+
+  float radius1 = radius + 0.008f;
   
 #if BUMP_MAPPED_CLOUDS
-  cx_texture *cloudBump = cx_texture_create_from_file ("data/maps/2048-normal-clouds.png", CX_FILE_STORAGE_BASE_RESOURCE true);
+  cx_shader *shader1     = cx_shader_create ("clouds-bump", "data/shaders");
+  cx_material *material1 = cx_material_create ("clouds-bump");
+  cx_material_set_texture (material1, cloudTexture, CX_MATERIAL_TEXTURE_DIFFUSE);
+  
+  cx_texture *cloudBump = cx_texture_create_from_file ("data/maps/2048-normal-clouds.png", CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_material_set_texture (material1, cloudBump, CX_MATERIAL_TEXTURE_BUMP);
-#endif
   
-  float radius1 = radius + 0.01f;
-#if BUMP_MAPPED_CLOUDS
-  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 32, CX_VERTEX_FORMAT_PTNTB);
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 36, CX_VERTEX_FORMAT_PTNTB);
 #else
-  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 32, CX_VERTEX_FORMAT_PTN);
+  cx_shader *shader1     = cx_shader_create (cloudShader, "data/shaders");
+  cx_material *material1 = cx_material_create (cloudShader);
+  
+  cx_material_set_texture (material1, cloudTexture, CX_MATERIAL_TEXTURE_DIFFUSE);
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 36, CX_VERTEX_FORMAT_PTN);
 #endif
   
   visual->mesh [1] = cx_mesh_create (sphere1, shader1, material1);
 #endif
   
   //////////////////////////////////////////////////////////////////////////////////////////
-#if ENABLE_ATMOSPHERE
-  float radius2 = radius + 0.02f;
+  
+#if NEW_EARTH_SHADER && ENABLE_ATMOSPHERE
+  float radius2 = radius + 0.010f;
   cx_vertex_data *sphere2 = cx_vertex_data_create_sphere (radius2, 96, CX_VERTEX_FORMAT_PN);
   
   cx_shader *shader2 = cx_shader_create ("atmos", "data/shaders");
@@ -354,6 +446,127 @@ static void earth_visual_get_sun_position (cx_vec4 *position, const cx_date *dat
 {
   CX_ASSERT (position);
   CX_ASSERT (date);
+  
+  // http://en.wikipedia.org/wiki/Position_of_the_Sun
+  
+  ////////////////////////////////////////
+  // ecliptic coordinates
+  ////////////////////////////////////////
+  
+  // calculate julian date
+  
+  int sec = date->calendar.tm_sec;
+  int min = date->calendar.tm_min;
+  int hour = date->calendar.tm_hour;
+  int day = date->calendar.tm_mday;
+  int month = date->calendar.tm_mon + 1;
+  int year = 1900 + date->calendar.tm_year;
+  
+  float s = (float) ((hour * 3600) + (min * 60) + sec);
+  float t = s / 86400.0f;                               // range (0, 1)
+  float jdnOffset = ((t * 2.0f) - 1.0f) * 0.5f;         // range (-0.5, 0.5)
+  
+  int a = (14 - month) / 12;
+  int y = year + 4800 - a;
+  int m = month + (12 * a) - 3;
+  
+  float jdn = (float) (day + (((153 * m) + 2) / 5) + (365 * y) + (y / 4) - (y / 100) + (y / 400) - 32045);
+  
+  // n: number of days since J2000.0
+  float n = (jdn + jdnOffset) - 2451545.0f;
+  
+  // L: mean longitude of the sun
+  float L = 280.460f + (0.9856474f * n);
+  L = earth_visual_dump_multiples (L, 360.0f);
+  
+  // g: mean anomaly of the sun
+  float g = 357.528f + (0.9856003f * n);
+  g = earth_visual_dump_multiples (g, 360.0f);
+  float gRad = cx_rad (g);
+  
+  // lambda: ecliptic longitude
+  float ecLong = L + (1.915f * cx_sin (gRad)) + (0.02f * cx_sin (2.0f * gRad));
+  ecLong = earth_visual_dump_multiples (ecLong, 360.0f);
+  float ecLongRad = cx_rad (ecLong);
+  
+  // beta: ecliptic latitude
+  float ecLat = 0.0f;
+  CX_REF_UNUSED (ecLat);
+  
+  // R: distance of the sun from the earth
+  float R = 1.00014f - (0.01671f * cx_cos (gRad)) - (0.00014f * cx_cos (2.0f * gRad));
+  CX_REF_UNUSED (R);
+  
+  ////////////////////////////////////////
+  // equatorial coordinates
+  ////////////////////////////////////////
+  
+  // e: obliquity of the ecliptic
+  float e = 23.439f - (0.0000004f * n);
+  float eRad = cx_rad (e);
+  
+  // d: declination
+  float d = cx_asin (cx_sin (eRad) * cx_sin (ecLongRad));
+  float dDeg = cx_deg (d);
+  
+#if 1 // no hack
+  // ra: right ascension
+  float raNum = cx_cos (eRad) * cx_sin (ecLongRad);
+  float raDen = cx_cos (ecLongRad);
+  float ra = cx_atan2 (raNum, raDen);
+  float raDeg = cx_deg (ra);
+  if (raDeg < 0.0f) { raDeg += 360.0f; }
+
+  // hours
+  int tsecs = (hour * 3600) + (min * 60) + sec;
+  float hrsf = (float) tsecs / 3600.0f;
+  
+  // gmst: greenwhich mean sidereal time
+  float gmst = 6.697375f + (0.0657098242f * n) + hrsf;
+  gmst = earth_visual_dump_multiples (gmst, 24.0f);
+  
+  float utclong = 0.0f; //-0.196306f;
+
+  // lmst: local mean sidereal time
+  float lmst = (gmst * 15.0f) + utclong;
+  lmst = earth_visual_dump_multiples (lmst, 360.0f);
+  
+  // ha: hour angle
+  float ha = lmst - raDeg;
+  
+  if (ha < -180.0f)
+  {
+    ha += 360.0f;
+  }
+  else if (ha > 180.0f)
+  {
+    ha -= 360.0f;
+  }
+  
+  // sun-earth distance
+#if 0
+  float earthRadiusAu = 4.26349651e-5f;
+  float sunEarthDist  = R / earthRadiusAu;
+#else
+  float sunEarthDist = 250.0f;
+#endif
+  
+  earth_convert_dd_to_world (position, NULL, dDeg, ha * -1.0f, sunEarthDist, g_earth->visual->slices);
+  
+#else
+  
+  float sunEarthDist = 250.0f;
+  int hr = date->calendar.tm_hour;
+  int mn = date->calendar.tm_min;
+  int sc = date->calendar.tm_sec;
+  int seconds = ((hr * 60) + mn) * 60 + sc;
+  int secondsInDay = 86400;
+  float angleDeg = ((float) seconds / (float) secondsInDay) * 360.0f; // 0 - 360
+  angleDeg -= 180.0f;
+  angleDeg *= -1.0f;
+  
+  earth_convert_dd_to_world (position, NULL, dDeg, angleDeg, sunEarthDist, g_earth->visual->slices);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -396,9 +609,7 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
   // light position
   /////////////////////////////
   
-  cx_vec4 sunPos;
-  earth_visual_get_sun_position (&sunPos, date);
-  
+#if DEBUG_EQUINOX_LIGHT
 #if DEBUG_FAST_LIGHT_ORBIT
   static float angle = 0.0f;
   angle += (1.0f / 3.0f);
@@ -415,32 +626,14 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
   float angle = ((float) seconds / (float) secondsInDay) * 360.0f;
   angle += 180.0f;
   angle = fmodf (angle, 360.0f);
+  angle *= -1.0f;
 #endif
   
   cx_vec4_set (&lightPos, 0.0f, 0.0f, -4.0f, 1.0f);
 
-#if 0
-  // get rotation matrix
-  cx_mat4x4 rotation2;
-  cx_mat4x4_rotation (&rotation2, cx_rad (45.0f), 1.0f, 0.0f, 0.0f);
-  
-  cx_vec4 origin2;
-  cx_vec4_set (&origin2, 0.0f, 0.0f, 0.0f, 1.0f);
-  
-  cx_vec4 forward2;
-  cx_vec4_sub (&forward2, &lightPos, &origin2);
-  
-  // transform forward vector
-  cx_vec4 newForward2;
-  cx_mat4x4_mul_vec4 (&newForward2, &rotation2, &forward2);
-  
-  // update light position
-  cx_vec4_add (&lightPos, &origin2, &newForward2);
-#endif
-  
   // get rotation matrix
   cx_mat4x4 rotation;
-  cx_mat4x4_rotation (&rotation, cx_rad (angle), 0.0f, -1.0f, 0.0f);
+  cx_mat4x4_rotation (&rotation, cx_rad (angle), 0.0f, 1.0f, 0.0f);
   
   cx_vec4 origin;
   cx_vec4_set (&origin, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -455,6 +648,12 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
   // update light position
   cx_vec4_add (&lightPos, &origin, &newForward);
 
+#else
+
+  earth_visual_get_sun_position (&lightPos, date);
+  
+#endif
+  
   /////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -482,17 +681,20 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
     cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_EYE_POSITION, &eyePos);
     cx_shader_set_uniform (mesh->shader, CX_SHADER_UNIFORM_LIGHT_POSITION, &lightPos);
     
-    shininess = 0.5f;
-    
     cx_colour_set (&ambient, 0.15f, 0.15f, 0.15f, 1.0f);
     cx_colour_set (&diffuse, 1.0f, 1.0f, 1.0f, 1.0f);
-    cx_colour_set (&specular, 0.9f, 0.9f, 0.9f, 1.0f);
-    cx_colour_set (&specular, 1.0f, 250.0f/255.0f, 205.0f/255.0f, 1.0f);
+    cx_colour_set (&specular, 1.0f, 0.98f, 0.803f, 1.0f);
     
     cx_shader_set_vector4 (mesh->shader, "u_ambientLight", &ambient, 1);
     cx_shader_set_vector4 (mesh->shader, "u_diffuseLight", &diffuse, 1);
-    cx_shader_set_vector4 (mesh->shader, "u_specularLight", &specular, 1);
-    cx_shader_set_float (mesh->shader, "u_shininess", &shininess, 1);
+    
+    if (g_earth->visual->highSpec)
+    {
+      shininess = 3.5f;
+      
+      cx_shader_set_vector4 (mesh->shader, "u_specularLight", &specular, 1);
+      cx_shader_set_float (mesh->shader, "u_shininess", &shininess, 1);
+    }
     
     cx_mesh_render (mesh);   // set u_diffuseMap, u_normalMap
     
@@ -515,10 +717,7 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
     cx_mesh *mesh1 = g_earth->visual->mesh [1];
     
     cx_shader_begin (mesh1->shader);
-    
-    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
-    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_LIGHT_POSITION, &lightPos);
-    
+
 #if BUMP_MAPPED_CLOUDS
     cx_colour_set (&ambient, 0.0f, 0.0f, 0.0f, 0.0f);
     cx_colour_set (&diffuse, 0.8f, 0.8f, 0.8f, 1.0f);
@@ -531,7 +730,38 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
     cx_shader_set_vector4 (mesh1->shader, "u_diffuseLight", &diffuse, 1);
     cx_shader_set_vector4 (mesh1->shader, "u_specularLight", &specular, 1);
     cx_shader_set_float (mesh1->shader, "u_shininess", &shininess, 1);
+    
+#else
+    
+    if (g_earth->visual->animClouds)
+    {
+      static float angle = 0.0f;
+      float dt = (float) cx_system_time_get_delta_time () * 0.125f; // (1.0f / 120.0f);
+#if 1
+      angle += dt;
+      angle = fmodf (angle, 360.0f);
+#else
+      angle -= dt;
+      angle = earth_visual_dump_multiples (angle, 360.0f);
 #endif
+    
+      cx_mat4x4 r; // model-view matrix
+      cx_mat4x4_rotation_axis_y (&r, cx_rad (angle));
+    
+      cx_mat4x4 mvp; // new mvp matrix
+      cx_mat4x4_mul (&mvp, &mvpMatrix, &r);
+      
+      cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_MV, &r);
+      cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
+    }
+    else
+    {
+      cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvpMatrix);
+    }
+    
+#endif
+    
+    cx_shader_set_uniform (mesh1->shader, CX_SHADER_UNIFORM_LIGHT_POSITION, &lightPos);
     
     cx_mesh_render (mesh1);
     

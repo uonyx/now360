@@ -9,6 +9,7 @@
 #import "util.h"
 #import "ui_ctrlr.h"
 #import <UIKit/UIKit.h>
+#import <sys/utsname.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +68,8 @@ bool util_init (const void *rootvc)
   
   util_init_screen_fade ();
   
+  //NSLog(@"%@", [NSTimeZone knownTimeZoneNames]);
+  
   return true;
 }
 
@@ -92,8 +95,6 @@ void util_deinit (void)
 int util_get_dst_offset_secs (const char *tzn)
 {
 #if 0
-  NSLog(@"%@", [NSTimeZone knownTimeZoneNames]);
-  
   //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"EST"]; // new york
   //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"GMT"]; // uk
   //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"BST"]; // uk
@@ -136,13 +137,7 @@ int util_get_dst_offset_secs (const char *tzn)
   
   [gregorian release];
 #endif
-  
 #endif
-  
-  if (*tzname == 0)
-  {
-    CX_DEBUG_BREAKABLE_EXPR;
-  }
   
   NSTimeZone *tz = [NSTimeZone timeZoneWithName:[NSString stringWithCString:tzn encoding:NSASCIIStringEncoding]];
   
@@ -160,70 +155,6 @@ const cx_font *util_get_font (font_size_t size)
   CX_ASSERT ((size > FONT_SIZE_INVALID) && (size < NUM_FONT_SIZES));
   
   return g_font [size];
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void util_render_fps (void)
-{
-#if 0
-  static float fps = 0.0f;
-  static float totalTime = 0.0f;
-  static unsigned int frameCount = 0;
-  
-  frameCount++;
-  
-  float deltaTime = (float) cx_system_time_get_delta_time ();
-  
-  //CX_DEBUGLOG_CONSOLE (1, "%.2f", deltaTime);
-  
-  totalTime += deltaTime;
-  
-  if (totalTime >= 1.0f)
-  {
-    fps = (float) frameCount / totalTime;
-    frameCount = 0;
-    totalTime = 0.0f;
-  }
-  
-  fps = 1.0f/ deltaTime;
-  
-  char fpsStr [32];
-  
-  cx_sprintf (fpsStr, 32, "%.2f", fps);
-  
-  const cx_font *font = util_get_font (FONT_SIZE_12); 
-  
-  float sw = 1024.0f;
-  float sh = 768.0f;
-  
-  cx_font_render (font, fpsStr, (sw - 24.0f) - 2.0f, sh - 12.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_red ());
-#endif
-  
-#if 1
-  
-  const unsigned int textLen = 255 - 32; // 161;
-  const unsigned int textBufLen = textLen + 1;
-  
-  unsigned char text [textBufLen];
-  
-  for (unsigned char i = 0; i < textLen; ++i)
-  {
-    unsigned char ch = i + 32;
-    
-    text [i] = ch;
-  }
-  
-  text [textLen] = 0;
-  
-  const cx_font *font = util_get_font (FONT_SIZE_12);
-  
-  cx_font_render (font, (const char *) text, 1.0f, 744.0f, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, cx_colour_cyan ());
-  
-#endif
-  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -477,6 +408,42 @@ bool util_screen_fade_trigger (screen_fade_type_t type, float opacity, float sec
   }
   
   return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+device_type_t util_get_device_type (void)
+{
+  device_type_t deviceType = DEVICE_TYPE_INVALID;
+  
+  struct utsname systemInfo;
+  
+  uname (&systemInfo);
+  
+  const char *devicTypeStr = systemInfo.machine;
+  
+  if (strstr (devicTypeStr, "iPad1"))
+  {
+    deviceType = DEVICE_TYPE_IPAD1;
+  }
+  else if (strstr (devicTypeStr, "iPad2"))
+  {
+    deviceType = DEVICE_TYPE_IPAD2;
+  }
+  else if (strstr (devicTypeStr, "iPad3"))
+  {
+    deviceType = DEVICE_TYPE_IPAD3;
+  }
+  else if (strstr (devicTypeStr, "iPad"))
+  {
+    // future devices
+    deviceType = DEVICE_TYPE_UNKNOWN;
+  }
+  
+  
+  return deviceType;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
