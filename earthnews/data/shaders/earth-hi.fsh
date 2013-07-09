@@ -51,7 +51,7 @@ void main (void)
   vec4 ambient = (u_ambientLight * diffuseMat);// + (nightMat * vec4 ((0.7 * u_ambientLight).xyz, 1.0));
   
   // diffuse
-  float d = max (dotp, 0.2);
+  float d = max (dotp, c_zero);
   float n = c_one - d;
   //n = smoothstep (0.7, 0.9, n); /* nice but expensive */
   //n = clamp ((n - 0.7) / 0.2, c_zero, c_one);

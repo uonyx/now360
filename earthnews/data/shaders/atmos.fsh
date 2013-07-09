@@ -23,7 +23,11 @@ void main (void)
   vec3 lVec = normalize ((u_lightPosition - v_position).xyz);
   vec3 vVec = normalize ((u_eyePosition - v_position).xyz);
   
-  vec4 diffuseColor = vec4 (0.551, 0.702, 0.838, c_one);
+  //vec4 diffuseColor = vec4 (0.551, 0.702, 0.838, c_one);
+  //vec4 diffuseColor = vec4 (0.0, 0.749, 1.0, c_one); // deep sky blue
+  //vec4 diffuseColor = vec4 (0.0, 0.698, 0.894, c_one); // sky blue
+  //vec4 diffuseColor = vec4 (0.533, 0.807, 0.98, c_one); // light sky blue
+  vec4 diffuseColor = vec4 (0.33, 0.80, 0.99, c_one); // my blue
 
   float dotp = dot (nVec, vVec); // view dot
 
@@ -31,12 +35,12 @@ void main (void)
   
   float rim = c_one - max (dotp, c_zero);
   
-  vec4 colour = diffuseColor * rim * rim;// * pow (rim, c_rimpower);
+  vec4 colour = diffuseColor * (rim * rim * rim);
   //vec4 colour = diffuseColor  * pow (rim, c_rimpower);
   
   float dif = max (dot (nVec, lVec), c_zero);
   //dif = smoothstep (0.01, 0.3, dif);
-  dif = clamp ((dif - 0.01) / 0.29, c_zero, c_one);
+  dif = clamp ((dif - 0.01) * 3.448, c_zero, c_one);
   
   colour.rgb *= dif;
   //colour.a = rim;

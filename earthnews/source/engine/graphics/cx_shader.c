@@ -599,7 +599,7 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
       
     default:
     {
-      CX_FATAL_ERROR ("CX_SHADER_UNIFORM_INVALID");
+      CX_ERROR ("CX_SHADER_UNIFORM_INVALID");
       break;
     }
   }
@@ -842,7 +842,7 @@ static cxi32 cx_shader_get_uniform_sampler (cx_shader_uniform uniform)
     case CX_SHADER_UNIFORM_DIFFUSE_MAP:   { return 0; }
     case CX_SHADER_UNIFORM_SPECULAR_MAP:  { return 1; }
     case CX_SHADER_UNIFORM_BUMP_MAP:      { return 2; }
-    default:                              { CX_FATAL_ERROR ("invalid uniform"); return -1; }
+    default:                              { CX_ERROR ("invalid uniform"); return -1; }
   }
 }
 

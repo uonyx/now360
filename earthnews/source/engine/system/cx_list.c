@@ -95,7 +95,7 @@ cx_list *cx_list_reverse (cx_list *list)
 
 cx_list *cx_list_sort (cx_list *list, cx_list_sort_cmp_func cmpfunc)
 {
-  CX_FATAL_ERROR ("Not implemented");
+  CX_ERROR ("Not implemented");
   
   cx_list_node *head = list;
   

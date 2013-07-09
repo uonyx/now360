@@ -812,7 +812,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       
     default:
     {
-      CX_FATAL_ERROR ("invalid row");
+      CX_ERROR ("invalid row");
       break;
     }
   }

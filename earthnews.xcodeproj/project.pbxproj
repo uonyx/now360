@@ -35,6 +35,9 @@
 		3127E30215DAFF6400793C60 /* cx_texture.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2FA15DAFF6400793C60 /* cx_texture.c */; };
 		3127E30A15E00F6D00793C60 /* worker.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30915E00F6D00793C60 /* worker.c */; };
 		3127E30D15E0557400793C60 /* cx_list.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E30C15E0557200793C60 /* cx_list.c */; };
+		31561D09178B77AA0022AF8B /* app-02-icon.72.png in Resources */ = {isa = PBXBuildFile; fileRef = 31561D08178B77A90022AF8B /* app-02-icon.72.png */; };
+		31561D0E178B7B680022AF8B /* Default-Landscape~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 31561D0A178B7A7E0022AF8B /* Default-Landscape~ipad.png */; };
+		31561D10178B8C260022AF8B /* app-02-icon.144.png in Resources */ = {isa = PBXBuildFile; fileRef = 31561D0F178B8C260022AF8B /* app-02-icon.144.png */; };
 		315EC7C216D443E00019E160 /* settings.m in Sources */ = {isa = PBXBuildFile; fileRef = 315EC7C116D443DE0019E160 /* settings.m */; };
 		315EC7C416E258CC0019E160 /* cx_json.c in Sources */ = {isa = PBXBuildFile; fileRef = 315EC7C316E258CA0019E160 /* cx_json.c */; };
 		3163730816F62AAA0018D64C /* util.m in Sources */ = {isa = PBXBuildFile; fileRef = 3163730716F62AAA0018D64C /* util.m */; };
@@ -54,6 +57,7 @@
 		316FAA691517C01900CC39F2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA651517C01900CC39F2 /* InfoPlist.strings */; };
 		316FAA6A1517C01900CC39F2 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */; };
 		316FAA8D1517C49A00CC39F2 /* data in Resources */ = {isa = PBXBuildFile; fileRef = 316FAA8C1517C49A00CC39F2 /* data */; };
+		31795E60178B959800FE94A6 /* Default-Landscape@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 31795E5E178B957B00FE94A6 /* Default-Landscape@2x~ipad.png */; };
 		3179D04917049D4F00F623AF /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3179D04817049D4E00F623AF /* AudioToolbox.framework */; };
 		317FFA0E16BB29EB00154541 /* stb_image.c in Sources */ = {isa = PBXBuildFile; fileRef = 317FFA0C16BB29EB00154541 /* stb_image.c */; };
 		3182B99C14B0B6680097A87E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3182B99B14B0B6680097A87E /* UIKit.framework */; };
@@ -200,6 +204,10 @@
 		3127E30915E00F6D00793C60 /* worker.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = worker.c; sourceTree = "<group>"; };
 		3127E30B15E0555B00793C60 /* cx_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_list.h; sourceTree = "<group>"; };
 		3127E30C15E0557200793C60 /* cx_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_list.c; sourceTree = "<group>"; };
+		31561D08178B77A90022AF8B /* app-02-icon.72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "app-02-icon.72.png"; sourceTree = "<group>"; };
+		31561D0A178B7A7E0022AF8B /* Default-Landscape~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-Landscape~ipad.png"; sourceTree = "<group>"; };
+		31561D0C178B7B5E0022AF8B /* Default-Portrait~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-Portrait~ipad.png"; sourceTree = "<group>"; };
+		31561D0F178B8C260022AF8B /* app-02-icon.144.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "app-02-icon.144.png"; sourceTree = "<group>"; };
 		315EC7C016D443CC0019E160 /* settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = settings.h; sourceTree = "<group>"; };
 		315EC7C116D443DE0019E160 /* settings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = settings.m; sourceTree = "<group>"; };
 		315EC7C316E258CA0019E160 /* cx_json.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_json.c; sourceTree = "<group>"; };
@@ -233,13 +241,14 @@
 		316FAA661517C01900CC39F2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		316FAA671517C01900CC39F2 /* MainStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MainStoryboard.storyboard; sourceTree = "<group>"; };
 		316FAA8C1517C49A00CC39F2 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; path = data; sourceTree = "<group>"; };
+		31795E5E178B957B00FE94A6 /* Default-Landscape@2x~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-Landscape@2x~ipad.png"; sourceTree = "<group>"; };
 		3179D04817049D4E00F623AF /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		317EC94C1533508C0092AFCB /* cx_engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_engine.h; sourceTree = "<group>"; };
 		317FFA0C16BB29EB00154541 /* stb_image.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stb_image.c; sourceTree = "<group>"; };
 		317FFA0D16BB29EB00154541 /* stb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_truetype.h; sourceTree = "<group>"; };
 		317FFA0F16BB2ECC00154541 /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
 		317FFA1016BB314C00154541 /* cx_native_ios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_native_ios.h; sourceTree = "<group>"; };
-		3182B99714B0B6680097A87E /* earthnews.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = earthnews.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3182B99714B0B6680097A87E /* now360.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = now360.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3182B99B14B0B6680097A87E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		3182B99D14B0B6680097A87E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		3182B99F14B0B6680097A87E /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -686,6 +695,11 @@
 		3182B98C14B0B6680097A87E = {
 			isa = PBXGroup;
 			children = (
+				31795E5E178B957B00FE94A6 /* Default-Landscape@2x~ipad.png */,
+				31561D0F178B8C260022AF8B /* app-02-icon.144.png */,
+				31561D0C178B7B5E0022AF8B /* Default-Portrait~ipad.png */,
+				31561D0A178B7A7E0022AF8B /* Default-Landscape~ipad.png */,
+				31561D08178B77A90022AF8B /* app-02-icon.72.png */,
 				3166F8A8176937CC000D1147 /* Accounts.framework */,
 				3166F8A3176395FC000D1147 /* SystemConfiguration.framework */,
 				3166F8A11763952C000D1147 /* libsystem_network.dylib */,
@@ -704,7 +718,7 @@
 		3182B99814B0B6680097A87E /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3182B99714B0B6680097A87E /* earthnews.app */,
+				3182B99714B0B6680097A87E /* now360.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1067,9 +1081,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3182B99614B0B6680097A87E /* earthnews */ = {
+		3182B99614B0B6680097A87E /* now360 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3182B9AF14B0B6680097A87E /* Build configuration list for PBXNativeTarget "earthnews" */;
+			buildConfigurationList = 3182B9AF14B0B6680097A87E /* Build configuration list for PBXNativeTarget "now360" */;
 			buildPhases = (
 				3182B99314B0B6680097A87E /* Sources */,
 				3182B99414B0B6680097A87E /* Frameworks */,
@@ -1079,9 +1093,9 @@
 			);
 			dependencies = (
 			);
-			name = earthnews;
+			name = now360;
 			productName = earthnews;
-			productReference = 3182B99714B0B6680097A87E /* earthnews.app */;
+			productReference = 3182B99714B0B6680097A87E /* now360.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -1110,7 +1124,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3182B99614B0B6680097A87E /* earthnews */,
+				3182B99614B0B6680097A87E /* now360 */,
 			);
 		};
 /* End PBXProject section */
@@ -1124,6 +1138,10 @@
 				316FAA6A1517C01900CC39F2 /* MainStoryboard.storyboard in Resources */,
 				316FAA8D1517C49A00CC39F2 /* data in Resources */,
 				31117DF11752C9E2000BB062 /* Localizable.strings in Resources */,
+				31561D09178B77AA0022AF8B /* app-02-icon.72.png in Resources */,
+				31561D0E178B7B680022AF8B /* Default-Landscape~ipad.png in Resources */,
+				31561D10178B8C260022AF8B /* app-02-icon.144.png in Resources */,
+				31795E60178B959800FE94A6 /* Default-Landscape@2x~ipad.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1344,6 +1362,7 @@
 			buildSettings = {
 				CLANG_WARN_IMPLICIT_SIGN_CONVERSION = NO;
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Ubaka Onyechi (84R2ZF2TC8)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "earthnews/resource_ios/earthnews-Prefix.pch";
@@ -1365,6 +1384,7 @@
 					"\"$(SDKROOT)/usr/lib/system\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "4378C2C7-38AA-4B2B-950C-8F58C412BA00";
 				TARGETED_DEVICE_FAMILY = 2;
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -1379,6 +1399,7 @@
 			buildSettings = {
 				CLANG_WARN_IMPLICIT_SIGN_CONVERSION = NO;
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Ubaka Onyechi (84R2ZF2TC8)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "earthnews/resource_ios/earthnews-Prefix.pch";
@@ -1400,6 +1421,7 @@
 					"\"$(SDKROOT)/usr/lib/system\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "4378C2C7-38AA-4B2B-950C-8F58C412BA00";
 				TARGETED_DEVICE_FAMILY = 2;
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -1421,7 +1443,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3182B9AF14B0B6680097A87E /* Build configuration list for PBXNativeTarget "earthnews" */ = {
+		3182B9AF14B0B6680097A87E /* Build configuration list for PBXNativeTarget "now360" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3182B9B014B0B6680097A87E /* Debug */,

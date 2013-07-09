@@ -308,7 +308,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   switch (devType)
   {
     case DEVICE_TYPE_UNKNOWN:
-    case DEVICE_TYPE_IPAD2:
+    case DEVICE_TYPE_IPAD3:
     {
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
@@ -320,8 +320,17 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       break;
     }
   
-    case DEVICE_TYPE_IPAD3:
+    case DEVICE_TYPE_IPAD2:
     {
+#if 0 // test-hi
+      earthShader   = "earth-hi";     highSpec = true;
+      cloudShader   = "clouds-anim";  animClouds = true;
+      specTexPath   = "data/images/earth/maps/spec1-2048.png";
+      bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-4096.png";
+      cloudTexPath  = "data/images/earth/maps/clouds-4096.png";
+      nightTexPath  = "data/images/earth/maps/night1-4096.png";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
+#else
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
@@ -329,6 +338,8 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
       nightTexPath  = "data/images/earth/maps/night1-4096.png";
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
+      //cx_sprintf (diffTexPath, 64, "%s", "data/images/earth/maps/snapseed.jpg");
+#endif
       break;
     }
       
@@ -362,9 +373,9 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
   cx_texture *specTexture   = cx_texture_create_from_file (specTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *cloudTexture  = cx_texture_create_from_file (cloudTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *bumpTexture   = cx_texture_create_from_file (bumpTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *nightTexture  = cx_texture_create_from_file (nightTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *diffTexture   = cx_texture_create_from_file (diffTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_texture *bumpTexture   = cx_texture_create_from_file (bumpTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   
   CX_ASSERT (specTexture);
   CX_ASSERT (bumpTexture);

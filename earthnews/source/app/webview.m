@@ -941,7 +941,7 @@ typedef enum
       
     default:
     {
-      CX_FATAL_ERROR ("CX_WEBVIEW_ACTION_ITEM_INVALID");
+      CX_ERROR ("CX_WEBVIEW_ACTION_ITEM_INVALID");
       
       break;
     }

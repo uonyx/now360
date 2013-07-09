@@ -622,7 +622,7 @@ static void app_load_stage_update (void)
       
     case APP_LOAD_STAGE_1:
     {
-      static float timer = 1.5f;
+      static float timer = 1.0f;
       timer -= deltaTime;
       
       if (timer <= 0.0f)
@@ -647,7 +647,7 @@ static void app_load_stage_update (void)
       
     case APP_LOAD_STAGE_2:
     {
-      static float timer = 3.5f;
+      static float timer = 3.0f;
       timer -= deltaTime;
       
       if (timer <= 0.0f)
@@ -1112,7 +1112,7 @@ static void app_update_feeds_news (void)
         
       default:
       {
-        //CX_FATAL_ERROR ("FEED_REQ_STATUS_INVALID");
+        //CX_ERROR ("FEED_REQ_STATUS_INVALID");
         break;
       }
     }
@@ -1164,7 +1164,7 @@ static void app_update_feeds_twitter (void)
         
       default:
       {
-        //CX_FATAL_ERROR ("FEED_REQ_STATUS_INVALID");
+        //CX_ERROR ("FEED_REQ_STATUS_INVALID");
         break;
       }
     }
@@ -1706,9 +1706,13 @@ static void app_render_2d_earth (void)
   
   bool drawClock = settings_get_show_clock ();
   int unitType = settings_get_temperature_unit ();
+  char tempUnit [4];
   
-  const char unit [2] = {'C', 'F'};
-  char tempUnit [3] = { 176, unit [unitType], 0 };
+  tempUnit [0] = 194;
+  tempUnit [1] = 176;
+  tempUnit [2] = (unitType == SETTINGS_TEMPERATURE_UNIT_C) ? 'C' : 'F';
+  tempUnit [3] = 0;
+  
   const cx_date *date = &g_dateUTC;
   
   const cx_font *font0 = util_get_font (FONT_SIZE_16);

@@ -23,7 +23,7 @@
 
 #define CX_FONT_TEXTURE_WIDTH       (512)
 #define CX_FONT_TEXTURE_HEIGHT      (512)
-#define CX_FONT_MAX_NUM_FONT_CHARS  (256)
+#define CX_FONT_MAX_NUM_FONT_CHARS  (256) // 65536 //9999
 #define CX_FONT_BEGIN_CHAR          (32)
 #define CX_FONT_END_CHAR            (CX_FONT_BEGIN_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
 #define CX_FONT_MAX_TEXT_LENGTH     (512)
@@ -112,8 +112,8 @@ void cx_font_set_scale (const cx_font *font, cxf32 x, cxf32 y)
   
   cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   
-  fontImpl->scaleX = x;
-  fontImpl->scaleY = y;
+  fontImpl->scaleX = cx_clamp (x, 0.0f, 1.0f);;
+  fontImpl->scaleY = cx_clamp (y, 0.0f, 1.0f);;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,13 +172,9 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
     py = py - (th * 0.5f);
   }
   
-  //char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
-  //cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
-  
-  const char *textBuffer = text;
   
 #if 0
-  const char *t = textBuffer;
+  const char *t = text;
   unsigned char c = 0;
   
   while ((c = *t++))
@@ -225,21 +221,36 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
 #else
 
-  cx_vec2 pos [CX_FONT_MAX_TEXT_LENGTH * 4];
-  cx_vec2 uv [CX_FONT_MAX_TEXT_LENGTH * 4];
+#if 0
+  // copy only up to max_text length
+  char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
+  cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   
   const char *t = textBuffer;
   unsigned char c = 0;
   
+#else
+  // convert from utf8 to unicode
+  cxu32 textBuffer [CX_FONT_MAX_TEXT_LENGTH];
+  cxu32 tLen = cx_str_utf8_to_unicode (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  CX_REF_UNUSED (tLen);
+  cxu32 *t = textBuffer;
+  cxu32 c = 0;
+#endif
+  
+  cx_vec2 pos [CX_FONT_MAX_TEXT_LENGTH * 4];
+  cx_vec2 uv [CX_FONT_MAX_TEXT_LENGTH * 4];
+  
   int len = 0;
-  
-  sx = 1.0f;
-  sy = 1.0f;
-  
+
   while ((c = *t++))
   {
     if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
     {
+      if (c >= 128)
+      {
+        CX_DEBUG_BREAKABLE_EXPR;
+      }
       
       stbtt_aligned_quad quad;
       stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 

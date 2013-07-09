@@ -20,7 +20,8 @@
 
 cxu32 cx_str_explode (char **dst, cxu32 dstSize, const char *src, char delimiter);
 cxu32 cx_str_percent_encode (char *dst, cxu32 dstSize, const char *src);
-cxi32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src);
+cxu32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src);
+cxu32 cx_str_utf8_to_unicode (cxu32 *dst, cxu32 dstSize, const char *utf8src);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

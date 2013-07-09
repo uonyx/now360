@@ -83,7 +83,7 @@ static cx_texture *cx_texture_load_img_xxx (const char *filename, cx_file_storag
       case STBI_grey_alpha: { texture->format = CX_TEXTURE_FORMAT_LUMINANCE_ALPHA; break; }
       case STBI_rgb:        { texture->format = CX_TEXTURE_FORMAT_RGB; break; }
       case STBI_rgb_alpha:  { texture->format = CX_TEXTURE_FORMAT_RGBA; break; }
-      default:              { CX_FATAL_ERROR ("Invalid texture format"); break; }
+      default:              { CX_ERROR ("Invalid texture format"); break; }
     }
     
     texture->data = data;
@@ -357,7 +357,7 @@ static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storag
             
           default:
           {
-            CX_FATAL_ERROR ("Unsupported channelType");
+            CX_ERROR ("Unsupported channelType");
             break;
           }
         }
@@ -411,7 +411,7 @@ static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storag
           
         default:
         {
-          CX_FATAL_ERROR ("Unsupported pixelFormat");
+          CX_ERROR ("Unsupported pixelFormat");
           break;
         }
       }
@@ -464,7 +464,7 @@ static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storag
         case PVR_PIXEL_FORMAT_PVRTC_4BPP_RGBA:  { texture->format  = CX_TEXTURE_FORMAT_RGBA_PVR_4BPP; break; }
         case PVR_PIXEL_FORMAT_PVRTC_II_2BPP:    { texture->format  = CX_TEXTURE_FORMAT_RGB_PVR_2BPP; break; }
         case PVR_PIXEL_FORMAT_PVRTC_II_4BPP:    { texture->format  = CX_TEXTURE_FORMAT_RGB_PVR_4BPP; break; }
-        default:                                { CX_FATAL_ERROR ("Unsupported pixelFormat"); break; }
+        default:                                { CX_ERROR ("Unsupported pixelFormat"); break; }
       }      
     }
     else
@@ -634,7 +634,7 @@ void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps)
           
         default:
         {
-          CX_FATAL_ERROR ("cx_texture_gpu_init: Invalid texture format");
+          CX_ERROR ("cx_texture_gpu_init: Invalid texture format");
           break;
         }
       }
@@ -675,7 +675,7 @@ void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps)
           
         default:
         {
-          CX_FATAL_ERROR ("cx_texture_gpu_init: Invalid texture format");
+          CX_ERROR ("cx_texture_gpu_init: Invalid texture format");
           break;
         }
       }

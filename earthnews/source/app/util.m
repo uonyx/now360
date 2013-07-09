@@ -32,14 +32,7 @@ static status_bar_msg_t g_msg = STATUS_BAR_MSG_NONE;
 static float g_statusTimer = STATUS_BAR_DISPLAY_TIMER;
 static cx_texture *g_statug_msg_icon = NULL;
 static cx_colour g_statug_msg_colour [NUM_STATUS_BAR_MSGS];
-static const char *g_statug_msg_text [NUM_STATUS_BAR_MSGS] =
-{
-  //"Network Connection Error",
-  "No Internet Connection",
-  "News Service Connection Error",
-  "Weather Service Connection Error",
-  "Twitter Connection Error",
-};
+static const char *g_statug_msg_text [NUM_STATUS_BAR_MSGS];
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -455,8 +448,15 @@ static void util_init_status_bar (void)
   g_statug_msg_icon = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   CX_ASSERT (g_statug_msg_icon);
   
-  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f);
-  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_TWITTER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f);
+  g_statug_msg_text [STATUS_BAR_MSG_CONNECTION_ERROR] = "No Internet Connection"; //"Network Connection Error",
+  g_statug_msg_text [STATUS_BAR_MSG_NEWS_COMMS_ERROR] = "News Service Connection Error";
+  g_statug_msg_text [STATUS_BAR_MSG_TWITTER_COMMS_ERROR] = "Weather Service Connection Error";
+  g_statug_msg_text [STATUS_BAR_MSG_WEATHER_COMMS_ERROR] = "Twitter Connection Error";
+  
+  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f); // red
+  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_NEWS_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_TWITTER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_WEATHER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

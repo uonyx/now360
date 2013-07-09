@@ -14,8 +14,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "3182B99614B0B6680097A87E"
-               BuildableName = "earthnews.app"
-               BlueprintName = "earthnews"
+               BuildableName = "now360.app"
+               BlueprintName = "now360"
                ReferencedContainer = "container:earthnews.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -32,8 +32,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3182B99614B0B6680097A87E"
-            BuildableName = "earthnews.app"
-            BlueprintName = "earthnews"
+            BuildableName = "now360.app"
+            BlueprintName = "now360"
             ReferencedContainer = "container:earthnews.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -44,14 +44,15 @@
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       buildConfiguration = "Release"
+      ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       allowLocationSimulation = "YES">
       <BuildableProductRunnable>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3182B99614B0B6680097A87E"
-            BuildableName = "earthnews.app"
-            BlueprintName = "earthnews"
+            BuildableName = "now360.app"
+            BlueprintName = "now360"
             ReferencedContainer = "container:earthnews.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -68,8 +69,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3182B99614B0B6680097A87E"
-            BuildableName = "earthnews.app"
-            BlueprintName = "earthnews"
+            BuildableName = "now360.app"
+            BlueprintName = "now360"
             ReferencedContainer = "container:earthnews.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

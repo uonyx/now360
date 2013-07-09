@@ -572,6 +572,8 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
               
                 if (statusCode == 200)
                 {
+                  CX_DEBUGLOG_CONSOLE (CX_DEBUG, "%s", response_data);
+                  
                   feeds_twitter_clear (feed);
                   if (feeds_twitter_parse (feed, (const char *) response_data, response_dataSize))
                   {
@@ -676,7 +678,7 @@ static void feeds_twitter_error (feed_twitter_t *feed, const char *error)
   CX_ASSERT (error);
   
   const char *text = error;
-  const char *username = "now30_app";
+  const char *username = "now360_app";
   
   if (text && username)
   {

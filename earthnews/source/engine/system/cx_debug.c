@@ -114,7 +114,7 @@ static void _cx_assert_ptr (const char *filename, int lineNumber, const char *as
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void _cx_fatal_error (const char *filename, int lineNumber, const char *fatalString)
+void _cx_error (const char *filename, int lineNumber, const char *fatalString)
 {
   _cx_outputLog (filename, lineNumber, "%s", fatalString);
   _cx_debug_break ();

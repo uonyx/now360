@@ -27,7 +27,7 @@ static bool g_initialised = false;
 static void cx_system_memory_init (void)    
 { 
 #if CX_SYSTEM_CUSTOM_MEMORY_ALLOCATOR_ENABLED
-  CX_FATAL_ERROR ("cx_system_memory_init: NOT YET IMPLEMENTED!");
+  CX_ERROR ("cx_system_memory_init: NOT YET IMPLEMENTED!");
 #endif
 }
 
@@ -38,7 +38,7 @@ static void cx_system_memory_init (void)
 static void cx_system_memory_deinit (void)  
 { 
 #if CX_SYSTEM_CUSTOM_MEMORY_ALLOCATOR_ENABLED
-  CX_FATAL_ERROR ("cx_system_memory_deinit: NOT YET IMPLEMENTED!");
+  CX_ERROR ("cx_system_memory_deinit: NOT YET IMPLEMENTED!");
 #endif
 }
 
