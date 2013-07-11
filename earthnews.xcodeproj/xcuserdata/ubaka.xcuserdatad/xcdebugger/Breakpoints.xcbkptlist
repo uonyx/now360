@@ -7,26 +7,143 @@
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/3rdparty/stb/stb_truetype.h"
-         timestampString = "394935949.729265"
+         filePath = "earthnews/source/app/app.c"
+         timestampString = "395191405.380423"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "804"
-         endingLineNumber = "804"
-         landmarkName = "stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codepoint)"
+         startingLineNumber = "1138"
+         endingLineNumber = "1138"
+         landmarkName = "app_update_feeds_twitter()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/app/ui_ctrlr.c"
-         timestampString = "395052425.361859"
+         filePath = "earthnews/source/app/app.c"
+         timestampString = "395191407.813198"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "1092"
-         endingLineNumber = "1092"
-         landmarkName = "ui_ctrlr_twitter_ticker_render()"
+         startingLineNumber = "1156"
+         endingLineNumber = "1156"
+         landmarkName = "app_update_feeds_twitter()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/app.c"
+         timestampString = "395191410.881263"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "1148"
+         endingLineNumber = "1148"
+         landmarkName = "app_update_feeds_twitter()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/app.c"
+         timestampString = "395191433.314545"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "2033"
+         endingLineNumber = "2033"
+         landmarkName = "app_input_touch_began()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/feeds.m"
+         timestampString = "395191498.708537"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "604"
+         endingLineNumber = "604"
+         landmarkName = "feeds_twitter_search()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/feeds.m"
+         timestampString = "395191505.407138"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "644"
+         endingLineNumber = "644"
+         landmarkName = "feeds_twitter_search()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/feeds.m"
+         timestampString = "395191509.317536"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "637"
+         endingLineNumber = "637"
+         landmarkName = "feeds_twitter_search()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/feeds.m"
+         timestampString = "395191514.080379"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "628"
+         endingLineNumber = "628"
+         landmarkName = "feeds_twitter_search()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/feeds.m"
+         timestampString = "395191518.242733"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "619"
+         endingLineNumber = "619"
+         landmarkName = "feeds_twitter_search()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/feeds.m"
+         timestampString = "395191520.216181"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "612"
+         endingLineNumber = "612"
+         landmarkName = "feeds_twitter_search()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/settings.m"
+         timestampString = "395193777.501204"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "231"
+         endingLineNumber = "231"
+         landmarkName = "settings_ui_hide()"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

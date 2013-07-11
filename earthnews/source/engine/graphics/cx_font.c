@@ -21,9 +21,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_FONT_TEXTURE_WIDTH       (512)
-#define CX_FONT_TEXTURE_HEIGHT      (512)
-#define CX_FONT_MAX_NUM_FONT_CHARS  (256) // 65536 //9999
+#define CX_FONT_TEXTURE_WIDTH       (1024)
+#define CX_FONT_TEXTURE_HEIGHT      (1024)
+#define CX_FONT_MAX_NUM_FONT_CHARS  (256)
 #define CX_FONT_BEGIN_CHAR          (32)
 #define CX_FONT_END_CHAR            (CX_FONT_BEGIN_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
 #define CX_FONT_MAX_TEXT_LENGTH     (512)
@@ -172,11 +172,15 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
     py = py - (th * 0.5f);
   }
   
+  // convert from utf8 to unicode
+  cxu32 textBuffer [CX_FONT_MAX_TEXT_LENGTH];
+  cxu32 tLen = cx_str_utf8_to_unicode (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
+  CX_REF_UNUSED (tLen);
   
-#if 0
-  const char *t = text;
-  unsigned char c = 0;
+  cxu32 *t = textBuffer;
+  cxu32 c = 0;
   
+#if 1
   while ((c = *t++))
   {
     if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
@@ -220,24 +224,6 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
   
 #else
-
-#if 0
-  // copy only up to max_text length
-  char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
-  cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
-  
-  const char *t = textBuffer;
-  unsigned char c = 0;
-  
-#else
-  // convert from utf8 to unicode
-  cxu32 textBuffer [CX_FONT_MAX_TEXT_LENGTH];
-  cxu32 tLen = cx_str_utf8_to_unicode (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
-  CX_REF_UNUSED (tLen);
-  cxu32 *t = textBuffer;
-  cxu32 c = 0;
-#endif
-  
   cx_vec2 pos [CX_FONT_MAX_TEXT_LENGTH * 4];
   cx_vec2 uv [CX_FONT_MAX_TEXT_LENGTH * 4];
   
@@ -247,11 +233,12 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   {
     if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
     {
+#if CX_DEBUG
       if (c >= 128)
       {
         CX_DEBUG_BREAKABLE_EXPR;
       }
-      
+#endif
       stbtt_aligned_quad quad;
       stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
                           (c - CX_FONT_BEGIN_CHAR), sx, sy, &px, &py, &quad, 1);
@@ -361,8 +348,6 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   
   char textBuffer [CX_FONT_MAX_TEXT_LENGTH];
   cx_strcpy (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
-  
-  //cx_str_html_unescape (textBuffer, CX_FONT_MAX_TEXT_LENGTH, text);
   
   unsigned char c = 0;
   char *t = textBuffer; 

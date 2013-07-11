@@ -322,7 +322,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
     case DEVICE_TYPE_IPAD2:
     {
-#if 0 // test-hi
+#if 1 // test hi
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
@@ -330,7 +330,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cloudTexPath  = "data/images/earth/maps/clouds-4096.png";
       nightTexPath  = "data/images/earth/maps/night1-4096.png";
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
-#else
+#elif 0 // test mid
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
@@ -338,7 +338,14 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
       nightTexPath  = "data/images/earth/maps/night1-4096.png";
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
-      //cx_sprintf (diffTexPath, 64, "%s", "data/images/earth/maps/snapseed.jpg");
+#else // test lo
+      earthShader   = "earth-lo"; highSpec = false;
+      cloudShader   = "clouds";   animClouds = false;
+      specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
+      bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
+      cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
+      nightTexPath  = "data/images/earth/maps/night1-4096.png";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
 #endif
       break;
     }

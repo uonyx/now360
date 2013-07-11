@@ -18,7 +18,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define UI_CTRLR_DEBUG 0
-#define UI_CTRLR_DEBUG_NEW_TICKER 1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -512,7 +511,6 @@ static void ui_ctrlr_news_position_setup (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 1
 static int cmp_feed_news_item (feed_news_item_t *item0, feed_news_item_t *item1)
 {
   CX_ASSERT (item0);
@@ -545,6 +543,10 @@ static int cmp_feed_news_item (feed_news_item_t *item0, feed_news_item_t *item1)
     return (item0->pubDateInfo.mon > item1->pubDateInfo.mon) ? 1 : -1;
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void ui_ctrlr_news_populate (feed_news_t *feed)
 {
@@ -623,44 +625,6 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
   ui_widget_set_dimension (custom, cx_font_get_text_width (font, morenews), fh);
 }
 
-#else
-static void ui_ctrlr_news_populate (feed_news_t *feed)
-{
-  CX_ASSERT (feed);
-  CX_ASSERT (feed->reqStatus != FEED_REQ_STATUS_IN_PROGRESS);
-
-  int count = NEWS_MAX_ENTRIES - 1;
-  
-  ui_custom_t **buttons = g_uinews.buttons;
-  
-  feed_news_item_t *entry = feed->items;
-  
-  const cx_font *font = util_get_font (FONT_SIZE_18);
-  
-  float fh = 24.0f; //cx_font_get_height (font);
-  
-  int i = 0;
-  
-  while (entry && count--)
-  {
-    float fw = cx_font_get_text_width (font, entry->title);
-    
-    ui_custom_t *custom = buttons [i++];
-    
-    custom->userdata = entry;
-    ui_widget_set_dimension (custom, fw, fh);
-    
-    entry = entry->next;
-  }
-  
-  const char *morenews = "More news...";
-  ui_custom_t *custom = buttons [i];
-  
-  custom->userdata = feed->link;    
-  ui_widget_set_dimension (custom, cx_font_get_text_width (font, morenews), fh);
-}
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -721,13 +685,12 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   
   if (title)
   {
-    char titleText [512] = {0};
-    
 #if CX_DEBUG
     unsigned int titleLen = strlen (title);
     CX_ASSERT (titleLen < 512);
 #endif
     
+    static char titleText [512] = {0};
     cx_str_html_unescape (titleText, 512, title);
     cx_font_render (font, titleText, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &colour);
   }
@@ -915,7 +878,7 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if UI_CTRLR_DEBUG_NEW_TICKER
+
 static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char *tweet)
 {
   CX_ASSERT (tweet);
@@ -958,6 +921,7 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
     
     while ((c = *t++))
     {
+      // stride until illegal url character
       if ((c == ' ') || (c == '#') || (c == '@') || (c > 127))
       {
         cxu32 p = t - start;
@@ -968,7 +932,7 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
         
         currLoc = p;
         
-        if (c != ' ')
+        if (c != ' ') // uhm... wtf? must be a good reason for this lol.
         {
           --t;
         }
@@ -1013,9 +977,8 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
     CX_DEBUG_BREAKABLE_EXPR;
   }
 #endif
-  
 }
-#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1055,7 +1018,6 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     
     cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colbg, NULL);
     
-    char unescapedText [256] = {0};
     const cx_font *font = util_get_font (FONT_SIZE_16);
 #if 0
     float deltaTime = (1.0f / 30.0f);
@@ -1082,13 +1044,13 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     
       if (!outOfBounds)
       {
-#if UI_CTRLR_DEBUG_NEW_TICKER
         if (tweet->username && tweet->text)
         {
           ticker_tweet_t tickerTweet;
           memset (&tickerTweet, 0, sizeof (ticker_tweet_t));
           
-          cx_str_html_unescape (unescapedText, 256, tweet->text);
+          static char unescapedText [512] = {0};
+          cx_str_html_unescape (unescapedText, 512, tweet->text);
           ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, unescapedText);
           
           char username [32];
@@ -1123,20 +1085,6 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
             rx = rx + cx_font_get_text_width (font, tickerTweetText);
           }
         }
-#else
-        if (tweet->username && tweet->text)
-        {
-          char namehandle [32];
-          cx_sprintf (namehandle, 32, "@%s: ", tweet->username);
-          cx_font_render (font, namehandle, x, y, 0.0f, 0, &colname);
-          
-          float x2 = x + cx_font_get_text_width (font, namehandle);
-          
-          char tweetText [256] = {0};
-          cx_str_html_unescape (tweetText, 256, tweet->text);
-          cx_font_render (font, tweetText, x2, y, 0.0f, 0, &coltweet);
-        }
-#endif
       }
       
       bool activeSystemUI = webview_active () || audio_music_picker_active () || settings_ui_active ();

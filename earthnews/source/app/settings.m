@@ -228,6 +228,8 @@ void settings_ui_hide (void)
 {
   if (g_uiActive)
   {
+    settings_data_save ();
+    
     [g_popover dismissPopoverAnimated:YES];
     
     util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, SCREEN_FADE_OPACITY, SCREEN_FADE_DURATION, NULL, NULL);
@@ -718,6 +720,10 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   [self setContentSizeForViewInPopover:CGSizeMake (SETTINGS_UI_SIZE_WIDTH, SETTINGS_UI_SIZE_HEIGHT)];
   
   [self.tableView reloadData];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
 }
 
 - (NSInteger) supportedInterfaceOrientations

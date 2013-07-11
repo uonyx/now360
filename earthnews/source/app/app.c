@@ -616,7 +616,7 @@ static void app_load_stage_update (void)
   {
     case APP_LOAD_STAGE_1_BEGIN:
     {
-      util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 1.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_1);
+      util_screen_fade_trigger (SCREEN_FADE_TYPE_IN, 1.0f, 0.0f, app_load_stage_transition, (void *) APP_LOAD_STAGE_1);
       break;
     }
       
@@ -1184,7 +1184,6 @@ static void app_update_feeds_weather (void)
     g_weatherRefresh = false;
     
     // if not already updating
-    
     if (!earth_data_validate_index (g_weatherUpdateCity))
     {
       g_weatherUpdateCity = 0;
@@ -1200,11 +1199,12 @@ static void app_update_feeds_weather (void)
   {
     feed_weather_t *feed = &g_feedsWeather [g_weatherUpdateCity];
     
+    const char *wId = earth_data_get_weather (g_weatherUpdateCity);
+    
     switch (feed->reqStatus) 
     {
       case FEED_REQ_STATUS_INVALID:
       {
-        const char *wId = earth_data_get_weather (g_weatherUpdateCity);
         feeds_weather_search (feed, wId);
         break;
       }
@@ -2019,8 +2019,8 @@ static void app_input_touch_began (float x, float y)
       
       if (oldFeedTwitter->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
       {
-        feeds_twitter_cancel_search (oldFeedTwitter);
-        util_activity_indicator_set_active (false);
+        //feeds_twitter_cancel_search (oldFeedTwitter);
+        //util_activity_indicator_set_active (false);
       }
       
       const char *query = earth_data_get_feed_query (newSelectedCity);
@@ -2259,9 +2259,9 @@ static int app_input_touch_earth (float screenX, float screenY, float screenWidt
 void app_on_background (void)
 {
   // save settings
-  settings_data_save ();
+  //settings_data_save (); // redundant
   
-  util_activity_indicator_set_active (false);
+  util_activity_indicator_set_active (false); // necessary?
   
   metrics_event_log (METRICS_EVENT_APP_BG, NULL);
 }
@@ -2289,8 +2289,8 @@ void app_on_foreground (void)
     
     if (feedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
     {
-      feeds_twitter_search (feedTwitter, query);
-      util_activity_indicator_set_active (true);
+      //feeds_twitter_search (feedTwitter, query);
+      //util_activity_indicator_set_active (true);
     }
     
     if (feedNews->reqStatus == FEED_REQ_STATUS_INVALID)
@@ -2301,6 +2301,15 @@ void app_on_foreground (void)
   }
   
   earth_data_update_dst_offsets ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void app_on_terminate (void)
+{
+  settings_data_save ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

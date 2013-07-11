@@ -64,9 +64,9 @@ void main (void)
 #if 0
   float s = pow (max (dot (vVec, r), c_zero), u_shininess);
 #else
+  u_shininess; // unused
   float mp = max (dot (vVec, r), c_zero);
   float s = mp * mp;
-  u_shininess;
 #endif
   
   vec4 specular = s * u_specularLight * specularMat * diffuseMat;

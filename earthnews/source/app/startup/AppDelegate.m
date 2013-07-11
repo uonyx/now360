@@ -66,6 +66,7 @@
      Save data if appropriate.
      See also applicationDidEnterBackground:.
      */
+  app_on_terminate ();
 }
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application

@@ -450,8 +450,8 @@ static void util_init_status_bar (void)
   
   g_statug_msg_text [STATUS_BAR_MSG_CONNECTION_ERROR] = "No Internet Connection"; //"Network Connection Error",
   g_statug_msg_text [STATUS_BAR_MSG_NEWS_COMMS_ERROR] = "News Service Connection Error";
-  g_statug_msg_text [STATUS_BAR_MSG_TWITTER_COMMS_ERROR] = "Weather Service Connection Error";
-  g_statug_msg_text [STATUS_BAR_MSG_WEATHER_COMMS_ERROR] = "Twitter Connection Error";
+  g_statug_msg_text [STATUS_BAR_MSG_TWITTER_COMMS_ERROR] = "Twitter Connection Error";
+  g_statug_msg_text [STATUS_BAR_MSG_WEATHER_COMMS_ERROR] = "Weather Service Connection Error";
   
   cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f); // red
   cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_NEWS_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow

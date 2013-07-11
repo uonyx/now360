@@ -832,19 +832,6 @@
   }
   },
   {
-  "name": "Puerto Rico",
-  "news": "Puerto Rico",
-  "weather": "161685",
-  "timezone": {
-  "utcoffset": -14400,
-  "name": "America/Puerto_Rico"
-  },
-  "location": {
-  "latitude": 18.4517,
-  "longitude": -66.0689
-  }
-  },
-  {
   "name": "Phoenix",
   "news": "Phoenix, Arizona",
   "weather": "2471390",
@@ -920,6 +907,19 @@
   "location": {
   "latitude": 9.9247,
   "longitude": -84.0781
+  }
+  },
+  {
+  "name": "San Juan",
+  "news": "San Juan, Puerto Rico",
+  "weather": "161685",
+  "timezone": {
+  "utcoffset": -14400,
+  "name": "America/Puerto_Rico"
+  },
+  "location": {
+  "latitude": 18.4517,
+  "longitude": -66.0689
   }
   },
   {

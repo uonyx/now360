@@ -26,7 +26,7 @@
 #define TWITTER_TTL                   (9)
 
 #endif
-#define TWITTER_SEARCH_API_RPP        "32"
+#define TWITTER_SEARCH_API_RPP        "15"
 #define TWITTER_HTTP_REQUEST_TIMEOUT  (10)
 
 #if FEEDS_WEATHER_API_YAHOO
@@ -544,16 +544,40 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query)
          
          if ([accounts count] > 0)
          {
-           NSURL *url = [NSURL URLWithString:@TWITTER_SEARCH_API_URL];
+           NSString *nsquery = nil;
            
-           NSString *nsquery = [NSString stringWithUTF8String:query];
+           const char *qsplit = strchr (query, ',');
+           
+           if (qsplit)
+           {
+             char srchQuery [128];
+             char q1 [64];
+             char q2 [64];
+             
+             int q1Len = qsplit - query;
+             
+             cx_strcpy (q1, q1Len + 1, query);
+             cx_strcpy (q2, 64, qsplit + 1);
+             cx_sprintf (srchQuery, 128, "%s OR %s", q1, q2);
+             
+             nsquery = [NSString stringWithUTF8String:srchQuery];
+           }
+           else
+           {
+             nsquery = [NSString stringWithUTF8String:query];
+           }
+           
+           NSURL *url = [NSURL URLWithString:@TWITTER_SEARCH_API_URL];
            NSString *nsSinceId = [NSString stringWithUTF8String:feed->maxIdStr];
            
            NSDictionary *params = @{ @"q" : nsquery,
-                                     @"result_type" : @"mixed",
-                                     @"include_entities" : @"1",
+                                     @"result_type" : @"recent",
+                                     @"include_entities" : @"false",
                                      @"count": @TWITTER_SEARCH_API_RPP,
-                                     @"since_id" : nsSinceId };
+#if CX_DEBUG
+                                     @"lang": @"en",  // currently limited to 'en' due to poor font support
+#endif
+                                     @"since_id" : nsSinceId};
            
            SLRequest *request = [SLRequest requestForServiceType:SLServiceTypeTwitter
                                                    requestMethod:SLRequestMethodGET
@@ -638,10 +662,12 @@ void feeds_twitter_cancel_search (feed_twitter_t *feed)
 {
   CX_ASSERT (feed);
   
+#if 0
   cx_http_cancel (&feed->httpReqId);
   
   feed->reqStatus = FEED_REQ_STATUS_INVALID;
   feed->query = NULL;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -921,7 +947,7 @@ bool feeds_weather_search (feed_weather_t *feed, const char *query)
   }
   else
   {
-    feed->reqStatus = FEED_REQ_STATUS_FAILURE;
+    feed->reqStatus = FEED_REQ_STATUS_SUCCESS;
     
     return false;
   }

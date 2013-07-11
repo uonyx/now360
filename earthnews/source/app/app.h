@@ -42,6 +42,7 @@ void app_view_resize (float width, float height);
 
 void app_on_background (void);
 void app_on_foreground (void);
+void app_on_terminate (void);
 void app_on_memory_warning (void);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
