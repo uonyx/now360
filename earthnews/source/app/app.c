@@ -873,16 +873,6 @@ static void app_update_camera (void)
   rotSpeedx = cx_sin ((CX_PI * rotSpeedx) + CX_HALF_PI);
   rotSpeedy = cx_sin ((CX_PI * rotSpeedy) + CX_HALF_PI);
 #endif
-  
-  if (rotSpeedx >= rotSpeed)
-  {
-    CX_DEBUGLOG_CONSOLE(1, "ORIA! X");
-  }
-  
-  if (rotSpeedy >= rotSpeed)
-  {
-    CX_DEBUGLOG_CONSOLE(1, "ORIA! Y");
-  }
 
   rotSpeedx = cx_min (rotSpeedx, rotSpeed);
   rotSpeedy = cx_min (rotSpeedy, rotSpeed);
@@ -1704,7 +1694,6 @@ static void app_render_2d_earth (void)
   cx_gdi_set_renderstate (CX_GDI_RENDER_STATE_BLEND | CX_GDI_RENDER_STATE_DEPTH_TEST);
   cx_gdi_enable_z_write (true);
   
-  bool drawClock = settings_get_show_clock ();
   int unitType = settings_get_temperature_unit ();
   char tempUnit [4];
   
@@ -1777,15 +1766,7 @@ static void app_render_2d_earth (void)
         
         cx_sprintf (tempStr, 32, "%d", tempValue);
         cx_strcat (tempStr, 32, tempUnit);
-        
-        if (drawClock)
-        {
-          cx_sprintf (text2, 64, "%s / %s", tempStr, timeStr);
-        }
-        else
-        {
-          cx_sprintf (text2, 64, "%s", tempStr);
-        }
+        cx_sprintf (text2, 64, "%s / %s", tempStr, timeStr);
         
         if (feeds_weather_data_cc_valid (feed))
         {
@@ -1835,10 +1816,7 @@ static void app_render_2d_earth (void)
         // time
         //////////////////
         
-        if (drawClock)
-        {
-          cx_font_render (sfont, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
-        }
+        cx_font_render (sfont, timeStr, pos->x + 12.0f, pos->y - 2.0f, pos->z, 0, &colour);
       }
     }
   }
@@ -2030,7 +2008,9 @@ static void app_input_touch_began (float x, float y)
       
       if (newFeedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
       {
-        feeds_twitter_search (newFeedTwitter, query);
+        float lat, lon;
+        earth_data_get_terrestrial_coords (newSelectedCity, &lat, &lon);
+        feeds_twitter_search (newFeedTwitter, query, lat, lon);
         util_activity_indicator_set_active (true);
       }
       
@@ -2054,7 +2034,7 @@ static void app_input_touch_began (float x, float y)
     float diffx = 0.5f - x;
     float diffy = 0.5f - y;
     
-    CX_DEBUGLOG_CONSOLE (1, "diffx = %.4f, diffy = %.4f", diffx, diffy);
+    CX_LOG_CONSOLE (0, "diffx = %.4f, diffy = %.4f", diffx, diffy);
     
     float aspectRatio = sw / sh;
     
@@ -2085,8 +2065,8 @@ static void app_input_touch_began (float x, float y)
 
     g_rotTarget = g_rotAngle;
     
-    CX_DEBUGLOG_CONSOLE (1, "BEGIN-AFEQRTEY4534545RGDFGQ34TQQ4545411");
-    CX_DEBUGLOG_CONSOLE (1, "bx = %.4f, by = %.4f", x, y);
+    CX_LOG_CONSOLE (0, "BEGIN-AFEQRTEY4534545RGDFGQ34TQQ4545411");
+    CX_LOG_CONSOLE (0, "bx = %.4f, by = %.4f", x, y);
     
     g_rotSpeedExp = CAMERA_ROTATION_SPEED_EXPONENT_SWIPE;
     
@@ -2113,7 +2093,7 @@ static void app_input_touch_moved (float x, float y, float prev_x, float prev_y)
   float diffx = x - prev_x;
   float diffy = y - prev_y;
   
-  CX_DEBUGLOG_CONSOLE (1, "diffx = %.4f, diffy = %.4f", diffx, diffy);
+  CX_LOG_CONSOLE (0, "diffx = %.4f, diffy = %.4f", diffx, diffy);
   
   float aspectRatio = sw / sh;
   
@@ -2238,7 +2218,7 @@ static int app_input_touch_earth (float screenX, float screenY, float screenWidt
           
           if (distSqr <= (0.025f * 0.025f))
           {
-            CX_DEBUGLOG_CONSOLE (1, "%s", city);
+            CX_LOG_CONSOLE (0, "%s", city);
             
             cityIndex = i;
             
@@ -2318,11 +2298,11 @@ void app_on_terminate (void)
 
 void app_on_memory_warning (void)
 {
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_DEBUGLOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
+  CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
   
   cx_http_clear_cache ();
 }
@@ -2334,7 +2314,7 @@ void app_on_memory_warning (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if 0
 void app_test_code (void)
 {
   const int size = 8 * 1024;
@@ -2370,9 +2350,8 @@ void app_test_code (void)
   cx_time_stop_timer (&timer);
   
   printf ("app_test_code: %.3f\n", timer.elapsedTime);
-  //CX_DEBUGLOG_CONSOLE (1, "app_test_code: %.3f", timer.elapsedTime);
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

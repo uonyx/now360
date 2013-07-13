@@ -21,8 +21,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CX_FONT_TEXTURE_WIDTH       (1024)
-#define CX_FONT_TEXTURE_HEIGHT      (1024)
+#define CX_FONT_TEXTURE_WIDTH       (512)
+#define CX_FONT_TEXTURE_HEIGHT      (512)
 #define CX_FONT_MAX_NUM_FONT_CHARS  (256)
 #define CX_FONT_BEGIN_CHAR          (32)
 #define CX_FONT_END_CHAR            (CX_FONT_BEGIN_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
@@ -127,6 +127,11 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   CX_ASSERT (font->fontdata);
   CX_ASSERT (text);
   CX_ASSERT (colour);
+  
+#if CX_DEBUG
+  cxu32 titleLen = strlen (text);
+  CX_ASSERT (titleLen < CX_FONT_MAX_TEXT_LENGTH);
+#endif
   
   cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
@@ -297,6 +302,11 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   CX_ASSERT (font->fontdata);
   CX_ASSERT (text);
   CX_ASSERT (colour);
+  
+#if CX_DEBUG
+  cxu32 titleLen = strlen (text);
+  CX_ASSERT (titleLen < CX_FONT_MAX_TEXT_LENGTH);
+#endif
   
   cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);

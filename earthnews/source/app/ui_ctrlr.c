@@ -608,6 +608,11 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
   {
     feed_news_item_t *e = entryArray [i];
     
+    if (settings_get_use_profanity_filter ())
+    {
+      util_profanity_filter (e->title);
+    }
+    
     float fw = cx_font_get_text_width (font, e->title);
     
     ui_custom_t *custom = buttons [i];
@@ -685,14 +690,7 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   
   if (title)
   {
-#if CX_DEBUG
-    unsigned int titleLen = strlen (title);
-    CX_ASSERT (titleLen < 512);
-#endif
-    
-    static char titleText [512] = {0};
-    cx_str_html_unescape (titleText, 512, title);
-    cx_font_render (font, titleText, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &colour);
+    cx_font_render (font, title, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &colour);
   }
 }
 
@@ -842,13 +840,19 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
   
   while (tweet && (ticker->itemCount < TWITTER_TICKER_MAX_ITEM_COUNT))
   {
+    if (settings_get_use_profanity_filter ())
+    {
+      util_profanity_filter (tweet->username);
+      util_profanity_filter (tweet->text);
+    }
+    
     float pixelwidth = 0.0f;
     
     pixelwidth += cx_font_get_text_width (font, tweet->username);
     pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar); // space + @
     
     pixelwidth += cx_font_get_text_width (font, tweet->text);
-    pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar); // padding
+    pixelwidth += (pixelwidthAvgChar + pixelwidthAvgChar + pixelwidthAvgChar); // padding
     
     ticker->items [ticker->itemCount].data = tweet;
     ticker->items [ticker->itemCount].width = pixelwidth;
@@ -972,7 +976,7 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
     
     const char *str = &dest->buffer [loc];
     
-    CX_DEBUGLOG_CONSOLE (1, "%s", str);
+    CX_LOG_CONSOLE (1, "%s", str);
     
     CX_DEBUG_BREAKABLE_EXPR;
   }
@@ -1049,9 +1053,7 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
           ticker_tweet_t tickerTweet;
           memset (&tickerTweet, 0, sizeof (ticker_tweet_t));
           
-          static char unescapedText [512] = {0};
-          cx_str_html_unescape (unescapedText, 512, tweet->text);
-          ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, unescapedText);
+          ui_ctrlr_twitter_get_ticker_tweet (&tickerTweet, tweet->text);
           
           char username [32];
           cx_sprintf (username, 32, " @%s: ", tweet->username);

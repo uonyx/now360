@@ -702,39 +702,39 @@ typedef enum
   {
     case UIWebViewNavigationTypeLinkClicked:
     {
-      CX_DEBUGLOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeLinkClicked)");
+      CX_LOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeLinkClicked)");
       //[webView stringByEvaluatingJavaScriptFromString:@"document.body.innerHTML = \"\";"];
       //[webView loadRequest:request];
       break;
     }
     case UIWebViewNavigationTypeFormSubmitted:
     {
-      CX_DEBUGLOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeFormSubmitted)");
+      CX_LOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeFormSubmitted)");
       break;
     }
     case UIWebViewNavigationTypeBackForward:
     {
-      CX_DEBUGLOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeBackForward)");
+      CX_LOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeBackForward)");
       break;
     }
     case UIWebViewNavigationTypeReload:
     {
-      CX_DEBUGLOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeReload)");
+      CX_LOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeReload)");
       break;
     }
     case UIWebViewNavigationTypeFormResubmitted:
     {
-      CX_DEBUGLOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeFormResubmitted)");
+      CX_LOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeFormResubmitted)");
       break;
     }
     case UIWebViewNavigationTypeOther:
     {
-      CX_DEBUGLOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeOther)");
+      CX_LOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: UIWebViewNavigationTypeOther)");
       break;
     }
     default:
     {
-      CX_DEBUGLOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: Unknown!)");
+      CX_LOG_CONSOLE (WEBVIEW_DEBUG_LOG_ENABLED, "Webview: navigationType: Unknown!)");
       break;
     }
   }

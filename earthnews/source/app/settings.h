@@ -37,7 +37,7 @@ bool settings_ui_active (void);
 
 void settings_set_city_names (const char **names, int count);
 bool settings_get_city_display (int cityIdx);
-bool settings_get_show_clock (void);
+bool settings_get_use_profanity_filter (void);
 int  settings_get_temperature_unit (void);
 int  settings_get_clock_display_format (void);
 

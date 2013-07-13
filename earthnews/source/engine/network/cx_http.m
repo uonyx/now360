@@ -93,14 +93,14 @@ bool _cx_http_init (cxu32 cacheMemSizeMb, cxu32 cacheDiskSizeMb, bool clearCache
   }
   else
   {
-    CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: Warning: using default system cache");
+    CX_LOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: Warning: using default system cache");
   }
 #else
   cxu32 sharedCacheMemory = [[NSURLCache sharedURLCache] memoryCapacity];
   cxu32 sharedCacheDisk = [[NSURLCache sharedURLCache] diskCapacity];
   
-  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared memory cache size: %u", sharedCacheMemory);
-  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared disk cache size: %u", sharedCacheDisk);
+  CX_LOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared memory cache size: %u", sharedCacheMemory);
+  CX_LOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED && 1, "shared disk cache size: %u", sharedCacheDisk);
   
   cxu32 newCacheMemory = cx_max (sharedCacheMemory, (1024 * 1024 * cacheMemSizeMb));
   cxu32 newCacheDisk = cx_max (sharedCacheDisk, (1024 * 1024 * cacheDiskSizeMb));
@@ -372,7 +372,7 @@ void cx_http_clear_cache (void)
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
-  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didFailWithError: Connection error: Internet offline maybe");
+  CX_LOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didFailWithError: Connection error: Internet offline maybe");
   
   self->resp.error = CX_HTTP_CONNECTION_ERROR;
   self->resp.statusCode = -1;
@@ -435,7 +435,7 @@ void cx_http_clear_cache (void)
   self->resp.error = CX_HTTP_CONNECTION_OK;
   self->resp.statusCode = statusCode;
   
-  CX_DEBUGLOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didReceiveResponse: HTTP request: Server Response Status Code [%d]", statusCode);
+  CX_LOG_CONSOLE (CX_HTTP_DEBUG_LOG_ENABLED, "cx_http: didReceiveResponse: HTTP request: Server Response Status Code [%d]", statusCode);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

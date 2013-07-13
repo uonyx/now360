@@ -118,9 +118,9 @@ void cx_util_world_space_to_screen_space (cxf32 width, cxf32 height, const cx_ma
   CX_REF_UNUSED (depth);
   
 #if 0
-  CX_DEBUGLOG_CONSOLE (1, "-----");
-  CX_DEBUGLOG_CONSOLE (1, "clip.z = %.3f", clip.z);
-  CX_DEBUGLOG_CONSOLE (1, "depth  = %.3f", *depth);
+  CX_LOG_CONSOLE (1, "-----");
+  CX_LOG_CONSOLE (1, "clip.z = %.3f", clip.z);
+  CX_LOG_CONSOLE (1, "depth  = %.3f", *depth);
 #endif
   
   if (zScale) // 2D
@@ -247,6 +247,41 @@ void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_ve
   cxf32 ez = cx_vec4_dot (&forward, eye);
   cx_vec4 e = {{ -ex, -ey, -ez, 1.0f }};
   cx_mat4x4_set_column (m, 3, &e);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void cx_util_word_filter (const char *text, const char **words, cxu32 wordCount, char subchar)
+{
+  for (cxu32 i = 0; i < wordCount; ++i)
+  {
+    const char *word = words [i];
+    
+    CX_ASSERT (word);
+    
+    char *found = strcasestr (text, word);
+    
+    while (found)
+    {
+      cxu32 blen = strlen (word);
+      
+      while (blen--)
+      {
+        if (*found != ' ') // ignore whitespace
+        {
+          *found++ = subchar;
+        }
+        else
+        {
+          found++;
+        }
+      }
+      
+      found = strcasestr (found, word);
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

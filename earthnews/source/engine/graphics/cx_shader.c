@@ -202,7 +202,7 @@ static bool cx_shader_compile (GLuint *shader, GLenum type, const char *buffer, 
     {
       char *log = (char *) cx_malloc (sizeof(char) * logLength);
       glGetShaderInfoLog (outShader, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Shader compile log:\n%s", log);
+      CX_LOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Shader compile log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -250,7 +250,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Program link log:\n%s", log);
+      CX_LOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Program link log:\n%s", log);
       cx_free (log);
     }
 #endif
@@ -274,7 +274,7 @@ static bool cx_shader_link (GLuint *program, GLuint vertexShader, GLuint fragmen
     {
       char *log = (char *) cx_malloc (sizeof (char) * logLength);
       glGetProgramInfoLog (outProgram, logLength, &logLength, log);
-      CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Program validate log:\n%s", log);
+      CX_LOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "Program validate log:\n%s", log);
       cx_free (log);
     }
     
@@ -336,7 +336,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
         shader->attributes [attribIdx] = attribLocation;
         
         cx_gdi_assert_no_errors ();
-        CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, attribLocation);
+        CX_LOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", attribStr, attribName, attribLocation);
       }
       
 #if CX_DEBUG
@@ -372,7 +372,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
           shader->uniforms [uniformIdx] = uniformLocation;
           
           cx_gdi_assert_no_errors ();
-          CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, uniformLocation);
+          CX_LOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "%s: %s [%d]", uniformStr, uniformName, uniformLocation);
         }
       }
       
@@ -389,7 +389,7 @@ static bool cx_shader_configure (const char *buffer, unsigned int bufferSize, cx
   }
   else
   {
-    CX_DEBUGLOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "JSON parse error");
+    CX_LOG_CONSOLE (CX_SHADER_DEBUG_LOG_ENABLED, "JSON parse error");
   }
   
   return success;

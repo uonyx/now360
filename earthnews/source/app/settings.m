@@ -27,12 +27,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char *g_rootTableData [SETTINGS_ROOT_TABLE_DATA_ROWS] = 
+static const char *g_rootTableData [SETTINGS_ROOT_TABLE_DATA_ROWS] =
 {
   "Cities",
   "Temperature",
   "Clock Format",
-  "Show Time",
+  "Profanity Filter",
 };
 
 static const char *g_tempTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
@@ -58,7 +58,7 @@ typedef struct
   int          cityCount;
   int          tempUnit;
   int          clockFmt;
-  bool         showTime;
+  bool         safeMode;
 } settings_t;
 
 static settings_t g_settings;
@@ -91,7 +91,7 @@ static settings_t g_settings;
 @interface RootTableViewController : UITableViewController
 {
   UINavigationController *_navCtrlr;
-  UISwitch *_timeSwitch;
+  UISwitch *_profanityFilterSwitch;
   UIBarButtonItem *_doneButton;
   TemperatureTableViewController *_temperatureViewController;
   CityTableViewController *_cityViewController;
@@ -151,9 +151,14 @@ bool settings_init (const void *rootvc, const char *filename)
   else if (settings_load (filename, CX_FILE_STORAGE_BASE_RESOURCE))
   {
     init = settings_save (SETTINGS_SAVE_FILE);
+    
+    if (init)
+    {
+      util_add_skip_backup_attribute_to_path (SETTINGS_SAVE_FILE, CX_FILE_STORAGE_BASE_DOCUMENTS);
+    }
   }
   
-  CX_DEBUGLOG_CONSOLE (1 && !init, "settings_init: failed");
+  CX_LOG_CONSOLE (1 && !init, "settings_init: failed");
   CX_ASSERT (init);
   
   g_initialised = init;
@@ -273,9 +278,9 @@ bool settings_get_city_display (int cityIdx)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool settings_get_show_clock (void)
+bool settings_get_use_profanity_filter (void)
 {
-  return g_settings.showTime;
+  return g_settings.safeMode;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -327,7 +332,9 @@ static void settings_init_view_destroy (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static bool settings_save (const char *filename)
-{  
+{
+  bool success = true;
+  
   cxu8 buffer [2048];
   cxu32 bufferlen = 0;
   
@@ -335,8 +342,8 @@ static bool settings_save (const char *filename)
   
   char tmp [1024];
   
-  int l = cx_sprintf (tmp, 1024, "{\"settings\":{\"time\":%d,\"cloc\":%d,\"temp\":%d,\"city\":[", 
-                      g_settings.showTime ? 1 : 0, 
+  int l = cx_sprintf (tmp, 1024, "{\"settings\":{\"safe\":%d,\"cloc\":%d,\"temp\":%d,\"city\":[", 
+                      g_settings.safeMode ? 1 : 0, 
                       g_settings.clockFmt,
                       g_settings.tempUnit);
   
@@ -374,7 +381,10 @@ static bool settings_save (const char *filename)
   
   buffer [bufferlen] = 0;
   
-  bool success = cx_file_storage_save_contents (buffer, bufferlen, filename, CX_FILE_STORAGE_BASE_DOCUMENTS);
+  if (cx_file_storage_save_contents (buffer, bufferlen, filename, CX_FILE_STORAGE_BASE_DOCUMENTS))
+  {
+    success = true;
+  }
 
   return success;
 }
@@ -399,17 +409,17 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       cx_json_node rootNode = cx_json_tree_root_node (jsonTree);
       cx_json_node settingsNode = cx_json_object_child (rootNode, "settings");
       
-      cx_json_node timeNode = cx_json_object_child (settingsNode, "time");
+      cx_json_node safeNode = cx_json_object_child (settingsNode, "safe");
       cx_json_node tempNode = cx_json_object_child (settingsNode, "temp");
       cx_json_node cityNode = cx_json_object_child (settingsNode, "city");
       cx_json_node clocNode = cx_json_object_child (settingsNode, "cloc");
       
-      CX_ASSERT (timeNode);
+      CX_ASSERT (safeNode);
       CX_ASSERT (tempNode);
       CX_ASSERT (cityNode);
       CX_ASSERT (clocNode);
       
-      int showTime = (int) cx_json_value_int (timeNode);
+      int safeMode = (int) cx_json_value_int (safeNode);
       int tempUnit = (int) cx_json_value_int (tempNode);
       int clockFmt = (int) cx_json_value_int (clocNode);
       int cityCount = cx_json_array_size (cityNode);
@@ -430,7 +440,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
         g_settings.cityDisplay = NULL;
       }
         
-      g_settings.showTime = showTime ? true : false;
+      g_settings.safeMode = safeMode ? true : false;
       g_settings.tempUnit = tempUnit;
       g_settings.clockFmt = clockFmt;
       g_settings.cityCount = cityCount;
@@ -442,14 +452,14 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     }
     else
     {
-      CX_DEBUGLOG_CONSOLE (1, "JSON tree parse error: %s", filename);
+      CX_LOG_CONSOLE (1, "JSON tree parse error: %s", filename);
     }
     
     cx_free (data);
   }
   else
   {
-    CX_DEBUGLOG_CONSOLE (1, "Failed to load %s", filename);
+    CX_LOG_CONSOLE (1, "Failed to load %s", filename);
   }
   
   return success;
@@ -660,7 +670,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   if (self)
   {
-    _timeSwitch = [[UISwitch alloc] init];
+    _profanityFilterSwitch = [[UISwitch alloc] init];
     _temperatureViewController = [[TemperatureTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _cityViewController = [[CityTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _clockViewController = [[ClockTableViewController alloc] initWithStyle:UITableViewStylePlain];
@@ -684,7 +694,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   [_cityViewController release];
   [_temperatureViewController release];
   [_clockViewController release];
-  [_timeSwitch release];
+  [_profanityFilterSwitch release];
   [_doneButton release];
   [_navCtrlr release];
   
@@ -693,9 +703,9 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (void)switchTouched
 {
-  bool showTime = !g_settings.showTime;
-  g_settings.showTime = showTime;
-  [_timeSwitch setOn:showTime animated:YES];
+  bool safeMode = !g_settings.safeMode;
+  g_settings.safeMode = safeMode;
+  [_profanityFilterSwitch setOn:safeMode animated:YES];
 }
 
 - (void)doneButtonClicked:(id)sender
@@ -706,13 +716,13 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 - (void)viewDidLoad
 {
   [super viewDidLoad];
-  [_timeSwitch addTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
+  [_profanityFilterSwitch addTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)viewDidUnload
 {
   [super viewDidUnload];
-  [_timeSwitch removeTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
+  [_profanityFilterSwitch removeTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -753,7 +763,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       break;
     }
       
-    case 3: // show time
+    case 3: // profanity filter
     {
       break;
     }
@@ -806,11 +816,11 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       break;
     }
       
-    case 3: // show time
+    case 3: // profanity filter
     {
-      [_timeSwitch setOn:g_settings.showTime];
+      [_profanityFilterSwitch setOn:g_settings.safeMode];
       
-      cell.accessoryView = _timeSwitch;
+      cell.accessoryView = _profanityFilterSwitch;
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryNone;
       break;

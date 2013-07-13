@@ -205,7 +205,7 @@ void cx_gdi_get_transform (cx_gdi_transform transform, cx_mat4x4 *matrix)
 
 void cx_gdi_set_screen_dimensions (cxi32 width, cxi32 height)
 {
-  CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi_set_screen_dimensions: width [%d], height [%d]", width, height);
+  CX_LOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi_set_screen_dimensions: width [%d], height [%d]", width, height);
   
   g_screenWidth = width;
   g_screenHeight = height;
@@ -332,11 +332,11 @@ void _cx_gdi_assert_no_errors (void)
   switch (error) 
   {
     case GL_NO_ERROR:           { break; }
-    case GL_INVALID_ENUM:       { CX_DEBUGLOG_CONSOLE (1, "GL_INVALID_ENUM"); break; }
-    case GL_INVALID_VALUE:      { CX_DEBUGLOG_CONSOLE (1, "GL_INVALID_VALUE"); break; }
-    case GL_INVALID_OPERATION:  { CX_DEBUGLOG_CONSOLE (1, "GL_INVALID_OPERATION"); break; }
-    case GL_OUT_OF_MEMORY:      { CX_DEBUGLOG_CONSOLE (1, "GL_OUT_OF_MEMORY"); break; }
-    default:                    { CX_DEBUGLOG_CONSOLE (1, "UNKNOWN GL ERROR"); break; }
+    case GL_INVALID_ENUM:       { CX_LOG_CONSOLE (1, "GL_INVALID_ENUM"); break; }
+    case GL_INVALID_VALUE:      { CX_LOG_CONSOLE (1, "GL_INVALID_VALUE"); break; }
+    case GL_INVALID_OPERATION:  { CX_LOG_CONSOLE (1, "GL_INVALID_OPERATION"); break; }
+    case GL_OUT_OF_MEMORY:      { CX_LOG_CONSOLE (1, "GL_OUT_OF_MEMORY"); break; }
+    default:                    { CX_LOG_CONSOLE (1, "UNKNOWN GL ERROR"); break; }
   }
  
   CX_ASSERT (error == GL_NO_ERROR);
@@ -380,7 +380,7 @@ static void cx_gdi_init_extensions (void)
     GLint val;
     glGetIntegerv (type, &val);
    
-    CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s: %d", str, val);
+    CX_LOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s: %d", str, val);
     CX_REF_UNUSED (str);
   }
   
@@ -394,7 +394,7 @@ static void cx_gdi_init_extensions (void)
     GLint *compressedFormats = (GLint *) cx_malloc (sizeof (GLint) * numCompressedTextures);
     glGetIntegerv (GL_COMPRESSED_TEXTURE_FORMATS, compressedFormats);
     
-    CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi: Supported compressed texture formats:");
+    CX_LOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi: Supported compressed texture formats:");
     
     for (int j = 0; j < numCompressedTextures; ++j)
     {
@@ -411,7 +411,7 @@ static void cx_gdi_init_extensions (void)
         default:                                  { formatStr = "cx_gdi: GL_COMPRESSED_FORMAT_UNKNOWN!"; break; }
       }
                                                     
-      CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", formatStr);
+      CX_LOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", formatStr);
       CX_REF_UNUSED (formatStr);
     }
     
@@ -423,7 +423,7 @@ static void cx_gdi_init_extensions (void)
   // supported extensions
   
   const char *supportedExtensions = (const char *) glGetString (GL_EXTENSIONS);
-  CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", supportedExtensions);
+  CX_LOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "%s", supportedExtensions);
   CX_REF_UNUSED (supportedExtensions);
   
   char *extensionsArray [512];
@@ -444,7 +444,7 @@ static void cx_gdi_init_extensions (void)
         const char *ext = extensionsArray [e];
         CX_ASSERT (ext);
       
-        CX_DEBUGLOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi: supported extension: %s", ext);
+        CX_LOG_CONSOLE (CX_GDI_DEBUG_LOG_ENABLED, "cx_gdi: supported extension: %s", ext);
         
         if (strcmp (ext, qry) == 0)
         {

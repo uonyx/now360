@@ -562,14 +562,14 @@ static void audio_music_playback_state_changed (void)
   {
     case MPMusicPlaybackStatePaused: 
     { 
-      CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStatePaused"); 
+      CX_LOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStatePaused"); 
       notification = AUDIO_MUSIC_NOTIFICATION_PAUSED;
       break; 
     }
       
     case MPMusicPlaybackStateStopped: 
     { 
-      CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateStopped"); 
+      CX_LOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateStopped"); 
       notification = AUDIO_MUSIC_NOTIFICATION_STOPPED;
       
 #if PLAYBACK_STATE_HACK_FIX
@@ -580,7 +580,7 @@ static void audio_music_playback_state_changed (void)
       
     case MPMusicPlaybackStateInterrupted: 
     { 
-      CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateInterrupted"); 
+      CX_LOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateInterrupted"); 
       notification = AUDIO_MUSIC_NOTIFICATION_INTERRUPTED;
       
 #if PLAYBACK_STATE_HACK_FIX
@@ -590,9 +590,9 @@ static void audio_music_playback_state_changed (void)
       break; 
     }
       
-    case MPMusicPlaybackStatePlaying: { CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStatePlaying"); break; }
-    case MPMusicPlaybackStateSeekingForward: { CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateSeekingForward"); break; }
-    case MPMusicPlaybackStateSeekingBackward: { CX_DEBUGLOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateSeekingBackward"); break; }
+    case MPMusicPlaybackStatePlaying: { CX_LOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStatePlaying"); break; }
+    case MPMusicPlaybackStateSeekingForward: { CX_LOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateSeekingForward"); break; }
+    case MPMusicPlaybackStateSeekingBackward: { CX_LOG_CONSOLE (DEBUG_LOG_ENABLE, "MPMusicPlaybackStateSeekingBackward"); break; }
 
     default: { break; }
   }

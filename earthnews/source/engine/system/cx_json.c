@@ -49,7 +49,7 @@ cx_json_tree cx_json_tree_create (const char *data, cxu32 size)
     tree->root = root;
   }
   
-  CX_DEBUGLOG_CONSOLE (CX_JSON_DEBUG_LOG_ENABLED && (root == NULL), errorBuffer);
+  CX_LOG_CONSOLE (CX_JSON_DEBUG_LOG_ENABLED && (root == NULL), errorBuffer);
   
   return tree;
 }

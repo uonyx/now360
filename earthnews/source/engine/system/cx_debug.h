@@ -51,9 +51,9 @@
 // logs
 
 #if CX_DEBUG_LOG_ENABLE
-#define CX_DEBUGLOG_CONSOLE(C, ...)  do { if (C) { _cx_outputLog(__FILE__, __LINE__, __VA_ARGS__); } } while (0)
+#define CX_LOG_CONSOLE(C, ...)  do { if (C) { _cx_console_log(__FILE__, __LINE__, __VA_ARGS__); } } while (0)
 #else
-#define CX_DEBUGLOG_CONSOLE(C, ...)
+#define CX_LOG_CONSOLE(C, ...)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@
 
 #if CX_DEBUG
 
-void _cx_outputLog (const char *file, int line, const char *format, ...);
+void _cx_console_log (const char *file, int line, const char *format, ...);
 void _cx_debug_break (void);
 
 void _cx_assert (const char *filename, int lineNumber, const char *assertString);

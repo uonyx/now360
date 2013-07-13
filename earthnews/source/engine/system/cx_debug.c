@@ -58,7 +58,7 @@ static BOOL in_debugger (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void _cx_outputLog (const char *file, int line, const char *format, ...)
+void _cx_console_log (const char *file, int line, const char *format, ...)
 {
   va_list arg_list;
   
@@ -89,7 +89,7 @@ void _cx_debug_break (void)
 
 void _cx_assert (const char *filename, int lineNumber, const char *assertString)
 {
-  _cx_outputLog (filename, lineNumber, "%s", assertString);
+  _cx_console_log (filename, lineNumber, "%s", assertString);
   _cx_debug_break ();
 }
 
@@ -116,7 +116,7 @@ static void _cx_assert_ptr (const char *filename, int lineNumber, const char *as
 
 void _cx_error (const char *filename, int lineNumber, const char *fatalString)
 {
-  _cx_outputLog (filename, lineNumber, "%s", fatalString);
+  _cx_console_log (filename, lineNumber, "%s", fatalString);
   _cx_debug_break ();
 }
 

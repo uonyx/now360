@@ -300,14 +300,14 @@ static CX_INLINE bool cx_validatef (cxf32 x)
   // check for infinity
   if ((exponent == 0x7f800000) && (mantissa == 0))
   {
-    //CX_DEBUGLOG_CONSOLE (1, "invalid float: inf");
+    //CX_LOG_CONSOLE (1, "invalid float: inf");
     return false;
   }
   
   // check for qnan
   if ((exponent == 0x7f800000) && (mantissa == 0x400000))
   {
-    //CX_DEBUGLOG_CONSOLE (1, "invalid float: nan");
+    //CX_LOG_CONSOLE (1, "invalid float: nan");
     return false;
   }
   

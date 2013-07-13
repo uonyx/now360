@@ -65,7 +65,7 @@ cxu32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src)
 {
   CX_ASSERT (src);
   CX_ASSERT (dst);
-  CX_ASSERT (dstSize);
+  CX_ASSERT (dstSize > 0);
   
   const char *s = src;
   cxu32 len = 0;
@@ -74,6 +74,11 @@ cxu32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src)
   while ((ch = *s))
   {
     CX_ASSERT (len < dstSize);
+    
+    if (len >= (dstSize - 1))
+    {
+      break;
+    }
     
     if (ch == '&')
     {
@@ -313,7 +318,7 @@ cxu32 cx_str_percent_encode (char *dst, cxu32 dstSize, const char *src)
 {
   CX_ASSERT (src);
   CX_ASSERT (dst);
-  CX_ASSERT (dstSize);
+  CX_ASSERT (dstSize > 0);
   
   cxu32 len = 0;
   cxu8 c = 0;

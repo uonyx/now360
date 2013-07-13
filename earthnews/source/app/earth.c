@@ -29,7 +29,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define OPTIMIZED_WEATHER_DATA 1
 #define WEATHER_ID_MAX_LEN 16
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,20 +49,19 @@ struct earth_visual_t
 
 struct earth_data_t
 {
+  // city properties
   const char **names;
   const char **newsFeeds;
-  
-#if OPTIMIZED_WEATHER_DATA
+  const char **tznames;
   char *weatherId;
-#else
-  const char **weatherId;
-#endif
-  
-  cx_vec4 *location;
-  cx_vec4 *normal;
   int *utcOffset;
   int *dstOffset;
-  const char **tznames;
+  float *longitude;
+  float *latitude;
+  cx_vec4 *location;
+  cx_vec4 *normal;
+  
+  // number of cities
   int count;
 };
 
@@ -165,28 +163,23 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
       earthdata->normal = (cx_vec4 *) cx_malloc (sizeof (cx_vec4) * count);
       earthdata->names = (const char **) cx_malloc (sizeof (char *) * count);
       earthdata->newsFeeds = (const char **) cx_malloc (sizeof (char *) * count);
-#if OPTIMIZED_WEATHER_DATA
       earthdata->weatherId = (char *) cx_malloc (sizeof (char) * WEATHER_ID_MAX_LEN * count);
-#else
-      earthdata->weatherId = (const char **) cx_malloc (sizeof (char *) * count);
-#endif
       earthdata->utcOffset = (int *) cx_malloc (sizeof (int) * count);
       earthdata->dstOffset = (int *) cx_malloc (sizeof (int) * count);
       earthdata->tznames = (const char **) cx_malloc (sizeof (char *) * count);
-    
+      earthdata->longitude = (float *) cx_malloc (sizeof (float) * count);
+      earthdata->latitude = (float *) cx_malloc (sizeof (float) * count);
       
       memset (earthdata->location, 0, (sizeof (cx_vec4) * count));
       memset (earthdata->normal, 0, (sizeof (cx_vec4) * count));
       memset (earthdata->names, 0, (sizeof (char *) * count));
       memset (earthdata->newsFeeds, 0, (sizeof (char *) * count));
-#if OPTIMIZED_WEATHER_DATA
       memset (earthdata->weatherId, 0, sizeof (char) * WEATHER_ID_MAX_LEN * count);
-#else
-      memset (earthdata->weatherId, 0, (sizeof (char *) * count));
-#endif
       memset (earthdata->utcOffset, 0, (sizeof (int) * count));
       memset (earthdata->dstOffset, 0, (sizeof (int) * count));
       memset (earthdata->tznames, 0, (sizeof (char *) * count));
+      memset (earthdata->longitude, 0, (sizeof (float) * count));
+      memset (earthdata->latitude, 0, (sizeof (float) * count));
       
       for (unsigned int i = 0; i < count; ++i)
       {
@@ -212,16 +205,9 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
           else if (strcmp (pk, "weather") == 0)
           {
             const char *str = cx_json_value_string (p);
-            
-#if OPTIMIZED_WEATHER_DATA
             int loc = i * WEATHER_ID_MAX_LEN;
-            
             char *d = &earthdata->weatherId [loc];
-            
             cx_strcpy (d, WEATHER_ID_MAX_LEN, str);
-#else
-            earthdata->weatherId [i] = cx_strdup (str, WEATHER_ID_MAX_LEN);
-#endif
           }
           else if (strcmp (pk, "timezone") == 0)
           {
@@ -255,6 +241,9 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
             float lat = cx_json_value_float (latNode);
             float lon = cx_json_value_float (lonNode);
             
+            earthdata->latitude [i] = lat;
+            earthdata->longitude [i] = lon;
+            
             float r = radius + (radius * 0.025f); // slightly extend radius (for point sprite rendering)
             
             earth_convert_dd_to_world (&earthdata->location [i], &earthdata->normal [i], lat, lon, r, slices);
@@ -266,14 +255,14 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
     }
     else
     {
-      CX_DEBUGLOG_CONSOLE (1, "JSON parse error: %s", filename);
+      CX_LOG_CONSOLE (1, "JSON parse error: %s", filename);
     }
     
     cx_free (filedata);
   }
   else
   {
-    CX_DEBUGLOG_CONSOLE (1, "Failed to load %s", filename);
+    CX_LOG_CONSOLE (1, "Failed to load %s", filename);
   }
 
   return earthdata;
@@ -969,11 +958,7 @@ const char *earth_data_get_weather (int index)
   CX_ASSERT (g_earth->data);
   CX_ASSERT (earth_data_validate_index (index));
   
-#if OPTIMIZED_WEATHER_DATA
   const char *w = &g_earth->data->weatherId [index * WEATHER_ID_MAX_LEN];
-#else
-  const char *w = g_earth->data->weatherId [index];
-#endif
   
   return w;
 }
@@ -1053,6 +1038,22 @@ int earth_data_get_tz_offset (int index)
   int o = u + d;
   
   return o;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void earth_data_get_terrestrial_coords (int index, float *lat, float *lon)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->data);
+  CX_ASSERT (earth_data_validate_index (index));
+  CX_ASSERT (lat);
+  CX_ASSERT (lon);
+  
+  *lat = g_earth->data->latitude [index];
+  *lon = g_earth->data->longitude [index];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

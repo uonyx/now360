@@ -524,7 +524,7 @@ cx_texture *cx_texture_create_from_file (const char *filename, cx_file_storage_b
     cx_texture_data_destroy (texture);
   }
 
-  CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE && !texture, "cx_texture_create: failed to load [%s]", filename);
+  CX_LOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE && !texture, "cx_texture_create: failed to load [%s]", filename);
   
   return texture;
 }
@@ -571,10 +571,10 @@ void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps)
   CX_ASSERT (texture->height > 0);
   CX_ASSERT (texture->mipmapCount <= CX_TEXTURE_MAX_MIPMAP_COUNT);
   
-  CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->width  [%d]", texture->width);
-  CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->height [%d]", texture->height);
-  CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->format [%d]", texture->format);
-  CX_DEBUGLOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->compressed [%s]", texture->compressed ? "true" : "false");
+  CX_LOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->width  [%d]", texture->width);
+  CX_LOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->height [%d]", texture->height);
+  CX_LOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->format [%d]", texture->format);
+  CX_LOG_CONSOLE (CX_TEXTURE_DEBUG_LOG_ENABLE, "cx_texture_gpu_init: texture->compressed [%s]", texture->compressed ? "true" : "false");
   
   if (texture->compressed)
   {

@@ -35,6 +35,7 @@ const char *    earth_data_get_feed_query (int index);
 const cx_vec4 * earth_data_get_position (int index);
 const cx_vec4 * earth_data_get_normal (int index);
 int             earth_data_get_tz_offset (int index);
+void            earth_data_get_terrestrial_coords (int index, float *lat, float *lon);
 void            earth_data_update_dst_offsets (void);
 bool            earth_data_validate_index (int index);
 

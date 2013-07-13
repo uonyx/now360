@@ -62,7 +62,7 @@
   
   if (!self.context)
   {
-    CX_DEBUGLOG_CONSOLE (1, "Failed ot create ES context");
+    CX_LOG_CONSOLE (1, "Failed ot create ES context");
   }
 
   GLKView *view = (GLKView *) self.view;
@@ -283,7 +283,7 @@
 
 - (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesBegan [%d]", [[event allTouches] count]);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesBegan [%d]", [[event allTouches] count]);
   
   if ([[event allTouches] count] > 1)
   {
@@ -294,7 +294,7 @@
   CGPoint currTouchPoint = [touch locationInView:self.view];
   CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
   
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
 
   float screen_width = self.view.bounds.size.width;
   float screen_height = self.view.bounds.size.height;
@@ -313,7 +313,7 @@
 
 - (void) touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesEnded [%d]", [[event allTouches] count]);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesEnded [%d]", [[event allTouches] count]);
   
   if ([[event allTouches] count] > 1)
   {
@@ -324,7 +324,7 @@
   CGPoint currTouchPoint = [touch locationInView:self.view];
   CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
   
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.bounds.size.width;
   float screen_height = self.view.bounds.size.height;
@@ -343,7 +343,7 @@
 
 - (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesMoved [%d]", [[event allTouches] count]);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesMoved [%d]", [[event allTouches] count]);
   
   if ([[event allTouches] count] > 1)
   {
@@ -354,8 +354,8 @@
   CGPoint currTouchPoint = [touch locationInView:self.view];
   CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
   
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, " prev: x = %.1f, y = %.1f", prevTouchPoint.x, prevTouchPoint.y);
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, " curr: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES, " prev: x = %.1f, y = %.1f", prevTouchPoint.x, prevTouchPoint.y);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES, " curr: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.bounds.size.width;
   float screen_height = self.view.bounds.size.height;
@@ -374,13 +374,13 @@
 
 - (void) touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesCancelled [%d]", [[event allTouches] count]);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES && 1, "touchesCancelled [%d]", [[event allTouches] count]);
   
   UITouch *touch = [[[event allTouches] allObjects] objectAtIndex:0];
   CGPoint currTouchPoint = [touch locationInView:self.view];
   CGPoint prevTouchPoint = [touch previousLocationInView:self.view];
 
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES, "touch: x = %.1f, y = %.1f", currTouchPoint.x, currTouchPoint.y);
   
   float screen_width = self.view.bounds.size.width;
   float screen_height = self.view.bounds.size.height;
@@ -401,7 +401,7 @@
 {
   CGFloat factor = [(UIPinchGestureRecognizer *)sender scale];
   
-  CX_DEBUGLOG_CONSOLE (DEBUG_LOG_TOUCHES && 0, "Pinch Gesture: factor [%.2f]", factor);
+  CX_LOG_CONSOLE (DEBUG_LOG_TOUCHES && 0, "Pinch Gesture: factor [%.2f]", factor);
   //self.view.transform = CGAffineTransformMakeScale (factor, factor);
   
   _input_cache_gesture_event (INPUT_GESTURE_TYPE_PINCH, (void *) &factor);
