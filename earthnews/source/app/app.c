@@ -1333,70 +1333,64 @@ static void app_render_3d_earth (void)
   // draw points
   float opacity = app_get_zoom_opacity ();
   
-  cx_colour white = *cx_colour_white ();
-  white.a = opacity;
-  
   // gather points
-#if 1
   int displayCount = 0;
   int cityCount = earth_data_get_count ();
   
-  cx_vec4 loc [256];
-  CX_ASSERT (cityCount < 256);
+  cx_vec4 loc [cityCount];
+  cx_colour col [cityCount];
   
   memset (loc, 0, sizeof (loc));
+  memset (col, 0, sizeof (col));
   
   for (int i = 0; i < cityCount; ++i)
   {
     bool display = settings_get_city_display (i);
     
-    if (display && (g_selectedCity != i))
+    if (display)
     {
-      const cx_vec4 *pos = earth_data_get_position (i);
-      
+      cx_vec4 pos = *earth_data_get_position (i);
       float a = g_render2dInfo.opacity [i].y;
       
-      loc [displayCount] = *pos;
-      loc [displayCount++].a = a;
+      if (i == g_selectedCity)
+      {
+        cx_colour ycol;
+        cx_colour_set (&ycol, 1.0f, 1.0f, 0.2f, opacity);
+        
+        const float pulseSpeed = 15.0f;
+        float time = (float) cx_system_time_get_total_time () * pulseSpeed;
+        float t = (cx_sin (time) + 1.0f) * 0.5f;
+        ycol.a *= (t * a);
+        
+        col [displayCount] = ycol;
+        
+        const cx_vec4 *p = earth_data_get_position (g_selectedCity);
+        cx_vec4 n = *earth_data_get_normal (g_selectedCity);
+        cx_vec4_mul (&n, 0.035f, &n);
+        cx_vec4_add (&pos, p, &n);
+      }
+      else
+      {     
+        cx_colour wcol = *cx_colour_white ();
+        wcol.a = (opacity * a);
+        
+        col [displayCount] = wcol;
+      }
+      
+      loc [displayCount++] = pos;
     }
   }
   
-  static bool hackFrameSkip = true;
+  // draw points
+  static bool hackReadyDraw = false; // haven't quite figured the bug that has given birth to this hack
 
-  if (hackFrameSkip)
+  if (hackReadyDraw)
   {
-    hackFrameSkip = false;
+    cx_draw_points (displayCount, loc, col, g_glowTex);
   }
   else
   {
-    cx_draw_points (displayCount, loc, &white, g_glowTex);
-  }
-  
-  
-#else
-  cx_draw_points (s_earth->data->count, s_earth->data->location, &white, g_glowTex);
-#endif
-  
-  if (earth_data_validate_index (g_selectedCity))
-  {
-    cx_colour yellow;
-    cx_colour_set (&yellow, 1.0f, 1.0f, 0.2f, opacity);
-    
-    const float pulseSpeed = 15.0f;
-    float time = (float) cx_system_time_get_total_time () * pulseSpeed;
-    float t = (cx_sin (time) + 1.0f) * 0.5f;
-    cx_vec4_mul (&yellow, t, &yellow);
-    
-    cx_vec4 pos = *earth_data_get_position (g_selectedCity);
-    pos.a = g_render2dInfo.opacity [g_selectedCity].y;
-    cx_draw_points (1, &pos, &yellow, g_glowTex);
-    
-#if 0
-    cx_colour col2 = *cx_colour_red ();
-    cx_vec4 pos2 = s_earth->data->location [0];
-    pos2.a = g_render2dInfo.opacity [0].y;
-    cx_draw_points (1, &pos2, &col2, g_glowTex);
-#endif
+    hackReadyDraw = true;
   }
 
   cx_gdi_enable_z_write (true);
@@ -2010,7 +2004,9 @@ static void app_input_touch_began (float x, float y)
       {
         float lat, lon;
         earth_data_get_terrestrial_coords (newSelectedCity, &lat, &lon);
-        feeds_twitter_search (newFeedTwitter, query, lat, lon);
+        bool loc = settings_get_local_tweets_only ();
+        
+        feeds_twitter_search (newFeedTwitter, query, loc, lat, lon);
         util_activity_indicator_set_active (true);
       }
       

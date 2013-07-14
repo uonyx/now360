@@ -11,16 +11,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define UTF8_BYTE1 0x80
-#define UTF8_BYTE2 0xc0
-#define UTF8_BYTE3 0xe0
-#define UTF8_BYTE4 0xf0
+#define UTF8_BYTE1 0x80u
+#define UTF8_BYTE2 0xc0u
+#define UTF8_BYTE3 0xe0u
+#define UTF8_BYTE4 0xf0u
+#define UTF8_BYTE5 0xf8u
+#define UTF8_BYTE6 0xfcu
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src);
+static cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -230,7 +232,7 @@ cxu32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src)
+static cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src)
 {
   CX_ASSERT (dst);
   CX_ASSERT (src);
@@ -238,7 +240,17 @@ cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src)
   cxu32 ch = 0;
   cxu32 offset = 0;
   
-  if ((src [0] & UTF8_BYTE4) == UTF8_BYTE4)
+  static cxu32 prevOffset = 0;
+
+  if ((src [0] & UTF8_BYTE6) == UTF8_BYTE6)
+  {
+    offset = 6;
+  }
+  else if ((src [0] & UTF8_BYTE5) == UTF8_BYTE5)
+  {
+    offset = 5;
+  }
+  else if ((src [0] & UTF8_BYTE4) == UTF8_BYTE4)
   {
     ch =  ((src [0] & 0x07) << 18) |
           ((src [1] & 0x3f) << 12) |
@@ -269,8 +281,11 @@ cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src)
   }
   else
   {
+    offset = strlen ((const char *) src);
     CX_ERROR ("Invalid UTF8 character");
   }
+  
+  prevOffset = offset;
   
   *dst = ch;
   
@@ -291,18 +306,24 @@ cxu32 cx_str_utf8_to_unicode (cxu32 *dst, cxu32 dstSize, const char *utf8src)
 
   const cxu8 *src = (const cxu8 *) utf8src;
   
-  cxu32 ss = srcSize;
+  cxi32 ss = srcSize;
   
-  while (ss)
+  cxi32 srcCount = 0;
+  
+  while ((ss > 0) && (dstLen < (dstSize - 1)))
   {
     cxu32 ch = 0;
     cxu32 offset = cx_str_utf8_decode (&ch, src);
+    
+    CX_ASSERT (dstLen < dstSize);
     
     dst [dstLen++] = ch;
     
     src += offset;
 
     ss -= offset;
+    
+    srcCount += offset;
   }
   
   dst [dstLen] = 0;

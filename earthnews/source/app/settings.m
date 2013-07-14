@@ -15,33 +15,55 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define SETTINGS_SAVE_FILE              "settings.dat"
-#define SETTINGS_ROOT_TABLE_DATA_ROWS   (4)
-#define SETTINGS_TEMP_TABLE_DATA_ROWS   (2)
-#define SETTINGS_CLOCK_TABLE_DATA_ROWS  (2)
 #define SCREEN_FADE_OPACITY             (0.6f)
 #define SCREEN_FADE_DURATION            (0.5f)
 #define SETTINGS_UI_SIZE_WIDTH          (320.0f)
 #define SETTINGS_UI_SIZE_HEIGHT         (400.0f)
 
+enum
+{
+  SETTINGS_ROOT_CITIES,
+  SETTINGS_ROOT_TEMPERATURE,
+  SETTINGS_ROOT_CLOCK_FORMAT,
+  SETTINGS_ROOT_LOCAL_TWEETS,
+  SETTINGS_ROOT_PROFANITY_FILTER,
+  SETTINGS_ROOT_TOTAL_COUNT,
+};
+
+enum
+{
+  SETTINGS_TEMPERATURE_CELSIUS,
+  SETTINGS_TEMPERATURE_FARENHEIT,
+  SETTINGS_TEMPERATURE_TOTAL_COUNT,
+};
+
+enum
+{
+  SETTINGS_CLOCK_FORMAT_12,
+  SETTINGS_CLOCK_FORMAT_24,
+  SETTINGS_CLOCK_FORMAT_TOTAL_COUNT,
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char *g_rootTableData [SETTINGS_ROOT_TABLE_DATA_ROWS] =
+static const char *g_rootTableData [SETTINGS_ROOT_TOTAL_COUNT] =
 {
   "Cities",
   "Temperature",
   "Clock Format",
+  "Local Tweets Only",
   "Profanity Filter",
 };
 
-static const char *g_tempTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
+static const char *g_tempTableData [SETTINGS_TEMPERATURE_TOTAL_COUNT] = 
 {
   "Celsius",
   "Farenheit",
 };
 
-static const char *g_clockTableData [SETTINGS_TEMP_TABLE_DATA_ROWS] = 
+static const char *g_clockTableData [SETTINGS_CLOCK_FORMAT_TOTAL_COUNT] =
 {
   "12-hour",
   "24-hour",
@@ -59,6 +81,7 @@ typedef struct
   int          tempUnit;
   int          clockFmt;
   bool         safeMode;
+  bool         locaTwts;
 } settings_t;
 
 static settings_t g_settings;
@@ -92,6 +115,7 @@ static settings_t g_settings;
 {
   UINavigationController *_navCtrlr;
   UISwitch *_profanityFilterSwitch;
+  UISwitch *_localTweetsSwitch;
   UIBarButtonItem *_doneButton;
   TemperatureTableViewController *_temperatureViewController;
   CityTableViewController *_cityViewController;
@@ -287,6 +311,15 @@ bool settings_get_use_profanity_filter (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool settings_get_local_tweets_only (void)
+{
+  return g_settings.locaTwts;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int settings_get_temperature_unit (void)
 {
   return g_settings.tempUnit;
@@ -342,8 +375,9 @@ static bool settings_save (const char *filename)
   
   char tmp [1024];
   
-  int l = cx_sprintf (tmp, 1024, "{\"settings\":{\"safe\":%d,\"cloc\":%d,\"temp\":%d,\"city\":[", 
-                      g_settings.safeMode ? 1 : 0, 
+  int l = cx_sprintf (tmp, 1024, "{\"settings\":{\"safe\":%d,\"lotw\":%d,\"cloc\":%d,\"temp\":%d,\"city\":[",
+                      g_settings.safeMode ? 1 : 0,
+                      g_settings.locaTwts ? 1 : 0,
                       g_settings.clockFmt,
                       g_settings.tempUnit);
   
@@ -410,16 +444,19 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       cx_json_node settingsNode = cx_json_object_child (rootNode, "settings");
       
       cx_json_node safeNode = cx_json_object_child (settingsNode, "safe");
+      cx_json_node lotwNode = cx_json_object_child (settingsNode, "lotw");
       cx_json_node tempNode = cx_json_object_child (settingsNode, "temp");
       cx_json_node cityNode = cx_json_object_child (settingsNode, "city");
       cx_json_node clocNode = cx_json_object_child (settingsNode, "cloc");
       
       CX_ASSERT (safeNode);
+      CX_ASSERT (lotwNode);
       CX_ASSERT (tempNode);
       CX_ASSERT (cityNode);
       CX_ASSERT (clocNode);
       
       int safeMode = (int) cx_json_value_int (safeNode);
+      int locaTwts = (int) cx_json_value_int (lotwNode);
       int tempUnit = (int) cx_json_value_int (tempNode);
       int clockFmt = (int) cx_json_value_int (clocNode);
       int cityCount = cx_json_array_size (cityNode);
@@ -441,6 +478,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       }
         
       g_settings.safeMode = safeMode ? true : false;
+      g_settings.locaTwts = locaTwts ? true : false;
       g_settings.tempUnit = tempUnit;
       g_settings.clockFmt = clockFmt;
       g_settings.cityCount = cityCount;
@@ -570,7 +608,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  return (section == 0) ? SETTINGS_TEMP_TABLE_DATA_ROWS : 0;
+  return (section == 0) ? SETTINGS_TEMPERATURE_TOTAL_COUNT : 0;
 }
 
 - (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -633,7 +671,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  return (section == 0) ? SETTINGS_CLOCK_TABLE_DATA_ROWS : 0;
+  return (section == 0) ? SETTINGS_TEMPERATURE_TOTAL_COUNT : 0;
 }
 
 - (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -671,6 +709,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   if (self)
   {
     _profanityFilterSwitch = [[UISwitch alloc] init];
+    _localTweetsSwitch = [[UISwitch alloc] init];
     _temperatureViewController = [[TemperatureTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _cityViewController = [[CityTableViewController alloc] initWithStyle:UITableViewStylePlain];
     _clockViewController = [[ClockTableViewController alloc] initWithStyle:UITableViewStylePlain];
@@ -695,18 +734,27 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   [_temperatureViewController release];
   [_clockViewController release];
   [_profanityFilterSwitch release];
+  [_localTweetsSwitch release];
   [_doneButton release];
   [_navCtrlr release];
   
   [super dealloc];
 }
 
-- (void)switchTouched
+- (void)switchTouched1
 {
   bool safeMode = !g_settings.safeMode;
   g_settings.safeMode = safeMode;
   [_profanityFilterSwitch setOn:safeMode animated:YES];
 }
+
+- (void)switchTouched2
+{
+  bool locaTwts = !g_settings.locaTwts;
+  g_settings.locaTwts = locaTwts;
+  [_localTweetsSwitch setOn:locaTwts animated:YES];
+}
+
 
 - (void)doneButtonClicked:(id)sender
 {
@@ -716,13 +764,15 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 - (void)viewDidLoad
 {
   [super viewDidLoad];
-  [_profanityFilterSwitch addTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
+  [_profanityFilterSwitch addTarget:self action:@selector(switchTouched1) forControlEvents:UIControlEventTouchUpInside];
+  [_localTweetsSwitch addTarget:self action:@selector(switchTouched2) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)viewDidUnload
 {
   [super viewDidUnload];
-  [_profanityFilterSwitch removeTarget:self action:@selector(switchTouched) forControlEvents:UIControlEventTouchUpInside];
+  [_profanityFilterSwitch removeTarget:self action:@selector(switchTouched1) forControlEvents:UIControlEventTouchUpInside];
+  [_localTweetsSwitch removeTarget:self action:@selector(switchTouched2) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -745,25 +795,26 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 {
   switch (indexPath.row)
   {
-    case 0: // edit cities
+    case SETTINGS_ROOT_CITIES: // edit cities
     {
       [_navCtrlr pushViewController:_cityViewController animated:YES];
       break;
     }
       
-    case 1: // temperature unit
+    case SETTINGS_ROOT_TEMPERATURE: // temperature unit
     {
       [_navCtrlr pushViewController:_temperatureViewController animated:YES];
       break;
     }
       
-    case 2: // clock
+    case SETTINGS_ROOT_CLOCK_FORMAT: // clock
     {
       [_navCtrlr pushViewController:_clockViewController animated:YES];
       break;
     }
       
-    case 3: // profanity filter
+    case SETTINGS_ROOT_LOCAL_TWEETS:
+    case SETTINGS_ROOT_PROFANITY_FILTER: // profanity filter
     {
       break;
     }
@@ -775,7 +826,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  return (section == 0) ? SETTINGS_ROOT_TABLE_DATA_ROWS : 0;
+  return (section == 0) ? SETTINGS_ROOT_TOTAL_COUNT : 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -793,14 +844,14 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   switch (idx)
   {
-    case 0: // cities
+    case SETTINGS_ROOT_CITIES: // cities
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
       break;
     }
       
-    case 1: // temperature unit
+    case SETTINGS_ROOT_TEMPERATURE: // temperature unit
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -808,7 +859,7 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       break;
     }
       
-    case 2: // clock
+    case SETTINGS_ROOT_CLOCK_FORMAT: // clock
     {
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -816,7 +867,17 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       break;
     }
       
-    case 3: // profanity filter
+    case SETTINGS_ROOT_LOCAL_TWEETS:
+    {
+      [_localTweetsSwitch setOn:g_settings.locaTwts];
+      
+      cell.accessoryView = _localTweetsSwitch;
+      cell.selectionStyle = UITableViewCellSelectionStyleNone;
+      cell.accessoryType = UITableViewCellAccessoryNone;
+      break;
+    }
+      
+    case SETTINGS_ROOT_PROFANITY_FILTER: // profanity filter
     {
       [_profanityFilterSwitch setOn:g_settings.safeMode];
       

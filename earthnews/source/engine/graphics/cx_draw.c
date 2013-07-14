@@ -60,6 +60,8 @@ void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colou
   
   glDrawArrays (GL_LINES, 0, numSegments);
   
+  glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+  
   cx_shader_end (shader);
 }
 
@@ -95,16 +97,26 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *points, const cx_colour *co
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MV, &mv);
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_P, &p);
   
-  glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  cx_gdi_assert_no_errors ();
+  //glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
+  //cx_gdi_assert_no_errors ();
   
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, points);
+  cx_gdi_assert_no_errors ();
+  
+  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], 4, GL_FLOAT, GL_FALSE, 0, colour);
   cx_gdi_assert_no_errors ();
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   cx_gdi_assert_no_errors ();
   
+  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+  cx_gdi_assert_no_errors ();
+  
   glDrawArrays (GL_POINTS, 0, numPoints);
+  
+  glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+  
+  glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
   
   cx_shader_end (shader);
 }

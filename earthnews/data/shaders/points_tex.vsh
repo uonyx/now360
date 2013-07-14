@@ -21,11 +21,11 @@ const float c_one = 1.0;
 void main (void)
 {
   v_colour = a_colour;
-  v_colour.a = a_position.w;
   
   vec4 eyePos = u_viewmatrix * vec4 (a_position.xyz, c_one);
   vec4 projCorner = u_projmatrix * vec4 (spriteWidth * c_half, spriteWidth * c_half, eyePos.z, eyePos.w);
   
+  //gl_PointSize = 12.0;
   gl_PointSize = screenWidth * (projCorner.x / projCorner.w);
   gl_Position = u_projmatrix * eyePos;
 }

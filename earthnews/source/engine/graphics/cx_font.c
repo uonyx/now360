@@ -27,6 +27,7 @@
 #define CX_FONT_BEGIN_CHAR          (32)
 #define CX_FONT_END_CHAR            (CX_FONT_BEGIN_CHAR + CX_FONT_MAX_NUM_FONT_CHARS)
 #define CX_FONT_MAX_TEXT_LENGTH     (512)
+#define CX_FONT_BATCH_CHAR_RENDER   (1)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,8 +152,12 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-
+#if CX_FONT_BATCH_CHAR_RENDER
+  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+#else
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
+#endif
+
   cx_gdi_assert_no_errors ();
   
   cxf32 sx = fontImpl->scaleX;
@@ -184,8 +189,126 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   cxu32 *t = textBuffer;
   cxu32 c = 0;
+
+#if CX_FONT_BATCH_CHAR_RENDER
   
-#if 1
+  cx_vec2 pos [CX_FONT_MAX_TEXT_LENGTH * 4];
+  cx_vec2 uv [CX_FONT_MAX_TEXT_LENGTH * 4];
+  
+  cxu32 len = 0;
+
+  while ((c = *t++))
+  {
+    if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
+    {
+      stbtt_aligned_quad quad;
+      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
+                          (c - CX_FONT_BEGIN_CHAR), sx, sy, &px, &py, &quad, 1);
+      
+      int i = len * 4;
+      
+      pos [i + 0].x = quad.x0;
+      pos [i + 0].y = quad.y0;
+      pos [i + 1].x = quad.x0;
+      pos [i + 1].y = quad.y1;
+      pos [i + 2].x = quad.x1;
+      pos [i + 2].y = quad.y0;
+      pos [i + 3].x = quad.x1;
+      pos [i + 3].y = quad.y1;
+      
+      uv [i + 0].x = quad.s0;
+      uv [i + 0].y = quad.t0;
+      uv [i + 1].x = quad.s0;
+      uv [i + 1].y = quad.t1;
+      uv [i + 2].x = quad.s1;
+      uv [i + 2].y = quad.t0;
+      uv [i + 3].x = quad.s1;
+      uv [i + 3].y = quad.t1;
+      
+      ++len;
+    }
+  }
+  
+  // batch triangestrip points
+  //(012) (213) (234) (435) ... total number of trianges == points - 2 == (len * 4) - 2
+  
+  cxu32 numTri = (len * 4) - 2;
+  cxu32 numPoints = numTri * 3;
+  
+  
+  cx_vec2 pos2 [numPoints];
+  cx_vec2 uv2 [numPoints];
+  cx_colour col [numPoints];
+  
+  cxu32 tri = 0;
+  cxu32 tript = 0;
+  cxu32 ni = 0;
+  
+  cx_vec2 zero;
+  cx_vec2_set (&zero, 0.0f, 0.0f);
+  
+  const cx_colour *null = cx_colour_null ();
+  
+  bool spacingQuad = false; // space between characters
+  
+  while (tri < numTri)
+  {
+    cxu32 sa0 = tript;      // 0
+    cxu32 sa1 = sa0 + 1;    // 1
+    cxu32 sa2 = sa1 + 1;    // 2
+    
+    cxu32 sa3 = sa2;        // 2
+    cxu32 sa4 = sa1;        // 1
+    cxu32 sa5 = sa3 + 1;    // 3
+   
+    col [ni] = spacingQuad ? *null : *colour;
+    pos2 [ni] = pos [sa0];
+    uv2 [ni++] = uv [sa0];
+    
+    col [ni] = spacingQuad ? *null : *colour;
+    pos2 [ni] = pos [sa1];
+    uv2 [ni++] = uv [sa1];
+    
+    col [ni] = spacingQuad ? *null : *colour;
+    pos2 [ni] = pos [sa2];
+    uv2 [ni++] = uv [sa2];
+    
+    col [ni] = spacingQuad ? *null : *colour;
+    pos2 [ni] = pos [sa3];
+    uv2 [ni++] = uv [sa3];
+    
+    col [ni] = spacingQuad ? *null : *colour;
+    pos2 [ni] = pos [sa4];
+    uv2 [ni++] = uv [sa4];
+    
+    col [ni] = spacingQuad ? *null : *colour;
+    pos2 [ni] = pos [sa5];
+    uv2 [ni++] = uv [sa5];
+    
+    tript = sa3;
+    
+    tri += 2;
+    
+    spacingQuad = !spacingQuad;
+  }
+  
+  if (len > 0)
+  {
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos2);
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv2);
+    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], 4, GL_FLOAT, GL_FALSE, 0, col);
+    
+    cx_gdi_assert_no_errors ();
+    
+    glDrawArrays (GL_TRIANGLE_STRIP, 0, numPoints);
+    cx_gdi_assert_no_errors ();
+    
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+  }
+  
+#else
   while ((c = *t++))
   {
     if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
@@ -194,7 +317,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
       cx_vec2 uv [4];
       
       stbtt_aligned_quad quad;
-      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
+      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT,
                           (c - CX_FONT_BEGIN_CHAR), sx, sy, &px, &py, &quad, 1);
       
       pos [0].x = quad.x0;
@@ -227,65 +350,6 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
   glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-  
-#else
-  cx_vec2 pos [CX_FONT_MAX_TEXT_LENGTH * 4];
-  cx_vec2 uv [CX_FONT_MAX_TEXT_LENGTH * 4];
-  
-  int len = 0;
-
-  while ((c = *t++))
-  {
-    if ((c >= CX_FONT_BEGIN_CHAR) && (c < CX_FONT_END_CHAR))
-    {
-#if CX_DEBUG
-      if (c >= 128)
-      {
-        CX_DEBUG_BREAKABLE_EXPR;
-      }
-#endif
-      stbtt_aligned_quad quad;
-      stbtt_GetBakedQuad (fontImpl->ttfCharData, CX_FONT_TEXTURE_WIDTH, CX_FONT_TEXTURE_HEIGHT, 
-                          (c - CX_FONT_BEGIN_CHAR), sx, sy, &px, &py, &quad, 1);
-      
-      int i = len * 4;
-      
-      pos [i + 0].x = quad.x0;
-      pos [i + 0].y = quad.y0;
-      pos [i + 1].x = quad.x0;
-      pos [i + 1].y = quad.y1;
-      pos [i + 2].x = quad.x1;
-      pos [i + 2].y = quad.y0;
-      pos [i + 3].x = quad.x1;
-      pos [i + 3].y = quad.y1;
-      
-      uv [i + 0].x = quad.s0;
-      uv [i + 0].y = quad.t0;
-      uv [i + 1].x = quad.s0;
-      uv [i + 1].y = quad.t1;
-      uv [i + 2].x = quad.s1;
-      uv [i + 2].y = quad.t0;
-      uv [i + 3].x = quad.s1;
-      uv [i + 3].y = quad.t1;
-      
-      ++len;
-    }
-  }
-  
-  if (len > 0)
-  {
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos);
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv);
-    
-    cx_gdi_assert_no_errors ();
-    
-    glDrawArrays (GL_TRIANGLE_STRIP, 0, 4 * len);
-    cx_gdi_assert_no_errors ();
-  
-    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-  }
-    
 #endif
 
   cx_shader_end (shader);

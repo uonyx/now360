@@ -7,6 +7,7 @@
 //
 
 #include "ui_ctrlr.h"
+#include "feeds.h"
 #include "util.h"
 #include "webview.h"
 #include "audio.h"
@@ -94,7 +95,7 @@ typedef struct ticker_tweet_t
     cxu32 type; // text or link
   } elems [TWITTER_TICKER_TWEET_MAX_ENTRIES];
   
-  char buffer [TWITTER_MAX_TWEET_LEN]; // max tweet - 140 chars
+  char buffer [TWITTER_MAX_TWEET_LEN];
   cxu32 elemCount;
 } ticker_tweet_t;
 
@@ -460,7 +461,7 @@ static void ui_ctrlr_news_create (void)
     
     ui_custom_set_callbacks (custom, &newsCallbacks);
     ui_widget_set_colour (custom, UI_WIDGET_STATE_NORMAL, cx_colour_white ());
-    ui_widget_set_colour (custom, UI_WIDGET_STATE_HOVER, cx_colour_grey ());
+    ui_widget_set_colour (custom, UI_WIDGET_STATE_HOVER, cx_colour_null ());
     ui_widget_set_colour (custom, UI_WIDGET_STATE_FOCUS, cx_colour_white ());
     
     g_uinews.buttons [i] = custom;
@@ -684,7 +685,9 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
     float y2 = y1 + custom->intr.dimension.y;
     
     cx_colour colHlght;
-    cx_colour_set (&colHlght, 0.2f, 0.2f, 0.2f, 0.7f);
+    //cx_colour_set (&colHlght, 0.2f, 0.2f, 0.2f, 0.6f);
+    cx_colour_set (&colHlght, 0.192f, 0.05f, 0.384f, 0.65f); // opposite of cyber yellow (purple shade)
+    
     cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colHlght, NULL);
   }
   
@@ -1061,12 +1064,12 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
           
           float rx = ix + cx_font_get_text_width (font, username);
           
-          char tickerTweetText [256];
+          char tickerTweetText [512];
           for (cxu32 j = 0; j < tickerTweet.elemCount; ++j)
           {
             cxu32 loc = tickerTweet.elems [j].loc;
             const char *s = &tickerTweet.buffer [loc];
-            cx_sprintf (tickerTweetText, 256, "%s ", s);
+            cx_sprintf (tickerTweetText, 512, "%s ", s);
             
             bool isLink = (tickerTweet.elems [j].type == TWITTER_TICKER_TWEET_ELEM_TYPE_LINK);
             const cx_colour *col = isLink ? &collink : &coltweet;

@@ -22,8 +22,8 @@
 #define ENABLE_CLOUDS 1
 #define ENABLE_ATMOSPHERE 1
 #define BUMP_MAPPED_CLOUDS 0
-#define DEBUG_EQUINOX_LIGHT 0
-#define DEBUG_FAST_LIGHT_ORBIT (CX_DEBUG && 0)
+#define DEBUG_EQUINOX_LIGHT (CX_DEBUG && 0)
+#define DEBUG_EQUINOX_LIGHT_ORBIT (DEBUG_EQUINOX_LIGHT && 0)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +124,7 @@ static void earth_convert_dd_to_world (cx_vec4 *world, cx_vec4 *n, float latitud
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if !DEBUG_EQUINOX_LIGHT
 static float earth_visual_dump_multiples (float mul, float div)
 {
   cxf32 val = mul;
@@ -134,7 +134,7 @@ static float earth_visual_dump_multiples (float mul, float div)
   
   return val;
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,7 +311,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
     case DEVICE_TYPE_IPAD2:
     {
-#if 1 // test hi
+#if 0 // test hi
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
@@ -320,7 +320,8 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       nightTexPath  = "data/images/earth/maps/night1-4096.png";
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
 #elif 0 // test mid
-      earthShader   = "earth-hi";     highSpec = true;
+        //earthShader   = "earth-hi";     highSpec = true;
+      earthShader   = "earth-lo"; highSpec = false;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
@@ -333,8 +334,8 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
       cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
-      nightTexPath  = "data/images/earth/maps/night1-4096.png";
-      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
+      nightTexPath  = "data/images/earth/maps/night1-2048.jpg";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-2048.jpg", 6);
 #endif
       break;
     }
@@ -347,8 +348,8 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
       cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
-      nightTexPath  = "data/images/earth/maps/night1-4096.png";
-      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
+      nightTexPath  = "data/images/earth/maps/night1-2048.jpg";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-2048.jpg", 6);
       break;
     }
   }
@@ -364,20 +365,29 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
 #if NEW_EARTH_SHADER
   
-  cx_shader *shader         = cx_shader_create (earthShader, "data/shaders");
-  cx_material *material     = cx_material_create (earthShader);
-  
+#if 0
   cx_texture *specTexture   = cx_texture_create_from_file (specTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *cloudTexture  = cx_texture_create_from_file (cloudTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *bumpTexture   = cx_texture_create_from_file (bumpTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *nightTexture  = cx_texture_create_from_file (nightTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *diffTexture   = cx_texture_create_from_file (diffTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+#else // hi
+  cx_texture *diffTexture   = cx_texture_create_from_file (diffTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *specTexture   = cx_texture_create_from_file (specTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  
+  cx_texture *cloudTexture  = cx_texture_create_from_file (cloudTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *nightTexture  = cx_texture_create_from_file (nightTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+  cx_texture *bumpTexture   = cx_texture_create_from_file (bumpTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
+#endif
   
   CX_ASSERT (specTexture);
   CX_ASSERT (bumpTexture);
   CX_ASSERT (cloudTexture);
   CX_ASSERT (nightTexture);
   CX_ASSERT (diffTexture);
+  
+  cx_shader *shader         = cx_shader_create (earthShader, "data/shaders");
+  cx_material *material     = cx_material_create (earthShader);
   
   cx_material_set_texture (material, diffTexture, CX_MATERIAL_TEXTURE_DIFFUSE);
   cx_material_set_texture (material, specTexture, CX_MATERIAL_TEXTURE_SPECULAR);
@@ -448,7 +458,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if !DEBUG_EQUINOX_LIGHT
 static void earth_visual_get_sun_position (cx_vec4 *position, const cx_date *date)
 {
   CX_ASSERT (position);
@@ -575,7 +585,7 @@ static void earth_visual_get_sun_position (cx_vec4 *position, const cx_date *dat
   earth_convert_dd_to_world (position, NULL, dDeg, angleDeg, sunEarthDist, g_earth->visual->slices);
 #endif
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -617,7 +627,7 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
   /////////////////////////////
   
 #if DEBUG_EQUINOX_LIGHT
-#if DEBUG_FAST_LIGHT_ORBIT
+#if DEBUG_EQUINOX_LIGHT_ORBIT
   static float angle = 0.0f;
   angle += (1.0f / 3.0f);
   angle = fmodf (angle, 360.0f);

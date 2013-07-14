@@ -8,6 +8,7 @@
 
 #import "feeds.h"
 #import "metrics.h"
+#import "settings.h"
 #import "worker.h"
 #import <Accounts/Accounts.h>
 #import <Social/Social.h>
@@ -466,7 +467,7 @@ static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void feeds_twitter_search (feed_twitter_t *feed, const char *query, float lat, float lon)
+void feeds_twitter_search (feed_twitter_t *feed, const char *query, bool local, float lat, float lon)
 {
   CX_ASSERT (feed);
   CX_ASSERT (query);
@@ -544,20 +545,36 @@ void feeds_twitter_search (feed_twitter_t *feed, const char *query, float lat, f
            {
              nsquery = [NSString stringWithUTF8String:query];
            }
-           
-           NSString *geocode = [NSString stringWithFormat:@"%.4f,%.4f,%d%s", lat, lon, 1000, "mi"];
+                    
            NSURL *url = [NSURL URLWithString:@TWITTER_SEARCH_API_URL];
-           NSString *nsSinceId = [NSString stringWithUTF8String:feed->maxIdStr];
+           NSString *nsSinceId = [NSString stringWithUTF8String:feed->maxIdStr];           
+           NSDictionary *params = nil;
            
-           NSDictionary *params = @{ @"q" : nsquery,
-                                     @"result_type" : @"recent",
-                                     @"include_entities" : @"false",
-                                     @"count": @TWITTER_SEARCH_API_RPP,
-                                     @"geocode": geocode,
+           if (local)
+           {
+             NSString *geocode = [NSString stringWithFormat:@"%.4f,%.4f,%d%s", lat, lon, 1000, "mi"];
+
+             params = @{ @"q" : nsquery,
+                         @"result_type" : @"recent",
+                         @"include_entities" : @"false",
+                         @"count": @TWITTER_SEARCH_API_RPP,
+                         @"geocode": geocode,
 #if CX_DEBUG && 0
-                                     @"lang": @"en",  // currently limited to 'en' due to poor font support
+                         @"lang": @"en",  // currently limited to 'en' due to poor font support
 #endif
-                                     @"since_id" : nsSinceId};
+                         @"since_id" : nsSinceId};
+           }
+           else
+           {
+             params = @{ @"q" : nsquery,
+                         @"result_type" : @"mixed",
+                         @"include_entities" : @"false",
+                         @"count": @TWITTER_SEARCH_API_RPP,
+#if CX_DEBUG && 0
+                         @"lang": @"en",  // currently limited to 'en' due to poor font support
+#endif
+                         @"since_id" : nsSinceId};
+           }
            
            SLRequest *request = [SLRequest requestForServiceType:SLServiceTypeTwitter
                                                    requestMethod:SLRequestMethodGET
