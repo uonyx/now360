@@ -1,8 +1,7 @@
-
-"TXT_OPEN_SAFARI" = "Åbn i Safari";
-"TXT_OPEN_CHROME" = "Åbn i Chrome";
-"TXT_COPY_LINK" = "Kopier Link";
-"TXT_MAIL_LINK" = "Mail Link til denne side";
-"TXT_POST_TWITTER" = "Post to Twitter";
-"TXT_POST_FACEBOOK" = "Post to Facebook";
-"TXT_CANCEL" = "Cancel";
+"TXT_CITIES" = "Cities";
+"TXT_TEMPERATURE_UNIT" = "Temperatur enhed";
+"TXT_CLOCK_FORMAT" = "Clock-format";
+"TXT_LOCAL_TWEETS" = "Lokale Tweets Only";
+"TXT_PROFANITY_FILTER" = "Blasfemi Filter";
+"TXT_12_HOUR" = "12-timers";
+"TXT_24_HOUR" = "24-timers";

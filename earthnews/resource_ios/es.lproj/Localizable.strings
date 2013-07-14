@@ -1,8 +1,7 @@
-
-"TXT_OPEN_SAFARI" = "Abrir en Safari";
-"TXT_OPEN_CHROME" = "Abrir en Chrome";
-"TXT_COPY_LINK" = "Copiar Enlace";
-"TXT_MAIL_LINK" = "Enviar Enlace a esta Página";
-"TXT_POST_TWITTER" = "Post to Twitter";
-"TXT_POST_FACEBOOK" = "Post to Facebook";
-"TXT_CANCEL" = "Cancel";
+"TXT_CITIES" = "Ciudades";
+"TXT_TEMPERATURE_UNIT" = "Unidad de temperatura";
+"TXT_CLOCK_FORMAT" = "Formato de reloj";
+"TXT_LOCAL_TWEETS" = "Tweets locales sólo";
+"TXT_PROFANITY_FILTER" = "Filtro de profanidad";
+"TXT_12_HOUR" = "12-horas";
+"TXT_24_HOUR" = "24-horas";

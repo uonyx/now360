@@ -1386,7 +1386,7 @@ static void app_render_3d_earth (void)
 
   if (hackReadyDraw)
   {
-    cx_draw_points (displayCount, loc, col, g_glowTex);
+    cx_draw_points (displayCount, loc, col, g_glowTex, 2.0f);
   }
   else
   {
@@ -1396,13 +1396,12 @@ static void app_render_3d_earth (void)
   cx_gdi_enable_z_write (true);
   
   // debug
-  
-#if 0
+#if (CX_DEBUG && 0)
   static cx_line *normalLines = NULL;
   static cx_line *tangentLines = NULL;
   static cx_line *bitangentLines = NULL;
   
-  cx_vertex_data *vertexData = s_earth->visual->mesh [0]->vertexData;
+  cx_vertex_data *vertexData = earth_data_get_mesh_vertex_data (0);
   
   if (!normalLines)
   {

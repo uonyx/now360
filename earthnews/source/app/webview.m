@@ -605,7 +605,7 @@ typedef enum
   
   NSURL *link = _webView.request.URL;
   NSString *title = [_webView stringByEvaluatingJavaScriptFromString:@"document.title"];
-  NSString *sigDefault = @"(via uonyechi.com/now360)";
+  NSString *sigDefault = @"(via http://now360.info)";
   NSString *sigTwitter = @"(via @now360_app)";
   
   NSString *postDefault = [NSString stringWithFormat:@"%@\n", title];

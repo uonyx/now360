@@ -239,8 +239,6 @@ static cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src)
   
   cxu32 ch = 0;
   cxu32 offset = 0;
-  
-  static cxu32 prevOffset = 0;
 
   if ((src [0] & UTF8_BYTE6) == UTF8_BYTE6)
   {
@@ -285,8 +283,6 @@ static cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src)
     CX_ERROR ("Invalid UTF8 character");
   }
   
-  prevOffset = offset;
-  
   *dst = ch;
   
   return offset;
@@ -307,9 +303,9 @@ cxu32 cx_str_utf8_to_unicode (cxu32 *dst, cxu32 dstSize, const char *utf8src)
   const cxu8 *src = (const cxu8 *) utf8src;
   
   cxi32 ss = srcSize;
-  
+#if CX_DEBUG
   cxi32 srcCount = 0;
-  
+#endif
   while ((ss > 0) && (dstLen < (dstSize - 1)))
   {
     cxu32 ch = 0;
@@ -322,8 +318,9 @@ cxu32 cx_str_utf8_to_unicode (cxu32 *dst, cxu32 dstSize, const char *utf8src)
     src += offset;
 
     ss -= offset;
-    
+#if CX_DEBUG
     srcCount += offset;
+#endif
   }
   
   dst [dstLen] = 0;
@@ -360,18 +357,11 @@ cxu32 cx_str_percent_encode (char *dst, cxu32 dstSize, const char *src)
     else // ascii control characters, reserved characters, unsafe characters
     {
       cxi32 encSize = cx_sprintf (enc, 16, "%%%02x", c);
-#if 1
       for (cxi32 i = 0; i < encSize; ++i)
       {
         CX_ASSERT (len < dstSize);
         dst [len++] = enc [i];
       }
-#else
-      CX_ASSERT ((len + encSize) < dstSize); CX_REF_UNUSED (encSize);
-      dst [len++] = enc [0];
-      dst [len++] = enc [1];
-      dst [len++] = enc [2];
-#endif
     }
     
     s++;

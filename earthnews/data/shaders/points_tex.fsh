@@ -1,5 +1,5 @@
 //
-//  draw.fsh
+//  points_tex.fsh
 //
 //  Created by Ubaka Onyechi on 08/04/2012.
 //  Copyright (c) 2012 uonyechi.com. All rights reserved.

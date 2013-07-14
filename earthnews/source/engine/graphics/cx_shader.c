@@ -526,13 +526,6 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     case CX_SHADER_UNIFORM_TRANSFORM_MV:
     case CX_SHADER_UNIFORM_TRANSFORM_MVP:
     {
-#if CX_SHADER_DEBUG && 0
-      GLint usize;
-      GLenum utype;
-      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-      
-      CX_ASSERT (utype == GL_FLOAT_MAT4);
-#endif
       cx_mat4x4 *mat4 = (cx_mat4x4 *) data;
       glUniformMatrix4fv (location, 1, GL_FALSE, mat4->f16);
       cx_gdi_assert_no_errors ();
@@ -541,13 +534,6 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
       
     case CX_SHADER_UNIFORM_TRANSFORM_N:
     {
-#if CX_SHADER_DEBUG && 0
-      GLint usize;
-      GLenum utype;
-      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-      
-      CX_ASSERT (utype == GL_FLOAT_MAT3);
-#endif
       cx_mat3x3 *mat3 = (cx_mat3x3 *) data;
       glUniformMatrix3fv (location, 1, GL_FALSE, mat3->f9);
       cx_gdi_assert_no_errors ();
@@ -557,13 +543,6 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     case CX_SHADER_UNIFORM_EYE_POSITION:
     case CX_SHADER_UNIFORM_LIGHT_POSITION:
     {
-#if CX_SHADER_DEBUG && 0
-      GLint usize;
-      GLenum utype;
-      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-      
-      CX_ASSERT (utype == GL_FLOAT_VEC4);
-#endif
       cx_vec4 *vec4 = (cx_vec4 *) data;
       glUniform4fv (location, 1, vec4->f4);
       cx_gdi_assert_no_errors ();
@@ -574,13 +553,6 @@ void cx_shader_set_uniform (const cx_shader *shader, enum cx_shader_uniform unif
     case CX_SHADER_UNIFORM_SPECULAR_MAP:
     case CX_SHADER_UNIFORM_BUMP_MAP:
     {
-#if CX_SHADER_DEBUG && 0
-      GLint usize;
-      GLenum utype;
-      glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-      
-      CX_ASSERT (utype == GL_SAMPLER_2D);
-#endif
       cx_texture *tex = (cx_texture *) data;
       cxi32 sampler = cx_shader_get_uniform_sampler (uniform);
       GLenum textureUnit = g_glTextureUnits [sampler];
@@ -619,15 +591,6 @@ void cx_shader_set_float (const cx_shader *shader, const char *name, cxf32 *f, c
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
   
-#if CX_SHADER_DEBUG
-  GLint usize;
-  GLenum utype;
-  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-  
-  CX_ASSERT (count == usize);
-  CX_ASSERT (utype == GL_FLOAT);
-#endif
-  
   glUniform1fv (location, count, f); 
   cx_gdi_assert_no_errors ();
 }
@@ -645,16 +608,7 @@ void cx_shader_set_vector2 (const cx_shader *shader, const char *name, const cx_
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
-  
-#if CX_SHADER_DEBUG
-  GLint usize;
-  GLenum utype;
-  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-  
-  CX_ASSERT (count == usize);
-  CX_ASSERT (utype == GL_FLOAT_VEC2);
-#endif
-  
+
   glUniform2fv (location, count, vec2->f2);
   cx_gdi_assert_no_errors ();
 }
@@ -673,15 +627,6 @@ void cx_shader_set_vector4 (const cx_shader *shader, const char *name, const cx_
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
   
-#if CX_SHADER_DEBUG
-  GLint usize;
-  GLenum utype;
-  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-  
-  CX_ASSERT (count == usize);
-  CX_ASSERT (utype == GL_FLOAT_VEC4);
-#endif
-  
   glUniform4fv (location, count, vec4->f4);
   cx_gdi_assert_no_errors ();
 }
@@ -699,16 +644,7 @@ void cx_shader_set_matrix3x3 (const cx_shader *shader, const char *name, const c
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
-  
-#if CX_SHADER_DEBUG
-  GLint usize;
-  GLenum utype;
-  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-  
-  CX_ASSERT (count == usize);
-  CX_ASSERT (utype == GL_FLOAT_MAT3);
-#endif
-  
+
   glUniform4fv (location, count, mat3x3->f9);
   cx_gdi_assert_no_errors ();
 }
@@ -727,15 +663,6 @@ void cx_shader_set_matrix4x4 (const cx_shader *shader, const char *name, const c
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
   
-#if CX_SHADER_DEBUG
-  GLint usize;
-  GLenum utype;
-  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-  
-  CX_ASSERT (count == usize);
-  CX_ASSERT (utype == GL_FLOAT_MAT4);
-#endif
-  
   glUniform4fv (location, count, mat4x4->f16);
   cx_gdi_assert_no_errors ();
 }
@@ -753,13 +680,6 @@ void cx_shader_set_texture (const cx_shader *shader, const char *name, const cx_
   
   GLint location = glGetUniformLocation (shader->program, name);
   CX_ASSERT (location >= 0);
-  
-#if CX_SHADER_DEBUG && 0
-  GLint usize;
-  GLenum utype;
-  glGetActiveUniform (shader->program, location, 0, NULL, &usize, &utype, NULL);
-  CX_ASSERT (utype == GL_SAMPLER_2D);
-#endif
   
 #if CX_SHADER_DEBUG
   for (int i = CX_SHADER_UNIFORM_DIFFUSE_MAP; i <= CX_SHADER_UNIFORM_BUMP_MAP; ++i)

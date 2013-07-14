@@ -50,11 +50,11 @@ enum
 
 static const char *g_rootTableData [SETTINGS_ROOT_TOTAL_COUNT] =
 {
-  "Cities",
-  "Temperature",
-  "Clock Format",
-  "Local Tweets Only",
-  "Profanity Filter",
+  "TXT_CITIES",
+  "TXT_TEMPERATURE_UNIT",
+  "TXT_CLOCK_FORMAT",
+  "TXT_LOCAL_TWEETS",
+  "TXT_PROFANITY_FILTER",
 };
 
 static const char *g_tempTableData [SETTINGS_TEMPERATURE_TOTAL_COUNT] = 
@@ -65,8 +65,8 @@ static const char *g_tempTableData [SETTINGS_TEMPERATURE_TOTAL_COUNT] =
 
 static const char *g_clockTableData [SETTINGS_CLOCK_FORMAT_TOTAL_COUNT] =
 {
-  "12-hour",
-  "24-hour",
+  "TXT_12_HOUR",
+  "TXT_24_HOUR",
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -689,7 +689,9 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
   
   cell.selectionStyle = UITableViewCellSelectionStyleNone;
   cell.accessoryType = (g_settings.clockFmt == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-  cell.textLabel.text = [NSString stringWithCString:g_clockTableData [idx] encoding:NSUTF8StringEncoding];
+  
+  NSString *trans = [NSString stringWithCString:g_clockTableData [idx] encoding:NSUTF8StringEncoding];
+  cell.textLabel.text = NSLocalizedString (trans, nil);
   
   return cell;
 }
@@ -861,9 +863,12 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
       
     case SETTINGS_ROOT_CLOCK_FORMAT: // clock
     {
+      NSString *trans = [NSString stringWithCString:g_clockTableData [g_settings.clockFmt] encoding:NSUTF8StringEncoding];
+      
       cell.selectionStyle = UITableViewCellSelectionStyleNone;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      cell.detailTextLabel.text = [NSString stringWithCString:g_clockTableData [g_settings.clockFmt] encoding:NSUTF8StringEncoding];
+      cell.detailTextLabel.text = NSLocalizedString (trans, nil);
+      
       break;
     }
       
@@ -894,7 +899,8 @@ static bool settings_load (const char *filename, cx_file_storage_base base)
     }
   }
   
-  cell.textLabel.text = [NSString stringWithCString:g_rootTableData [idx] encoding:NSUTF8StringEncoding];
+  NSString *trans = [NSString stringWithCString:g_rootTableData [idx] encoding:NSUTF8StringEncoding];
+  cell.textLabel.text = NSLocalizedString (trans, nil);
   
   return cell;
 }

@@ -319,9 +319,8 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cloudTexPath  = "data/images/earth/maps/clouds-4096.png";
       nightTexPath  = "data/images/earth/maps/night1-4096.png";
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
-#elif 0 // test mid
-        //earthShader   = "earth-hi";     highSpec = true;
-      earthShader   = "earth-lo"; highSpec = false;
+#elif 1 // test mid
+      earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
@@ -1064,6 +1063,21 @@ void earth_data_get_terrestrial_coords (int index, float *lat, float *lon)
   
   *lat = g_earth->data->latitude [index];
   *lon = g_earth->data->longitude [index];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cx_vertex_data *earth_data_get_mesh_vertex_data (int meshIndex)
+{
+  CX_ASSERT (g_earth);
+  CX_ASSERT (g_earth->visual);
+  CX_ASSERT (meshIndex >= 0);
+  
+  cx_vertex_data *vertexData = g_earth->visual->mesh [meshIndex]->vertexData;
+  
+  return vertexData;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

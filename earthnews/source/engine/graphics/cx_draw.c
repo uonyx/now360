@@ -26,12 +26,15 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colour, cxf32 lineWidth)
+void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colour, cxf32 scale)
 {
   CX_ASSERT (numLines > 0);
-  CX_ASSERT (lineWidth > 0.0f);
+  CX_ASSERT (scale > 0.0f);
   CX_ASSERT (lines);
   CX_ASSERT (colour);
+  
+  cx_mat4x4 mvp;
+  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
   cxi32 numSegments = numLines * 2;
   
@@ -41,18 +44,15 @@ void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colou
   cx_shader_begin (shader);
   
   // set mvp
-  cx_mat4x4 mvp;
-  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   
   // line width
-  glLineWidth (lineWidth);
+  glLineWidth (scale);
   
-  // attributes
   glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
   cx_gdi_assert_no_errors ();
   
-  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, (void*) lines);
+  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, lines);
   cx_gdi_assert_no_errors ();
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
@@ -69,11 +69,11 @@ void cx_draw_lines (cxi32 numLines, const cx_line *lines, const cx_colour *colou
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_points (cxi32 numPoints, const cx_vec4 *points, const cx_colour *colour, const cx_texture *texture)
+void cx_draw_points (cxi32 numPoints, const cx_vec4 *points, const cx_colour *colours, const cx_texture *texture, cxf32 scale)
 {
   CX_ASSERT (numPoints > 0);
   CX_ASSERT (points);
-  CX_ASSERT (colour);
+  CX_ASSERT (colours);
   
   cx_shader_built_in shaderType = texture ? CX_SHADER_BUILT_IN_DRAW_POINTS_TEX : CX_SHADER_BUILT_IN_DRAW_POINTS;
   
@@ -88,22 +88,24 @@ void cx_draw_points (cxi32 numPoints, const cx_vec4 *points, const cx_colour *co
   }
   
   // set mvp
-  cx_mat4x4 mvp, p, mv;
-  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
+  cx_mat4x4 p, mv;
   cx_gdi_get_transform (CX_GDI_TRANSFORM_MV, &mv);
   cx_gdi_get_transform (CX_GDI_TRANSFORM_P, &p);
   
-  //cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MV, &mv);
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_P, &p);
   
-  //glVertexAttrib4fv (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], colour->f4);
-  //cx_gdi_assert_no_errors ();
+  // set scene width
+  cxf32 sceneWidth = cx_gdi_get_screen_height () * 0.5f;
+  cx_shader_set_float (shader, "u_sw", &sceneWidth, 1);
+  
+  // set scale
+  cx_shader_set_float (shader, "u_pw", &scale, 1);
   
   glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 4, GL_FLOAT, GL_FALSE, 0, points);
   cx_gdi_assert_no_errors ();
   
-  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], 4, GL_FLOAT, GL_FALSE, 0, colour);
+  glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], 4, GL_FLOAT, GL_FALSE, 0, colours);
   cx_gdi_assert_no_errors ();
   
   glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
@@ -129,7 +131,8 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32
 {
   CX_ASSERT (colour);
   
-  //cx_gdi_unbind_all_buffers ();
+  cx_mat4x4 mvp;
+  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
   
   cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_DRAW_QUAD);
   
@@ -137,10 +140,10 @@ void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32
   cx_shader_begin (shader);
   
   // set mvp
-  cx_mat4x4 mvp;
-  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
+
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);  
+  // set depth
   cx_shader_set_float (shader, "u_z", &z, 1);
   
   // position attribute
@@ -215,6 +218,8 @@ void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf3
   
   // set mvp
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
+  
+  // set depth
   cx_shader_set_float (shader, "u_z", &z, 1);
   
   cx_vec2 uv [4], pos [4];
