@@ -83,7 +83,6 @@ typedef struct cx_texture
   cx_texture_format format;
   
   cxu32 compressed : 1;
-  cxu32 npot : 1;
   
 } cx_texture;
 

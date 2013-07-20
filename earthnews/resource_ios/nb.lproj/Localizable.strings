@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Banning filter";
 "TXT_12_HOUR" = "12-timers";
 "TXT_24_HOUR" = "24-timers";
+"TXT_NO_INTERNET_CONNECTION" = "Ingen internetuppkoppling";
+"TXT_NEWS_CONNECTION_ERROR" = "Nyhetstjeneste tilkobling feil";
+"TXT_TWITTER_CONNECTION_ERROR" = "Twitter tilkobling feil";
+"TXT_WEATHER_CONNECTION_ERROR" = "Værtjeneste tilkobling feil";

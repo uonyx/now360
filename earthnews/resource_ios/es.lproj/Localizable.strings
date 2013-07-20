@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Filtro de profanidad";
 "TXT_12_HOUR" = "12-horas";
 "TXT_24_HOUR" = "24-horas";
+"TXT_NO_INTERNET_CONNECTION" = "No hay conexión a internet";
+"TXT_NEWS_CONNECTION_ERROR" = "Noticias error de conexión de servicio";
+"TXT_TWITTER_CONNECTION_ERROR" = "Error de conexión de Twitter";
+"TXT_WEATHER_CONNECTION_ERROR" = "El tiempo de error de conexión de servicio";

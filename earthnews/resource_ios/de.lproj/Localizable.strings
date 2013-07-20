@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Obszöne Filter";
 "TXT_12_HOUR" = "12 Stunden";
 "TXT_24_HOUR" = "24 Stunden";
+"TXT_NO_INTERNET_CONNECTION" = "Keine Internetverbindung";
+"TXT_NEWS_CONNECTION_ERROR" = "Newsservice Verbindungsfehler";
+"TXT_TWITTER_CONNECTION_ERROR" = "Twitter Verbindungsfehler";
+"TXT_WEATHER_CONNECTION_ERROR" = "Wetter-Service-Verbindung Fehler";

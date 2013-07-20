@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Filtre de blasphème";
 "TXT_12_HOUR" = "12 heures";
 "TXT_24_HOUR" = "24 heures";
+"TXT_NO_INTERNET_CONNECTION" = "Pas de connexion Internet";
+"TXT_NEWS_CONNECTION_ERROR" = "Service de nouvelles erreur de connexion";
+"TXT_TWITTER_CONNECTION_ERROR" = "Twitter erreur de connexion";
+"TXT_WEATHER_CONNECTION_ERROR" = "Service Météo erreur de connexion";

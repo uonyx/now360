@@ -25,6 +25,9 @@
 #define DEBUG_EQUINOX_LIGHT (CX_DEBUG && 0)
 #define DEBUG_EQUINOX_LIGHT_ORBIT (DEBUG_EQUINOX_LIGHT && 0)
 
+#define DEBUG_PERFORMANCE_TEST_HI (CX_DEBUG && 0)
+#define DEBUG_PERFORMANCE_TEST_LO (CX_DEBUG && 0)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,7 +218,7 @@ static struct earth_data_t *earth_data_create (const char *filename, float radiu
             cx_json_node tznNode = cx_json_object_child (p, "name");
             
             const char *tzn = cx_json_value_string (tznNode);
-            unsigned int tznlen = cx_roundupPow2 (strlen (tzn));
+            unsigned int tznlen = cx_util_roundup_pow2 (strlen (tzn));
             
             if (tznlen > 0)
             {
@@ -290,15 +293,18 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
   bool highSpec = false;
   bool animClouds = false;
+  
+  short slicesCloud = 0;
+  short slicesAtmos = 0;
 
   device_type_t devType = util_get_device_type ();
-  CX_REF_UNUSED (devType);
-
   switch (devType)
   {
     case DEVICE_TYPE_UNKNOWN:
     case DEVICE_TYPE_IPAD3:
     {
+      slicesAtmos = 128;
+      slicesCloud = 48;
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
@@ -311,7 +317,9 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
     case DEVICE_TYPE_IPAD2:
     {
-#if 0 // test hi
+#if DEBUG_PERFORMANCE_TEST_HI
+      slicesAtmos = 128;
+      slicesCloud = 48;
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
@@ -319,7 +327,20 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cloudTexPath  = "data/images/earth/maps/clouds-4096.png";
       nightTexPath  = "data/images/earth/maps/night1-4096.png";
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
-#elif 1 // test mid
+#elif DEBUG_PERFORMANCE_TEST_LO
+      month = 6;
+      slicesAtmos = 72;
+      slicesCloud = 32;
+      earthShader   = "earth-lo"; highSpec = false;
+      cloudShader   = "clouds";   animClouds = false;
+      specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
+      bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
+      cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
+      nightTexPath  = "data/images/earth/maps/night1-2048.jpg";
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-2048.jpg", month);
+#else // default
+      slicesAtmos = 96;
+      slicesCloud = 36;
       earthShader   = "earth-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
@@ -327,14 +348,6 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
       nightTexPath  = "data/images/earth/maps/night1-4096.png";
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
-#else // test lo
-      earthShader   = "earth-lo"; highSpec = false;
-      cloudShader   = "clouds";   animClouds = false;
-      specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
-      bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
-      cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
-      nightTexPath  = "data/images/earth/maps/night1-2048.jpg";
-      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-2048.jpg", 6);
 #endif
       break;
     }
@@ -342,13 +355,16 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
     case DEVICE_TYPE_IPAD1:
     default:
     {
+      month = 6;
+      slicesAtmos = 72;
+      slicesCloud = 32;
       earthShader   = "earth-lo"; highSpec = false;
       cloudShader   = "clouds";   animClouds = false;
       specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
       cloudTexPath  = "data/images/earth/maps/clouds-2048.png";
       nightTexPath  = "data/images/earth/maps/night1-2048.jpg";
-      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-2048.jpg", 6);
+      cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-2048.jpg", month);
       break;
     }
   }
@@ -425,13 +441,13 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   cx_texture *cloudBump = cx_texture_create_from_file ("data/maps/2048-normal-clouds.png", CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_material_set_texture (material1, cloudBump, CX_MATERIAL_TEXTURE_BUMP);
   
-  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 36, CX_VERTEX_FORMAT_PTNTB);
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, slicesCloud, CX_VERTEX_FORMAT_PTNTB);
 #else
   cx_shader *shader1     = cx_shader_create (cloudShader, "data/shaders");
   cx_material *material1 = cx_material_create (cloudShader);
   
   cx_material_set_texture (material1, cloudTexture, CX_MATERIAL_TEXTURE_DIFFUSE);
-  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, 36, CX_VERTEX_FORMAT_PTN);
+  cx_vertex_data *sphere1 = cx_vertex_data_create_sphere (radius1, slicesCloud, CX_VERTEX_FORMAT_PTN);
 #endif
   
   visual->mesh [1] = cx_mesh_create (sphere1, shader1, material1);
@@ -441,7 +457,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
 #if NEW_EARTH_SHADER && ENABLE_ATMOSPHERE
   float radius2 = radius + 0.010f;
-  cx_vertex_data *sphere2 = cx_vertex_data_create_sphere (radius2, 96, CX_VERTEX_FORMAT_PN);
+  cx_vertex_data *sphere2 = cx_vertex_data_create_sphere (radius2, slicesAtmos, CX_VERTEX_FORMAT_PN);
   
   cx_shader *shader2 = cx_shader_create ("atmos", "data/shaders");
   cx_material *material2 = cx_material_create ("atmos");
@@ -861,13 +877,22 @@ static earth_t *earth_create (const char *filename, const cx_date *date)
   earth_t *earth = (earth_t *) cx_malloc (sizeof (earth_t));
   
   float radius = 1.0f;
-#if 1
-  // ipad 2 configuration
   int slices = 64;
-  //int parallels = 32;
-#else
-  int slices = 128;
-  //int parallels = 64;
+  
+  device_type_t devType = util_get_device_type ();
+  switch (devType)
+  {
+    case DEVICE_TYPE_UNKNOWN:
+    case DEVICE_TYPE_IPAD3:   { slices = 128; break; }
+    case DEVICE_TYPE_IPAD2:   { slices = 64; break; }
+    case DEVICE_TYPE_IPAD1:
+    default:                  { slices = 32; break; }
+  }
+  
+#if DEBUG_PERFORMANCE_TEST_HI
+  slices = 128;
+#elif DEBUG_PERFORMANCE_TEST_LO
+  slices = 32;
 #endif
   
   // create earth data    

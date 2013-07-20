@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Godslastering filter";
 "TXT_12_HOUR" = "12-uurs";
 "TXT_24_HOUR" = "24-uurs";
+"TXT_NO_INTERNET_CONNECTION" = "Geen internetverbinding";
+"TXT_NEWS_CONNECTION_ERROR" = "News-service verbinding fout";
+"TXT_TWITTER_CONNECTION_ERROR" = "Twitter verbindingsfout";
+"TXT_WEATHER_CONNECTION_ERROR" = "Weerdienst verbinding fout";

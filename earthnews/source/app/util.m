@@ -24,7 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cx_font *g_font [NUM_FONT_SIZES];
+static cx_font *g_font [NUM_FONT_IDS];
 static UIActivityIndicatorView *g_activityIndicatorView = nil;
 static int g_activityRefCount = 0;
 static screen_fade_type_t g_screenFadeType;
@@ -33,9 +33,9 @@ static anim_t g_screenFade;
 
 static status_bar_msg_t g_msg = STATUS_BAR_MSG_NONE;
 static float g_statusTimer = STATUS_BAR_DISPLAY_TIMER;
-static cx_texture *g_statug_msg_icon = NULL;
-static cx_colour g_statug_msg_colour [NUM_STATUS_BAR_MSGS];
-static const char *g_statug_msg_text [NUM_STATUS_BAR_MSGS];
+static cx_texture *g_status_msg_icon = NULL;
+static cx_colour g_status_msg_colour [NUM_STATUS_BAR_MSGS];
+static NSString *g_status_msg_text [NUM_STATUS_BAR_MSGS];
 
 static unsigned int g_profanityWordCount = 0;
 static char *g_profanityWords [MAX_PROFANITY_WORD_COUNT] = { NULL };
@@ -60,9 +60,7 @@ static void util_deinit_profanity_filter (void);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool util_init (const void *rootvc)
-{
-  util_init_create_fonts ();
-  
+{  
   util_init_activity_indicator (rootvc);
   
   util_init_status_bar ();
@@ -83,14 +81,23 @@ bool util_init (const void *rootvc)
 void util_deinit (void)
 {
   util_deinit_activity_indicator ();
-  
-  util_deinit_destroy_fonts ();
-  
+    
   util_deinit_status_bar ();
   
   util_deinit_screen_fade ();
   
   util_deinit_profanity_filter ();
+  
+  util_deinit_destroy_fonts ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void util_thread_init (void)
+{
+  util_init_create_fonts ();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -157,11 +164,11 @@ int util_get_dst_offset_secs (const char *tzn)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const cx_font *util_get_font (font_size_t size)
+const cx_font *util_get_font (font_id_t fontId)
 {
-  CX_ASSERT ((size > FONT_SIZE_INVALID) && (size < NUM_FONT_SIZES));
+  CX_ASSERT ((fontId > FONT_ID_INVALID) && (fontId < NUM_FONT_IDS));
   
-  return g_font [size];
+  return g_font [fontId];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -302,12 +309,15 @@ void util_status_bar_render (void)
 {
   if ((g_msg > STATUS_BAR_MSG_NONE) && (g_msg < NUM_STATUS_BAR_MSGS))
   {    
-    cx_texture *icon = g_statug_msg_icon;
-    const char *text = g_statug_msg_text [g_msg];
-    cx_colour *colour = &g_statug_msg_colour [g_msg];
+    cx_texture *icon = g_status_msg_icon;
+    NSString *tag = g_status_msg_text [g_msg];
+    cx_colour *colour = &g_status_msg_colour [g_msg];
     
     CX_ASSERT (icon);
-    CX_ASSERT (text);
+    CX_ASSERT (tag);
+    
+    NSString *nstext = NSLocalizedString (tag, nil);
+    const char *text = [nstext cStringUsingEncoding:NSUTF8StringEncoding];
     
     float alpha = 1.0f;
     
@@ -358,7 +368,7 @@ void util_status_bar_render (void)
     
     // text
     
-    const cx_font *font = util_get_font (FONT_SIZE_14);
+    const cx_font *font = util_get_font (FONT_ID_DEFAULT_14);
     CX_ASSERT (font);
     
     float xoffset = 0.0f;
@@ -489,18 +499,18 @@ bool util_add_skip_backup_attribute_to_path (const char *filepath, cx_file_stora
 
 static void util_init_status_bar (void)
 {
-  g_statug_msg_icon = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
-  CX_ASSERT (g_statug_msg_icon);
+  g_status_msg_icon = cx_texture_create_from_file ("data/images/ui/warning-16.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  CX_ASSERT (g_status_msg_icon);
   
-  g_statug_msg_text [STATUS_BAR_MSG_CONNECTION_ERROR] = "No Internet Connection"; //"Network Connection Error",
-  g_statug_msg_text [STATUS_BAR_MSG_NEWS_COMMS_ERROR] = "News Service Connection Error";
-  g_statug_msg_text [STATUS_BAR_MSG_TWITTER_COMMS_ERROR] = "Twitter Connection Error";
-  g_statug_msg_text [STATUS_BAR_MSG_WEATHER_COMMS_ERROR] = "Weather Service Connection Error";
+  g_status_msg_text [STATUS_BAR_MSG_CONNECTION_ERROR] = @"TXT_NO_INTERNET_CONNECTION"; //"Network Connection Error",
+  g_status_msg_text [STATUS_BAR_MSG_NEWS_COMMS_ERROR] = @"TXT_NEWS_CONNECTION_ERROR";
+  g_status_msg_text [STATUS_BAR_MSG_TWITTER_COMMS_ERROR] = @"TXT_TWITTER_CONNECTION_ERROR";
+  g_status_msg_text [STATUS_BAR_MSG_WEATHER_COMMS_ERROR] = @"TXT_WEATHER_CONNECTION_ERROR";
   
-  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f); // red
-  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_NEWS_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
-  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_TWITTER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
-  cx_colour_set (&g_statug_msg_colour [STATUS_BAR_MSG_WEATHER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f); // red
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_NEWS_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_TWITTER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_WEATHER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -509,7 +519,7 @@ static void util_init_status_bar (void)
 
 static void util_deinit_status_bar (void)
 {
-  cx_texture_destroy (g_statug_msg_icon);
+  cx_texture_destroy (g_status_msg_icon);
 }
   
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -535,16 +545,90 @@ static void util_deinit_screen_fade (void)
 
 static void util_init_create_fonts (void)
 {
-  //const char *fontname = "data/fonts/verdana.ttf";
-  const char *fontname = "data/fonts/tahoma.ttf";
+  {
+    // earth text and music 
+    //const char *fontname = "data/fonts/tahoma.ttf";
+    //const char *fontname = "data/fonts/UnDotum.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-light.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-regular.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
+    const char *fontname = "data/fonts/mplus-1c-bold.ttf";
+    
+    cx_str_unicode_block unicodeBlocks [] =
+    {
+      CX_STR_UNICODE_BLOCK_LATIN_BASIC,
+    };
+    
+    cxu32 unicodeBlocksCount = sizeof (unicodeBlocks) / sizeof (cx_str_unicode_block);
+    
+    g_font [FONT_ID_DEFAULT_12] = cx_font_create (fontname, 12.0f, unicodeBlocks, unicodeBlocksCount);
+    g_font [FONT_ID_DEFAULT_14] = cx_font_create (fontname, 14.0f, unicodeBlocks, unicodeBlocksCount);
+    
+    cx_str_unicode_block unicodeBlocks0 [] =
+    {
+      CX_STR_UNICODE_BLOCK_LATIN_BASIC,
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED,
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A
+    };
+    
+    cxu32 unicodeBlocksCount0 = sizeof (unicodeBlocks0) / sizeof (cx_str_unicode_block);
+    
+    g_font [FONT_ID_DEFAULT_16] = cx_font_create (fontname, 16.0f, unicodeBlocks0, unicodeBlocksCount0);
+  }
   
-  g_font [FONT_SIZE_10] = cx_font_create (fontname, 10.0f);
-  g_font [FONT_SIZE_12] = cx_font_create (fontname, 12.0f);
-  g_font [FONT_SIZE_14] = cx_font_create (fontname, 14.0f);
-  g_font [FONT_SIZE_16] = cx_font_create (fontname, 16.0f);
-  g_font [FONT_SIZE_18] = cx_font_create (fontname, 18.0f);
-  g_font [FONT_SIZE_20] = cx_font_create (fontname, 20.0f);
-  g_font [FONT_SIZE_24] = cx_font_create (fontname, 24.0f); 
+  {
+    const char *fontname = "data/fonts/UnDotumBold.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-regular.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-bold.ttf";
+    
+    cx_str_unicode_block unicodeBlocks1 [] =
+    {
+      //CX_STR_UNICODE_BLOCK_ARABIC,
+      CX_STR_UNICODE_BLOCK_CYRILLIC,
+      CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
+      CX_STR_UNICODE_BLOCK_LATIN_BASIC,
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED,
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
+      CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,
+    };
+    
+    cxu32 unicodeBlocksCount1 = sizeof (unicodeBlocks1) / sizeof (cx_str_unicode_block);
+    
+    g_font [FONT_ID_NEWS_18] = cx_font_create (fontname, 18.0f, unicodeBlocks1, unicodeBlocksCount1);
+  }
+  
+  {
+    //const char *fontname = "data/fonts/CODE2000.TTF";
+    //const char *fontname = "data/fonts/UnDotum.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
+    const char *fontname = "data/fonts/mplus-1c-bold.ttf";
+    
+    cx_str_unicode_block unicodeBlocks2 [] =
+    {
+      //CX_STR_UNICODE_BLOCK_ARABIC,
+      CX_STR_UNICODE_BLOCK_CJK_FULL,
+      CX_STR_UNICODE_BLOCK_CYRILLIC,
+      CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
+      CX_STR_UNICODE_BLOCK_LATIN_BASIC,
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED,
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
+      CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS
+    };
+    
+    cxu32 unicodeBlocksCount2 = sizeof (unicodeBlocks2) / sizeof (cx_str_unicode_block);
+    
+    g_font [FONT_ID_TWITTER_16] = cx_font_create (fontname, 18.0f, unicodeBlocks2, unicodeBlocksCount2);
+  }
+  
+  //cx_font_set_scale (g_font [FONT_ID_TWITTER_16], 16.0f / 14.0f, 16.0f / 14.0f);
+  
+#if CX_DEBUG
+  for (int i = FONT_ID_INVALID + 1; i < NUM_FONT_IDS; ++i)
+  {
+    CX_ASSERT (g_font [i]);
+  }
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,7 +637,7 @@ static void util_init_create_fonts (void)
 
 static void util_deinit_destroy_fonts (void)
 {
-  for (unsigned int i = 0; i < NUM_FONT_SIZES; ++i)
+  for (unsigned int i = 0; i < NUM_FONT_IDS; ++i)
   {
     cx_font_destroy (g_font [i]);
   }

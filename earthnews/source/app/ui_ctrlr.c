@@ -592,8 +592,7 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
     entryArray [si] = tmpEntry;
   }
   
-  
-  const cx_font *font = util_get_font (FONT_SIZE_18);
+  const cx_font *font = util_get_font (FONT_ID_NEWS_18);
   
   float fh = 24.0f; //cx_font_get_height (font);
   
@@ -651,7 +650,7 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
     title = entry ? entry->title : NULL;
   }
 
-  const cx_font *font = util_get_font (FONT_SIZE_18);
+  const cx_font *font = util_get_font (FONT_ID_NEWS_18);
   CX_ASSERT (font);
   
   float opacity = g_uinews.opacity;
@@ -839,7 +838,7 @@ static void ui_ctrlr_twitter_populate (feed_twitter_t *feed)
   float pixelwidthAvgChar = 6.0f;
   float pixelwidthTotal = 0.0f;
   
-  const cx_font *font = util_get_font (FONT_SIZE_16);
+  const cx_font *font = util_get_font (FONT_ID_TWITTER_16);
   
   while (tweet && (ticker->itemCount < TWITTER_TICKER_MAX_ITEM_COUNT))
   {
@@ -1025,14 +1024,14 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
     
     cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colbg, NULL);
     
-    const cx_font *font = util_get_font (FONT_SIZE_16);
+    const cx_font *font = util_get_font (FONT_ID_TWITTER_16);
 #if 0
     float deltaTime = (1.0f / 30.0f);
     float scrollx = 60.0f * deltaTime;
 #else
     float deltaTime = (float) cx_system_time_get_delta_time ();
     float scrollx = 60.0f * deltaTime;
-    scrollx = (float) cx_roundupInt (scrollx);
+    scrollx = (float) cx_util_roundup_int (scrollx);
 #endif
     
     for (int i = 0, c = ticker->itemCount; i < c; ++i)
@@ -1567,7 +1566,7 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
     col = *cx_colour_white ();
     col.a *= opacity;
     
-    const cx_font *font = util_get_font (FONT_SIZE_14);
+    const cx_font *font = util_get_font (FONT_ID_DEFAULT_14);
     
     cx_font_render (font, trackId, tx, ty, 0.0f, 0, &col);
   }

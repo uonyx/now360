@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Kirosanoja suodatin";
 "TXT_12_HOUR" = "12-tunnin";
 "TXT_24_HOUR" = "24-tunnin";
+"TXT_NO_INTERNET_CONNECTION" = "Ei internet-yhteyttä";
+"TXT_NEWS_CONNECTION_ERROR" = "Uutispalvelu yhteys virhe";
+"TXT_TWITTER_CONNECTION_ERROR" = "Twitter-yhteyden virhe";
+"TXT_WEATHER_CONNECTION_ERROR" = "Sääpalvelu yhteys virhe";

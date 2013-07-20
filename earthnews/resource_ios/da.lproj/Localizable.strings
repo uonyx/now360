@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Blasfemi Filter";
 "TXT_12_HOUR" = "12-timers";
 "TXT_24_HOUR" = "24-timers";
+"TXT_NO_INTERNET_CONNECTION" = "Ingen internetforbindelse";
+"TXT_NEWS_CONNECTION_ERROR" = "Nyhedsservice tilslutning fejl";
+"TXT_TWITTER_CONNECTION_ERROR" = "Twitter tilslutning fejl";
+"TXT_WEATHER_CONNECTION_ERROR" = "Vejrtjeneste tilslutning fejl";

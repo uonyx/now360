@@ -61,6 +61,7 @@ void audio_music_pause (void);
 void audio_music_next (void);
 void audio_music_prev (void);
 bool audio_music_playing (void);
+bool audio_music_paused (void);
 bool audio_music_picker_active (void);
 bool audio_music_queued (void);
 int  audio_music_get_track_id (char *buffer, int bufferlen);

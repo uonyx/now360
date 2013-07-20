@@ -5,3 +5,7 @@
 "TXT_PROFANITY_FILTER" = "Svordomar filter";
 "TXT_12_HOUR" = "12-timmars";
 "TXT_24_HOUR" = "24-timmars";
+"TXT_NO_INTERNET_CONNECTION" = "Ingen internetuppkoppling";
+"TXT_NEWS_CONNECTION_ERROR" = "Nyheter tjänsten anslutningsfel";
+"TXT_TWITTER_CONNECTION_ERROR" = "Twitter anslutningsfel";
+"TXT_WEATHER_CONNECTION_ERROR" = "Vädertjänst anslutningsfel";

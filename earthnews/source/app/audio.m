@@ -231,14 +231,29 @@ bool audio_music_playing (void)
 
   MPMediaItem *nowPlayingItem = [g_musicPlayer nowPlayingItem];
   
+  MPMusicPlaybackState playbackState = [g_musicPlayer playbackState];
+  CX_REF_UNUSED (playbackState);
+  
 #if PLAYBACK_STATE_HACK_FIX
   ret = nowPlayingItem && g_musicPlaying;
 #else
-
-  MPMusicPlaybackState playbackState = [g_musicPlayer playbackState];
-
   ret = (nowPlayingItem && (playbackState == MPMusicPlaybackStatePlaying))
 #endif
+  
+  return ret;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool audio_music_paused (void)
+{
+  CX_ASSERT (g_musicPlayer);
+  
+  MPMusicPlaybackState playbackState = [g_musicPlayer playbackState];
+  
+  bool ret = (playbackState == MPMusicPlaybackStatePaused);
   
   return ret;
 }
@@ -340,9 +355,11 @@ static void audio_music_init (void)
 #endif
   
   cx_list2_init (&g_musicNotificationCallbacks);
-  
+#if 1
   g_musicPlayer = [MPMusicPlayerController applicationMusicPlayer];
-  
+#else
+  g_musicPlayer = [MPMusicPlayerController iPodMusicPlayer];
+#endif
   g_musicNotification = [[MusicNotifcation alloc] init];
   
   g_musicPickerDelegate = [[MusicPickerDelegate alloc] init];

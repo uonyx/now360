@@ -192,6 +192,12 @@ static cx_thread_exit_status app_init_load (void *userdata)
   cx_time_set_date (&g_dateLocal, CX_TIME_ZONE_LOCAL);
   
   //
+  // util
+  //
+  
+  util_thread_init ();
+  
+  //
   // earth data
   //
   
@@ -283,6 +289,8 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   
   cx_engine_init (CX_ENGINE_INIT_ALL, &params);
   
+  g_appState = APP_STATE_INIT;
+  
   //
   // metrics
   //
@@ -338,8 +346,6 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   //
   // loading thread
   //
-  
-  g_appState = APP_STATE_INIT;
   
   g_ldThreadInProgress = true;
   
@@ -1580,8 +1586,8 @@ static void app_render_2d_local_clock (void)
   
   app_get_clock_str (date, 0, timeStr, 32);
   cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
-
-  const cx_font *font = util_get_font (FONT_SIZE_16);
+  
+  const cx_font *font = util_get_font (FONT_ID_DEFAULT_16);
   CX_ASSERT (font);
   
   float sw = cx_gdi_get_screen_width ();
@@ -1697,9 +1703,9 @@ static void app_render_2d_earth (void)
   
   const cx_date *date = &g_dateUTC;
   
-  const cx_font *font0 = util_get_font (FONT_SIZE_16);
-  const cx_font *font1 = util_get_font (FONT_SIZE_14);
-  const cx_font *font2 = util_get_font (FONT_SIZE_12);
+  const cx_font *font0 = util_get_font (FONT_ID_DEFAULT_16);
+  const cx_font *font1 = util_get_font (FONT_ID_DEFAULT_14);
+  const cx_font *font2 = util_get_font (FONT_ID_DEFAULT_12);
   
   char tempStr [32];
   char timeStr [32];
@@ -1754,7 +1760,7 @@ static void app_render_2d_earth (void)
       
       if (feed->dataReady)
       {
-        int tempFarenHeit = (cx_roundupInt ((float) feed->celsius * 1.8f)) + 32;
+        int tempFarenHeit = (cx_util_roundup_int ((float) feed->celsius * 1.8f)) + 32;
         int tempValue = (unitType == SETTINGS_TEMPERATURE_UNIT_C) ? feed->celsius : tempFarenHeit;
         
         cx_sprintf (tempStr, 32, "%d", tempValue);
@@ -1768,13 +1774,13 @@ static void app_render_2d_earth (void)
           //////////////////
           
           // (icon width / 2) + margin offset
-          cx_font_render (lfont, cityStr, pos->x + 24.0f + 18.0f, pos->y - 16.0f, pos->z, 0, &colour);
+          cx_font_render (lfont, cityStr, pos->x + 42.0f, pos->y - 16.0f, pos->z, 0, &colour); // 42.0f = 24.0f + 18.0f
           
           ////////////////////////
           // temperature / time
           ///////////////////////
           
-          cx_font_render (sfont, text2, pos->x + 24.0f + 18.0f, pos->y - 4.0f, pos->z, 0, &colour);
+          cx_font_render (sfont, text2, pos->x + 42.0f, pos->y - 4.0f, pos->z, 0, &colour);
           
           //////////////////
           // weather icon
@@ -2233,12 +2239,21 @@ static int app_input_touch_earth (float screenX, float screenY, float screenWidt
 
 void app_on_background (void)
 {
-  // save settings
-  //settings_data_save (); // redundant
+  if (g_appState == APP_STATE_UPDATE)
+  {
+#if 0
+    if (audio_music_playing ())
+    {
+      audio_music_pause ();
+    }
+#endif
+    // save settings
+    //settings_data_save (); // redundant
+    
+    util_activity_indicator_set_active (false); // necessary?
   
-  util_activity_indicator_set_active (false); // necessary?
-  
-  metrics_event_log (METRICS_EVENT_APP_BG, NULL);
+    metrics_event_log (METRICS_EVENT_APP_BG, NULL);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2247,35 +2262,45 @@ void app_on_background (void)
 
 void app_on_foreground (void)
 {
-  metrics_event_log (METRICS_EVENT_APP_FG, NULL);
-  
-  // update clocks
-  g_dateUpdateTimer = 0.0f;
-  
-  // trigger weather update
-  g_weatherRefresh = true;
-  
-  // refresh selected city
-  if (earth_data_validate_index (g_selectedCity))
+  if (g_appState == APP_STATE_UPDATE)
   {
-    const char *query = earth_data_get_feed_query (g_selectedCity);
-    feed_news_t *feedNews = &g_feedsNews [g_selectedCity];
-    feed_twitter_t *feedTwitter = &g_feedsTwitter [g_selectedCity];
-    
-    if (feedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
+#if 0
+    if (audio_music_paused ())
     {
-      //feeds_twitter_search (feedTwitter, query);
-      //util_activity_indicator_set_active (true);
+      audio_music_play ();
     }
+#endif
     
-    if (feedNews->reqStatus == FEED_REQ_STATUS_INVALID)
+    metrics_event_log (METRICS_EVENT_APP_FG, NULL);
+    
+    // update clocks
+    g_dateUpdateTimer = 0.0f;
+    
+    // trigger weather update
+    g_weatherRefresh = true;
+    
+    // refresh selected city
+    if (earth_data_validate_index (g_selectedCity))
     {
-      feeds_news_search (feedNews, query);
-      util_activity_indicator_set_active (true);
+      const char *query = earth_data_get_feed_query (g_selectedCity);
+      feed_news_t *feedNews = &g_feedsNews [g_selectedCity];
+      feed_twitter_t *feedTwitter = &g_feedsTwitter [g_selectedCity];
+      
+      if (feedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
+      {
+        //feeds_twitter_search (feedTwitter, query);
+        //util_activity_indicator_set_active (true);
+      }
+      
+      if (feedNews->reqStatus == FEED_REQ_STATUS_INVALID)
+      {
+        feeds_news_search (feedNews, query);
+        util_activity_indicator_set_active (true);
+      }
     }
-  }
   
-  earth_data_update_dst_offsets ();
+    earth_data_update_dst_offsets ();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2284,7 +2309,10 @@ void app_on_foreground (void)
 
 void app_on_terminate (void)
 {
-  settings_data_save ();
+  if (g_appState == APP_STATE_UPDATE)
+  {
+    settings_data_save ();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2299,7 +2327,10 @@ void app_on_memory_warning (void)
   CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
   CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
   
-  cx_http_clear_cache ();
+  if (g_appState == APP_STATE_UPDATE)
+  {
+    cx_http_clear_cache ();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

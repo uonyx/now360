@@ -4,29 +4,107 @@
    version = "1.0">
    <FileBreakpoints>
       <FileBreakpoint
-         shouldBeEnabled = "Yes"
+         shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/system/cx_string.c"
-         timestampString = "395523041.710571"
+         filePath = "earthnews/source/app/earth.c"
+         timestampString = "395969112.018503"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "245"
-         endingLineNumber = "245"
-         landmarkName = "cx_str_utf8_decode()"
+         startingLineNumber = "460"
+         endingLineNumber = "460"
+         landmarkName = "earth_visual_create()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "Yes"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
-         filePath = "earthnews/source/engine/system/cx_string.c"
-         timestampString = "395523041.710571"
+         filePath = "earthnews/source/engine/3rdparty/stb/stb_truetype.h"
+         timestampString = "395969595.993829"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "249"
-         endingLineNumber = "249"
-         landmarkName = "cx_str_utf8_decode()"
+         startingLineNumber = "1787"
+         endingLineNumber = "1787"
+         landmarkName = "stbtt_BakeFontBitmap2(const unsigned char *data, int offset, // font location (use offset=0 for plain .ttf) float pixel_height, // height of font in pixels unsigned char *pixels, int pw, int ph, // bitmap to be filled in unsigned int *unicode_codepts, int num_codepts, // characters to bake stbtt_bakedchar *chardata)"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/ui_ctrlr.c"
+         timestampString = "395970632.677649"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "1062"
+         endingLineNumber = "1062"
+         landmarkName = "ui_ctrlr_twitter_ticker_render()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/audio.m"
+         timestampString = "395972562.899672"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "679"
+         endingLineNumber = "679"
+         landmarkName = "-handlePlaybackStateChanged:"
+         landmarkType = "5">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/util.m"
+         timestampString = "395985632.002578"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "621"
+         endingLineNumber = "621"
+         landmarkName = "util_init_create_fonts()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/util.m"
+         timestampString = "395985632.002578"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "597"
+         endingLineNumber = "597"
+         landmarkName = "util_init_create_fonts()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/util.m"
+         timestampString = "395985632.002578"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "564"
+         endingLineNumber = "564"
+         landmarkName = "util_init_create_fonts()"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "earthnews/source/app/util.m"
+         timestampString = "395985672.682064"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "565"
+         endingLineNumber = "565"
+         landmarkName = "util_init_create_fonts()"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

@@ -90,8 +90,6 @@ static cx_texture *cx_texture_load_img_xxx (const char *filename, cx_file_storag
     texture->dataSize = w * h * sizeof (cxu8) * g_texture_format_pixel_size [texture->format];
     texture->width = (cxu32) w;
     texture->height = (cxu32) h;
-    texture->npot = (!cx_util_is_power_of_2 (texture->width)) || (!cx_util_is_power_of_2 (texture->height));
-    
     texture->imageData [0] = texture->data;
     texture->imageDataSize [0] = texture->dataSize;
     texture->mipmapCount = 1;
@@ -454,7 +452,6 @@ static cx_texture *cx_texture_load_img_pvr (const char *filename, cx_file_storag
       texture->mipmapCount  = pvrHeader->mipmapCount;
       texture->width        = pvrHeader->width;
       texture->height       = pvrHeader->height;
-      texture->npot         = (!cx_util_is_power_of_2 (texture->width)) || (!cx_util_is_power_of_2 (texture->height));
       
       switch (pvrHeader->pixelFormat)
       {
@@ -498,7 +495,6 @@ cx_texture *cx_texture_create (cxu32 width, cxu32 height, cx_texture_format form
   texture->imageData [0]     = texture->data;
   texture->imageDataSize [0] = texture->dataSize;
   texture->mipmapCount       = 1;
-  texture->npot              = (!cx_util_is_power_of_2 (width)) || (!cx_util_is_power_of_2 (height));
   
   return texture;
 }
@@ -684,9 +680,12 @@ void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps)
     cx_gdi_assert_no_errors ();
   }
   
+  
+  bool npotTexture = (!cx_util_is_pow2 (texture->width)) || (!cx_util_is_pow2 (texture->height));
+  
   if (texture->mipmapCount > 1)
   {
-    CX_ASSERT (!texture->npot);
+    CX_ASSERT (!npotTexture);
     
     // set up filters
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -703,7 +702,7 @@ void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps)
     
     bool npotExtensionSupported = cx_gdi_get_extension_supported (CX_GDI_EXTENSION_NPOT);
     
-    if (texture->npot && !npotExtensionSupported)
+    if (npotTexture && !npotExtensionSupported)
     {
       // set up filters
       glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -741,8 +740,8 @@ void cx_texture_gpu_init (cx_texture *texture, bool genMipmaps)
         cx_gdi_assert_no_errors ();
         
         // set up coordinate wrapping
-        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         cx_gdi_assert_no_errors ();
       }
     }
