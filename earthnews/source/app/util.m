@@ -554,71 +554,88 @@ static void util_init_create_fonts (void)
     //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
     const char *fontname = "data/fonts/mplus-1c-bold.ttf";
     
-    cx_str_unicode_block unicodeBlocks [] =
+    cx_str_unicode_block blocks [] =
     {
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
     };
     
-    cxu32 unicodeBlocksCount = sizeof (unicodeBlocks) / sizeof (cx_str_unicode_block);
+    cxu32 codePts [] =
+    {
+      0xb0, // degree symbol
+    };
     
-    g_font [FONT_ID_DEFAULT_12] = cx_font_create (fontname, 12.0f, unicodeBlocks, unicodeBlocksCount);
-    g_font [FONT_ID_DEFAULT_14] = cx_font_create (fontname, 14.0f, unicodeBlocks, unicodeBlocksCount);
+    cxu32 codePtsCount = sizeof (codePts) / sizeof (cxu32);
     
-    cx_str_unicode_block unicodeBlocks0 [] =
+    cxu32 blocksCount = sizeof (blocks) / sizeof (cx_str_unicode_block);
+    
+    g_font [FONT_ID_DEFAULT_12] = cx_font_create (fontname, 14.0f, blocks, blocksCount, codePts, codePtsCount);
+    g_font [FONT_ID_DEFAULT_14] = cx_font_create (fontname, 15.0f, blocks, blocksCount, codePts, codePtsCount);
+    g_font [FONT_ID_DEFAULT_16] = cx_font_create (fontname, 16.0f, blocks, blocksCount, NULL, 0);
+  }
+  
+  {
+    //const char *fontname = "data/fonts/UnDotum.ttf";
+    const char *fontname = "data/fonts/mplus-1c-bold.ttf";
+  
+    cx_str_unicode_block blocks0 [] =
     {
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
-      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED,
+      CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
       CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A
     };
     
-    cxu32 unicodeBlocksCount0 = sizeof (unicodeBlocks0) / sizeof (cx_str_unicode_block);
+    cxu32 blocksCount0 = sizeof (blocks0) / sizeof (cx_str_unicode_block);
     
-    g_font [FONT_ID_DEFAULT_16] = cx_font_create (fontname, 16.0f, unicodeBlocks0, unicodeBlocksCount0);
+    g_font [FONT_ID_MUSIC_16] = cx_font_create (fontname, 16.0f, blocks0, blocksCount0, NULL, 0);
   }
   
   {
-    const char *fontname = "data/fonts/UnDotumBold.ttf";
+    //const char *fontname = "data/fonts/UnDotumBold.ttf";
     //const char *fontname = "data/fonts/mplus-1c-regular.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-bold.ttf";
-    
-    cx_str_unicode_block unicodeBlocks1 [] =
-    {
-      //CX_STR_UNICODE_BLOCK_ARABIC,
-      CX_STR_UNICODE_BLOCK_CYRILLIC,
-      CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
-      CX_STR_UNICODE_BLOCK_LATIN_BASIC,
-      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED,
-      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
-      CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,
-    };
-    
-    cxu32 unicodeBlocksCount1 = sizeof (unicodeBlocks1) / sizeof (cx_str_unicode_block);
-    
-    g_font [FONT_ID_NEWS_18] = cx_font_create (fontname, 18.0f, unicodeBlocks1, unicodeBlocksCount1);
-  }
-  
-  {
-    //const char *fontname = "data/fonts/CODE2000.TTF";
-    //const char *fontname = "data/fonts/UnDotum.ttf";
     //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
     const char *fontname = "data/fonts/mplus-1c-bold.ttf";
     
-    cx_str_unicode_block unicodeBlocks2 [] =
+    cx_str_unicode_block blocks1 [] =
     {
       //CX_STR_UNICODE_BLOCK_ARABIC,
       CX_STR_UNICODE_BLOCK_CJK_FULL,
       CX_STR_UNICODE_BLOCK_CYRILLIC,
       CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
+      CX_STR_UNICODE_BLOCK_HEBREW,
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
-      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED,
+      CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
+      CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,
+    };
+    
+    cxu32 blocksCount1 = sizeof (blocks1) / sizeof (cx_str_unicode_block);
+    
+    g_font [FONT_ID_NEWS_18] = cx_font_create (fontname, 20.0f, blocks1, blocksCount1, NULL, 0);
+  }
+  
+  {
+    //const char *fontname = "data/fonts/CODE2000.TTF";
+    //const char *fontname = "data/fonts/UnDotum.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-regular.ttf";
+    //const char *fontname = "data/fonts/mplus-1c-bold.ttf";
+    const char *fontname = "data/fonts/mplus-1c-medium.ttf";
+    
+    cx_str_unicode_block blocks2 [] =
+    {
+      //CX_STR_UNICODE_BLOCK_ARABIC,
+      CX_STR_UNICODE_BLOCK_CJK_FULL,
+      CX_STR_UNICODE_BLOCK_CYRILLIC,
+      CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
+      CX_STR_UNICODE_BLOCK_HEBREW,
+      CX_STR_UNICODE_BLOCK_LATIN_BASIC,
+      CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
       CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
       CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS
     };
     
-    cxu32 unicodeBlocksCount2 = sizeof (unicodeBlocks2) / sizeof (cx_str_unicode_block);
+    cxu32 blocksCount2 = sizeof (blocks2) / sizeof (cx_str_unicode_block);
     
-    g_font [FONT_ID_TWITTER_16] = cx_font_create (fontname, 18.0f, unicodeBlocks2, unicodeBlocksCount2);
+    g_font [FONT_ID_TWITTER_16] = cx_font_create (fontname, 18.0f, blocks2, blocksCount2, NULL, 0);
   }
   
   //cx_font_set_scale (g_font [FONT_ID_TWITTER_16], 16.0f / 14.0f, 16.0f / 14.0f);

@@ -62,6 +62,7 @@ static int cmp_codepoints (const void *a, const void *b)
   }
   else// if (va == vb )
   {
+    CX_ERROR ("code point duplicated");
     return 0;
   }
 }
@@ -80,7 +81,7 @@ static bool cx_font_get_unicode_codepoint_range (cx_str_unicode_block block, cxu
   switch (block)
   {
     case CX_STR_UNICODE_BLOCK_LATIN_BASIC:          { *rmin = 32;  *rmax = 127; break; }
-    case CX_STR_UNICODE_BLOCK_LATIN_EXTENDED:       { *rmin = 160; *rmax = 255; break; }
+    case CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT:     { *rmin = 160; *rmax = 255; break; }
     case CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A:     { *rmin = 256; *rmax = 383; break; }
     case CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_B:     { *rmin = 384; *rmax = 591; break; }
     case CX_STR_UNICODE_BLOCK_IPA:                  { *rmin = 592; *rmax = 687; break; }
@@ -101,17 +102,19 @@ static bool cx_font_get_unicode_codepoint_range (cx_str_unicode_block block, cxu
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static cxu32 *cx_font_create_unicode_codepoints (cx_str_unicode_block *unicodeBlocks, cxu32 unicodeBlockCount, cxu32 *codepointsSize)
+static cxu32 *cx_font_create_unicode_codepoints (cx_str_unicode_block *unicodeBlocks, cxu32 unicodeBlockCount,
+                                                 cxu32 *extraUnicodeCodepts, cxu32 extraUnicodeCodeptsCount,
+                                                 cxu32 *codePointsSize)
 {
-  CX_ASSERT (unicodeBlocks);
-  CX_ASSERT (unicodeBlockCount > 0);
+  CX_ASSERT (codePointsSize);
   
-  cxu32 *unicodePts = NULL;
-  
-  cxu32 unicodePtsSize = 0;
+  cxu32 *unicodeCodePoints = NULL;
+  cxu32 unicodeCodePointsSize = 0;
 
   for (cxu32 i = 0; i < unicodeBlockCount; ++i)
   {
+    CX_ASSERT (unicodeBlocks);
+    
     cx_str_unicode_block block = unicodeBlocks [i];
     
     cxu32 rmin;
@@ -123,14 +126,16 @@ static cxu32 *cx_font_create_unicode_codepoints (cx_str_unicode_block *unicodeBl
       
       cxu32 numCodepts = (rmax - rmin) + 1;
       
-      unicodePtsSize += numCodepts;
+      unicodeCodePointsSize += numCodepts;
     }
   }
   
-  if (unicodePtsSize > 0)
+  unicodeCodePointsSize += extraUnicodeCodeptsCount;
+  
+  if (unicodeCodePointsSize > 0)
   {
-    cxu32 unicodePtsCount = 0;
-    unicodePts = cx_malloc (sizeof (cxu32) * unicodePtsSize);
+    cxu32 ucount = 0;
+    unicodeCodePoints = cx_malloc (sizeof (cxu32) * unicodeCodePointsSize);
     
     for (cxu32 j = 0; j < unicodeBlockCount; ++j)
     {
@@ -145,19 +150,25 @@ static cxu32 *cx_font_create_unicode_codepoints (cx_str_unicode_block *unicodeBl
         
         for (cxu32 k = rmin; k <= rmax; ++k)
         {
-          CX_ASSERT (unicodePtsCount < unicodePtsSize);
+          CX_ASSERT (ucount < unicodeCodePointsSize);
           
-          unicodePts [unicodePtsCount++] = k;
+          unicodeCodePoints [ucount++] = k;
         }
       }
     }
     
-    CX_ASSERT (unicodePtsCount == unicodePtsSize);
+    for (cxu32 k = 0; k < extraUnicodeCodeptsCount; ++k)
+    {
+      CX_ASSERT (extraUnicodeCodepts);
+      unicodeCodePoints [ucount++] = extraUnicodeCodepts [k];
+    }
     
-    qsort (unicodePts, unicodePtsSize, sizeof (cxu32), cmp_codepoints);
+    CX_ASSERT (ucount == unicodeCodePointsSize);
+    
+    qsort (unicodeCodePoints, unicodeCodePointsSize, sizeof (cxu32), cmp_codepoints);
   }
-  
-  *codepointsSize = unicodePtsSize;
+
+  *codePointsSize = unicodeCodePointsSize;
   
 #if CX_DEBUG && 0
   for (cxu32 i = 0; i < unicodePtsSize; ++i)
@@ -166,7 +177,7 @@ static cxu32 *cx_font_create_unicode_codepoints (cx_str_unicode_block *unicodeBl
   }
 #endif
   
-  return unicodePts;
+  return unicodeCodePoints;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,8 +202,9 @@ static void cx_font_get_texture_dims (cxu32 unicodePtsSize, cxu32 *width, cxu32 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cx_font * cx_font_create (const char *filename, cxf32 fontsize, cx_str_unicode_block *unicodeBlocks, cxu32 unicodeBlockCount)
-{
+cx_font * cx_font_create (const char *filename, cxf32 fontsize,
+                          cx_str_unicode_block *unicodeBlocks, cxu32 unicodeBlockCount,
+                          cxu32 *extraUnicodeCodepts, cxu32 extraUnicodeCodeptsCount){
   CX_ASSERT (filename);
   
   cx_font *font = NULL;
@@ -203,8 +215,9 @@ cx_font * cx_font_create (const char *filename, cxf32 fontsize, cx_str_unicode_b
   if (cx_file_storage_load_contents (&filedata, &filedataSize, filename, CX_FILE_STORAGE_BASE_RESOURCE))
   {
     cxu32 unicodePtsSize = 0;
-    cxu32 *unicodePts = cx_font_create_unicode_codepoints (unicodeBlocks, unicodeBlockCount, &unicodePtsSize);
-    
+    cxu32 *unicodePts = cx_font_create_unicode_codepoints (unicodeBlocks, unicodeBlockCount,
+                                                           extraUnicodeCodepts, extraUnicodeCodeptsCount,
+                                                           &unicodePtsSize);
     cxu32 textureWidth = 0;
     cxu32 textureHeight = 0;
     cx_font_get_texture_dims (unicodePtsSize, &textureWidth, &textureHeight);

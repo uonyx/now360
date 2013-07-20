@@ -108,15 +108,18 @@ bool ui_input (ui_context_t *ctx, const input_touch_event *tevent)
     case INPUT_TOUCH_TYPE_MOVE:
     {
 #if 1
-      ui_intrinsic_t *hit = ui_ctx_input_hit (ctx, &tevent->point, false);
-      
-      if (hit)
+      if (ctx->hover)
       {
-        if (hit != ctx->focus)
+        ui_intrinsic_t *hit = ui_ctx_input_hit (ctx, &tevent->point, false);
+        
+        if (hit)
         {
-          ctx->hover = hit;
-          
-          handled = true;
+          if (hit != ctx->focus)
+          {
+            ctx->hover = hit;
+            
+            handled = true;
+          }
         }
       }
 #else

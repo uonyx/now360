@@ -658,17 +658,11 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   float y1 = custom->intr.position.y;
 
   ui_widget_state_t wstate = ui_widget_get_state (g_uicontext, custom);
-  //cx_colour colour = *cx_colour_white (); //custom->intr.colour [wstate];
-  //colour.a *= opacity;
-  
-  cx_colour colour;
-  //cx_colour_set (&colour, 1.0f, 0.8f, 0.55f, opacity);
-  cx_colour_set (&colour, 1.0f, 0.83f, 0.0f, opacity); // cyber yellow
-  
-#if UI_CTRLR_DEBUG
+
   float x2 = x1 + custom->intr.dimension.x;
   float y2 = y1 + custom->intr.dimension.y;
   
+#if UI_CTRLR_DEBUG
   cx_colour colours [3];    
   cx_colour_set (&colours [0], 1.0f, 0.0f, 0.0f, 0.45f);
   cx_colour_set (&colours [1], 0.0f, 1.0f, 0.0f, 0.45f);
@@ -676,23 +670,26 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   
   int uid = custom->intr.uid;
   cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colours [uid % 3], NULL);
-#endif
+#else
+  cx_colour colbg;
   
   if (wstate == UI_WIDGET_STATE_HOVER)
   {
-    float x2 = x1 + custom->intr.dimension.x;
-    float y2 = y1 + custom->intr.dimension.y;
-    
-    cx_colour colHlght;
-    //cx_colour_set (&colHlght, 0.2f, 0.2f, 0.2f, 0.6f);
-    cx_colour_set (&colHlght, 0.192f, 0.05f, 0.384f, 0.65f); // opposite of cyber yellow (purple shade)
-    
-    cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colHlght, NULL);
+    cx_colour_set (&colbg, 0.192f, 0.05f, 0.384f, 0.65f); // opposite of cyber yellow (purple shade)
   }
+  else
+  {
+    cx_colour_set (&colbg, 0.0f, 0.0f, 0.0f, 0.15f);
+  }
+  
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colbg, NULL);
+#endif
   
   if (title)
   {
-    cx_font_render (font, title, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &colour);
+    cx_colour col;
+    cx_colour_set (&col, 1.0f, 0.83f, 0.0f, opacity); // cyber yellow
+    cx_font_render (font, title, x1, y1, 0.0f, CX_FONT_ALIGNMENT_DEFAULT, &col);
   }
 }
 
@@ -777,7 +774,7 @@ static void ui_ctrlr_twitter_create (void)
   ui_widget_set_colour (g_uitwitter.toggle, UI_WIDGET_STATE_FOCUS, cx_colour_black ());
   
   cx_colour viewCol;
-  cx_colour_set (&viewCol, 0.2f, 0.2f, 0.2f, 0.4f);
+  cx_colour_set (&viewCol, 0.0f, 0.0f, 0.0f, 0.2f);
   
   g_uitwitter.view = ui_custom_create (g_uicontext, UI_ID_TWITTER_VIEW);
   ui_custom_set_callbacks (g_uitwitter.view, &twViewCallbacks);
@@ -1305,7 +1302,7 @@ static void ui_ctrlr_music_create (void)
   g_uimusic.toggle->userdata = (void *) 0xffff; // using userdata as toggle switch -_-
   
   cx_colour viewCol;
-  cx_colour_set (&viewCol, 0.2f, 0.2f, 0.2f, 0.4f);
+  cx_colour_set (&viewCol, 0.0f, 0.0f, 0.0f, 0.2f);
   
   ui_custom_set_callbacks (g_uimusic.view, &cbview);
   ui_widget_set_colour (g_uimusic.view, UI_WIDGET_STATE_NORMAL, &viewCol);
@@ -1566,7 +1563,7 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
     col = *cx_colour_white ();
     col.a *= opacity;
     
-    const cx_font *font = util_get_font (FONT_ID_DEFAULT_14);
+    const cx_font *font = util_get_font (FONT_ID_MUSIC_16);
     
     cx_font_render (font, trackId, tx, ty, 0.0f, 0, &col);
   }

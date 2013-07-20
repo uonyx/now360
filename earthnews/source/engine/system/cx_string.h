@@ -22,7 +22,7 @@ typedef enum   // http://en.wikipedia.org/wiki/Unicode_block
 {
   CX_STR_UNICODE_BLOCK_INVALID = -1,
   CX_STR_UNICODE_BLOCK_LATIN_BASIC,         // 96  (0-127)         (: english, french, spanish, german, vietnamese)
-  CX_STR_UNICODE_BLOCK_LATIN_EXTENDED,      // 96  (128-255)       (: french, german, spanish, icelandic, vietnamese)
+  CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,    // 96  (128-255)       (: french, german, spanish, icelandic, vietnamese)
   CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,    // 128 (256-383)       (: latin, czech, dutch, polish, turkish)
   CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_B,    // 208 (384-591)       (: africa alphabet, pan-nigerian, americanist, khosian, pinyin, romanian,
   CX_STR_UNICODE_BLOCK_IPA,                 // 96  (592-687)       (: international phonetic alphabet)

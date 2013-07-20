@@ -28,6 +28,7 @@ typedef enum
   FONT_ID_DEFAULT_16,
   FONT_ID_NEWS_18,
   FONT_ID_TWITTER_16,
+  FONT_ID_MUSIC_16,
   NUM_FONT_IDS
 } font_id_t;
 

@@ -1587,7 +1587,7 @@ static void app_render_2d_local_clock (void)
   app_get_clock_str (date, 0, timeStr, 32);
   cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
   
-  const cx_font *font = util_get_font (FONT_ID_DEFAULT_16);
+  const cx_font *font = util_get_font (FONT_ID_MUSIC_16);
   CX_ASSERT (font);
   
   float sw = cx_gdi_get_screen_width ();
@@ -1600,7 +1600,9 @@ static void app_render_2d_local_clock (void)
   float dx = tx - dw - 6.0f;
   float dy = 2.0f;
   
-  cx_font_render (font, dateStr, dx, dy, 0.0f, 0, cx_colour_grey ());
+  cx_colour grey;
+  cx_colour_set (&grey, 0.65f, 0.65f, 0.65f, 1.0f);
+  cx_font_render (font, dateStr, dx, dy, 0.0f, 0, &grey);
   cx_font_render (font, timeStr, tx, ty, 0.0f, 0, cx_colour_white ());
 }
 
@@ -2288,8 +2290,12 @@ void app_on_foreground (void)
       
       if (feedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
       {
-        //feeds_twitter_search (feedTwitter, query);
-        //util_activity_indicator_set_active (true);
+        float lat, lon;
+        earth_data_get_terrestrial_coords (g_selectedCity, &lat, &lon);
+        bool loc = settings_get_local_tweets_only ();
+        
+        feeds_twitter_search (feedTwitter, query, loc, lat, lon);
+        util_activity_indicator_set_active (true);
       }
       
       if (feedNews->reqStatus == FEED_REQ_STATUS_INVALID)

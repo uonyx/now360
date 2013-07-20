@@ -50,7 +50,8 @@ typedef enum cx_font_language
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cx_font * cx_font_create (const char *filename, cxf32 fontsize,
-                          cx_str_unicode_block *unicodeBlocks, cxu32 unicodeBlockCount);
+                          cx_str_unicode_block *unicodeBlocks, cxu32 unicodeBlockCount,
+                          cxu32 *extraUnicodeCodepts, cxu32 extraUnicodeCodeptsCount);
 void      cx_font_destroy (cx_font *font);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
