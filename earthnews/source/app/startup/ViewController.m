@@ -78,7 +78,7 @@
   [self.view addGestureRecognizer:pinchGesture];
   [pinchGesture release];
 
-  [self setPreferredFramesPerSecond:60];
+  [self setPreferredFramesPerSecond:NOW360_TARGET_FRAMERATE];
   
   [EAGLContext setCurrentContext:self.context];
   
@@ -95,15 +95,12 @@
   //[[UIBarButtonItem appearanceWhenContainedIn:[UINavigationBar class], nil] setTintColor:[UIColor colorWithWhite:0.1f alpha:1.0f]];
   
   //[[UINavigationBar appearance] setBarStyle:UIBarStyleBlack];
-  
   //[[UINavigationBar appearance] setTranslucent:YES];
-  
   //[[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
   
   //[[UITableViewCell appearanceWhenContainedIn:[UITableView class], [UIViewController class], [UIPopoverController class], nil] setBackgroundColor:[UIColor colorWithWhite:0.0f alpha:0.4f]];
   
   //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setBackgroundView:nil];
-  
   //[[UITableViewCell appearanceWhenContainedIn:[UIPopoverController class], nil] setAlpha:0.3f];
   
   /*
@@ -114,13 +111,9 @@
   */
   
   //[[UIBarButtonItem appearance] setTintColor:[UIColor blackColor]];
-  
   //[[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
-  
   //[[UINavigationBar appearance] setTintColor:[UIColor redColor]];
-  
   //[[UINavigationBar appearance] setTranslucent:YES];
-  
   //[[UINavigationBar appearance] setAlpha:0.7f];
   
   

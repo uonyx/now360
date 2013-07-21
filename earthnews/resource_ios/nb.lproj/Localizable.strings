@@ -9,3 +9,5 @@
 "TXT_NEWS_CONNECTION_ERROR" = "Nyhetstjeneste tilkobling feil";
 "TXT_TWITTER_CONNECTION_ERROR" = "Twitter tilkobling feil";
 "TXT_WEATHER_CONNECTION_ERROR" = "Værtjeneste tilkobling feil";
+"TXT_MORE_NEWS" = "Flere nyheter";
+"TXT_QUEUE_SONGS" = "Kø sanger for avspilling";

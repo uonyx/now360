@@ -22,6 +22,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define CX_FONT_DEBUG_USE_VBO       (0)
+#define CX_FONT_DEBUG_ENABLE_CHAIN  (0)
 #define CX_FONT_MAX_TEXT_LENGTH     (512)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +39,17 @@ typedef struct cx_font_impl_stb
   cxf32 height;
   cxu32 *unicodePts;
   cxu32  unicodePtsSize;
+  
+#if CX_FONT_DEBUG_ENABLE_CHAIN
   const cx_font *chain;
+#endif
+#if CX_FONT_DEBUG_USE_VBO
+  cx_vec2 pos [2048];
+  cx_vec2 uv [2048];
+  cx_colour col [2048];
+  cxu16 indices [6138];
+  GLuint vbos [4];
+#endif
 } cx_font_impl;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +102,11 @@ static bool cx_font_get_unicode_codepoint_range (cx_str_unicode_block block, cxu
     case CX_STR_UNICODE_BLOCK_CYRILLIC_SUPPLEMENT:  { *rmin = 1280; *rmax = 1327; break; }
     case CX_STR_UNICODE_BLOCK_HEBREW:               { *rmin = 1424; *rmax = 1535; break; }
     case CX_STR_UNICODE_BLOCK_ARABIC:               { *rmin = 1536; *rmax = 1791; break; }
+    case CX_STR_UNICODE_BLOCK_GENERAL_PUNCTUATION:  { *rmin = 8208; *rmax = 8286; break; }
     case CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS:     { *rmin = 8352; *rmax = 8399; break; }
+    case CX_STR_UNICODE_BLOCK_LETTERLIKE_SYMBOLS:   { *rmin = 8448; *rmax = 8527; break; }
+    case CX_STR_UNICODE_BLOCK_HIRAGANA:             { *rmin = 12353; *rmax = 12447; break; }
+    case CX_STR_UNICODE_BLOCK_KATAKANA:             { *rmin = 12448; *rmax = 12543; break; }
     case CX_STR_UNICODE_BLOCK_CJK_FULL:             { *rmin = 19968; *rmax = 40908; break; }
     default:                                        { *rmin = 0; *rmax = 0; success = false; break; }
   }
@@ -191,11 +207,9 @@ static void cx_font_get_texture_dims (cxu32 unicodePtsSize, cxu32 *width, cxu32 
   
   cxu32 size = unicodePtsSize / 2;
   size = cx_util_roundup_pow2 (size);
-  size = cx_clamp (size, 128, 4096);
-  //size = cx_clamp (size, 128, 2048);
   
-  *width = size;
-  *height = size;
+  *width = cx_clamp (size, 128, 2048);
+  *height = cx_clamp (size, 128, 2048);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -223,6 +237,7 @@ cx_font * cx_font_create (const char *filename, cxf32 fontsize,
     cx_font_get_texture_dims (unicodePtsSize, &textureWidth, &textureHeight);
 
     cx_font_impl *fontImpl = (cx_font_impl *) cx_malloc (sizeof (cx_font_impl));
+    memset (fontImpl, 0, sizeof (cx_font_impl));
   
     fontImpl->unicodePts     = unicodePts;
     fontImpl->unicodePtsSize = unicodePtsSize;
@@ -243,7 +258,7 @@ cx_font * cx_font_create (const char *filename, cxf32 fontsize,
                                        fontImpl->unicodePts,
                                        fontImpl->unicodePtsSize,
                                        fontImpl->ttfCharData);
-    //CX_ASSERT (ret != -1);
+    CX_ASSERT (ret != -1);
     CX_REF_UNUSED (ret);
     
     cx_texture_gpu_init (fontImpl->texture, true);
@@ -303,15 +318,20 @@ void cx_font_chain (cx_font *dst, const cx_font *src)
   CX_ASSERT (src);
   CX_ASSERT (dst != src);
   
+#if CX_FONT_DEBUG_ENABLE_CHAIN
   cx_font_impl *fontImpl = (cx_font_impl *) dst->fontdata;
 
   fontImpl->chain = src;
+#else
+  CX_ERROR ("cx_font_chain: not implemented");
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if CX_FONT_DEBUG_USE_VBO
 void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cxf32 z,
                      cx_font_alignment alignment, const cx_colour *colour)
 {
@@ -336,11 +356,233 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   cx_shader_set_float (shader, "u_z", &z, 1);
   
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+  cxf32 sx = fontImpl->scaleX;
+  cxf32 sy = fontImpl->scaleY;
+  cxf32 px = x;
+  cxf32 py = y + (fontImpl->height * sy);
   
-  cx_gdi_assert_no_errors ();
+  if (alignment & CX_FONT_ALIGNMENT_CENTRE_X)
+  {
+    cxf32 tw = cx_font_get_text_width (font, text);
+    px = px - (tw * 0.5f);
+  }
+  else if (alignment & CX_FONT_ALIGNMENT_RIGHT_X)
+  {
+    cxf32 tw = cx_font_get_text_width (font, text);
+    px = px + (tw * 0.5f);
+  }
+  
+  if (alignment & CX_FONT_ALIGNMENT_CENTRE_Y)
+  {
+    cxf32 th = cx_font_get_height (font);
+    py = py - (th * 0.5f);
+  }
+  
+  // gather vertices
+  
+  cxu32 srcSize = strlen (text); // data length
+  const cxu8 *src = (const cxu8 *) text;
+  
+  cxi32 ss = srcSize;
+  cxi32 ds = 0;
+
+  cxu32 vcount = CX_FONT_MAX_TEXT_LENGTH * 4; // 2048
+  
+  if (fontImpl->vbos [0] == 0)
+  {
+    cxu32 numTri = vcount - 2; // 2046
+    cxu32 icount = numTri * 3; // 6138
+    
+    glGenBuffers (4, fontImpl->vbos);
+    
+    glBindBuffer (GL_ARRAY_BUFFER, fontImpl->vbos [0]);
+    glBufferData (GL_ARRAY_BUFFER, vcount * sizeof (cx_vec2), NULL, GL_DYNAMIC_DRAW);
+    cx_gdi_assert_no_errors ();
+    
+    glBindBuffer (GL_ARRAY_BUFFER, fontImpl->vbos [1]);
+    glBufferData (GL_ARRAY_BUFFER, vcount * sizeof (cx_vec2), NULL, GL_DYNAMIC_DRAW);
+    cx_gdi_assert_no_errors ();
+    
+    glBindBuffer (GL_ARRAY_BUFFER, fontImpl->vbos [2]);
+    glBufferData (GL_ARRAY_BUFFER, vcount * sizeof (cx_vec4), NULL, GL_DYNAMIC_DRAW);
+    cx_gdi_assert_no_errors ();
+    
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, fontImpl->vbos [3]);
+    glBufferData (GL_ELEMENT_ARRAY_BUFFER, icount * sizeof (cxu16), NULL, GL_DYNAMIC_DRAW);
+    cx_gdi_assert_no_errors ();
+  }
+  
+#if 0
+  cx_vec2 pos [vcount];
+  cx_vec2 uv [vcount];
+  cx_colour col [vcount];
+  cxu16 indices [icount];
+#endif
+  
+  cxu32 qcount = 0;
+  
+  while (ss > 0)
+  {
+    cxu32 cp = 0;
+    cxu32 offset = cx_str_utf8_decode (&cp, src);
+    cxi32 cIndex = cx_util_bsearch_int (cp, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+    
+    if (cIndex > -1)
+    {
+      stbtt_aligned_quad quad;
+      stbtt_GetBakedQuad (fontImpl->ttfCharData, fontImpl->textureWidth, fontImpl->textureHeight,
+                          cIndex, sx, sy, &px, &py, &quad, 1);
+      
+      cxu32 i = qcount * 4;
+      
+      CX_ASSERT ((i + 3) < (CX_FONT_MAX_TEXT_LENGTH * 4));
+      
+      fontImpl->pos [i + 0].x = quad.x0;
+      fontImpl->pos [i + 0].y = quad.y0;
+      fontImpl->pos [i + 1].x = quad.x0;
+      fontImpl->pos [i + 1].y = quad.y1;
+      fontImpl->pos [i + 2].x = quad.x1;
+      fontImpl->pos [i + 2].y = quad.y0;
+      fontImpl->pos [i + 3].x = quad.x1;
+      fontImpl->pos [i + 3].y = quad.y1;
+      
+      fontImpl->uv [i + 0].x = quad.s0;
+      fontImpl->uv [i + 0].y = quad.t0;
+      fontImpl->uv [i + 1].x = quad.s0;
+      fontImpl->uv [i + 1].y = quad.t1;
+      fontImpl->uv [i + 2].x = quad.s1;
+      fontImpl->uv [i + 2].y = quad.t0;
+      fontImpl->uv [i + 3].x = quad.s1;
+      fontImpl->uv [i + 3].y = quad.t1;
+
+      fontImpl->col [i + 0] = *colour;
+      fontImpl->col [i + 1] = *colour;
+      fontImpl->col [i + 2] = *colour;
+      fontImpl->col [i + 3] = *colour;
+      
+      ++qcount;
+    }
+    
+    src += offset;
+    ss -= offset;
+    
+    ds++;
+  }
+  
+  // render text
+  
+  if (qcount > 0)
+  {
+    cxu32 numTri = (qcount * 4) - 2;
+    cxu32 tri = 0;
+    cxu16 tript = 0;
+    cxu32 ni = 0;
+    
+    const cx_colour *null = cx_colour_null ();
+    
+    bool spacing = false; // space between characters
+    
+    while (tri < numTri)
+    {
+      cxu16 sa0 = tript;      // 0
+      cxu16 sa1 = sa0 + 1;    // 1
+      cxu16 sa2 = sa1 + 1;    // 2
+      
+      cxu16 sa3 = sa2;        // 2
+      cxu16 sa4 = sa1;        // 1
+      cxu16 sa5 = sa3 + 1;    // 3
+
+#if 0
+      fontImpl->col [sa0] = spacing ? *null : *colour;
+      fontImpl->col [sa1] = spacing ? *null : *colour;
+      fontImpl->col [sa2] = spacing ? *null : *colour;
+      fontImpl->col [sa3] = spacing ? *null : *colour;
+      fontImpl->col [sa4] = spacing ? *null : *colour;
+      fontImpl->col [sa5] = spacing ? *null : *colour;
+#endif
+      if (0) //(1 || spacing)
+      {
+        fontImpl->col [sa0] = *null;
+        fontImpl->col [sa1] = *null;
+        fontImpl->col [sa2] = *null;
+        fontImpl->col [sa3] = *null;
+        fontImpl->col [sa4] = *null;
+        fontImpl->col [sa5] = *null;
+      }
+      
+      fontImpl->indices [ni++] = sa0;
+      fontImpl->indices [ni++] = sa1;
+      fontImpl->indices [ni++] = sa2;
+      fontImpl->indices [ni++] = sa3;
+      fontImpl->indices [ni++] = sa4;
+      fontImpl->indices [ni++] = sa5;
+      
+      tript = sa3;
+      
+      tri += 2;
+      
+      spacing = !spacing;
+    }
+    
+    glBindBuffer (GL_ARRAY_BUFFER, fontImpl->vbos [0]);
+    glBufferSubData (GL_ARRAY_BUFFER, 0, qcount * 4 * sizeof (cx_vec2), fontImpl->pos);
+    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
+    glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_POSITION]);
+    
+    glBindBuffer (GL_ARRAY_BUFFER, fontImpl->vbos [1]);
+    glBufferSubData (GL_ARRAY_BUFFER, 0, qcount * 4 * sizeof (cx_vec2), fontImpl->uv);
+    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
+    glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_TEXCOORD]);
+    
+    glBindBuffer (GL_ARRAY_BUFFER, fontImpl->vbos [2]);
+    glBufferSubData (GL_ARRAY_BUFFER, 0, qcount * 4 * sizeof (cx_vec4), fontImpl->col);
+    glVertexAttribPointer (shader->attributes[CX_SHADER_ATTRIBUTE_COLOUR], 4, GL_FLOAT, GL_FALSE, 0, (const void *) 0);
+    glEnableVertexAttribArray (shader->attributes[CX_SHADER_ATTRIBUTE_COLOUR]);
+    
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, fontImpl->vbos [3]);
+    glBufferSubData (GL_ELEMENT_ARRAY_BUFFER, 0, ni * sizeof (cxu16), fontImpl->indices);
+    glDrawElements (GL_TRIANGLE_STRIP, ni, GL_UNSIGNED_SHORT, (const void *) 0);
+    
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+    
+    glBindBuffer (GL_ARRAY_BUFFER, 0);
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
+  }
+  
+  cx_shader_end (shader);
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if !CX_FONT_DEBUG_USE_VBO
+void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cxf32 z,
+                     cx_font_alignment alignment, const cx_colour *colour)
+{
+  CX_ASSERT (font);
+  CX_ASSERT (font->fontdata);
+  CX_ASSERT (text);
+  CX_ASSERT (colour);
+  
+  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
+  cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
+  
+  // use shader
+  cx_shader_begin (shader);
+  
+  // set texture
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, fontImpl->texture);
+  
+  // set mvp
+  cx_mat4x4 mvp;
+  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
+  
+  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
+  cx_shader_set_float (shader, "u_z", &z, 1);
   
   cxf32 sx = fontImpl->scaleX;
   cxf32 sy = fontImpl->scaleY;
@@ -372,16 +614,18 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   cxi32 ss = srcSize;
   cxi32 ds = 0;
   
-  cx_vec2 pos [srcSize * 4]; // unicode decoded strlen <= srcSize
-  cx_vec2 uv [srcSize * 4];
+  cxu32 vcount = srcSize * 4;
   
-  cxu32 vcount = 0;
+  cx_vec2 pos [vcount]; // unicode decoded strlen <= srcSize
+  cx_vec2 uv [vcount];
+  
+  cxu32 qcount = 0;
   
   while (ss > 0)
   {
-    cxu32 ch = 0;
-    cxu32 offset = cx_str_utf8_decode (&ch, src);
-    cxi32 cIndex = cx_util_bsearch_int (ch, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+    cxu32 cp = 0;
+    cxu32 offset = cx_str_utf8_decode (&cp, src);
+    cxi32 cIndex = cx_util_bsearch_int (cp, fontImpl->unicodePts, fontImpl->unicodePtsSize);
     
     if (cIndex > -1)
     {
@@ -389,7 +633,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
       stbtt_GetBakedQuad (fontImpl->ttfCharData, fontImpl->textureWidth, fontImpl->textureHeight,
                           cIndex, sx, sy, &px, &py, &quad, 1);
       
-      cxu32 i = vcount * 4;
+      cxu32 i = qcount * 4;
       
       CX_ASSERT ((i + 3) < (srcSize * 4));
       
@@ -411,7 +655,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
       uv [i + 3].x = quad.s1;
       uv [i + 3].y = quad.t1;
       
-      ++vcount;
+      ++qcount;
     }
     
     src += offset;
@@ -422,12 +666,11 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   // render text
   
-  if (vcount > 0)
+  if (qcount > 0)
   {
     // batch triangestrip points
     //(012) (213) (234) (435) ... total number of trianges == points - 2 == (len * 4) - 2
-    
-    cxu32 numTri = (vcount * 4) - 2;
+    cxu32 numTri = (qcount * 4) - 2;
     cxu32 numPoints = numTri * 3;
     
     cx_vec2 pos2 [numPoints];
@@ -482,6 +725,11 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
       
       spacing = !spacing;
     }
+
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+    cx_gdi_assert_no_errors ();
     
     glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos2);
     glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv2);
@@ -498,6 +746,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   
   cx_shader_end (shader);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -531,12 +780,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   
   cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
   cx_shader_set_float (shader, "u_z", &z, 1);
-  
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-  glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
-  cx_gdi_assert_no_errors ();
-  
+    
   cxf32 sx = fontImpl->scaleX;
   cxf32 sy = fontImpl->scaleY;
   cxf32 px = x;
@@ -706,6 +950,11 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
       
       spacing = !spacing;
     }
+    
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+    cx_gdi_assert_no_errors ();
     
     glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos2);
     glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv2);

@@ -9,3 +9,5 @@
 "TXT_NEWS_CONNECTION_ERROR" = "News-service verbinding fout";
 "TXT_TWITTER_CONNECTION_ERROR" = "Twitter verbindingsfout";
 "TXT_WEATHER_CONNECTION_ERROR" = "Weerdienst verbinding fout";
+"TXT_MORE_NEWS" = "Meer nieuws";
+"TXT_QUEUE_SONGS" = "Wachtrij nummers voor weergave";

@@ -31,8 +31,13 @@ typedef enum   // http://en.wikipedia.org/wiki/Unicode_block
   CX_STR_UNICODE_BLOCK_CYRILLIC_SUPPLEMENT, // 48  (1280-1327)     (: abkhaz, komi, mordvin, aleut,
   CX_STR_UNICODE_BLOCK_HEBREW,              // 112 (1424-1535)
   CX_STR_UNICODE_BLOCK_ARABIC,              // 256 (1536-1791)
+  CX_STR_UNICODE_BLOCK_GENERAL_PUNCTUATION, // 78  (8208-8286
   CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,    // 48  (8352-8399)
+  CX_STR_UNICODE_BLOCK_LETTERLIKE_SYMBOLS,  // 80  (8448-8527)
+  CX_STR_UNICODE_BLOCK_HIRAGANA,            // 93  (12353-12447)
+  CX_STR_UNICODE_BLOCK_KATAKANA,            // 96  (12448-12543)
   CX_STR_UNICODE_BLOCK_CJK_FULL,            // 20940 (19968-40908)
+
 } cx_str_unicode_block;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

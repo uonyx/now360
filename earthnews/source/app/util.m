@@ -459,7 +459,6 @@ device_type_t util_get_device_type (void)
     deviceType = DEVICE_TYPE_UNKNOWN;
   }
   
-  
   return deviceType;
 }
 
@@ -470,6 +469,23 @@ device_type_t util_get_device_type (void)
 void util_profanity_filter (const char *text)
 {
   cx_util_word_filter (text, (const char **) g_profanityWords, g_profanityWordCount, '*');
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int util_get_translation (char *dest, int destSize, const char *tag)
+{
+  CX_ASSERT (tag);
+  
+  NSString *nstag = [NSString stringWithCString:tag encoding:NSUTF8StringEncoding];
+  NSString *nstext = NSLocalizedString (nstag, nil);
+  const char *text = [nstext cStringUsingEncoding:NSUTF8StringEncoding];
+  
+  int len = cx_sprintf (dest, destSize, "%s", text);
+  
+  return len;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -545,13 +561,17 @@ static void util_deinit_screen_fade (void)
 
 static void util_init_create_fonts (void)
 {
+  // support CJK code points for mplus-1c-bold
+  cxu32 cjkCodePtStart = 19968;
+  cxu32 cjkCodePtEnd = 26230;
+  cxu32 cjkCodePtsCount = (cjkCodePtEnd - cjkCodePtStart) + 1;
+  cxu32 cjkCodePts [cjkCodePtsCount];
+  for (cxu32 i = cjkCodePtStart, c = 0; c < cjkCodePtsCount; ++i, ++c)
   {
-    // earth text and music 
-    //const char *fontname = "data/fonts/tahoma.ttf";
-    //const char *fontname = "data/fonts/UnDotum.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-light.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-regular.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
+    cjkCodePts [c] = i;
+  }
+  
+  {
     const char *fontname = "data/fonts/mplus-1c-bold.ttf";
     
     cx_str_unicode_block blocks [] =
@@ -561,84 +581,89 @@ static void util_init_create_fonts (void)
     
     cxu32 codePts [] =
     {
-      0xb0, // degree symbol
+      0x2103, // degree celsius
+      0x2109, // degree farenheit,
     };
     
     cxu32 codePtsCount = sizeof (codePts) / sizeof (cxu32);
-    
     cxu32 blocksCount = sizeof (blocks) / sizeof (cx_str_unicode_block);
     
     g_font [FONT_ID_DEFAULT_12] = cx_font_create (fontname, 14.0f, blocks, blocksCount, codePts, codePtsCount);
     g_font [FONT_ID_DEFAULT_14] = cx_font_create (fontname, 15.0f, blocks, blocksCount, codePts, codePtsCount);
-    g_font [FONT_ID_DEFAULT_16] = cx_font_create (fontname, 16.0f, blocks, blocksCount, NULL, 0);
   }
   
   {
-    //const char *fontname = "data/fonts/UnDotum.ttf";
+    // use for audio track display and clock
     const char *fontname = "data/fonts/mplus-1c-bold.ttf";
   
     cx_str_unicode_block blocks0 [] =
     {
+      //CX_STR_UNICODE_BLOCK_CJK_FULL,
+      CX_STR_UNICODE_BLOCK_CYRILLIC,
+      CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
       CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
-      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
+      CX_STR_UNICODE_BLOCK_KATAKANA,
+      CX_STR_UNICODE_BLOCK_HIRAGANA,
     };
     
     cxu32 blocksCount0 = sizeof (blocks0) / sizeof (cx_str_unicode_block);
     
-    g_font [FONT_ID_MUSIC_16] = cx_font_create (fontname, 16.0f, blocks0, blocksCount0, NULL, 0);
+    g_font [FONT_ID_DEFAULT_16] = cx_font_create (fontname, 16.0f, blocks0, blocksCount0, cjkCodePts, cjkCodePtsCount);
   }
-  
+
   {
-    //const char *fontname = "data/fonts/UnDotumBold.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-regular.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-medium.ttf";
-    const char *fontname = "data/fonts/mplus-1c-bold.ttf";
+    // news font: suppport for english-only news
+    const char *fontname = "data/fonts/mplus-1c-bold.ttf"; // no arabic support
     
     cx_str_unicode_block blocks1 [] =
     {
-      //CX_STR_UNICODE_BLOCK_ARABIC,
-      CX_STR_UNICODE_BLOCK_CJK_FULL,
-      CX_STR_UNICODE_BLOCK_CYRILLIC,
-      CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
-      CX_STR_UNICODE_BLOCK_HEBREW,
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
       CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
-      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
       CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,
+      CX_STR_UNICODE_BLOCK_GENERAL_PUNCTUATION,
     };
     
+    cxu32 codePts1 [] =
+    {
+      0x2103, // degree celsius
+      0x2109, // degree farenheit,
+      0x2122, // TM
+      0x2126, // omega
+    };
+    
+    cxu32 codePtsCount1 = sizeof (codePts1) / sizeof (cxu32);
     cxu32 blocksCount1 = sizeof (blocks1) / sizeof (cx_str_unicode_block);
     
-    g_font [FONT_ID_NEWS_18] = cx_font_create (fontname, 20.0f, blocks1, blocksCount1, NULL, 0);
+    g_font [FONT_ID_NEWS_18] = cx_font_create (fontname, 20.0f, blocks1, blocksCount1, codePts1, codePtsCount1);
   }
   
   {
-    //const char *fontname = "data/fonts/CODE2000.TTF";
-    //const char *fontname = "data/fonts/UnDotum.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-regular.ttf";
-    //const char *fontname = "data/fonts/mplus-1c-bold.ttf";
-    const char *fontname = "data/fonts/mplus-1c-medium.ttf";
+    // twitter: support for as many languages as is possible
+    const char *fontname = "data/fonts/mplus-1c-medium.ttf"; // no arabic support
     
     cx_str_unicode_block blocks2 [] =
     {
-      //CX_STR_UNICODE_BLOCK_ARABIC,
-      CX_STR_UNICODE_BLOCK_CJK_FULL,
+      //CX_STR_UNICODE_BLOCK_CJK_FULL,
       CX_STR_UNICODE_BLOCK_CYRILLIC,
       CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
       CX_STR_UNICODE_BLOCK_HEBREW,
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
       CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
       CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
-      CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS
+      CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_B,
+      CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,
+      CX_STR_UNICODE_BLOCK_GENERAL_PUNCTUATION,
+      CX_STR_UNICODE_BLOCK_KATAKANA,
+      CX_STR_UNICODE_BLOCK_HIRAGANA,
+      CX_STR_UNICODE_BLOCK_LETTERLIKE_SYMBOLS,
     };
     
     cxu32 blocksCount2 = sizeof (blocks2) / sizeof (cx_str_unicode_block);
     
-    g_font [FONT_ID_TWITTER_16] = cx_font_create (fontname, 18.0f, blocks2, blocksCount2, NULL, 0);
+    g_font [FONT_ID_TWITTER_16] = cx_font_create (fontname, 18.0f, blocks2, blocksCount2, cjkCodePts, cjkCodePtsCount);
   }
-  
-  //cx_font_set_scale (g_font [FONT_ID_TWITTER_16], 16.0f / 14.0f, 16.0f / 14.0f);
   
 #if CX_DEBUG
   for (int i = FONT_ID_INVALID + 1; i < NUM_FONT_IDS; ++i)

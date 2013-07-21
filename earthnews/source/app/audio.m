@@ -374,8 +374,7 @@ static void audio_music_init (void)
   [g_musicPicker setAllowsPickingMultipleItems:YES];
   [g_musicPicker setTitle:@""];
   [g_musicPicker setModalInPopover:YES];
-  
-  //[g_musicPicker setPrompt:@"Queue songs for playback"];
+  [g_musicPicker setPrompt:NSLocalizedString (@"TXT_QUEUE_SONGS", nil)];
   
   if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO (@"6.0"))
   {
@@ -467,7 +466,6 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
   
   if (g_currentCollection)
   {
-    MPMusicPlaybackState playbackState = [g_musicPlayer playbackState];
     NSTimeInterval currentPlaybackTime = [g_musicPlayer currentPlaybackTime];
     MPMediaItem *nowPlayingItem = [g_musicPlayer nowPlayingItem];
     
@@ -483,20 +481,15 @@ static bool audio_music_update_queue (MPMediaItemCollection *collection)
     [g_musicPlayer setNowPlayingItem:nowPlayingItem];
     
     [currentItems release];
-    
-    if (playbackState == MPMusicPlaybackStatePlaying)
-    {
-      audio_music_play ();
-    }
   }
   else
   {
     g_currentCollection = collection;
     
     [g_musicPlayer setQueueWithItemCollection:g_currentCollection];
-    
-    audio_music_play ();
   }
+  
+  audio_music_play ();
   
   return true;
 }

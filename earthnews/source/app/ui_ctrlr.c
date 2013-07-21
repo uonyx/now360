@@ -18,7 +18,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define UI_CTRLR_DEBUG 0
+#define UI_CTRLR_DEBUG                (0)
+#define UI_CTRLR_DEBUG_NEWS_LOCALISED (0)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -622,7 +623,14 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
     ui_widget_set_dimension (custom, fw, fh);
   }
   
-  const char *morenews = "More news...";
+#if UI_CTRLR_DEBUG_NEWS_LOCALISED
+  char morenews [128];
+  util_get_translation (morenews, 128, "TXT_MORE_NEWS");
+  cx_strcat (morenews, 128, " ...");
+#else
+  const char *morenews = "More news ...";
+#endif
+  
   ui_custom_t *custom = buttons [c];
   
   custom->userdata = feed->link;
@@ -637,12 +645,20 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
 static void ui_ctrlr_news_button_render (ui_custom_t *custom)
 {
   const char *title = NULL;
+
+#if UI_CTRLR_DEBUG_NEWS_LOCALISED
+  char morenews [128];
+  util_get_translation (morenews, 128, "TXT_MORE_NEWS");
+  cx_strcat (morenews, 128, " ...");
+#else
+  const char *morenews = "More news ...";
+#endif
   
   ui_custom_t *moreNewsButton = g_uinews.buttons [NEWS_MAX_ENTRIES - 1];
-  
+
   if (moreNewsButton == custom)
   {
-    title = custom->userdata ? "More news..." : NULL;
+    title = custom->userdata ? morenews : NULL;
   }
   else
   {
@@ -702,12 +718,19 @@ static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *po
   CX_ASSERT (custom);
   
   const char *link = NULL, *title = NULL;
+    
+#if UI_CTRLR_DEBUG_NEWS_LOCALISED
+  char morenews [128];
+  util_get_translation (morenews, 128, "TXT_MORE_NEWS");
+#else
+  const char *morenews = "More news";
+#endif
   
   ui_custom_t *moreNewsButton = g_uinews.buttons [NEWS_MAX_ENTRIES - 1];
   
   if (moreNewsButton == custom)
   {
-    title = "More news";
+    title = morenews;
     link = (const char *) custom->userdata;
   }
   else
@@ -1246,7 +1269,7 @@ static void ui_ctrlr_music_create (void)
 {
   memset (&g_uimusic, 0, sizeof (g_uimusic));
     
-  g_uimusic.iconNote = cx_texture_create_from_file ("data/images/ui/mnote-16z.pvr", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  g_uimusic.iconNote = cx_texture_create_from_file ("data/images/ui/mnote-16z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   g_uimusic.iconPlay = cx_texture_create_from_file ("data/images/ui/play-12z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   g_uimusic.iconPause = cx_texture_create_from_file ("data/images/ui/pause-12z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   g_uimusic.iconPrev = cx_texture_create_from_file ("data/images/ui/prev-12z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
@@ -1562,10 +1585,18 @@ static void ui_ctrlr_music_view_render (ui_custom_t *custom)
     
     col = *cx_colour_white ();
     col.a *= opacity;
-    
-    const cx_font *font = util_get_font (FONT_ID_MUSIC_16);
-    
+
+#if 1
+    const cx_font *font = util_get_font (FONT_ID_DEFAULT_16);
+    CX_ASSERT (font);
     cx_font_render (font, trackId, tx, ty, 0.0f, 0, &col);
+#else
+    const cx_font *font = util_get_font (FONT_ID_NEWS_18);
+    CX_ASSERT (font);
+    cx_font_set_scale (font, 15.0f/18.0f, 15.0f/18.0f);
+    cx_font_render (font, trackId, tx, ty, 0.0f, 0, &col);
+    cx_font_set_scale (font, 1.0f, 1.0f);
+#endif
   }
 }
 

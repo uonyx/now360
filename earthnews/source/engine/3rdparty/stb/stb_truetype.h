@@ -1857,14 +1857,38 @@ void stbtt_GetBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int char_inde
    float d3d_bias = opengl_fillrule ? 0 : -0.5f;
    float ipw = 1.0f / pw, iph = 1.0f / ph;
    stbtt_bakedchar *b = chardata + char_index;
+  
+#if 1
+  float xoff = ((float)b->xoff) * sx;
+  float yoff = ((float)b->yoff) * sy;
+  
+  xoff = (float) cx_util_roundup_int (xoff);
+  yoff = (float) cx_util_roundup_int (yoff);
+  
+  int round_x = cx_util_roundup_int((*xpos + xoff) + 0.5);
+  int round_y = cx_util_roundup_int((*ypos + yoff) + 0.5);
+#else
    int round_x = STBTT_ifloor((*xpos + (b->xoff * sx)) + 0.5);
    int round_y = STBTT_ifloor((*ypos + (b->yoff * sy)) + 0.5);
+#endif
 
+#if 1
+  float w = ((float)(b->x1 - b->x0)) * sx;
+  float h = ((float)(b->y1 - b->y0)) * sy;
+  
+  w = (float) cx_util_roundup_int (w);
+  h = (float) cx_util_roundup_int (h);
+  
+  q->x0 = round_x + d3d_bias;
+  q->y0 = round_y + d3d_bias;
+  q->x1 = round_x + w + d3d_bias;
+  q->y1 = round_y + h + d3d_bias;
+#else
    q->x0 = round_x + d3d_bias;
    q->y0 = round_y + d3d_bias;
    q->x1 = round_x + ((b->x1 - b->x0) * sx) + d3d_bias;
    q->y1 = round_y + ((b->y1 - b->y0) * sy) + d3d_bias;
-
+#endif
    q->s0 = b->x0 * ipw;
    q->t0 = b->y0 * iph;
    q->s1 = b->x1 * ipw;

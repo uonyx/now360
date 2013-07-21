@@ -25,6 +25,7 @@
 
 static void cx_mesh_gpu_init (cx_mesh *mesh, const cx_shader *shader);
 static void cx_mesh_gpu_deinit (cx_mesh *mesh);
+static void cx_mesh_vertex_data_destroy (cx_mesh *mesh);
 static void cx_mesh_get_attributes (cx_vertex_format format, bool attr [static CX_NUM_SHADER_ATTRIBUTES]);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,6 +49,7 @@ cx_mesh *cx_mesh_create (cx_vertex_data *vertexData, cx_shader *shader, cx_mater
   
 #if !ENABLE_VAO
   cx_mesh_gpu_init (mesh, shader);
+  cx_mesh_vertex_data_destroy (mesh);
 #endif
   
   return mesh;
@@ -262,6 +264,56 @@ static void cx_mesh_gpu_deinit (cx_mesh *mesh)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void cx_mesh_vertex_data_destroy (cx_mesh *mesh)
+{
+#if CX_VERTEX_DATA_AOS
+  if (mesh->vertexData->vertices)
+  {
+    cx_free (mesh->vertexData->vertices);
+    mesh->vertexData->vertices = NULL;
+  }
+#else
+  if (mesh->vertexData->positions)
+  {
+    cx_free (mesh->vertexData->positions);
+    mesh->vertexData->positions = NULL;
+  }
+  
+  if (mesh->vertexData->texCoords)
+  {
+    cx_free (mesh->vertexData->texCoords);
+    mesh->vertexData->texCoords = NULL;
+  }
+  
+  if (mesh->vertexData->normals)
+  {
+    cx_free (mesh->vertexData->normals);
+    mesh->vertexData->normals = NULL;
+  }
+  
+  if (mesh->vertexData->tangents)
+  {
+    cx_free (mesh->vertexData->tangents);
+    mesh->vertexData->tangents = NULL;
+  }
+  
+  if (mesh->vertexData->bitangents)
+  {
+    cx_free (mesh->vertexData->bitangents);
+    mesh->vertexData->bitangents = NULL;
+  }
+#endif
+  if (mesh->vertexData->indices)
+  {
+    cx_free (mesh->vertexData->indices);
+    mesh->vertexData->indices = NULL;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void cx_mesh_render (cx_mesh *mesh)
 {
   CX_ASSERT (mesh);
@@ -272,6 +324,7 @@ void cx_mesh_render (cx_mesh *mesh)
   {
     // opengl vaos can't be shared across contexts
     cx_mesh_gpu_init (mesh, mesh->shader);
+    cx_mesh_vertex_data_destroy (mesh);
   }
 #endif
   

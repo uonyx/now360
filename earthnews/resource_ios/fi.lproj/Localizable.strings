@@ -9,3 +9,5 @@
 "TXT_NEWS_CONNECTION_ERROR" = "Uutispalvelu yhteys virhe";
 "TXT_TWITTER_CONNECTION_ERROR" = "Twitter-yhteyden virhe";
 "TXT_WEATHER_CONNECTION_ERROR" = "Sääpalvelu yhteys virhe";
+"TXT_MORE_NEWS" = "Lisää uutisia";
+"TXT_QUEUE_SONGS" = "Jono kappaleita toistoa varten";

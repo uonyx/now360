@@ -302,6 +302,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   {
     case DEVICE_TYPE_UNKNOWN:
     case DEVICE_TYPE_IPAD3:
+    case DEVICE_TYPE_IPAD2:
     {
       slicesAtmos = 128;
       slicesCloud = 48;
@@ -314,7 +315,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
       break;
     }
-  
+#if 0
     case DEVICE_TYPE_IPAD2:
     {
 #if DEBUG_PERFORMANCE_TEST_HI
@@ -351,7 +352,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
 #endif
       break;
     }
-      
+#endif
     case DEVICE_TYPE_IPAD1:
     default:
     {
@@ -380,20 +381,11 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
 #if NEW_EARTH_SHADER
   
-#if 0
-  cx_texture *specTexture   = cx_texture_create_from_file (specTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_texture *cloudTexture  = cx_texture_create_from_file (cloudTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_texture *bumpTexture   = cx_texture_create_from_file (bumpTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_texture *nightTexture  = cx_texture_create_from_file (nightTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-  cx_texture *diffTexture   = cx_texture_create_from_file (diffTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-#else // hi
   cx_texture *diffTexture   = cx_texture_create_from_file (diffTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *specTexture   = cx_texture_create_from_file (specTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-  
   cx_texture *cloudTexture  = cx_texture_create_from_file (cloudTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *nightTexture  = cx_texture_create_from_file (nightTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *bumpTexture   = cx_texture_create_from_file (bumpTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
-#endif
   
   CX_ASSERT (specTexture);
   CX_ASSERT (bumpTexture);
@@ -410,7 +402,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   
   visual->nightMap = nightTexture;
   
-  CX_REF_UNUSED (cloudTexture);
+  
   
 #else
   cx_shader *shader     = cx_shader_create ("mesh", "data/shaders");
@@ -432,7 +424,6 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
 #if NEW_EARTH_SHADER && ENABLE_CLOUDS
 
   float radius1 = radius + 0.008f;
-  
 #if BUMP_MAPPED_CLOUDS
   cx_shader *shader1     = cx_shader_create ("clouds-bump", "data/shaders");
   cx_material *material1 = cx_material_create ("clouds-bump");
@@ -451,6 +442,8 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
 #endif
   
   visual->mesh [1] = cx_mesh_create (sphere1, shader1, material1);
+#else
+  CX_REF_UNUSED (cloudTexture);
 #endif
   
   //////////////////////////////////////////////////////////////////////////////////////////

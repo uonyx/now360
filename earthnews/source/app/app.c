@@ -94,6 +94,9 @@ static cx_vec2  g_rotationSpeed;
 static cx_vec2  g_rotationAngle;
 #endif
 
+static bool               g_isRetina = false;
+static cxi64              g_timeInBg = 0;
+
 static feed_twitter_t    *g_feedsTwitter = NULL;
 static feed_news_t       *g_feedsNews = NULL;
 static feed_weather_t    *g_feedsWeather = NULL;
@@ -101,6 +104,7 @@ static feed_weather_t    *g_feedsWeather = NULL;
 static int                g_selectedCity = CITY_INDEX_INVALID;
 static int                g_weatherUpdateCity = CITY_INDEX_INVALID;
 static bool               g_weatherRefresh = false;
+static cxi64              g_weatherUpdateTime = 0;
 
 static app_state_t        g_appState = APP_STATE_INVALID;
 static app_load_stage_t   g_loadStage = APP_LOAD_STAGE_1_BEGIN;
@@ -160,7 +164,6 @@ static void app_update_feeds (void);
 static void app_update_feeds_news (void);
 static void app_update_feeds_twitter (void);
 static void app_update_feeds_weather (void);
-static void app_update_feeds_weather_refresh (void);
 
 static void app_render_3d (void);
 static void app_render_3d_earth (void);
@@ -190,7 +193,7 @@ static cx_thread_exit_status app_init_load (void *userdata)
   
   cx_time_set_date (&g_dateUTC, CX_TIME_ZONE_UTC);
   cx_time_set_date (&g_dateLocal, CX_TIME_ZONE_LOCAL);
-  
+
   //
   // util
   //
@@ -250,8 +253,6 @@ static cx_thread_exit_status app_init_load (void *userdata)
   memset (&g_rotationSpeed, 0, sizeof (g_rotationSpeed));
   memset (&g_rotationAngle, 0, sizeof (g_rotationAngle));
 #endif
-  
-  app_update_feeds_weather_refresh ();
   
   cx_gdi_shared_context_destroy ();
   
@@ -347,6 +348,9 @@ void app_init (void *rootvc, void *gctx, int width, int height)
   // loading thread
   //
   
+  device_type_t devType = util_get_device_type ();
+  
+  g_isRetina = devType > DEVICE_TYPE_IPAD2;
   g_ldThreadInProgress = true;
   
   g_ldThread = cx_thread_create ("init_load", CX_THREAD_TYPE_JOINABLE, app_init_load, NULL);
@@ -1179,11 +1183,25 @@ static void app_update_feeds_weather (void)
   {    
     g_weatherRefresh = false;
     
-    // if not already updating
-    if (!earth_data_validate_index (g_weatherUpdateCity))
+    if (!earth_data_validate_index (g_weatherUpdateCity)) // is not updating (dogdy eh?)
     {
       g_weatherUpdateCity = 0;
+      g_weatherUpdateTime = cx_time_get_utc_epoch ();
       util_activity_indicator_set_active (true);
+    }
+  }
+  else
+  {
+    if (!earth_data_validate_index (g_weatherUpdateCity)) // is not updating
+    {
+      cxi64 currentTime = cx_time_get_utc_epoch ();
+      cxi64 timeElapsed = currentTime - g_weatherUpdateTime;
+      cxi64 timeRefreshSeconds = 60 * 15;
+      
+      if (timeElapsed > timeRefreshSeconds)
+      {
+        g_weatherRefresh = true;
+      }
     }
   }
   
@@ -1264,15 +1282,6 @@ static void app_update_feeds_weather (void)
     }
   }
 #endif
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void app_update_feeds_weather_refresh (void)
-{
-  g_weatherRefresh = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1392,7 +1401,7 @@ static void app_render_3d_earth (void)
 
   if (hackReadyDraw)
   {
-    cx_draw_points (displayCount, loc, col, g_glowTex, 2.0f);
+    cx_draw_points (displayCount, loc, col, g_glowTex, g_isRetina ? 3.0f : 2.0f);
   }
   else
   {
@@ -1587,8 +1596,30 @@ static void app_render_2d_local_clock (void)
   app_get_clock_str (date, 0, timeStr, 32);
   cx_sprintf (dateStr, 32, "%s %d %s", wdayStr [wday], mday, monStr [mon]);
   
-  const cx_font *font = util_get_font (FONT_ID_MUSIC_16);
+#if 1
+  const cx_font *font = util_get_font (FONT_ID_DEFAULT_16);
   CX_ASSERT (font);
+  
+  float sw = cx_gdi_get_screen_width ();
+  float tw = cx_font_get_text_width (font, timeStr);
+  float dw = cx_font_get_text_width (font, dateStr);
+  
+  float tx = sw - tw - 12.0f;
+  float ty = 2.0f;
+  
+  float dx = tx - dw - 6.0f;
+  float dy = 2.0f;
+  
+  cx_colour grey;
+  cx_colour_set (&grey, 0.65f, 0.65f, 0.65f, 1.0f);
+  cx_font_render (font, dateStr, dx, dy, 0.0f, 0, &grey);
+  cx_font_render (font, timeStr, tx, ty, 0.0f, 0, cx_colour_white ());
+
+#else
+  const cx_font *font = util_get_font (FONT_ID_NEWS_18);
+  CX_ASSERT (font);
+  
+  cx_font_set_scale (font, 15.0f/18.0f, 15.0f/18.0f);
   
   float sw = cx_gdi_get_screen_width ();
   float tw = cx_font_get_text_width (font, timeStr);
@@ -1604,6 +1635,9 @@ static void app_render_2d_local_clock (void)
   cx_colour_set (&grey, 0.65f, 0.65f, 0.65f, 1.0f);
   cx_font_render (font, dateStr, dx, dy, 0.0f, 0, &grey);
   cx_font_render (font, timeStr, tx, ty, 0.0f, 0, cx_colour_white ());
+  
+  cx_font_set_scale (font, 1.0f, 1.0f);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1698,9 +1732,9 @@ static void app_render_2d_earth (void)
   int unitType = settings_get_temperature_unit ();
   char tempUnit [4];
   
-  tempUnit [0] = 194;
-  tempUnit [1] = 176;
-  tempUnit [2] = (unitType == SETTINGS_TEMPERATURE_UNIT_C) ? 'C' : 'F';
+  tempUnit [0] = 226; // 0xe2
+  tempUnit [1] = 132; // 0x84
+  tempUnit [2] = (unitType == SETTINGS_TEMPERATURE_UNIT_C) ? 131 : 137; // 0x83 : 0x89
   tempUnit [3] = 0;
   
   const cx_date *date = &g_dateUTC;
@@ -2255,6 +2289,8 @@ void app_on_background (void)
     util_activity_indicator_set_active (false); // necessary?
   
     metrics_event_log (METRICS_EVENT_APP_BG, NULL);
+    
+    g_timeInBg = cx_time_get_utc_epoch ();
   }
 }
 
@@ -2275,37 +2311,45 @@ void app_on_foreground (void)
     
     metrics_event_log (METRICS_EVENT_APP_FG, NULL);
     
-    // update clocks
-    g_dateUpdateTimer = 0.0f;
     
-    // trigger weather update
-    g_weatherRefresh = true;
+    cxi64 currentTime = cx_time_get_utc_epoch ();
+    cxi64 timeElapsed = currentTime - g_timeInBg;
+    cxi64 timeRefreshSeconds = 1 * 60; 
     
-    // refresh selected city
-    if (earth_data_validate_index (g_selectedCity))
+    if (timeElapsed >= timeRefreshSeconds)
     {
-      const char *query = earth_data_get_feed_query (g_selectedCity);
-      feed_news_t *feedNews = &g_feedsNews [g_selectedCity];
-      feed_twitter_t *feedTwitter = &g_feedsTwitter [g_selectedCity];
+      // update clocks
+      g_dateUpdateTimer = 0.0f;
       
-      if (feedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
+      // trigger weather update
+      g_weatherUpdateTime = 0;
+      
+      // refresh selected city
+      if (earth_data_validate_index (g_selectedCity))
       {
-        float lat, lon;
-        earth_data_get_terrestrial_coords (g_selectedCity, &lat, &lon);
-        bool loc = settings_get_local_tweets_only ();
+        const char *query = earth_data_get_feed_query (g_selectedCity);
+        feed_news_t *feedNews = &g_feedsNews [g_selectedCity];
+        feed_twitter_t *feedTwitter = &g_feedsTwitter [g_selectedCity];
         
-        feeds_twitter_search (feedTwitter, query, loc, lat, lon);
-        util_activity_indicator_set_active (true);
+        if (feedTwitter->reqStatus == FEED_REQ_STATUS_INVALID)
+        {
+          float lat, lon;
+          earth_data_get_terrestrial_coords (g_selectedCity, &lat, &lon);
+          bool loc = settings_get_local_tweets_only ();
+          
+          feeds_twitter_search (feedTwitter, query, loc, lat, lon);
+          util_activity_indicator_set_active (true);
+        }
+        
+        if (feedNews->reqStatus == FEED_REQ_STATUS_INVALID)
+        {
+          feeds_news_search (feedNews, query);
+          util_activity_indicator_set_active (true);
+        }
       }
-      
-      if (feedNews->reqStatus == FEED_REQ_STATUS_INVALID)
-      {
-        feeds_news_search (feedNews, query);
-        util_activity_indicator_set_active (true);
-      }
+    
+      earth_data_update_dst_offsets ();
     }
-  
-    earth_data_update_dst_offsets ();
   }
 }
 
