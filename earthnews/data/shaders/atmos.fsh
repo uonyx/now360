@@ -40,7 +40,9 @@ void main (void)
   
   float dif = max (dot (nVec, lVec), c_zero);
   //dif = smoothstep (0.01, 0.3, dif);
-  dif = clamp ((dif - 0.01) / 0.29, c_zero, c_one);
+  //dif = clamp ((dif - 0.01) / 0.29, c_zero, c_one);
+  dif = (dif - 0.01) / 0.29;
+  dif = min (max (dif, c_zero), c_one);
   
   colour.rgb *= dif;
   //colour.a = rim;

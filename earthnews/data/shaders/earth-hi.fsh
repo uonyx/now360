@@ -54,7 +54,11 @@ void main (void)
   float d = max (dotp, c_zero);
   float n = c_one - d;
   //n = smoothstep (0.5, 1.0, n); /* nice but expensive */
-  n = clamp ((n - 0.5) / 0.5, c_zero, c_one);
+  //n = clamp ((n - 0.5) / 0.5, c_zero, c_one); /* linear step */
+  //n = clamp ((n - 0.5) * 2.0, c_zero, c_one);
+  //n = clamp ((n + n) - c_one, c_zero, c_one); /* simply scale range [0,1] to range [-1,1] */
+  n = (n + n) - c_one;
+  n = max (n, c_zero);
   
   vec4 diffuse = ((d * diffuseMat) + (n * nightMat)) * u_diffuseLight;
   
@@ -65,9 +69,9 @@ void main (void)
 #else
   u_shininess; // unused
   float mp = max (dot (vVec, r), c_zero);
-  float s = mp * mp;
+  float s = mp * mp; // shininess = 2
 #endif
-  
+
   vec4 specular = s * u_specularLight * specularMat * diffuseMat;
     
   gl_FragColor = ambient + diffuse + specular;
