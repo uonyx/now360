@@ -78,7 +78,7 @@
   [self.view addGestureRecognizer:pinchGesture];
   [pinchGesture release];
 
-  [self setPreferredFramesPerSecond:NOW360_TARGET_FRAMERATE];
+  [self setPreferredFramesPerSecond:APP_TARGET_FRAMERATE];
   
   [EAGLContext setCurrentContext:self.context];
   

@@ -2021,19 +2021,22 @@ static void app_input_touch_began (float x, float y)
   {
     if (newSelectedCity != oldSelectedCity)
     {
-      feed_news_t *oldFeedNews = &g_feedsNews [oldSelectedCity];
-      feed_twitter_t *oldFeedTwitter = &g_feedsTwitter [oldSelectedCity];
-      
-      if (oldFeedNews->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
+      if (earth_data_validate_index (oldSelectedCity))
       {
-        feeds_news_cancel_search (oldFeedNews);
-        util_activity_indicator_set_active (false);
-      }
-      
-      if (oldFeedTwitter->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
-      {
-        //feeds_twitter_cancel_search (oldFeedTwitter);
-        //util_activity_indicator_set_active (false);
+        feed_news_t *oldFeedNews = &g_feedsNews [oldSelectedCity];
+        feed_twitter_t *oldFeedTwitter = &g_feedsTwitter [oldSelectedCity];
+        
+        if (oldFeedNews->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
+        {
+          feeds_news_cancel_search (oldFeedNews);
+          util_activity_indicator_set_active (false);
+        }
+        
+        if (oldFeedTwitter->reqStatus == FEED_REQ_STATUS_IN_PROGRESS)
+        {
+          //feeds_twitter_cancel_search (oldFeedTwitter);
+          //util_activity_indicator_set_active (false);
+        }
       }
       
       const char *query = earth_data_get_feed_query (newSelectedCity);
