@@ -53,9 +53,8 @@ void main (void)
   // diffuse
   float d = max (dotp, c_zero);
   float n = c_one - d;
-  //n = smoothstep (0.7, 0.9, n); /* nice but expensive */
-  //n = clamp ((n - 0.7) / 0.2, c_zero, c_one);
-  //n = n * n * (3.0 - c_two * n);
+  //n = smoothstep (0.5, 1.0, n); /* nice but expensive */
+  n = clamp ((n - 0.5) / 0.5, c_zero, c_one);
   
   vec4 diffuse = ((d * diffuseMat) + (n * nightMat)) * u_diffuseLight;
   
