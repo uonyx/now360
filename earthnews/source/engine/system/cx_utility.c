@@ -115,47 +115,6 @@ cxu32 cx_util_roundup_pow2 (cxu32 x)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-cxi32 cx_util_bsearch_int (cxu32 key, cxu32 *array, cxu32 arraysize)
-{
-  CX_ASSERT (array);
-  CX_ASSERT (arraysize > 0);
-  
-  cxi32 index = -1;
-  
-  cxi32 low = 0;
-  cxi32 high = arraysize - 1;
-  
-  if ((key >= array [low]) && (key <= array [high]))
-  {  
-    while (low <= high)
-    {
-      cxi32 mid = (low + high) / 2;
-      
-      cxu32 val = array [mid];
-      
-      if (val < key)
-      {
-        low = mid + 1;
-      }
-      else if (val > key)
-      {
-        high = mid - 1;
-      }
-      else
-      {
-        index = mid;
-        break;
-      }
-    }
-  }
-  
-  return index;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void cx_util_world_space_to_screen_space (cxf32 width, cxf32 height, const cx_mat4x4 *proj, const cx_mat4x4 *view, 
                                           const cx_vec4 *world, cx_vec2 *screen, cxf32 *depth, cxf32 *zScale)
 {

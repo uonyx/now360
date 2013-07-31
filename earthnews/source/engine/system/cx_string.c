@@ -203,6 +203,11 @@ cxu32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src)
         dst [len++] = 133;
         s += 5;
       }
+      else if ((s [1] == '#') && (s [2] == '0') && (s [3] == '3') && (s [4] == '9') && (s [5] == ';')) // &#039;
+      {
+        dst [len++] = '\'';
+        s += 6;
+      }
       else
       {
         dst [len++] = ch;
@@ -320,6 +325,82 @@ cxu32 cx_str_utf8_to_unicode (cxu32 *dst, cxu32 dstSize, const char *utf8src)
   dst [dstLen] = 0;
   
   return dstLen;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool cx_str_get_unicode_block_codepoint_range (cx_str_unicode_block block, cxu32 *rmin, cxu32 *rmax)
+{
+  CX_ASSERT (rmin);
+  CX_ASSERT (rmax);
+  
+  bool success = true;
+  
+  switch (block)
+  {
+    case CX_STR_UNICODE_BLOCK_LATIN_BASIC:          { *rmin = 0;  *rmax = 127; break; }
+    case CX_STR_UNICODE_BLOCK_LATIN_1_SUPPLEMENT:   { *rmin = 128; *rmax = 255; break; }
+    case CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A:     { *rmin = 256; *rmax = 383; break; }
+    case CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_B:     { *rmin = 384; *rmax = 591; break; }
+    case CX_STR_UNICODE_BLOCK_IPA:                  { *rmin = 592; *rmax = 687; break; }
+    case CX_STR_UNICODE_BLOCK_GREEK_COPTIC:         { *rmin = 880; *rmax = 1023; break; }
+    case CX_STR_UNICODE_BLOCK_CYRILLIC:             { *rmin = 1024; *rmax = 1279; break; }
+    case CX_STR_UNICODE_BLOCK_CYRILLIC_SUPPLEMENT:  { *rmin = 1280; *rmax = 1327; break; }
+    case CX_STR_UNICODE_BLOCK_HEBREW:               { *rmin = 1424; *rmax = 1535; break; }
+    case CX_STR_UNICODE_BLOCK_ARABIC:               { *rmin = 1536; *rmax = 1791; break; }
+    case CX_STR_UNICODE_BLOCK_GENERAL_PUNCTUATION:  { *rmin = 8208; *rmax = 8286; break; }
+    case CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS:     { *rmin = 8352; *rmax = 8399; break; }
+    case CX_STR_UNICODE_BLOCK_LETTERLIKE_SYMBOLS:   { *rmin = 8448; *rmax = 8527; break; }
+    case CX_STR_UNICODE_BLOCK_HIRAGANA:             { *rmin = 12353; *rmax = 12447; break; }
+    case CX_STR_UNICODE_BLOCK_KATAKANA:             { *rmin = 12448; *rmax = 12543; break; }
+    case CX_STR_UNICODE_BLOCK_CJK_FULL:             { *rmin = 19968; *rmax = 40908; break; }
+    default:                                        { *rmin = 0; *rmax = 0; success = false; break; }
+  }
+  
+  return success;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+cxu32 cx_str_get_unicode_codepoints (cxu32 *dst, cxu32 dstSize, const cx_str_unicode_block *blocks, cxu32 blockCount)
+{
+  CX_ASSERT (dst);
+  CX_ASSERT (dstSize);
+  
+  cxu32 codeptsCount = 0;
+  
+  cxu32 rmin = 0;
+  cxu32 rmax = 0;
+  
+  for (cxu32 i = 0; i < blockCount; ++i)
+  {
+    cx_str_unicode_block block = blocks [i];
+    
+    if (cx_str_get_unicode_block_codepoint_range (block, &rmin, &rmax))
+    {
+      CX_ASSERT (rmax > rmin);
+      
+      for (cxu32 k = rmin; k <= rmax; ++k)
+      {
+        CX_ASSERT ((codeptsCount < dstSize) && "dst buffer not big enough");
+        
+        dst [codeptsCount++] = k;
+      }
+    }
+  }
+  
+#if CX_DEBUG && 0
+  for (cxu32 c = 0; c < codeptsCount; ++c)
+  {
+    CX_LOG_CONSOLE (1, "%d: %d", c, dst [c]);
+  }
+#endif
+  
+  return codeptsCount;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

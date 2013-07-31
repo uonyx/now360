@@ -182,6 +182,28 @@ void metrics_event_log (metrics_event_type_t eventType, void *data)
         
         break;
       }
+        
+      case METRICS_EVENT_APP_TERM:
+      {
+        const char *e = "app_mem_term";
+        const char *pn = "timestamp";
+        const char *pv = timstamp;
+        
+        cx_analytics_log_event (e, &pn, &pv, 1);
+        
+        break;
+      }
+        
+      case METRICS_EVENT_APP_MEMORY_WARNING:
+      {
+        const char *e = "app_mem_warning";
+        const char *pn = "timestamp";
+        const char *pv = timstamp;
+        
+        cx_analytics_log_event (e, &pn, &pv, 1);
+        
+        break;
+      }
        
       case METRICS_EVENT_TWITTER_API_ERROR:
       {

@@ -79,14 +79,12 @@ static render2d_t      g_render2dInfo;
 #define NEW_ROTATION 1
 
 #if NEW_ROTATION
-
 #define CAMERA_ROTATION_SPEED_EXPONENT_SWIPE (1.0f)
 #define CAMERA_ROTATION_SPEED_EXPONENT_CITY_SELECT (4.0f)
 
 static cx_vec2  g_rotAngle;
 static cx_vec2  g_rotTarget;
 static cxf32    g_rotSpeedExp = 1.0f;
-
 #else
 static cx_vec2  g_rotTouchBegin;
 static cx_vec2  g_rotTouchEnd;
@@ -95,7 +93,8 @@ static cx_vec2  g_rotationAngle;
 #endif
 
 static bool               g_isRetina = false;
-static cxi64              g_timeInBg = 0;
+static cxi64              g_prevTimeInBg = 0;
+static cxi64              g_bgTime = 0;
 
 static feed_twitter_t    *g_feedsTwitter = NULL;
 static feed_news_t       *g_feedsNews = NULL;
@@ -121,15 +120,14 @@ static cx_date            g_dateUTC;
 static cx_date            g_dateLocal;
 static float              g_dateUpdateTimer = 0.0f;
 
+static float              g_feedsUITargetOpacity = 1.0f;
+static float              g_feedsUICurrentOpacity = 1.0f;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static float app_get_zoom_opacity (void);
 static int app_get_clock_str (const cx_date *date, int offset, char *dst, int dstSize);
-
-//static int  app_get_selected_city (void);
-//static void app_set_selected_city (int index);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -486,17 +484,16 @@ void app_render (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if 0
 static float app_get_zoom_opacity (void)
 {
   float fov = g_camera->fov;
   
-  //float opacity = 1.0f - cx_smoothstep (CAMERA_MIN_FOV, 56.0f, fov);
-  float opacity = 1.0f - cx_smoothstep (CAMERA_START_FOV, CAMERA_START_FOV + 6.0f, fov);
+  float opacity = 1.0f - cx_smoothstep (CAMERA_START_FOV, CAMERA_START_FOV + 4.0f, fov);
   
   return opacity;
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -870,9 +867,6 @@ static void app_update_camera (void)
   float rotSpeedx = (fabsf (rotAddx) / rotDecel);
   float rotSpeedy = (fabsf (rotAddy) / rotDecel);
   
-  //x ^ 5
-  (void) g_rotSpeedExp;
-  
 #if 0
   float exponent = 1.0f;
   rotSpeedx = cx_pow (rotSpeedx, exponent);
@@ -899,7 +893,6 @@ static void app_update_camera (void)
   
   g_rotAngle.x += (rotAddx * deltaTime * rotSpeedx);
   g_rotAngle.y += (rotAddy * deltaTime * rotSpeedy);
-  
   
   float rotx = fmodf (g_rotAngle.x, 360.0f);
   float roty = cx_clamp (g_rotAngle.y, -89.9f, 89.9f);
@@ -998,7 +991,7 @@ static void app_update_earth (void)
 {
   // update 2d render info: font opacity
   
-  float opacity = app_get_zoom_opacity ();
+  float opacity = g_feedsUICurrentOpacity;
   
   float screenWidth = cx_gdi_get_screen_width ();
   float screenHeight = cx_gdi_get_screen_height ();
@@ -1062,6 +1055,10 @@ static void app_update_earth (void)
 
 static void app_update_feeds (void)
 {
+  float dt = (float) cx_system_time_get_delta_time ();
+  g_feedsUICurrentOpacity += ((g_feedsUITargetOpacity - g_feedsUICurrentOpacity) * dt * 7.0f);
+  g_feedsUICurrentOpacity = cx_clamp (g_feedsUICurrentOpacity, 0.0f, 1.0f);
+  
   app_update_feeds_news ();
   app_update_feeds_twitter ();
   app_update_feeds_weather ();
@@ -1196,7 +1193,7 @@ static void app_update_feeds_weather (void)
     {
       cxi64 currentTime = cx_time_get_utc_epoch ();
       cxi64 timeElapsed = currentTime - g_weatherUpdateTime;
-      cxi64 timeRefreshSeconds = 60 * 15;
+      cxi64 timeRefreshSeconds = 60 * 5;
       
       if (timeElapsed > timeRefreshSeconds)
       {
@@ -1346,7 +1343,7 @@ static void app_render_3d_earth (void)
   cx_gdi_enable_z_write (false);
   
   // draw points
-  float opacity = app_get_zoom_opacity ();
+  float opacity = g_feedsUICurrentOpacity;
   
   // gather points
   int displayCount = 0;
@@ -1646,6 +1643,11 @@ static void app_render_2d_local_clock (void)
 
 static void app_render_2d_feeds (void)
 {
+  float opacity = g_feedsUICurrentOpacity;
+  
+  ui_ctrlr_set_news_feed_opacity (opacity);
+  ui_ctrlr_set_twitter_opacity (opacity);
+  
   ui_ctrlr_render ();
 }
 
@@ -2183,6 +2185,11 @@ static void app_input_zoom (float factor)
   f = g_camera->fov + (1.0f - factor);
   
   g_camera->fov = cx_clamp (f, CAMERA_MIN_FOV, CAMERA_MAX_FOV);
+  
+  
+  float fovMid = (CAMERA_MAX_FOV - CAMERA_MIN_FOV) * 0.55f; // 0.5f;
+  float fovCutoff = CAMERA_MIN_FOV + fovMid;
+  g_feedsUITargetOpacity = (g_camera->fov <= fovCutoff) ? 1.0f : 0.0f;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2293,7 +2300,7 @@ void app_on_background (void)
   
     metrics_event_log (METRICS_EVENT_APP_BG, NULL);
     
-    g_timeInBg = cx_time_get_utc_epoch ();
+    g_bgTime = cx_time_get_utc_epoch ();
   }
 }
 
@@ -2314,19 +2321,12 @@ void app_on_foreground (void)
     
     metrics_event_log (METRICS_EVENT_APP_FG, NULL);
     
-    
     cxi64 currentTime = cx_time_get_utc_epoch ();
-    cxi64 timeElapsed = currentTime - g_timeInBg;
-    cxi64 timeRefreshSeconds = 1 * 60; 
+    cxi64 timeElapsed = (currentTime - g_bgTime) + g_prevTimeInBg;
+    cxi64 timeRefreshSeconds = 1 * 30;
     
     if (timeElapsed >= timeRefreshSeconds)
     {
-      // update clocks
-      g_dateUpdateTimer = 0.0f;
-      
-      // trigger weather update
-      g_weatherUpdateTime = 0;
-      
       // refresh selected city
       if (earth_data_validate_index (g_selectedCity))
       {
@@ -2350,9 +2350,22 @@ void app_on_foreground (void)
           util_activity_indicator_set_active (true);
         }
       }
-    
-      earth_data_update_dst_offsets ();
+      
+      g_prevTimeInBg = 0;
     }
+    else
+    {
+      g_prevTimeInBg = timeElapsed;
+    }
+    
+    // update clocks
+    g_dateUpdateTimer = 0.0f;
+    
+    // trigger weather update
+    g_weatherUpdateTime = 0;
+    
+    // update dst offsets
+    earth_data_update_dst_offsets ();
   }
 }
 
@@ -2365,6 +2378,7 @@ void app_on_terminate (void)
   if (g_appState == APP_STATE_UPDATE)
   {
     settings_data_save ();
+    metrics_event_log (METRICS_EVENT_APP_TERM, NULL);
   }
 }
 
@@ -2383,6 +2397,7 @@ void app_on_memory_warning (void)
   if (g_appState == APP_STATE_UPDATE)
   {
     cx_http_clear_cache ();
+    metrics_event_log (METRICS_EVENT_APP_MEMORY_WARNING, NULL);
   }
 }
 

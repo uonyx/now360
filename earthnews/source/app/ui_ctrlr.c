@@ -57,7 +57,7 @@ const float posY = 582.0f;
 typedef struct ui_news_t
 {
   ui_custom_t *buttons [NEWS_MAX_ENTRIES];
-  float opacity;
+  float baseOpacity;
 } ui_news_t;
 
 static ui_news_t g_uinews;
@@ -116,9 +116,10 @@ typedef struct ui_twitter_t
 {
   ui_custom_t *view;
   ui_custom_t *toggle;
-  cx_texture *birdicon;
+  cx_texture *birdIcon;
   ticker_t ticker;
   animdata_t fade;
+  float baseOpacity;
   
 } ui_twitter_t;
 
@@ -286,14 +287,6 @@ bool ui_ctrlr_handle_input (const input_touch_event *event)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ui_ctrlr_set_news_feed_visible (bool visible)
-{
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void ui_ctrlr_set_news_feed (feed_news_t *feed)
 {
   CX_ASSERT (feed);
@@ -307,7 +300,7 @@ void ui_ctrlr_set_news_feed (feed_news_t *feed)
 
 void ui_ctrlr_set_news_feed_opacity (float opacity)
 {
-  g_uinews.opacity = opacity;
+  g_uinews.baseOpacity = opacity;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -449,7 +442,7 @@ static void ui_ctrlr_news_create (void)
 {
   memset (&g_uinews, 0, sizeof (g_uinews));
   
-  g_uinews.opacity = 1.0f;
+  g_uinews.baseOpacity = 1.0f;
   
   ui_custom_callbacks_t newsCallbacks;
   memset (&newsCallbacks, 0, sizeof (ui_custom_callbacks_t));
@@ -669,7 +662,7 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   const cx_font *font = util_get_font (FONT_ID_NEWS_18);
   CX_ASSERT (font);
   
-  float opacity = g_uinews.opacity;
+  float opacity = g_uinews.baseOpacity;
   float x1 = custom->intr.position.x;
   float y1 = custom->intr.position.y;
 
@@ -691,11 +684,11 @@ static void ui_ctrlr_news_button_render (ui_custom_t *custom)
   
   if (wstate == UI_WIDGET_STATE_HOVER)
   {
-    cx_colour_set (&colbg, 0.192f, 0.05f, 0.384f, 0.65f); // opposite of cyber yellow (purple shade)
+    cx_colour_set (&colbg, 0.192f, 0.05f, 0.384f, 0.65f * opacity); // opposite of cyber yellow (purple shade)
   }
   else
   {
-    cx_colour_set (&colbg, 0.0f, 0.0f, 0.0f, 0.15f);
+    cx_colour_set (&colbg, 0.0f, 0.0f, 0.0f, 0.15f * opacity);
   }
   
   cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &colbg, NULL);
@@ -717,40 +710,43 @@ static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *po
 {
   CX_ASSERT (custom);
   
-  const char *link = NULL, *title = NULL;
+  if (g_uinews.baseOpacity >= 0.5f)
+  {
+    const char *link = NULL, *title = NULL;
     
 #if UI_CTRLR_DEBUG_NEWS_LOCALISED
-  char morenews [128];
-  util_get_translation (morenews, 128, "TXT_MORE_NEWS");
+    char morenews [128];
+    util_get_translation (morenews, 128, "TXT_MORE_NEWS");
 #else
-  const char *morenews = "More news";
+    const char *morenews = "More news";
 #endif
   
-  ui_custom_t *moreNewsButton = g_uinews.buttons [NEWS_MAX_ENTRIES - 1];
-  
-  if (moreNewsButton == custom)
-  {
-    title = morenews;
-    link = (const char *) custom->userdata;
-  }
-  else
-  {
-    feed_news_item_t *entry = (feed_news_item_t *) custom->userdata;
+    ui_custom_t *moreNewsButton = g_uinews.buttons [NEWS_MAX_ENTRIES - 1];
     
-    title = entry ? entry->title : NULL;
-    link = entry ? entry->link : NULL;
+    if (moreNewsButton == custom)
+    {
+      title = morenews;
+      link = (const char *) custom->userdata;
+    }
+    else
+    {
+      feed_news_item_t *entry = (feed_news_item_t *) custom->userdata;
+      
+      title = entry ? entry->title : NULL;
+      link = entry ? entry->link : NULL;
+    }
+    
+    if (link)
+    {
+      webview_show (link, title);
+    }
+    
+    audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+    
+    ui_clear_focus (g_uicontext);
+    
+    metrics_event_log (METRICS_EVENT_CLICK_NEWS, NULL);
   }
-  
-  if (link)
-  {
-    webview_show (link, title);
-  }
-  
-  audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
-  
-  ui_clear_focus (g_uicontext);
-  
-  metrics_event_log (METRICS_EVENT_CLICK_NEWS, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -760,7 +756,17 @@ static void ui_ctrlr_news_button_pressed (ui_custom_t *custom, const cx_vec2 *po
 void ui_ctrlr_set_twitter_feed (feed_twitter_t *feed)
 {
   CX_ASSERT (feed);
+  
   ui_ctrlr_twitter_populate (feed);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ui_ctrlr_set_twitter_opacity (float opacity)
+{
+  g_uitwitter.baseOpacity = opacity;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -771,7 +777,8 @@ static void ui_ctrlr_twitter_create (void)
 {  
   memset (&g_uitwitter, 0, sizeof (g_uitwitter));
   
-  g_uitwitter.birdicon = cx_texture_create_from_file ("data/images/ui/twbird-16z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
+  g_uitwitter.baseOpacity = 1.0f;
+  g_uitwitter.birdIcon = cx_texture_create_from_file ("data/images/ui/twbird-16z.png", CX_FILE_STORAGE_BASE_RESOURCE, false);
   
   ui_custom_callbacks_t twViewCallbacks, twToggleCallbacks;
   
@@ -815,7 +822,7 @@ static void ui_ctrlr_twitter_create (void)
 
 static void ui_ctrlr_twitter_destroy (void)
 {
-  cx_texture_destroy (g_uitwitter.birdicon);
+  cx_texture_destroy (g_uitwitter.birdIcon);
   ui_custom_destroy (g_uicontext, g_uitwitter.view);
   ui_custom_destroy (g_uicontext, g_uitwitter.toggle);
 }
@@ -1020,11 +1027,13 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
   
   if (ticker)
   {
+    float baseOpacity = g_uitwitter.baseOpacity;
+    
     ui_widget_state_t wstate = ui_widget_get_state (g_uicontext, custom);
     const cx_colour *colour = ui_widget_get_colour (custom, wstate);
     const cx_vec2 *pos = ui_widget_get_position (custom);
     const cx_vec2 *dim = ui_widget_get_dimension (custom);
-    float opacity = ui_widget_get_opacity (custom);
+    float opacity = ui_widget_get_opacity (custom) * baseOpacity;
     
     cx_colour colbg = *colour;
     cx_colour colname = *cx_colour_cyan ();
@@ -1111,9 +1120,10 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
         }
       }
       
+      bool invisible = (g_uitwitter.baseOpacity <= CX_EPSILON);
       bool activeSystemUI = webview_active () || audio_music_picker_active () || settings_ui_active ();
       
-      if ((wstate != UI_WIDGET_STATE_HOVER) && !activeSystemUI)
+      if ((wstate != UI_WIDGET_STATE_HOVER) && !activeSystemUI && !invisible)
       {
         if ((ix + ticker->items [i].width) < 0.0f)
         {
@@ -1134,33 +1144,36 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
 
 static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 *point)
 {
-  // get x,y press position
-  // get positions of all currently visible ticker_tweets
-  // find visible link element
-  // go to browser
-  
-  CX_ASSERT (point);
-  
-  float touchX = point->x;
-  
-  for (unsigned int i = 0; i < g_visLinkCount; ++i) 
+  if (g_uitwitter.baseOpacity >= 0.5f)
   {
-    float x1 = g_visLinks [i].x;
-    float x2 = g_visLinks [i].w + x1;
+    // get x,y press position
+    // get positions of all currently visible ticker_tweets
+    // find visible link element
+    // go to browser
     
-    if ((touchX > x1) && (touchX < x2))
+    CX_ASSERT (point);
+    
+    float touchX = point->x;
+    
+    for (unsigned int i = 0; i < g_visLinkCount; ++i) 
     {
-      const char *url = g_visLinks [i].url;
+      float x1 = g_visLinks [i].x;
+      float x2 = g_visLinks [i].w + x1;
       
-      webview_show (url, url);
-      
-      audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
-      
-      metrics_event_log (METRICS_EVENT_OPEN_TWITTER_LINK, NULL);
+      if ((touchX > x1) && (touchX < x2))
+      {
+        const char *url = g_visLinks [i].url;
+        
+        webview_show (url, url);
+        
+        audio_soundfx_play (AUDIO_SOUNDFX_CLICK1);
+        
+        metrics_event_log (METRICS_EVENT_OPEN_TWITTER_LINK, NULL);
+      }
     }
+    
+    ui_clear_focus (g_uicontext);
   }
-  
-  ui_clear_focus (g_uicontext);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1170,9 +1183,9 @@ static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 
 static void ui_ctrlr_twitter_button_render (ui_custom_t *custom)
 {
   cx_colour col1;
-  cx_colour_set (&col1, 0.0f, 0.6745f, 0.9294f, 1.0f);
+  cx_colour_set (&col1, 0.0f, 0.6745f, 0.9294f, 1.0f * g_uitwitter.baseOpacity);
   cx_colour col2 = *cx_colour_grey ();
-  cx_texture *image = g_uitwitter.birdicon;
+  cx_texture *image = g_uitwitter.birdIcon;
   
   ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, true);
 }
@@ -1185,25 +1198,28 @@ static void ui_ctrlr_twitter_button_pressed (ui_custom_t *custom, const cx_vec2 
 {
   CX_ASSERT (custom);
   
-  if (!g_uitwitter.fade.on)
+  if (g_uitwitter.baseOpacity >= 0.5f)
   {
-    if (custom->userdata)
+    if (!g_uitwitter.fade.on)
     {
-      // show 
-      custom->userdata = NULL;
-      ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_IN, 0.3f);
+      if (custom->userdata)
+      {
+        // show 
+        custom->userdata = NULL;
+        ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_IN, 0.3f);
+      }
+      else
+      {
+        // hide
+        custom->userdata = (void *) 0xffff;
+        ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_OUT, 0.3f);
+      }
     }
-    else
-    {
-      // hide
-      custom->userdata = (void *) 0xffff;
-      ui_ctrlr_twitter_ticker_fade_begin (ANIM_FADE_OUT, 0.3f);
-    }
+    
+    ui_clear_focus (g_uicontext);
+    
+    audio_soundfx_play (AUDIO_SOUNDFX_CLICK2);
   }
-  
-  ui_clear_focus (g_uicontext);
-  
-  audio_soundfx_play (AUDIO_SOUNDFX_CLICK2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -21,8 +21,8 @@
 typedef enum   // http://en.wikipedia.org/wiki/Unicode_block
 {
   CX_STR_UNICODE_BLOCK_INVALID = -1,
-  CX_STR_UNICODE_BLOCK_LATIN_BASIC,         // 96  (0-127)         (: english, french, spanish, german, vietnamese)
-  CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,    // 96  (128-255)       (: french, german, spanish, icelandic, vietnamese)
+  CX_STR_UNICODE_BLOCK_LATIN_BASIC,         // 128 (0-127)         (: english, french, spanish, german, vietnamese)
+  CX_STR_UNICODE_BLOCK_LATIN_1_SUPPLEMENT,  // 128 (128-255)       (: french, german, spanish, icelandic, vietnamese)
   CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,    // 128 (256-383)       (: latin, czech, dutch, polish, turkish)
   CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_B,    // 208 (384-591)       (: africa alphabet, pan-nigerian, americanist, khosian, pinyin, romanian,
   CX_STR_UNICODE_BLOCK_IPA,                 // 96  (592-687)       (: international phonetic alphabet)
@@ -49,6 +49,7 @@ cxu32 cx_str_percent_encode (char *dst, cxu32 dstSize, const char *src);
 cxu32 cx_str_html_unescape (char *dst, cxu32 dstSize, const char *src);
 cxu32 cx_str_utf8_to_unicode (cxu32 *dst, cxu32 dstSize, const char *utf8src);
 cxu32 cx_str_utf8_decode (cxu32 *dst, const cxu8 *src);
+cxu32 cx_str_get_unicode_codepoints (cxu32 *dst, cxu32 dstSize, const cx_str_unicode_block *blocks, cxu32 blockCount);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

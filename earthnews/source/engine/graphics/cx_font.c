@@ -83,6 +83,47 @@ static int cmp_codepoints (const void *a, const void *b)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static cxi32 cx_font_bsearch_codepoint_index (cxu32 key, cxu32 *array, cxu32 arraysize)
+{
+  CX_ASSERT (array);
+  CX_ASSERT (arraysize > 0);
+  
+  cxi32 index = -1;
+  
+  cxi32 low = 0;
+  cxi32 high = arraysize - 1;
+  
+  if ((key >= array [low]) && (key <= array [high]))
+  {
+    while (low <= high)
+    {
+      cxi32 mid = (low + high) / 2;
+      
+      cxu32 val = array [mid];
+      
+      if (val < key)
+      {
+        low = mid + 1;
+      }
+      else if (val > key)
+      {
+        high = mid - 1;
+      }
+      else
+      {
+        index = mid;
+        break;
+      }
+    }
+  }
+  
+  return index;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static bool cx_font_get_unicode_codepoint_range (cx_str_unicode_block block, cxu32 *rmin, cxu32 *rmax)
 {
   CX_ASSERT (rmin);
@@ -93,7 +134,7 @@ static bool cx_font_get_unicode_codepoint_range (cx_str_unicode_block block, cxu
   switch (block)
   {
     case CX_STR_UNICODE_BLOCK_LATIN_BASIC:          { *rmin = 32;  *rmax = 127; break; }
-    case CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT:     { *rmin = 160; *rmax = 255; break; }
+    case CX_STR_UNICODE_BLOCK_LATIN_1_SUPPLEMENT:   { *rmin = 160; *rmax = 255; break; }
     case CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A:     { *rmin = 256; *rmax = 383; break; }
     case CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_B:     { *rmin = 384; *rmax = 591; break; }
     case CX_STR_UNICODE_BLOCK_IPA:                  { *rmin = 592; *rmax = 687; break; }
@@ -285,7 +326,9 @@ void cx_font_destroy (cx_font *font)
   cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
   
   cx_texture_destroy (fontImpl->texture);
+  cx_free (fontImpl->unicodePts);
   cx_free (fontImpl->ttfCharData);
+  
   cx_free (font->fontdata);
   cx_free (font);
 }
@@ -625,7 +668,7 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   {
     cxu32 cp = 0;
     cxu32 offset = cx_str_utf8_decode (&cp, src);
-    cxi32 cIndex = cx_util_bsearch_int (cp, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+    cxi32 cIndex = cx_font_bsearch_codepoint_index (cp, fontImpl->unicodePts, fontImpl->unicodePtsSize);
     
     if (cIndex > -1)
     {
@@ -818,7 +861,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   cxu32 *lastSpacePos = NULL;
   while ((c = *t))
   {
-    cxi32 cIndex = cx_util_bsearch_int (c, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+    cxi32 cIndex = cx_font_bsearch_codepoint_index (c, fontImpl->unicodePts, fontImpl->unicodePtsSize);
     
     if (cIndex > -1)
     {
@@ -860,7 +903,7 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
     }
     else
     {
-      cxi32 cIndex = cx_util_bsearch_int (c, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+      cxi32 cIndex = cx_font_bsearch_codepoint_index (c, fontImpl->unicodePts, fontImpl->unicodePtsSize);
       
       if (cIndex > -1)
       {
@@ -996,7 +1039,7 @@ cxf32 cx_font_get_text_width (const cx_font *font, const char *text)
   {
     cxu32 ch = 0;
     cxu32 offset = cx_str_utf8_decode (&ch, src);
-    cxi32 cIndex = cx_util_bsearch_int (ch, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+    cxi32 cIndex = cx_font_bsearch_codepoint_index (ch, fontImpl->unicodePts, fontImpl->unicodePtsSize);
     
     if (cIndex > -1)
     {

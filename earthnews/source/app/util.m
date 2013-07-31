@@ -334,12 +334,11 @@ void util_status_bar_render (void)
     {
       const float fadeCutoff = STATUS_BAR_DISPLAY_TIMER * 0.1f;
       
-      if (g_statusTimer < fadeCutoff)
+      if (g_statusTimer < fadeCutoff) // bottom end
       {
         alpha = g_statusTimer / fadeCutoff;
       }
-      
-      if (g_statusTimer > (STATUS_BAR_DISPLAY_TIMER - fadeCutoff))
+      else if (g_statusTimer > (STATUS_BAR_DISPLAY_TIMER - fadeCutoff)) // top end
       {
         alpha = (STATUS_BAR_DISPLAY_TIMER - g_statusTimer) / fadeCutoff;
       }
@@ -602,7 +601,7 @@ static void util_init_create_fonts (void)
       CX_STR_UNICODE_BLOCK_CYRILLIC,
       CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
-      CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
+      CX_STR_UNICODE_BLOCK_LATIN_1_SUPPLEMENT,
       CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
       CX_STR_UNICODE_BLOCK_KATAKANA,
       CX_STR_UNICODE_BLOCK_HIRAGANA,
@@ -620,7 +619,7 @@ static void util_init_create_fonts (void)
     cx_str_unicode_block blocks1 [] =
     {
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
-      CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
+      CX_STR_UNICODE_BLOCK_LATIN_1_SUPPLEMENT,
       CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,
       CX_STR_UNICODE_BLOCK_GENERAL_PUNCTUATION,
     };
@@ -650,7 +649,7 @@ static void util_init_create_fonts (void)
       CX_STR_UNICODE_BLOCK_GREEK_COPTIC,
       CX_STR_UNICODE_BLOCK_HEBREW,
       CX_STR_UNICODE_BLOCK_LATIN_BASIC,
-      CX_STR_UNICODE_BLOCK_LATIN_SUPPLEMENT,
+      CX_STR_UNICODE_BLOCK_LATIN_1_SUPPLEMENT,
       CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_A,
       CX_STR_UNICODE_BLOCK_LATIN_EXTENDED_B,
       CX_STR_UNICODE_BLOCK_CURRENCY_SYMBOLS,
