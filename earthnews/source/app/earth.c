@@ -302,7 +302,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   {
     case DEVICE_TYPE_UNKNOWN:
     case DEVICE_TYPE_IPAD3:
-    case DEVICE_TYPE_IPAD2:
+      //case DEVICE_TYPE_IPAD2:
     {
       slicesAtmos = 128;
       slicesCloud = 48;
@@ -315,7 +315,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
       break;
     }
-#if 0
+#if 1
     case DEVICE_TYPE_IPAD2:
     {
 #if DEBUG_PERFORMANCE_TEST_HI
@@ -380,7 +380,6 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   visual->highSpec = highSpec;
   
 #if NEW_EARTH_SHADER
-  
   cx_texture *diffTexture   = cx_texture_create_from_file (diffTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *specTexture   = cx_texture_create_from_file (specTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
   cx_texture *cloudTexture  = cx_texture_create_from_file (cloudTexPath, CX_FILE_STORAGE_BASE_RESOURCE, true);
@@ -401,9 +400,6 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   cx_material_set_texture (material, bumpTexture, CX_MATERIAL_TEXTURE_BUMP);
   
   visual->nightMap = nightTexture;
-  
-  
-  
 #else
   cx_shader *shader     = cx_shader_create ("mesh", "data/shaders");
   cx_material *material = cx_material_create ("earth");

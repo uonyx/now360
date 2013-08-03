@@ -30,7 +30,7 @@ bool ui_ctrlr_handle_input (const input_touch_event *event);
 void ui_ctrlr_set_news_feed (feed_news_t *feed);
 void ui_ctrlr_set_news_feed_opacity (float opacity);
 void ui_ctrlr_set_twitter_feed (feed_twitter_t *feed);
-void ui_ctrlr_set_twitter_opacity (float opacity);
+void ui_ctrlr_set_twitter_feed_opacity (float opacity);
 
 bool ui_ctrlr_settings_get_active (void);
 void ui_ctrlr_settings_set_active (bool active);

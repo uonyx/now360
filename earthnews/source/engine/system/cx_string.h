@@ -57,6 +57,7 @@ cxu32 cx_str_get_unicode_codepoints (cxu32 *dst, cxu32 dstSize, const cx_str_uni
 
 static CX_INLINE char *cx_strcat (char *dst, cxu32 dstSize, const char *src);
 static CX_INLINE char *cx_strcpy (char *dst, cxu32 dstSize, const char *src);
+static CX_INLINE char *cx_strncpy (char *dst, cxu32 dstSize, const char *src, cxu32 num);
 static CX_INLINE char *cx_strdup (const char *str, cxu32 strLength);
 static CX_INLINE cxi32 cx_sprintf (char *dst, cxu32 dstSize, const char *format, ...);
 
@@ -75,6 +76,26 @@ static CX_INLINE char *cx_strcpy (char *dst, cxu32 dstSize, const char *src)
   dst [dstSize - 1] = 0;
   
   return d;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static CX_INLINE char *cx_strncpy (char *dst, cxu32 dstSize, const char *src, cxu32 num)
+{
+  CX_ASSERT (src);
+  CX_ASSERT (dst);
+  CX_ASSERT (dstSize);
+  
+  cxu32 copySize = num + 1;
+  
+  if (dstSize < copySize)
+  {
+    copySize = dstSize;
+  }
+  
+  return cx_strcpy (dst, copySize, src);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

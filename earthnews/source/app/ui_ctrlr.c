@@ -92,8 +92,8 @@ typedef struct ticker_tweet_t
   struct 
   {
     cxu32 loc; //  start pos
-    cxu32 charCount;
     cxu32 type; // text or link
+    cxu32 charCount;
   } elems [TWITTER_TICKER_TWEET_MAX_ENTRIES];
   
   char buffer [TWITTER_MAX_TWEET_LEN];
@@ -142,7 +142,7 @@ typedef struct ui_music_t
   ui_custom_t *view;
   ui_custom_t *toggle;
   ui_custom_t *queue;
-  ui_custom_t *play; // pause
+  ui_custom_t *play; // & pause
   ui_custom_t *prev;
   ui_custom_t *next;
   
@@ -152,11 +152,6 @@ typedef struct ui_music_t
   cx_texture *iconPrev;
   cx_texture *iconQueue;
   
-  // queue
-  // toggle
-  // pause
-  // next
-  // prev
   animdata_t fade;
 } ui_music_t;
 
@@ -764,7 +759,7 @@ void ui_ctrlr_set_twitter_feed (feed_twitter_t *feed)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ui_ctrlr_set_twitter_opacity (float opacity)
+void ui_ctrlr_set_twitter_feed_opacity (float opacity)
 {
   g_uitwitter.baseOpacity = opacity;
 }
@@ -940,23 +935,37 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
     
     CX_ASSERT (i > 0);
     
-    if (p0 == dest->elems [i-1].loc)
+    if (p0 == dest->elems [i - 1].loc)
     {
-      i = i -1;
+      i = i - 1;
     }
 
     CX_ASSERT (i < TWITTER_TICKER_TWEET_MAX_ENTRIES);
     dest->elems [i].loc = p0;
     dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_LINK;
     
-    char c = 0;
+    unsigned char c = 0;
     char *t = (char *) http;
+    
+    cxu32 ccount = 0;
     
     while ((c = *t++))
     {
-      // stride until illegal url character
-      if ((c == ' ') || (c == '#') || (c == '@') || (c > 127))
+      if (c > 127)
       {
+        CX_DEBUG_BREAKABLE_EXPR;
+      }
+      
+      // stride until url terminator char
+      if ((c <=  32) || (c >  127) || (c == '@') || (c == '\\') ||
+          (c == '#') || (c == '+') || (c == '~') || (c == '*') ||
+          (c == '{') || (c == '}') || (c == '<') || (c == '>'))
+      {
+        if (c > 32) // not whitespace
+        {
+          --t; // re-adjust back to before terminator char
+        }
+        
         cxu32 p = t - start;
         
         CX_ASSERT (i < TWITTER_TICKER_TWEET_MAX_ENTRIES);
@@ -965,13 +974,10 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
         
         currLoc = p;
         
-        if (c != ' ') // uhm... wtf? must be a good reason for this lol.
-        {
-          --t;
-        }
-        
         break;
       }
+      
+      ccount++;
     }
     
     curr = t;
@@ -988,26 +994,37 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
   
   CX_ASSERT (dest->elemCount <= TWITTER_TICKER_TWEET_MAX_ENTRIES);
 
+#if 0
   for (cxu32 j = 0; j < dest->elemCount; ++j)
   {
     cxu32 loc = dest->elems [j].loc;
     
     if (loc > 0)
     {
+      unsigned char dc = dest->buffer [loc - 1];
+      
+      if (dc > 127)
+      {
+        CX_DEBUG_BREAKABLE_EXPR;
+      }
+      
       dest->buffer [loc - 1] = 0;
     }
   }
-  
-#if 0
-  for (cxu32 j = 0; j < dest->elemCount; ++j)
+#else
+  for (cxu32 j = 0, jc = dest->elemCount; j < jc; ++j)
   {
     cxu32 loc = dest->elems [j].loc;
+
+    if ((j > 0) && (loc > 0))
+    {
+      dest->elems [j - 1].charCount = loc - dest->elems [j - 1].loc;
+    }
     
-    const char *str = &dest->buffer [loc];
-    
-    CX_LOG_CONSOLE (1, "%s", str);
-    
-    CX_DEBUG_BREAKABLE_EXPR;
+    if (j == (jc - 1)) // last element
+    {
+      dest->elems [j].charCount = strlen (&dest->buffer [loc]);
+    }
   }
 #endif
 }
@@ -1096,7 +1113,15 @@ static void ui_ctrlr_twitter_ticker_render (ui_custom_t *custom)
           for (cxu32 j = 0; j < tickerTweet.elemCount; ++j)
           {
             cxu32 loc = tickerTweet.elems [j].loc;
+#if 0
             const char *s = &tickerTweet.buffer [loc];
+#else
+            cxu32 sz = tickerTweet.elems [j].charCount;
+            
+            char s [512];
+          
+            cx_strncpy (s, 512, &tickerTweet.buffer [loc], sz);
+#endif
             cx_sprintf (tickerTweetText, 512, "%s ", s);
             
             bool isLink = (tickerTweet.elems [j].type == TWITTER_TICKER_TWEET_ELEM_TYPE_LINK);

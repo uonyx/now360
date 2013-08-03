@@ -521,11 +521,13 @@ static void util_init_status_bar (void)
   g_status_msg_text [STATUS_BAR_MSG_NEWS_COMMS_ERROR] = @"TXT_NEWS_CONNECTION_ERROR";
   g_status_msg_text [STATUS_BAR_MSG_TWITTER_COMMS_ERROR] = @"TXT_TWITTER_CONNECTION_ERROR";
   g_status_msg_text [STATUS_BAR_MSG_WEATHER_COMMS_ERROR] = @"TXT_WEATHER_CONNECTION_ERROR";
+  g_status_msg_text [STATUS_BAR_MSG_IOS_MEMORY_WARNING] = @"TXT_IOS_MEMORY_WARNING";
   
-  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.9f, 0.2f, 0.2f, 1.0f); // red
-  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_NEWS_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
-  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_TWITTER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
-  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_WEATHER_COMMS_ERROR], 0.9f, 0.9f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_CONNECTION_ERROR], 0.93f, 0.2f, 0.2f, 1.0f); // red
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_NEWS_COMMS_ERROR], 0.93f, 0.93f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_TWITTER_COMMS_ERROR], 0.93f, 0.93f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_WEATHER_COMMS_ERROR], 0.93f, 0.93f, 0.2f, 1.0f); // yellow
+  cx_colour_set (&g_status_msg_colour [STATUS_BAR_MSG_IOS_MEMORY_WARNING], 0.93f, 0.5f, 0.0f, 1.0f); // orange
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

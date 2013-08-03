@@ -11,3 +11,4 @@
 "TXT_WEATHER_CONNECTION_ERROR" = "Wetter-Service-Verbindung Fehler";
 "TXT_MORE_NEWS" = "Weitere Nachrichten";
 "TXT_QUEUE_SONGS" = "Queue Lieder für die Wiedergabe";
+"TXT_IOS_MEMORY_WARNING" = "iOS Speicher Warnung";

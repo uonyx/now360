@@ -120,8 +120,12 @@ static cx_date            g_dateUTC;
 static cx_date            g_dateLocal;
 static float              g_dateUpdateTimer = 0.0f;
 
-static float              g_feedsUITargetOpacity = 1.0f;
-static float              g_feedsUICurrentOpacity = 1.0f;
+static float              g_feedsOSDZoomOpacity = 1.0f;
+static float              g_feedsOSDZoomTargetOpacity = 1.0f;
+static float              g_feedsNewsOSDOpacity = 1.0f;
+static float              g_feedsNewsOSDTargetOpacity = 1.0f;
+static float              g_feedsTwitterOSDOpacity = 1.0f;
+static float              g_feedsTwitterOSDTargetOpacity = 1.0f;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,6 +162,7 @@ static void app_load_stage_render (void);
 static void app_update_clocks (void);
 static void app_update_camera (void);
 static void app_update_earth (void);
+static void app_update_osd_opacity (void);
 static void app_update_feeds (void);
 static void app_update_feeds_news (void);
 static void app_update_feeds_twitter (void);
@@ -430,9 +435,11 @@ void app_update (void)
     {
       input_update ();
       
+      app_update_clocks ();
+      
       app_update_camera ();
       
-      app_update_clocks ();
+      app_update_osd_opacity ();
       
       app_update_earth ();
       
@@ -991,7 +998,7 @@ static void app_update_earth (void)
 {
   // update 2d render info: font opacity
   
-  float opacity = g_feedsUICurrentOpacity;
+  float opacity = g_feedsOSDZoomOpacity;
   
   float screenWidth = cx_gdi_get_screen_width ();
   float screenHeight = cx_gdi_get_screen_height ();
@@ -1055,13 +1062,40 @@ static void app_update_earth (void)
 
 static void app_update_feeds (void)
 {
-  float dt = (float) cx_system_time_get_delta_time ();
-  g_feedsUICurrentOpacity += ((g_feedsUITargetOpacity - g_feedsUICurrentOpacity) * dt * 7.0f);
-  g_feedsUICurrentOpacity = cx_clamp (g_feedsUICurrentOpacity, 0.0f, 1.0f);
+  // set osd opacity
+  
+  ui_ctrlr_set_news_feed_opacity (g_feedsOSDZoomOpacity * g_feedsNewsOSDOpacity);
+  ui_ctrlr_set_twitter_feed_opacity (g_feedsOSDZoomOpacity * g_feedsTwitterOSDOpacity);
+  
+  // update feeds
   
   app_update_feeds_news ();
   app_update_feeds_twitter ();
   app_update_feeds_weather ();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void app_update_osd_opacity (void)
+{
+  float dt = (float) cx_system_time_get_delta_time ();
+  
+  // zoom opacity
+  
+  g_feedsOSDZoomOpacity += ((g_feedsOSDZoomTargetOpacity - g_feedsOSDZoomOpacity) * dt * 7.0f);
+  g_feedsOSDZoomOpacity = cx_clamp (g_feedsOSDZoomOpacity, 0.0f, 1.0f);
+  
+  // news opacity
+  
+  g_feedsNewsOSDOpacity += ((g_feedsNewsOSDTargetOpacity - g_feedsNewsOSDOpacity) * dt * 10.0f);
+  g_feedsNewsOSDOpacity = cx_clamp (g_feedsNewsOSDOpacity, 0.0f, 1.0f);
+  
+  // twitter opacity
+  
+  g_feedsTwitterOSDOpacity += ((g_feedsTwitterOSDTargetOpacity - g_feedsTwitterOSDOpacity) * dt * 10.0f);
+  g_feedsTwitterOSDOpacity = cx_clamp (g_feedsTwitterOSDOpacity, 0.0f, 1.0f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1079,9 +1113,10 @@ static void app_update_feeds_news (void)
     {
       case FEED_REQ_STATUS_SUCCESS:
       {
-        ui_ctrlr_set_news_feed (feed);
-        feed->reqStatus = FEED_REQ_STATUS_INVALID;
         util_activity_indicator_set_active (false);
+        ui_ctrlr_set_news_feed (feed);
+        g_feedsNewsOSDTargetOpacity = 1.0f;
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
         break;
       }
         
@@ -1131,9 +1166,10 @@ static void app_update_feeds_twitter (void)
     {
       case FEED_REQ_STATUS_SUCCESS:
       {
-        ui_ctrlr_set_twitter_feed (feed);
-        feed->reqStatus = FEED_REQ_STATUS_INVALID;
         util_activity_indicator_set_active (false);
+        ui_ctrlr_set_twitter_feed (feed);
+        g_feedsTwitterOSDTargetOpacity = 1.0f;
+        feed->reqStatus = FEED_REQ_STATUS_INVALID;
         break;
       }
         
@@ -1142,6 +1178,7 @@ static void app_update_feeds_twitter (void)
         util_status_bar_set_msg (STATUS_BAR_MSG_TWITTER_COMMS_ERROR);
         util_activity_indicator_set_active (false);
         ui_ctrlr_set_twitter_feed (feed);
+        g_feedsTwitterOSDTargetOpacity = 1.0f;
         feed->reqStatus = FEED_REQ_STATUS_INVALID;
         break;
       }
@@ -1343,7 +1380,7 @@ static void app_render_3d_earth (void)
   cx_gdi_enable_z_write (false);
   
   // draw points
-  float opacity = g_feedsUICurrentOpacity;
+  float opacity = g_feedsOSDZoomOpacity;
   
   // gather points
   int displayCount = 0;
@@ -1518,8 +1555,6 @@ static void app_render_2d (void)
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MV, &view);
   cx_gdi_set_transform (CX_GDI_TRANSFORM_MVP, &proj);
   
-  util_status_bar_render ();
-  
   //////////////
   // render
   //////////////
@@ -1536,7 +1571,10 @@ static void app_render_2d (void)
   // render fade
   app_render_2d_screen_fade ();
   
-  //
+  // status
+  util_status_bar_render ();
+  
+  // logo
   app_render_2d_logo ();
   
   //////////////
@@ -1643,11 +1681,6 @@ static void app_render_2d_local_clock (void)
 
 static void app_render_2d_feeds (void)
 {
-  float opacity = g_feedsUICurrentOpacity;
-  
-  ui_ctrlr_set_news_feed_opacity (opacity);
-  ui_ctrlr_set_twitter_opacity (opacity);
-  
   ui_ctrlr_render ();
 }
 
@@ -2053,13 +2086,17 @@ static void app_input_touch_began (float x, float y)
         bool loc = settings_get_local_tweets_only ();
         
         feeds_twitter_search (newFeedTwitter, query, loc, lat, lon);
+        
         util_activity_indicator_set_active (true);
+        g_feedsTwitterOSDTargetOpacity = 0.0f;
       }
       
       if (newFeedNews->reqStatus == FEED_REQ_STATUS_INVALID)
       {
         feeds_news_search (newFeedNews, query);
+        
         util_activity_indicator_set_active (true);
+        g_feedsNewsOSDTargetOpacity = 0.0f;
       }
     }
     
@@ -2189,7 +2226,7 @@ static void app_input_zoom (float factor)
   
   float fovMid = (CAMERA_MAX_FOV - CAMERA_MIN_FOV) * 0.55f; // 0.5f;
   float fovCutoff = CAMERA_MIN_FOV + fovMid;
-  g_feedsUITargetOpacity = (g_camera->fov <= fovCutoff) ? 1.0f : 0.0f;
+  g_feedsOSDZoomTargetOpacity = (g_camera->fov <= fovCutoff) ? 1.0f : 0.0f;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2396,7 +2433,10 @@ void app_on_memory_warning (void)
   
   if (g_appState == APP_STATE_UPDATE)
   {
+    util_status_bar_set_msg (STATUS_BAR_MSG_IOS_MEMORY_WARNING);
+    
     cx_http_clear_cache ();
+    
     metrics_event_log (METRICS_EVENT_APP_MEMORY_WARNING, NULL);
   }
 }

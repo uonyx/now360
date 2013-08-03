@@ -11,3 +11,4 @@
 "TXT_WEATHER_CONNECTION_ERROR" = "El tiempo de error de conexión de servicio";
 "TXT_MORE_NEWS" = "Más noticias";
 "TXT_QUEUE_SONGS" = "Canciones de cola para su reproducción";
+"TXT_IOS_MEMORY_WARNING" = "Advertencia de memoria iOS";
