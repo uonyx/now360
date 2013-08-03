@@ -276,14 +276,12 @@ void feeds_news_search (feed_news_t *feed, const char *query)
   // q
   char q [256];
   cx_str_percent_encode (q, 256, query);
-  
   CX_LOG_CONSOLE (1, "%s", q);
   
   // request
   
   char request [512];
-  cx_sprintf (request, 512, "%s?q=%s&output=rss", url, q);
-  
+  cx_sprintf (request, 512, "%s?q=%s&output=rss", url, q); // &ned=en
   CX_LOG_CONSOLE (1, "%s", request);
   
   feed->httpReqId = cx_http_get (request, NULL, 0, NEWS_HTTP_REQUEST_TIMEOUT, http_callback_news, feed);
@@ -381,7 +379,7 @@ static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
           
           if (pubDate)
           {
-            const char *d = cx_xml_node_content (pubDate);
+            char *d = cx_xml_node_content (pubDate);
             
             char day [32];
             char monn [32];
@@ -429,6 +427,8 @@ static bool feeds_news_parse (feed_news_t *feed, const char *data, int dataSize)
             rssItem->pubDateInfo.mday = mday;
             rssItem->pubDateInfo.mon = month;
             rssItem->pubDateInfo.secs = seconds;
+            
+            cx_free (d);
           }
           
           // next

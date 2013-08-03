@@ -20,6 +20,7 @@
 
 #define UI_CTRLR_DEBUG                (0)
 #define UI_CTRLR_DEBUG_NEWS_LOCALISED (0)
+#define UI_CTRLR_DEBUG_NEWS_DATE_SORT (1)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -389,7 +390,10 @@ static void ui_ctrlr_button_render_with_image (ui_custom_t *custom, cx_colour* c
   float x2 = x1 + w;
   float y2 = y1 + h;
   
-  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, colour, NULL);
+  cx_colour bgCol = *colour;
+  bgCol.a *= opacity;
+  
+  cx_draw_quad (x1, y1, x2, y2, 0.0f, 0.0f, &bgCol, NULL);
   
   // image
   
@@ -500,7 +504,7 @@ static void ui_ctrlr_news_position_setup (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#if UI_CTRLR_DEBUG_NEWS_DATE_SORT
 static int cmp_feed_news_item (feed_news_item_t *item0, feed_news_item_t *item1)
 {
   CX_ASSERT (item0);
@@ -533,7 +537,7 @@ static int cmp_feed_news_item (feed_news_item_t *item0, feed_news_item_t *item1)
     return (item0->pubDateInfo.mon > item1->pubDateInfo.mon) ? 1 : -1;
   }
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -557,8 +561,8 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
     entry = entry->next;
   }
   
+#if UI_CTRLR_DEBUG_NEWS_DATE_SORT
   // (selection) sort array according to entry pubDate
-  
   for (int si = 0; si < (entryCount - 1); ++si)
   {
     int maxIdx = si;
@@ -580,6 +584,7 @@ static void ui_ctrlr_news_populate (feed_news_t *feed)
     entryArray [maxIdx] = entryArray [si];
     entryArray [si] = tmpEntry;
   }
+#endif
   
   const cx_font *font = util_get_font (FONT_ID_NEWS_18);
   
@@ -951,11 +956,6 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
     
     while ((c = *t++))
     {
-      if (c > 127)
-      {
-        CX_DEBUG_BREAKABLE_EXPR;
-      }
-      
       // stride until url terminator char
       if ((c <=  32) || (c >  127) || (c == '@') || (c == '\\') ||
           (c == '#') || (c == '+') || (c == '~') || (c == '*') ||
@@ -971,8 +971,6 @@ static void ui_ctrlr_twitter_get_ticker_tweet (ticker_tweet_t *dest, const char 
         CX_ASSERT (i < TWITTER_TICKER_TWEET_MAX_ENTRIES);
         dest->elems [i].loc = p;
         dest->elems [i++].type = TWITTER_TICKER_TWEET_ELEM_TYPE_TEXT;
-        
-        currLoc = p;
         
         break;
       }
@@ -1208,10 +1206,12 @@ static void ui_ctrlr_twitter_ticker_pressed (ui_custom_t *custom, const cx_vec2 
 static void ui_ctrlr_twitter_button_render (ui_custom_t *custom)
 {
   cx_colour col1;
-  cx_colour_set (&col1, 0.0f, 0.6745f, 0.9294f, 1.0f * g_uitwitter.baseOpacity);
-  cx_colour col2 = *cx_colour_grey ();
+  cx_colour_set (&col1, 0.0f, 0.6745f, 0.9294f, 1.0f);// * g_uitwitter.baseOpacity);
+  cx_colour col2;
+  cx_colour_set (&col2, 0.5f, 0.5f, 0.5f, 1.0f);// * g_uitwitter.baseOpacity);
   cx_texture *image = g_uitwitter.birdIcon;
   
+  ui_widget_set_opacity (custom, g_uitwitter.baseOpacity);
   ui_ctrlr_button_render_with_image (custom, &col1, &col2, image, false, true);
 }
 

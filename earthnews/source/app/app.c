@@ -2217,12 +2217,11 @@ static void app_input_touch_ended (float x, float y)
 
 static void app_input_zoom (float factor)
 {
-  float f = cx_clamp (factor, 0.5f, 1.5f);
+  //float f = cx_clamp (factor, 0.5f, 1.5f);
   
-  f = g_camera->fov + (1.0f - factor);
+  float f = g_camera->fov + (1.0f - factor);
   
   g_camera->fov = cx_clamp (f, CAMERA_MIN_FOV, CAMERA_MAX_FOV);
-  
   
   float fovMid = (CAMERA_MAX_FOV - CAMERA_MIN_FOV) * 0.55f; // 0.5f;
   float fovCutoff = CAMERA_MIN_FOV + fovMid;

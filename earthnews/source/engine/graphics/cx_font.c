@@ -611,183 +611,186 @@ void cx_font_render (const cx_font *font, const char *text, cxf32 x, cxf32 y, cx
   CX_ASSERT (text);
   CX_ASSERT (colour);
   
-  cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
-  cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
-  
-  // use shader
-  cx_shader_begin (shader);
-  
-  // set texture
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, fontImpl->texture);
-  
-  // set mvp
-  cx_mat4x4 mvp;
-  cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
-  
-  cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
-  cx_shader_set_float (shader, "u_z", &z, 1);
-  
-  cxf32 sx = fontImpl->scaleX;
-  cxf32 sy = fontImpl->scaleY;
-  cxf32 px = x;
-  cxf32 py = y + (fontImpl->height * sy);
-  
-  if (alignment & CX_FONT_ALIGNMENT_CENTRE_X)
-  {
-    cxf32 tw = cx_font_get_text_width (font, text);
-    px = px - (tw * 0.5f);
-  }
-  else if (alignment & CX_FONT_ALIGNMENT_RIGHT_X)
-  {
-    cxf32 tw = cx_font_get_text_width (font, text);
-    px = px + (tw * 0.5f);
-  }
-  
-  if (alignment & CX_FONT_ALIGNMENT_CENTRE_Y)
-  {
-    cxf32 th = cx_font_get_height (font);
-    py = py - (th * 0.5f);
-  }
-  
-  // gather vertices
-  
   cxu32 srcSize = strlen (text); // data length
-  const cxu8 *src = (const cxu8 *) text;
   
-  cxi32 ss = srcSize;
-  cxi32 ds = 0;
-  
-  cxu32 vcount = srcSize * 4;
-  
-  cx_vec2 pos [vcount]; // unicode decoded strlen <= srcSize
-  cx_vec2 uv [vcount];
-  
-  cxu32 qcount = 0;
-  
-  while (ss > 0)
+  if (srcSize > 0)
   {
-    cxu32 cp = 0;
-    cxu32 offset = cx_str_utf8_decode (&cp, src);
-    cxi32 cIndex = cx_font_bsearch_codepoint_index (cp, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+    cx_font_impl *fontImpl = (cx_font_impl *) font->fontdata;
+    cx_shader *shader = cx_shader_get_built_in (CX_SHADER_BUILT_IN_FONT);
     
-    if (cIndex > -1)
+    // use shader
+    cx_shader_begin (shader);
+    
+    // set texture
+    cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_DIFFUSE_MAP, fontImpl->texture);
+    
+    // set mvp
+    cx_mat4x4 mvp;
+    cx_gdi_get_transform (CX_GDI_TRANSFORM_MVP, &mvp);
+    
+    cx_shader_set_uniform (shader, CX_SHADER_UNIFORM_TRANSFORM_MVP, &mvp);
+    cx_shader_set_float (shader, "u_z", &z, 1);
+    
+    cxf32 sx = fontImpl->scaleX;
+    cxf32 sy = fontImpl->scaleY;
+    cxf32 px = x;
+    cxf32 py = y + (fontImpl->height * sy);
+    
+    if (alignment & CX_FONT_ALIGNMENT_CENTRE_X)
     {
-      stbtt_aligned_quad quad;
-      stbtt_GetBakedQuad (fontImpl->ttfCharData, fontImpl->textureWidth, fontImpl->textureHeight,
-                          cIndex, sx, sy, &px, &py, &quad, 1);
-      
-      cxu32 i = qcount * 4;
-      
-      CX_ASSERT ((i + 3) < (srcSize * 4));
-      
-      pos [i + 0].x = quad.x0;
-      pos [i + 0].y = quad.y0;
-      pos [i + 1].x = quad.x0;
-      pos [i + 1].y = quad.y1;
-      pos [i + 2].x = quad.x1;
-      pos [i + 2].y = quad.y0;
-      pos [i + 3].x = quad.x1;
-      pos [i + 3].y = quad.y1;
-      
-      uv [i + 0].x = quad.s0;
-      uv [i + 0].y = quad.t0;
-      uv [i + 1].x = quad.s0;
-      uv [i + 1].y = quad.t1;
-      uv [i + 2].x = quad.s1;
-      uv [i + 2].y = quad.t0;
-      uv [i + 3].x = quad.s1;
-      uv [i + 3].y = quad.t1;
-      
-      ++qcount;
+      cxf32 tw = cx_font_get_text_width (font, text);
+      px = px - (tw * 0.5f);
+    }
+    else if (alignment & CX_FONT_ALIGNMENT_RIGHT_X)
+    {
+      cxf32 tw = cx_font_get_text_width (font, text);
+      px = px + (tw * 0.5f);
     }
     
-    src += offset;
-    ss -= offset;
-    
-    ds++;
-  }
-  
-  // render text
-  
-  if (qcount > 0)
-  {
-    // batch triangestrip points
-    //(012) (213) (234) (435) ... total number of trianges == points - 2 == (len * 4) - 2
-    cxu32 numTri = (qcount * 4) - 2;
-    cxu32 numPoints = numTri * 3;
-    
-    cx_vec2 pos2 [numPoints];
-    cx_vec2 uv2 [numPoints];
-    cx_colour col [numPoints];
-    
-    cxu32 tri = 0;
-    cxu32 tript = 0;
-    cxu32 ni = 0;
-    
-    const cx_colour *null = cx_colour_null ();
-    
-    bool spacing = false; // space between characters
-    
-    while (tri < numTri)
+    if (alignment & CX_FONT_ALIGNMENT_CENTRE_Y)
     {
-      cxu32 sa0 = tript;      // 0
-      cxu32 sa1 = sa0 + 1;    // 1
-      cxu32 sa2 = sa1 + 1;    // 2
-      
-      cxu32 sa3 = sa2;        // 2
-      cxu32 sa4 = sa1;        // 1
-      cxu32 sa5 = sa3 + 1;    // 3
-      
-      col [ni] = spacing ? *null : *colour;
-      pos2 [ni] = pos [sa0];
-      uv2 [ni++] = uv [sa0];
-      
-      col [ni] = spacing ? *null : *colour;
-      pos2 [ni] = pos [sa1];
-      uv2 [ni++] = uv [sa1];
-      
-      col [ni] = spacing ? *null : *colour;
-      pos2 [ni] = pos [sa2];
-      uv2 [ni++] = uv [sa2];
-      
-      col [ni] = spacing ? *null : *colour;
-      pos2 [ni] = pos [sa3];
-      uv2 [ni++] = uv [sa3];
-      
-      col [ni] = spacing ? *null : *colour;
-      pos2 [ni] = pos [sa4];
-      uv2 [ni++] = uv [sa4];
-      
-      col [ni] = spacing ? *null : *colour;
-      pos2 [ni] = pos [sa5];
-      uv2 [ni++] = uv [sa5];
-      
-      tript = sa3;
-      
-      tri += 2;
-      
-      spacing = !spacing;
+      cxf32 th = cx_font_get_height (font);
+      py = py - (th * 0.5f);
     }
+    
+    // gather vertices
+    const cxu8 *src = (const cxu8 *) text;
+    
+    cxi32 ss = srcSize;
+    cxi32 ds = 0;
+    
+    cxu32 vcount = srcSize * 4;
+    
+    cx_vec2 pos [vcount]; // unicode decoded strlen <= srcSize
+    cx_vec2 uv [vcount];
+    
+    cxu32 qcount = 0;
+    
+    while (ss > 0)
+    {
+      cxu32 cp = 0;
+      cxu32 offset = cx_str_utf8_decode (&cp, src);
+      cxi32 cIndex = cx_font_bsearch_codepoint_index (cp, fontImpl->unicodePts, fontImpl->unicodePtsSize);
+      
+      if (cIndex > -1)
+      {
+        stbtt_aligned_quad quad;
+        stbtt_GetBakedQuad (fontImpl->ttfCharData, fontImpl->textureWidth, fontImpl->textureHeight,
+                            cIndex, sx, sy, &px, &py, &quad, 1);
+        
+        cxu32 i = qcount * 4;
+        
+        CX_ASSERT ((i + 3) < (srcSize * 4));
+        
+        pos [i + 0].x = quad.x0;
+        pos [i + 0].y = quad.y0;
+        pos [i + 1].x = quad.x0;
+        pos [i + 1].y = quad.y1;
+        pos [i + 2].x = quad.x1;
+        pos [i + 2].y = quad.y0;
+        pos [i + 3].x = quad.x1;
+        pos [i + 3].y = quad.y1;
+        
+        uv [i + 0].x = quad.s0;
+        uv [i + 0].y = quad.t0;
+        uv [i + 1].x = quad.s0;
+        uv [i + 1].y = quad.t1;
+        uv [i + 2].x = quad.s1;
+        uv [i + 2].y = quad.t0;
+        uv [i + 3].x = quad.s1;
+        uv [i + 3].y = quad.t1;
+        
+        ++qcount;
+      }
+      
+      src += offset;
+      ss -= offset;
+      
+      ds++;
+    }
+    
+    // render text
+    
+    if (qcount > 0)
+    {
+      // batch triangestrip points
+      //(012) (213) (234) (435) ... total number of trianges == points - 2 == (len * 4) - 2
+      cxu32 numTri = (qcount * 4) - 2;
+      cxu32 numPoints = numTri * 3;
+      
+      cx_vec2 pos2 [numPoints];
+      cx_vec2 uv2 [numPoints];
+      cx_colour col [numPoints];
+      
+      cxu32 tri = 0;
+      cxu32 tript = 0;
+      cxu32 ni = 0;
+      
+      const cx_colour *null = cx_colour_null ();
+      
+      bool spacing = false; // space between characters
+      
+      while (tri < numTri)
+      {
+        cxu32 sa0 = tript;      // 0
+        cxu32 sa1 = sa0 + 1;    // 1
+        cxu32 sa2 = sa1 + 1;    // 2
+        
+        cxu32 sa3 = sa2;        // 2
+        cxu32 sa4 = sa1;        // 1
+        cxu32 sa5 = sa3 + 1;    // 3
+        
+        col [ni] = spacing ? *null : *colour;
+        pos2 [ni] = pos [sa0];
+        uv2 [ni++] = uv [sa0];
+        
+        col [ni] = spacing ? *null : *colour;
+        pos2 [ni] = pos [sa1];
+        uv2 [ni++] = uv [sa1];
+        
+        col [ni] = spacing ? *null : *colour;
+        pos2 [ni] = pos [sa2];
+        uv2 [ni++] = uv [sa2];
+        
+        col [ni] = spacing ? *null : *colour;
+        pos2 [ni] = pos [sa3];
+        uv2 [ni++] = uv [sa3];
+        
+        col [ni] = spacing ? *null : *colour;
+        pos2 [ni] = pos [sa4];
+        uv2 [ni++] = uv [sa4];
+        
+        col [ni] = spacing ? *null : *colour;
+        pos2 [ni] = pos [sa5];
+        uv2 [ni++] = uv [sa5];
+        
+        tript = sa3;
+        
+        tri += 2;
+        
+        spacing = !spacing;
+      }
 
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-    glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
-    cx_gdi_assert_no_errors ();
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+      glEnableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+      cx_gdi_assert_no_errors ();
+      
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos2);
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv2);
+      glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], 4, GL_FLOAT, GL_FALSE, 0, col);
+      cx_gdi_assert_no_errors ();
+      
+      glDrawArrays (GL_TRIANGLE_STRIP, 0, numPoints);
+      cx_gdi_assert_no_errors ();
+      
+      glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
+      glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
+      glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+    }
     
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION], 2, GL_FLOAT, GL_FALSE, 0, pos2);
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD], 2, GL_FLOAT, GL_FALSE, 0, uv2);
-    glVertexAttribPointer (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR], 4, GL_FLOAT, GL_FALSE, 0, col);
-    cx_gdi_assert_no_errors ();
-    
-    glDrawArrays (GL_TRIANGLE_STRIP, 0, numPoints);
-    cx_gdi_assert_no_errors ();
-    
-    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_POSITION]);
-    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_TEXCOORD]);
-    glDisableVertexAttribArray (shader->attributes [CX_SHADER_ATTRIBUTE_COLOUR]);
+    cx_shader_end (shader);
   }
-  
-  cx_shader_end (shader);
 }
 #endif
 
@@ -891,7 +894,6 @@ cxi32 cx_font_render_word_wrap (const cx_font *font, const char *text, cxf32 x, 
   cxi32 newlines = 0;
   cxf32 fontHeight = fontImpl->height * sy;
   
-  c = 0;
   t = textBuffer; 
   while ((c = *t++))
   {

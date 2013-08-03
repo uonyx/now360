@@ -674,7 +674,6 @@ static void audio_music_now_playing_state_changed (void)
 
 - (void)handleVolumeChanged:(NSNotification *)notification
 {
-  CX_DEBUG_BREAKABLE_EXPR;
 }
 
 @end

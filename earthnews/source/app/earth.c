@@ -25,7 +25,7 @@
 #define DEBUG_EQUINOX_LIGHT (CX_DEBUG && 0)
 #define DEBUG_EQUINOX_LIGHT_ORBIT (DEBUG_EQUINOX_LIGHT && 0)
 
-#define DEBUG_PERFORMANCE_TEST_HI (CX_DEBUG && 0)
+#define DEBUG_PERFORMANCE_TEST_HI (CX_DEBUG && 1)
 #define DEBUG_PERFORMANCE_TEST_LO (CX_DEBUG && 0)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -302,7 +302,6 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
   {
     case DEVICE_TYPE_UNKNOWN:
     case DEVICE_TYPE_IPAD3:
-      //case DEVICE_TYPE_IPAD2:
     {
       slicesAtmos = 128;
       slicesCloud = 48;

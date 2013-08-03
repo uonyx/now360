@@ -465,7 +465,7 @@ device_type_t util_get_device_type (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void util_profanity_filter (const char *text)
+void util_profanity_filter (char *text)
 {
   cx_util_word_filter (text, (const char **) g_profanityWords, g_profanityWordCount, '*');
 }
@@ -736,6 +736,22 @@ static void util_init_profanity_filter (void)
     
     cx_free (buffer);
   }
+
+#if (CX_DEBUG && 0) // debug test
+  const char *text = "piece of shit punkass classic assassin ass in the wind bitch";
+  
+  char t [256];
+  
+  cx_strcpy (t, 256, text);
+  
+  CX_LOG_CONSOLE (1, "%s", t);
+  
+  util_profanity_filter (t);
+  
+  CX_LOG_CONSOLE (1, "%s", t);
+  
+  CX_DEBUG_BREAKABLE_EXPR;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

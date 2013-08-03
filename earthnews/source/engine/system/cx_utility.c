@@ -284,29 +284,62 @@ void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_ve
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_util_word_filter (const char *text, const char **words, cxu32 wordCount, char subchar)
+void cx_util_word_filter (char *text, const char **words, cxu32 wordCount, char subchar)
 {
   for (cxu32 i = 0; i < wordCount; ++i)
   {
     const char *word = words [i];
-    
     CX_ASSERT (word);
+    
+    bool matchWord = false;
+    
+    if (word [0] == '@')
+    {
+      word++;
+      matchWord = true;
+    }
+    
+    cxu32 wlen = strlen (word);
     
     char *found = strcasestr (text, word);
     
     while (found)
     {
-      cxu32 blen = strlen (word);
+      bool replace = false;
       
-      while (blen--)
+      if (matchWord) // match word
       {
-        if (*found != ' ') // ignore whitespace
+        cxu8 fca = (found == text) ? 0 : found [-1];
+        cxu8 fcb = found [wlen];
+        
+        if ((fca <= 32) && (fcb <= 32))
         {
-          *found++ = subchar;
+          replace = true;
         }
         else
         {
-          found++;
+          found += wlen;
+        }
+      }
+      else
+      {
+        replace = true; // contain world
+      }
+      
+      if (replace)
+      {
+        while (wlen--)
+        {
+          cxu8 fc = *found;
+          
+          if (fc > 32) // ignore whitespace
+          {
+            *found++ = subchar;
+          }
+          else
+          {
+            found++;
+          }
         }
       }
       
