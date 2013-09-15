@@ -30,8 +30,8 @@ void cx_analytics_session_begin (const cx_analytics_session_data *data)
   CX_ASSERT (data);
   
 #if CX_ANALYTICS_FLURRY_ENABLED
-  [Flurry startSession:[NSString stringWithCString:data->flurry.apiKey encoding:NSASCIIStringEncoding]];
   [Flurry setCrashReportingEnabled:TRUE];
+  [Flurry startSession:[NSString stringWithCString:data->flurry.apiKey encoding:NSASCIIStringEncoding]];
   
 #if CX_DEBUG
   [Flurry setDebugLogEnabled:TRUE];

@@ -45,7 +45,6 @@
 		3166F88E175EA426000D1147 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F88A175EA426000D1147 /* AppDelegate.m */; };
 		3166F88F175EA426000D1147 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F88B175EA426000D1147 /* main.m */; };
 		3166F890175EA426000D1147 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F88D175EA426000D1147 /* ViewController.m */; };
-		3166F89C175EA9E3000D1147 /* libFlurry.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3166F89B175EA9E3000D1147 /* libFlurry.a */; };
 		3166F89E17638D9B000D1147 /* cx_analytics.m in Sources */ = {isa = PBXBuildFile; fileRef = 3166F89D17638D9B000D1147 /* cx_analytics.m */; };
 		3166F8A4176395FC000D1147 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3166F8A3176395FC000D1147 /* SystemConfiguration.framework */; };
 		3166F8A71763A8DB000D1147 /* metrics.c in Sources */ = {isa = PBXBuildFile; fileRef = 3166F8A61763A8DA000D1147 /* metrics.c */; };
@@ -71,6 +70,8 @@
 		31A18A1E1793330000733E46 /* Default-Portrait@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 31A18A1D1793330000733E46 /* Default-Portrait@2x~ipad.png */; };
 		31B4E7DB1686956C00B5A371 /* ui.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7DA1686956C00B5A371 /* ui.c */; };
 		31B4E7E6168CFA9100B5A371 /* ui_ctrlr.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */; };
+		31F6B93517E5D055003C6D86 /* libFlurry_4.2.3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31F6B93417E5D055003C6D86 /* libFlurry_4.2.3.a */; };
+		31F6B93717E5D0FB003C6D86 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31F6B93617E5D0FB003C6D86 /* Security.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -151,7 +152,6 @@
 		3166F88D175EA426000D1147 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		3166F897175EA99D000D1147 /* cx_analytics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_analytics.h; sourceTree = "<group>"; };
 		3166F89A175EA9E3000D1147 /* Flurry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Flurry.h; sourceTree = "<group>"; };
-		3166F89B175EA9E3000D1147 /* libFlurry.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libFlurry.a; sourceTree = "<group>"; };
 		3166F89D17638D9B000D1147 /* cx_analytics.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = cx_analytics.m; sourceTree = "<group>"; };
 		3166F89F176394F2000D1147 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		3166F8A11763952C000D1147 /* libsystem_network.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsystem_network.dylib; path = usr/lib/system/libsystem_network.dylib; sourceTree = SDKROOT; };
@@ -203,6 +203,8 @@
 		31B4E7E4168CF97E00B5A371 /* ui_ctrlr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ui_ctrlr.h; sourceTree = "<group>"; };
 		31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui_ctrlr.c; sourceTree = "<group>"; };
 		31CE5D961618A82D00500B11 /* cx_vector2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_vector2.h; sourceTree = "<group>"; };
+		31F6B93417E5D055003C6D86 /* libFlurry_4.2.3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libFlurry_4.2.3.a; sourceTree = "<group>"; };
+		31F6B93617E5D0FB003C6D86 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -210,6 +212,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31F6B93717E5D0FB003C6D86 /* Security.framework in Frameworks */,
 				3166F8A9176937CF000D1147 /* Accounts.framework in Frameworks */,
 				3166F8A4176395FC000D1147 /* SystemConfiguration.framework in Frameworks */,
 				3166F8871759ED6A000D1147 /* Social.framework in Frameworks */,
@@ -223,7 +226,7 @@
 				3182B99C14B0B6680097A87E /* UIKit.framework in Frameworks */,
 				3182B99E14B0B6680097A87E /* Foundation.framework in Frameworks */,
 				3182B9A014B0B6680097A87E /* CoreGraphics.framework in Frameworks */,
-				3166F89C175EA9E3000D1147 /* libFlurry.a in Frameworks */,
+				31F6B93517E5D055003C6D86 /* libFlurry_4.2.3.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,8 +369,8 @@
 		3166F899175EA9E3000D1147 /* flurry */ = {
 			isa = PBXGroup;
 			children = (
+				31F6B93417E5D055003C6D86 /* libFlurry_4.2.3.a */,
 				3166F89A175EA9E3000D1147 /* Flurry.h */,
-				3166F89B175EA9E3000D1147 /* libFlurry.a */,
 			);
 			path = flurry;
 			sourceTree = "<group>";
@@ -430,6 +433,7 @@
 		3182B98C14B0B6680097A87E = {
 			isa = PBXGroup;
 			children = (
+				31F6B93617E5D0FB003C6D86 /* Security.framework */,
 				31A18A1D1793330000733E46 /* Default-Portrait@2x~ipad.png */,
 				31795E5E178B957B00FE94A6 /* Default-Landscape@2x~ipad.png */,
 				31561D0F178B8C260022AF8B /* app-02-icon.144.png */,
