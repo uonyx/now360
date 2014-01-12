@@ -4,7 +4,7 @@ Nov, 2013
 
 ## Background
 Done purely for educational reasons to re-familiarise myself with graphics programming, 3D maths, C, and to improve knowledge of the iOS platform. Being an iOS project, Objective-C was unavoidable and some of its use in this project is very questionable but I learn ;)
-- Written in C with the necessary Objective-C.
+- Written in C (with the necessary Objective-C) in my spare time.
 - Inspired by / Ode to [Life with Playstation](http://www.playstation.com/life). Perfect choice for an app as it doesn't require use of 3D modelling packages where I have no skill.
 - Test app for cx_engine framework (which was written in parallel).
 - Started just before the release of iOS6 (I have no idea what the app looks like in iOS7 yet) and released on the app store in August 2013. 
