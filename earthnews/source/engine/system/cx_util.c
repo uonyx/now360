@@ -1,11 +1,10 @@
 //
 //  cx_utility.c
 //
-//  Created by Ubaka Onyechi on 19/02/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
-#include "cx_utility.h"
+#include "cx_util.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,6 +285,8 @@ void cx_util_look_at (cx_mat4x4 *m, const cx_vec4 * CX_RESTRICT eye, const cx_ve
 
 void cx_util_word_filter (char *text, const char **words, cxu32 wordCount, char subchar)
 {
+  // brute-force search
+  
   for (cxu32 i = 0; i < wordCount; ++i)
   {
     const char *word = words [i];

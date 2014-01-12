@@ -1,8 +1,8 @@
 //
-//  settings.c
+//  settings.m
+//  now360
 //
-//  Created by Ubaka Onyechi on 19/02/2013.
-//  Copyright (c) 2013 uonyechi.com. All rights reserved.
+//  Copyright (c) 2013 Ubaka Onyechi. All rights reserved.
 //
 
 #import "settings.h"

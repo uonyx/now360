@@ -1,8 +1,7 @@
 //
 //  cx_string.c
 //
-//  Created by Ubaka Onyechi on 01/07/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "cx_string.h"

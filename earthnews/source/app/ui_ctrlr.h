@@ -1,9 +1,8 @@
 //
-//  ui_controller.h
-//  earthnews
+//  ui_ctrlr.h
+//  now360
 //
-//  Created by Ubaka Onyechi on 27/12/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef NOW360_UI_CTRLR_H

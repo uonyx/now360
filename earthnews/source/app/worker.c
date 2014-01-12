@@ -1,9 +1,8 @@
 //
 //  worker.c
-//  earthnews
+//  now360
 //
-//  Created by Ubaka Onyechi on 18/08/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "worker.h"

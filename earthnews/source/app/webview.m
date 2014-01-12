@@ -1,9 +1,8 @@
 //
 //  webview.m
-//  earthnews
+//  now360
 //
-//  Created by Ubaka Onyechi on 30/03/2013.
-//  Copyright (c) 2013 uonyechi.com. All rights reserved.
+//  Copyright (c) 2013 Ubaka Onyechi. All rights reserved.
 //
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,7 +330,7 @@ typedef enum
     _titleLabel.backgroundColor = [UIColor clearColor];
     _titleLabel.font = [UIFont boldSystemFontOfSize:14.0];
     _titleLabel.textColor = [UIColor whiteColor];
-    _titleLabel.textAlignment = UITextAlignmentLeft;
+    //_titleLabel.textAlignment = UITextAlignmentLeft; // iOS6 deprecated
     [self setTitleLabelText:title]; //_titleLabel.text = title;
     
 #if WEBVIEW_USE_ACTION_SHEET

@@ -1,9 +1,7 @@
 //
 //  cx_http.c
-//  earthnews
 //
-//  Created by Ubaka Onyechi on 03/05/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #import "cx_http.h"

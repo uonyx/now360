@@ -1,8 +1,8 @@
 //
 //  atmos.fsh
+//  now360
 //
-//  Created by Ubaka Onyechi on 26/11/2012.
-//  Copyright (c) 2011 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 precision lowp float;
@@ -22,21 +22,14 @@ void main (void)
   vec3 nVec = normalize (v_normal);
   vec3 lVec = normalize ((u_lightPosition - v_position).xyz);
   vec3 vVec = normalize ((u_eyePosition - v_position).xyz);
-  
-  //vec4 diffuseColor = vec4 (0.551, 0.702, 0.838, c_one);
-  //vec4 diffuseColor = vec4 (0.0, 0.749, 1.0, c_one); // deep sky blue
-  //vec4 diffuseColor = vec4 (0.0, 0.698, 0.894, c_one); // sky blue
-  //vec4 diffuseColor = vec4 (0.533, 0.807, 0.98, c_one); // light sky blue
   vec4 diffuseColor = vec4 (0.33, 0.80, 0.99, c_one); // my blue
 
   float dotp = dot (nVec, vVec); // view dot
 
-#if 1
-  
   float rim = c_one - max (dotp, c_zero);
-  
-  vec4 colour = diffuseColor * (rim * rim * rim);
+
   //vec4 colour = diffuseColor  * pow (rim, c_rimpower);
+  vec4 colour = diffuseColor * (rim * rim * rim);
   
   float dif = max (dot (nVec, lVec), c_zero);
   //dif = smoothstep (0.01, 0.3, dif);
@@ -46,25 +39,6 @@ void main (void)
   
   colour.rgb *= dif;
   //colour.a = rim;
-  
-#else
-  
-  vec4 colour = vec4 (c_zero);
-  
-  if (dotp > c_zero)
-  {
-    float rim = c_one - dotp;
-
-    colour = diffuseColor * pow (rim, c_rimpower);
-    
-    float dif = max (dot (nVec, lVec), c_zero);
-    dif = clamp ((dif - 0.01) / 0.29, c_zero, c_one);
-    
-    colour.rgb *= dif;
-    colour.a = rim;
-  }
-  
-#endif
   
   gl_FragColor = colour;
 }

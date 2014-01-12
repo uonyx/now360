@@ -1,8 +1,8 @@
 //
-//  earth.fsh
+//  topo-lo.fsh
+//  now360
 //
-//  Created by Ubaka Onyechi on 26/12/2011.
-//  Copyright (c) 2011 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 precision lowp float;

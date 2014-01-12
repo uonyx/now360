@@ -1,8 +1,7 @@
 //
 //  cx_matrix4x4.h
 //
-//  Created by Ubaka Onyechi on 05/02/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef CX_MATRIX4X4_H

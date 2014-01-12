@@ -22,7 +22,6 @@
 		3127E2DC15DAFD7E00793C60 /* cx_system.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2CD15DAFD7E00793C60 /* cx_system.c */; };
 		3127E2DD15DAFD7E00793C60 /* cx_thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2CF15DAFD7E00793C60 /* cx_thread.c */; };
 		3127E2DE15DAFD7E00793C60 /* cx_time.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2D115DAFD7E00793C60 /* cx_time.c */; };
-		3127E2DF15DAFD7E00793C60 /* cx_utility.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2D315DAFD7E00793C60 /* cx_utility.c */; };
 		3127E2E015DAFD7E00793C60 /* cx_xml.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2D615DAFD7E00793C60 /* cx_xml.c */; };
 		3127E2E715DAFE2000793C60 /* json.c in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2E315DAFE2000793C60 /* json.c */; };
 		3127E2EB15DAFF1A00793C60 /* cx_http.m in Sources */ = {isa = PBXBuildFile; fileRef = 3127E2EA15DAFF1A00793C60 /* cx_http.m */; };
@@ -70,6 +69,7 @@
 		31A18A1E1793330000733E46 /* Default-Portrait@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 31A18A1D1793330000733E46 /* Default-Portrait@2x~ipad.png */; };
 		31B4E7DB1686956C00B5A371 /* ui.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7DA1686956C00B5A371 /* ui.c */; };
 		31B4E7E6168CFA9100B5A371 /* ui_ctrlr.c in Sources */ = {isa = PBXBuildFile; fileRef = 31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */; };
+		31BDF36A18820FE100072B55 /* cx_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 31BDF36818820FE100072B55 /* cx_util.c */; };
 		31F6B93517E5D055003C6D86 /* libFlurry_4.2.3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31F6B93417E5D055003C6D86 /* libFlurry_4.2.3.a */; };
 		31F6B93717E5D0FB003C6D86 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31F6B93617E5D0FB003C6D86 /* Security.framework */; };
 /* End PBXBuildFile section */
@@ -106,8 +106,6 @@
 		3127E2D015DAFD7E00793C60 /* cx_thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_thread.h; sourceTree = "<group>"; };
 		3127E2D115DAFD7E00793C60 /* cx_time.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_time.c; sourceTree = "<group>"; };
 		3127E2D215DAFD7E00793C60 /* cx_time.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_time.h; sourceTree = "<group>"; };
-		3127E2D315DAFD7E00793C60 /* cx_utility.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_utility.c; sourceTree = "<group>"; };
-		3127E2D415DAFD7E00793C60 /* cx_utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_utility.h; sourceTree = "<group>"; };
 		3127E2D515DAFD7E00793C60 /* cx_vector4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_vector4.h; sourceTree = "<group>"; };
 		3127E2D615DAFD7E00793C60 /* cx_xml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_xml.c; sourceTree = "<group>"; };
 		3127E2D715DAFD7E00793C60 /* cx_xml.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_xml.h; sourceTree = "<group>"; };
@@ -202,6 +200,8 @@
 		31B4E7DA1686956C00B5A371 /* ui.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui.c; sourceTree = "<group>"; };
 		31B4E7E4168CF97E00B5A371 /* ui_ctrlr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ui_ctrlr.h; sourceTree = "<group>"; };
 		31B4E7E5168CFA9100B5A371 /* ui_ctrlr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ui_ctrlr.c; sourceTree = "<group>"; };
+		31BDF36818820FE100072B55 /* cx_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cx_util.c; sourceTree = "<group>"; };
+		31BDF36918820FE100072B55 /* cx_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cx_util.h; sourceTree = "<group>"; };
 		31CE5D961618A82D00500B11 /* cx_vector2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cx_vector2.h; sourceTree = "<group>"; };
 		31F6B93417E5D055003C6D86 /* libFlurry_4.2.3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libFlurry_4.2.3.a; sourceTree = "<group>"; };
 		31F6B93617E5D0FB003C6D86 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -270,6 +270,8 @@
 		3127E2C115DAFD7D00793C60 /* system */ = {
 			isa = PBXGroup;
 			children = (
+				31BDF36818820FE100072B55 /* cx_util.c */,
+				31BDF36918820FE100072B55 /* cx_util.h */,
 				3127E2C215DAFD7E00793C60 /* cx_debug.c */,
 				3127E2C315DAFD7E00793C60 /* cx_debug.h */,
 				3127E2C415DAFD7E00793C60 /* cx_defines.h */,
@@ -290,8 +292,6 @@
 				3127E2D015DAFD7E00793C60 /* cx_thread.h */,
 				3127E2D115DAFD7E00793C60 /* cx_time.c */,
 				3127E2D215DAFD7E00793C60 /* cx_time.h */,
-				3127E2D315DAFD7E00793C60 /* cx_utility.c */,
-				3127E2D415DAFD7E00793C60 /* cx_utility.h */,
 				3127E2D615DAFD7E00793C60 /* cx_xml.c */,
 				3127E2D715DAFD7E00793C60 /* cx_xml.h */,
 				3127E30B15E0555B00793C60 /* cx_list.h */,
@@ -580,7 +580,6 @@
 				3127E2DC15DAFD7E00793C60 /* cx_system.c in Sources */,
 				3127E2DD15DAFD7E00793C60 /* cx_thread.c in Sources */,
 				3127E2DE15DAFD7E00793C60 /* cx_time.c in Sources */,
-				3127E2DF15DAFD7E00793C60 /* cx_utility.c in Sources */,
 				3127E2E015DAFD7E00793C60 /* cx_xml.c in Sources */,
 				3127E2E715DAFE2000793C60 /* json.c in Sources */,
 				3127E2EB15DAFF1A00793C60 /* cx_http.m in Sources */,
@@ -610,6 +609,7 @@
 				3166F89E17638D9B000D1147 /* cx_analytics.m in Sources */,
 				3166F8A71763A8DB000D1147 /* metrics.c in Sources */,
 				3166F8AB176A8277000D1147 /* feeds.m in Sources */,
+				31BDF36A18820FE100072B55 /* cx_util.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -731,7 +731,7 @@
 					earthnews/source/engine/freetype2/include,
 				);
 				INFOPLIST_FILE = "earthnews/resource_ios/earthnews-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/earthnews/source/app/flurry\"",
@@ -768,7 +768,7 @@
 					earthnews/source/engine/freetype2/include,
 				);
 				INFOPLIST_FILE = "earthnews/resource_ios/earthnews-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/earthnews/source/app/flurry\"",

@@ -1,8 +1,7 @@
 //
 //  cx_json.c
 //
-//  Created by Ubaka Onyechi on 02/03/2013.
-//  Copyright (c) 2013 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "cx_json.h"

@@ -1,8 +1,7 @@
 //
 //  cx_vertex_data.c
 //
-//  Created by Ubaka Onyechi on 20/11/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "cx_vertex_data.h"

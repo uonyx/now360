@@ -1,8 +1,7 @@
 //
 //  cx_mesh.h
 //
-//  Created by Ubaka Onyechi on 26/02/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef CX_MESH_H

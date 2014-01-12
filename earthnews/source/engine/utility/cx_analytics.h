@@ -1,8 +1,7 @@
 //
 //  analytics.h
 //
-//  Created by Ubaka Onyechi on 04/06/2013.
-//  Copyright (c) 2013 uonyechi.com. All rights reserved.
+//  Copyright (c) 2013 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef CX_ANALYTICS_H

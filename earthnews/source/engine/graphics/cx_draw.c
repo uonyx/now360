@@ -1,8 +1,7 @@
 //
 //  cx_draw.c
 //
-//  Created by Ubaka Onyechi on 08/04/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include <OpenGLES/ES2/gl.h>
@@ -18,9 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, const cx_colour *colour);
-void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, cxf32 u1, cxf32 v1, cxf32 u2, cxf32 v2, 
-                           const cx_colour *colour, const cx_texture *texture);
+static void cx_draw_quad_colour (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, const cx_colour *colour);
+static void cx_draw_quad_texture (cxf32 x1, cxf32 y1, cxf32 x2, cxf32 y2, cxf32 z, cxf32 r, cxf32 u1, cxf32 v1,
+                                  cxf32 u2, cxf32 v2, const cx_colour *colour, const cx_texture *texture);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

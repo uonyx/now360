@@ -1,9 +1,8 @@
 //
 //  earth.c
-//  earthnews
+//  now360
 //
-//  Created by Ubaka Onyechi on 01/05/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "earth.h"
@@ -305,7 +304,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
     {
       slicesAtmos = 128;
       slicesCloud = 48;
-      earthShader   = "earth-hi";     highSpec = true;
+      earthShader   = "topo-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-4096.png";
@@ -314,13 +313,13 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       cx_sprintf (diffTexPath, 64, "data/images/earth/maps/diff-%02d-4096.png", month);
       break;
     }
-#if 1
+
     case DEVICE_TYPE_IPAD2:
     {
 #if DEBUG_PERFORMANCE_TEST_HI
       slicesAtmos = 128;
       slicesCloud = 48;
-      earthShader   = "earth-hi";     highSpec = true;
+      earthShader   = "topo-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-4096.png";
@@ -331,7 +330,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
       month = 6;
       slicesAtmos = 72;
       slicesCloud = 32;
-      earthShader   = "earth-lo"; highSpec = false;
+      earthShader   = "topo-lo"; highSpec = false;
       cloudShader   = "clouds";   animClouds = false;
       specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
@@ -341,7 +340,7 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
 #else // default
       slicesAtmos = 96;
       slicesCloud = 36;
-      earthShader   = "earth-hi";     highSpec = true;
+      earthShader   = "topo-hi";     highSpec = true;
       cloudShader   = "clouds-anim";  animClouds = true;
       specTexPath   = "data/images/earth/maps/spec1-2048.png";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
@@ -351,14 +350,14 @@ static struct earth_visual_t *earth_visual_create (const cx_date *date, float ra
 #endif
       break;
     }
-#endif
+
     case DEVICE_TYPE_IPAD1:
     default:
     {
       month = 6;
       slicesAtmos = 72;
       slicesCloud = 32;
-      earthShader   = "earth-lo"; highSpec = false;
+      earthShader   = "topo-lo"; highSpec = false;
       cloudShader   = "clouds";   animClouds = false;
       specTexPath   = "data/images/earth/maps/spec1-1024.jpg";
       bumpTexPath   = "data/images/earth/maps/norm-sobel3x3-2048.png";
@@ -757,13 +756,9 @@ static void earth_visual_render (const cx_vec4 *eye, const cx_date *date)
     {
       static float angle = 0.0f;
       float dt = (float) cx_system_time_get_delta_time () * 0.125f; // (1.0f / 120.0f);
-#if 1
+      
       angle += dt;
       angle = fmodf (angle, 360.0f);
-#else
-      angle -= dt;
-      angle = earth_visual_dump_multiples (angle, 360.0f);
-#endif
     
       cx_mat4x4 r; // model-view matrix
       cx_mat4x4_rotation_axis_y (&r, cx_rad (angle));

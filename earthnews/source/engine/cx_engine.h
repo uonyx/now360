@@ -1,8 +1,7 @@
 //
 //  cx_engine.h
 //
-//  Created by Ubaka Onyechi on 09/04/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef CX_ENGINE_H
@@ -15,7 +14,7 @@
 #include "system/cx_thread.h"
 #include "system/cx_xml.h"
 #include "system/cx_json.h"
-#include "system/cx_utility.h"
+#include "system/cx_util.h"
 #include "graphics/cx_gdi.h"
 #include "graphics/cx_font.h"
 #include "graphics/cx_mesh.h"

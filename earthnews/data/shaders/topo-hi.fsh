@@ -1,8 +1,8 @@
 //
-//  earth.fsh
+//  topo-hi.fsh
+//  now360
 //
-//  Created by Ubaka Onyechi on 26/12/2011.
-//  Copyright (c) 2011 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 precision lowp float;
@@ -48,18 +48,24 @@ void main (void)
   float dotp = dot (nVec, lVec);
   
   // ambient
-  vec4 ambient = (u_ambientLight * diffuseMat);// + (nightMat * vec4 ((0.7 * u_ambientLight).xyz, 1.0));
+  vec4 ambient = (u_ambientLight * diffuseMat);
   
   // diffuse
   float d = max (dotp, c_zero);
   float n = c_one - d;
-  //n = smoothstep (0.5, 1.0, n); /* nice but expensive */
+
+#if 0
+  n = smoothstep (0.63, c_one, n); /* nice but expensive */
+#else
+  //n = smoothstep (0.5, c_one, n); /* next best range */
   //n = clamp ((n - 0.5) / 0.5, c_zero, c_one); /* linear step */
   //n = clamp ((n - 0.5) * 2.0, c_zero, c_one);
   //n = clamp ((n + n) - c_one, c_zero, c_one); /* simply scale range [0,1] to range [-1,1] */
-  n = (n + n) - c_one;
-  n = max (n, c_zero);
   
+  n = (n + n) - c_one; /* n will always be less than one */
+  n = max (n, c_zero);
+#endif
+
   vec4 diffuse = ((d * diffuseMat) + (n * nightMat)) * u_diffuseLight;
   
   // phong model

@@ -1,9 +1,8 @@
 //
 //  ui.c
-//  earthnews
+//  now360
 //
-//  Created by Ubaka Onyechi on 09/04/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #import "util.h"
@@ -105,52 +104,7 @@ void util_thread_init (void)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int util_get_dst_offset_secs (const char *tzn)
-{
-#if 0
-  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"EST"]; // new york
-  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"GMT"]; // uk
-  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"BST"]; // uk
-  //NSTimeZone *tz2 = [NSTimeZone timeZoneWithAbbreviation:@"CET"]; // europe
-  NSTimeZone *tz2 = [NSTimeZone timeZoneWithName:@"Australia/Sydney"];
-  
-  bool dst2 = [tz2 isDaylightSavingTime];
-  (void) dst2;
-  
-  NSTimeInterval dst2OffsetSecs = [tz2 daylightSavingTimeOffset];
-  (void) dst2OffsetSecs;
-  
-  NSTimeInterval dst2OffsetDateSecs = [tz2 daylightSavingTimeOffsetForDate:[NSDate date]];
-  (void) dst2OffsetDateSecs;
-  
-#if 0
-  NSCalendarUnit unitFlags = NSYearCalendarUnit | NSMonthCalendarUnit |  NSDayCalendarUnit | NSHourCalendarUnit | NSMinuteCalendarUnit | NSSecondCalendarUnit;
-  
-  NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier: NSGregorianCalendar];
-  
-  [gregorian setTimeZone:tz2];
-  
-  NSDate *date = [NSDate date];
-  
-  NSDateComponents *dateComponents = [gregorian components:unitFlags fromDate:date];
-  
-  NSInteger year = [dateComponents year];
-  NSInteger month = [dateComponents month];
-  NSInteger day = [dateComponents day];
-  NSInteger hour = [dateComponents hour];
-  NSInteger minute = [dateComponents minute];
-  NSInteger second = [dateComponents second];
-  
-  (void) year;
-  (void) month;
-  (void) day;
-  (void) hour;
-  (void) minute;
-  (void) second;
-  
-  [gregorian release];
-#endif
-#endif
-  
+{  
   CX_ASSERT (tzn);
   
   NSTimeZone *tz = [NSTimeZone timeZoneWithName:[NSString stringWithCString:tzn encoding:NSASCIIStringEncoding]];

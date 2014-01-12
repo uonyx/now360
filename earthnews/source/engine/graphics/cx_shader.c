@@ -1,8 +1,7 @@
 //
-//  cx_gdi_shader.c
+//  cx_shader.c
 //
-//  Created by Ubaka Onyechi on 29/01/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include <OpenGLES/ES2/gl.h>

@@ -1,14 +1,13 @@
 //
-//  cx_texture.
+//  cx_texture.c
 //
-//  Created by Ubaka Onyechi on 19/02/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 
-#include "../system/cx_utility.h"
+#include "../system/cx_util.h"
 #include "../system/cx_string.h"
 
 #include "cx_texture.h"

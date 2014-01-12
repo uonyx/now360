@@ -1,5 +1,8 @@
 //
-//  clouds.vsh
+//  clouds-bump.vsh
+//  now360
+//
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 attribute vec4 a_position;

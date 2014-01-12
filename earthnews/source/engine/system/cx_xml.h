@@ -1,8 +1,7 @@
 //
 //  cx_xml.h
 //
-//  Created by Ubaka Onyechi on 28/07/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef CX_XML_H

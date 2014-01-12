@@ -1,8 +1,7 @@
 //
 //  cx_time.h
 //
-//  Created by Ubaka Onyechi on 10/01/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef CX_TIME_H

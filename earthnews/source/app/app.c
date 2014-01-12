@@ -1,9 +1,8 @@
 //
 //  app.c
-//  earthnews
+//  now360
 //
-//  Created by Ubaka Onyechi on 02/01/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "app.h"
@@ -821,51 +820,13 @@ static void app_update_camera (void)
   CX_REF_UNUSED (sh);
   
 #if NEW_ROTATION
-  
-#if 0
-  cx_vec2 desiredVel;
-  
-  float maxspeed = 1.0;
-  
-  desiredVel.x = (s_touchTargetPos.x - s_touchPos.x) * maxspeed * 0.25f;
-  desiredVel.y = (s_touchTargetPos.y - s_touchPos.y) * maxspeed * 0.25f;
-  
-  s_touchVel.x = desiredVel.x - s_touchVel.x;
-  s_touchVel.y = desiredVel.y - s_touchVel.y;
-  
-  s_touchPos.x = s_touchPos.x + (s_touchVel.x * deltaTime);
-  s_touchPos.y = s_touchPos.y + (s_touchVel.y * deltaTime);
-  
-  g_rotAngle.x += (s_touchVel.x * deltaTime);
-  g_rotAngle.y += (s_touchVel.y * deltaTime);
-  
-  g_rotAngle.x = fmodf (g_rotAngle.x, 360.0f);
-  g_rotAngle.y = cx_clamp (g_rotAngle.y, -89.9f, 89.9f);
-#endif
-  
-#if 1
+
   float rotAddx = g_rotTarget.x - g_rotAngle.x;
   float rotAddy = g_rotTarget.y - g_rotAngle.y;
 
-  //float alpha = cx_smoothstep (0.98f, 1.0f, dotp);
   float zoomFactor = 1.0f - cx_linearstep (CAMERA_MIN_FOV, CAMERA_MAX_FOV, g_camera->fov);
-  
-#if 0
-  zoomFactor += 1.0f; // range (1.0, 2.0)
-#endif
-  
-#if 0
-  zoomFactor = cx_sin ((CX_PI * zoomFactor) + CX_HALF_PI); // sine interpolation // range (-1.0, 1.0)
-  zoomFactor = (zoomFactor + 1.0f) * 0.5f; // range (0.0, 1.0)
-  zoomFactor += 1.0f; // range (1.0, 2.0)
-#endif
-  
-#if 1
-  //zoomFactor *= 2.0f;
   zoomFactor += 1.0f;
   zoomFactor = cx_pow (zoomFactor, 3.0f);
-  //zoomFactor += 1.0f;
-#endif
 
   
   float rotDecel = 1.0f * zoomFactor * g_rotSpeedExp;
@@ -874,17 +835,6 @@ static void app_update_camera (void)
   float rotSpeedx = (fabsf (rotAddx) / rotDecel);
   float rotSpeedy = (fabsf (rotAddy) / rotDecel);
   
-#if 0
-  float exponent = 1.0f;
-  rotSpeedx = cx_pow (rotSpeedx, exponent);
-  rotSpeedy = cx_pow (rotSpeedy, exponent);
-#endif
-  
-#if 0
-  rotSpeedx = cx_sin ((CX_PI * rotSpeedx) + CX_HALF_PI);
-  rotSpeedy = cx_sin ((CX_PI * rotSpeedy) + CX_HALF_PI);
-#endif
-
   rotSpeedx = cx_min (rotSpeedx, rotSpeed);
   rotSpeedy = cx_min (rotSpeedy, rotSpeed);
   
@@ -904,9 +854,6 @@ static void app_update_camera (void)
   float rotx = fmodf (g_rotAngle.x, 360.0f);
   float roty = cx_clamp (g_rotAngle.y, -89.9f, 89.9f);
   
-#endif
-  
-  
 #else // OLD_ROTATION
   
   cx_vec2 tdist;
@@ -914,7 +861,6 @@ static void app_update_camera (void)
   tdist.x = g_rotTouchEnd.x - g_rotTouchBegin.x;
   tdist.y = g_rotTouchEnd.y - g_rotTouchBegin.y;
 
-#if 1
   float rx = tdist.x * deltaTime;
   float ry = tdist.y * deltaTime;
   
@@ -923,14 +869,6 @@ static void app_update_camera (void)
   
   g_rotationAngle.x += rx;
   g_rotationAngle.y += ry;
-  
-#else
-  g_rotTouchBegin.x += (tdist.x * deltaTime);
-  g_rotTouchBegin.y += (tdist.y * deltaTime);
-  
-  g_rotationAngle.x += (tdist.x * deltaTime);
-  g_rotationAngle.y += (tdist.y * deltaTime);
-#endif
   
   g_rotationAngle.x = fmodf (g_rotationAngle.x, 360.0f);
   g_rotationAngle.y = cx_clamp (g_rotationAngle.y, -89.9f, 89.9f);
@@ -948,10 +886,10 @@ static void app_update_camera (void)
   // set rotation
   cx_vec4 center = {{0.0f, 0.0f, 0.0f, 1.0f}};
   cx_vec4 axis_x = {{1.0f, 0.0f, 0.0f, 0.0f}};
-  cx_vec4 axis_y = {{0.0f, -1.0f, 0.0f, 0.0f}};
+  cx_vec4 axis_y = {{0.0f, 1.0f, 0.0f, 0.0f}};
   
   camera_rotate_around_point (g_camera, &center, cx_rad (roty), &axis_x);
-  camera_rotate_around_point (g_camera, &center, cx_rad (rotx), &axis_y);
+  camera_rotate_around_point (g_camera, &center, cx_rad (-rotx), &axis_y);
   
   // get projection matrix
   cx_mat4x4 projmatrix;
@@ -2297,9 +2235,10 @@ static int app_input_touch_earth (float screenX, float screenY, float screenWidt
           
           cx_vec4_sub (&toPos, &position, &intersectpt);
         
+          float touchRadius = 0.025f;
           float distSqr = cx_vec4_length_sq (&toPos);
           
-          if (distSqr <= (0.025f * 0.025f))
+          if (distSqr <= (touchRadius * touchRadius))
           {
             CX_LOG_CONSOLE (0, "%s", city);
             
@@ -2424,8 +2363,6 @@ void app_on_terminate (void)
 
 void app_on_memory_warning (void)
 {
-  CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
-  CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
   CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
   CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");
   CX_LOG_CONSOLE (1, "BONKERS! RECEIVED MEMORY WARNING!!!");

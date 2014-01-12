@@ -1,14 +1,13 @@
 //
 //  cx_font.c
 //
-//  Created by Ubaka Onyechi on 21/03/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "../system/cx_file.h"
 #include "../system/cx_matrix4x4.h"
 #include "../system/cx_vector2.h"
-#include "../system/cx_utility.h"
+#include "../system/cx_util.h"
 #include "../3rdparty/stb/stb_truetype.h"
 
 #include "cx_font.h"

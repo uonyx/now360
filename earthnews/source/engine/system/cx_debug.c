@@ -1,12 +1,10 @@
 //
 //  cx_debug.c
 //
-//  Created by Ubaka Onyechi on 04/01/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "cx_debug.h"
-
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>

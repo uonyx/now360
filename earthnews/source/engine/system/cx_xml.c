@@ -1,8 +1,7 @@
 //
 //  cx_xml.c
 //
-//  Created by Ubaka Onyechi on 28/07/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "cx_xml.h"
@@ -16,8 +15,6 @@
 
 cx_xml_doc cx_xml_doc_create (const char *data, cxu32 dataSize)
 {
-  //xmlDocPtr xmlDoc = xmlReadMemory (data, dataSize, "noname.xml", NULL, 0);
-  
   xmlDocPtr xmlDoc = xmlParseMemory (data, dataSize);
   
   return xmlDoc;

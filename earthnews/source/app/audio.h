@@ -1,9 +1,8 @@
 //
 //  audio.h
-//  earthnews
+//  now360
 //
-//  Created by Ubaka Onyechi on 12/01/2013.
-//  Copyright (c) 2013 uonyechi.com. All rights reserved.
+//  Copyright (c) 2013 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef NOW360_AUDIO_H

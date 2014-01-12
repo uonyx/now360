@@ -1,8 +1,7 @@
 //
 //  cx_file.c
 //
-//  Created by Ubaka Onyechi on 02/01/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #include "cx_file.h"

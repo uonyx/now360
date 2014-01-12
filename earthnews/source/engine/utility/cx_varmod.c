@@ -1,8 +1,7 @@
 //
 //  cx_varmod.h
 //
-//  Created by Ubaka Onyechi on 24/11/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

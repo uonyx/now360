@@ -1,8 +1,8 @@
 //
 //  atmos.vsh
+//  now360
 //
-//  Created by Ubaka Onyechi on 26/11/2012.
-//  Copyright (c) 2011 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 precision lowp float;

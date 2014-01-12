@@ -1,9 +1,8 @@
 //
 //  webview.h
-//  earthnews
+//  now360
 //
-//  Created by Ubaka Onyechi on 30/03/2013.
-//  Copyright (c) 2013 uonyechi.com. All rights reserved.
+//  Copyright (c) 2013 Ubaka Onyechi. All rights reserved.
 //
 
 #ifndef NOW360_WEBVIEW_H

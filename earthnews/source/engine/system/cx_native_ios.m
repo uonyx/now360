@@ -1,8 +1,7 @@
 //
 //  cx_native_ios.m
 //
-//  Created by Ubaka Onyechi on 19/02/2012.
-//  Copyright (c) 2012 uonyechi.com. All rights reserved.
+//  Copyright (c) 2012 Ubaka Onyechi. All rights reserved.
 //
 
 #import "cx_native_ios.h"
