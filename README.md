@@ -1,5 +1,7 @@
 Nov, 2013
 
+![Now360](http://a3.mzstatic.com/eu/r30/Purple4/v4/71/72/af/7172af6b-5c6a-fd21-3ca0-3e00d7a31d45/screen480x480.jpeg)
+
 ## Background
 Done purely for educational reasons to re-familiarise myself with graphics programming, 3D maths, C, and to improve knowledge of the iOS platform. Being an iOS project, Objective-C was unavoidable and some of its use in this project is very questionable but I learn ;)
 - Written in C with the necessary Objective-C.
@@ -41,7 +43,7 @@ As is displayed during the loading phase of the app:
 - Weather information comes from [Yahoo](http://developer.yahoo.com/weather/)
 - Tweet streams are from [Twitter](https://dev.twitter.com/docs/api/1.1)
 - News headlines and content are from [Google News RSS feeds](https://support.google.com/news/topic/2428792?hl=en-GB&ref_topic=2428789)
-These services are all HTTP-based and instruction on a client implementation, along with rules and restrictions, can be found on their websites. (Saying that, there seems to be little or no documentation about Google News now - dammit google!).
+These services are all HTTP-based and instructions on a client implementation, along with rules and restrictions, can be found on their websites. (Saying that, there seems to be little or no documentation about Google News now - dammit google!).
 
 ### Webview (webview.h/m)
 This went through 3 iterations. 
