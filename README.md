@@ -1,6 +1,8 @@
 Nov, 2013
 
-![Now360](http://a3.mzstatic.com/eu/r30/Purple4/v4/71/72/af/7172af6b-5c6a-fd21-3ca0-3e00d7a31d45/screen480x480.jpeg)
+![Now360](http://i.imgur.com/XinAvGi.png)
+
+Now360 is an interactive 3D earth browser which provides up-to-date news, tweets, time zone and weather feeds of popular cities around the world.
 
 ## Background
 Done purely for educational reasons to re-familiarise myself with graphics programming, 3D maths, C, and to improve knowledge of the iOS platform. Being an iOS project, Objective-C was unavoidable and some of its use in this project is very questionable but I learn ;)
